@@ -1,21 +1,27 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-06-seams",
-  "status": "passed",
-  "source_revision": "c5b50aae",
+  "task_id": "foundation-07-final-review",
+  "status": "partial",
+  "source_revision": "33795d47",
   "commands": [
-    {"command": "PowerShell baseline path existence check", "status": "passed", "summary": "All fourteen paths referenced by the architecture map exist; printed Fork baseline paths verified.", "exit_code": 0},
-    {"command": "git diff --cached --check", "status": "passed", "summary": "Architecture document has no whitespace errors.", "exit_code": 0},
-    {"command": "git show --stat c5b50aae", "status": "passed", "summary": "Commit contains only docs/architecture/fork-baseline.md.", "exit_code": 0}
+    {"command": "npx -y pnpm@9.15.9 verify:foundation", "status": "passed", "summary": "Printed Huabu foundation contract passed.", "exit_code": 0},
+    {"command": "npx -y pnpm@9.15.9 build", "status": "passed", "summary": "Next.js compilation, typecheck, 53-page static generation, export, and map pruning completed.", "exit_code": 0},
+    {"command": "cargo check --manifest-path src-tauri/Cargo.toml --locked", "status": "failed", "summary": "Lock validation passed without changes; compilation stopped because MSVC link.exe is not installed.", "exit_code": 101},
+    {"command": "git diff --exit-code -- pnpm-lock.yaml src-tauri/Cargo.lock", "status": "passed", "summary": "Final verification did not change either dependency lockfile.", "exit_code": 0},
+    {"command": "git diff --check 847ad7c7..33795d47", "status": "passed", "summary": "No whitespace errors in post-import foundation changes.", "exit_code": 0},
+    {"command": "git merge-base --is-ancestor checks", "status": "passed", "summary": "Both main and pinned NoteGen commit 636d4f8 are ancestors; import merge has the expected two parents.", "exit_code": 0},
+    {"command": "git diff --name-status 847ad7c7..33795d47", "status": "passed", "summary": "Post-import changes are workflow artifacts, identity/configuration/docs, contract files, Cargo lock normalization, and two minimal frontend build repairs; no Huabu feature implementation is present.", "exit_code": 0}
   ],
   "acceptance_criteria_coverage": [
-    {"criterion": "fork-baseline.md matches the plan", "status": "passed", "evidence": ["docs/architecture/fork-baseline.md"]},
-    {"criterion": "every referenced path exists", "status": "passed", "evidence": ["PowerShell path check exit code 0"]},
-    {"criterion": "explicit deferrals are recorded", "status": "passed", "evidence": ["Explicit deferrals section"]},
-    {"criterion": "only the architecture document is committed", "status": "passed", "evidence": ["commit c5b50aae"]}
+    {"criterion": "foundation contract passes", "status": "passed", "evidence": ["foundation success output"]},
+    {"criterion": "frontend build passes", "status": "passed", "evidence": ["Next.js build exit code 0"]},
+    {"criterion": "cargo check passes or its environment blocker is recorded", "status": "passed", "evidence": ["link.exe failure recorded in docs/verification/windows-foundation.md and this artifact"]},
+    {"criterion": "branch is clean after review artifacts are committed", "status": "pending", "evidence": ["final clean status will be checked after artifact commit"]},
+    {"criterion": "diff contains no Huabu feature implementation", "status": "passed", "evidence": ["post-import name-status review", "two source changes are compile-only upstream repairs"]},
+    {"criterion": "independent review has no unresolved blocking findings", "status": "failed", "evidence": ["Active Windows startup chain reaches download.notegen.top config center"]}
   ],
-  "passed": ["All foundation-06-seams acceptance criteria"],
-  "failed": [],
+  "passed": ["Huabu foundation contract", "Frontend production build", "Lockfile stability", "Import ancestry", "Foundation-only scope review"],
+  "failed": ["Independent product network boundary", "Rust compile gate in current environment"],
   "not_run_reason": null,
-  "residual_risk": []
+  "residual_risk": ["Disable the NoteGen remote configuration startup path and extend the foundation contract before final approval.", "Install Visual Studio Build Tools with Desktop development with C++ and a Windows SDK, then rerun Cargo, NSIS, and manual smoke checks."]
 }

@@ -1,40 +1,39 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-06-seams",
+  "task_id": "foundation-07-final-review",
   "context_level": "L1-index-large-project",
   "read_first": [
-    "src/lib/writing-assets-path.ts",
-    "src/lib/vector-document-key.js",
-    "src/lib/skills/path-utils.ts",
-    "src/lib/path.ts",
-    "src/lib/markdown-image-path.ts",
+    "src/app/core/main/editor/markdown/agent-diff-preview-extension.ts",
+    "src/components/photo-preview-provider.tsx",
+    "src/app/core/main/chat/quote-preview.ts",
+    "src/app/core/main/chat/chat-preview.tsx",
+    "src/lib/check.ts",
+    "src/lib/agent/react-diff-helpers.ts",
     "src/components/ui/textarea.tsx",
-    "src/components/ui/scroll-area.tsx",
-    "src/components/ui/agent-plan.tsx"
+    "src/components/ui/scroll-area.tsx"
   ],
   "relevant_symbols": [
-    "normalizePathForCompare (src/app/core/main/editor/markdown/slash-command/suggestion.tsx:168)",
-    "createMarkdownLinksForFilePaths (src/app/core/main/editor/markdown/slash-command/suggestion.tsx:216)",
-    "normalizePathForCompare (src/app/core/main/editor/markdown/tiptap-editor.tsx:422)",
-    "createMarkdownLinksForDroppedPaths (src/app/core/main/editor/markdown/tiptap-editor.tsx:470)",
-    "deleteVectorDocumentsByPaths (src/app/core/main/file/folder-item/delete-folder-utils.ts:136)",
-    "createGiteaRepo (src/app/core/setting/sync/gitea-sync.tsx:83)",
-    "parentPath (src/app/mobile/writing/browser-utils.ts:6)",
-    "normalizeForCompare (src/components/ui/agent-plan.tsx:198)",
-    "checkVectorDocumentExists (src/db/vector.ts:329)",
-    "normalizeFilePathForCompare (src/lib/agent/runtime.ts:174)",
-    "normalizeFilePathForCompare (src/lib/agent/tool-registry.ts:177)",
-    "filePathFromCreateResult (src/lib/agent/tool-registry.ts:514)"
+    "buildDiffDecorations (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:37)",
+    "createInsertedContentWidget (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:26)",
+    "applyPreviewMeta (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:114)",
+    "handleAgentDiffPreview (src/app/core/main/editor/markdown/tiptap-editor.tsx:4607)",
+    "buildEditorApprovalPreview (src/lib/agent/tool-registry.ts:257)",
+    "buildFolderPreview (src/lib/chat-attachments.ts:111)",
+    "showPreview (src/app/core/main/canvas/canvas-editor.tsx:460)",
+    "clearPreview (src/app/core/main/canvas/canvas-editor.tsx:461)",
+    "previewClassName (src/app/core/main/canvas/nodes/canvas-nodes.tsx:27)",
+    "generateFilePreview (src/app/core/main/chat/chat-input.tsx:808)",
+    "isMacOS (src/app/core/main/chat/chat-preview.tsx:24)",
+    "handleDragStart (src/app/core/main/chat/chat-preview.tsx:151)"
   ],
   "entrypoints": [
-    "docs/architecture/fork-baseline.md"
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-7-final-branch-verification-and-review-handoff"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "src/",
-    "src-tauri/",
-    "package.json",
-    ".github/"
+    "product source",
+    "main branch",
+    "remote repositories"
   ],
   "open_questions": []
 }
