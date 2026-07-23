@@ -1,12 +1,24 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "unconfigured",
-  "status": "not_run",
-  "source_revision": null,
-  "commands": [],
-  "acceptance_criteria_coverage": [],
-  "passed": [],
+  "task_id": "foundation-01-import",
+  "status": "passed",
+  "source_revision": "847ad7c7151016dc5cf52b71a5e549c9e9035d68",
+  "commands": [
+    {"command": "git remote get-url upstream", "status": "passed", "summary": "Returned https://github.com/codexu/note-gen.git.", "exit_code": 0},
+    {"command": "git merge-base --is-ancestor 636d4f8 upstream/dev", "status": "passed", "summary": "Pinned commit is in upstream/dev ancestry.", "exit_code": 0},
+    {"command": "git show -s --format=%P HEAD", "status": "passed", "summary": "Merge parents are Huabu main 522af921 and pinned upstream 636d4f8.", "exit_code": 0},
+    {"command": "Compare-Object upstream tree paths vs main..HEAD paths", "status": "passed", "summary": "838 paths on each side; mismatch count 0.", "exit_code": 0},
+    {"command": "git status --short --branch in main and foundation", "status": "passed", "summary": "Both worktrees are clean on the expected branches.", "exit_code": 0}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "upstream remote is correct", "status": "passed", "evidence": ["git remote get-url upstream"]},
+    {"criterion": "pinned commit is an ancestor of upstream/dev", "status": "passed", "evidence": ["merge-base exit code 0"]},
+    {"criterion": "foundation worktree and branch exist", "status": "passed", "evidence": ["git worktree list", "foundation status"]},
+    {"criterion": "unrelated histories merge is clean", "status": "passed", "evidence": ["merge parent SHAs", "838/838 path comparison"]},
+    {"criterion": "main is unchanged", "status": "passed", "evidence": ["main remains at 522af921 and clean"]}
+  ],
+  "passed": ["All Task 1 acceptance criteria"],
   "failed": [],
-  "not_run_reason": "Task is not configured.",
-  "residual_risk": []
+  "not_run_reason": null,
+  "residual_risk": ["Dependencies and builds are intentionally deferred to Task 2.", "Imported release/updater settings are intentionally deferred to Task 4."]
 }
