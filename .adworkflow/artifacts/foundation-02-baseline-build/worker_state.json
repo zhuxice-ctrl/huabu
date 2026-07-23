@@ -1,0 +1,16 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "foundation-02-baseline-build",
+  "status": "verified",
+  "revision": 1,
+  "done": ["Recorded Node, Corepack, Rust and Cargo versions.", "Installed 1201 packages with the frozen pnpm 9.15.9 lockfile.", "Ran the unmodified frontend build and recorded its first two upstream type failures.", "Ran cargo check and recorded the missing MSVC linker environment failure."],
+  "changed_files": [],
+  "current_problem": null,
+  "next_action": "Use foundation-02a-build-fix for the two frontend defects; install MSVC Build Tools before Rust packaging verification.",
+  "must_keep_context": ["Node v24.14.1", "pnpm 9.15.9 is available through corepack/npx", "Rust 1.95.0", "link.exe is absent"],
+  "discarded_context": [],
+  "remaining_risks": ["Rust and Tauri packaging cannot run until MSVC Build Tools and Windows SDK are available."],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}

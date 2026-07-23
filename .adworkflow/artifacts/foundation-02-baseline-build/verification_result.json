@@ -1,0 +1,23 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "foundation-02-baseline-build",
+  "status": "partial",
+  "source_revision": "b9e2edbb",
+  "commands": [
+    {"command": "node/corepack/rustc/cargo version checks", "status": "passed", "summary": "Node 24.14.1, Corepack 0.34.6, Rust/Cargo 1.95.0 recorded; global pnpm is 11.9.0 and pinned pnpm 9.15.9 is invoked via corepack/npx.", "exit_code": 0},
+    {"command": "corepack pnpm@9.15.9 install --frozen-lockfile", "status": "passed", "summary": "Installed 1201 packages; lockfile remained unchanged.", "exit_code": 0},
+    {"command": "upstream frontend production build", "status": "failed", "summary": "Pinned upstream failed first on untyped innerGraph.width, then on missing uploadCanvas import.", "exit_code": 1},
+    {"command": "cargo check --manifest-path src-tauri/Cargo.toml", "status": "failed", "summary": "Environment failed before project code because link.exe/MSVC Build Tools are not installed.", "exit_code": 101}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "toolchain versions recorded", "status": "passed", "evidence": ["version command output"]},
+    {"criterion": "frozen install succeeds without tracked changes", "status": "passed", "evidence": ["pnpm 9.15.9 install output", "clean status before repairs"]},
+    {"criterion": "unmodified pnpm build passes", "status": "failed", "evidence": ["canvas-editor.tsx:1123 type error", "stores/canvas.ts:280 missing import"]},
+    {"criterion": "cargo check passes", "status": "failed", "evidence": ["link.exe not found before project compilation"]},
+    {"criterion": "worktree remains clean", "status": "passed", "evidence": ["no tracked changes were made during baseline diagnostics"]}
+  ],
+  "passed": ["Toolchain discovery", "Frozen dependency installation", "No lockfile change"],
+  "failed": ["Unmodified frontend build", "Rust check in current machine environment"],
+  "not_run_reason": null,
+  "residual_risk": ["Task 2 proves the pinned upstream commit is not build-clean as imported.", "MSVC Build Tools and Windows SDK are required for later Rust/NSIS gates."]
+}

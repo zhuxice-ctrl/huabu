@@ -1,20 +1,16 @@
 {
   "schema": "ADworkflo.impact_report.v1",
-  "task_id": "unconfigured",
-  "status": "not_run",
-  "baseline_revision": null,
-  "current_revision": null,
-  "declared_files": [],
-  "predicted_files": [],
-  "changed_files": [],
-  "observed_impact_files": [],
+  "task_id": "foundation-02a-build-fix",
+  "status": "passed",
+  "baseline_revision": "b9e2edbb",
+  "current_revision": "8d7d7b36",
+  "declared_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
+  "predicted_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
+  "changed_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
+  "observed_impact_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
   "unexpected_impact": [],
-  "symbol_delta": {"added": [], "removed": []},
-  "edge_delta": {
-    "calls": {"added": [], "removed": []},
-    "references": {"added": [], "removed": []},
-    "imports": {"added": [], "removed": []}
-  },
+  "symbol_delta": {"summary": "No public symbol contract changed; one type-only import/generic and one existing runtime import were added."},
+  "edge_delta": {"summary": "canvas store now resolves the existing uploadCanvas dependency; no new module introduced."},
   "new_critical_unresolved_edges": [],
-  "review_required": false
+  "review_required": true
 }

@@ -1,12 +1,20 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-02-baseline-build",
-  "status": "not_run",
-  "source_revision": null,
-  "commands": [],
-  "acceptance_criteria_coverage": [],
-  "passed": [],
+  "task_id": "foundation-02a-build-fix",
+  "status": "passed",
+  "source_revision": "8d7d7b36",
+  "commands": [
+    {"command": "npx -y pnpm@9.15.9 build", "status": "passed", "summary": "Next.js typecheck, static generation, export, and build:prune-maps completed.", "exit_code": 0},
+    {"command": "git diff of build-fix commit", "status": "passed", "summary": "Only two intended source files changed, with three insertions and two deletions.", "exit_code": 0}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "ELK output is typed without any-casts", "status": "passed", "evidence": ["ElkNode type import and generic layout call"]},
+    {"criterion": "uploadCanvas is imported", "status": "passed", "evidence": ["existing canvas-sync export added to import"]},
+    {"criterion": "frontend build passes", "status": "passed", "evidence": ["npx pnpm 9.15.9 build exit code 0"]},
+    {"criterion": "only two source files change", "status": "passed", "evidence": ["commit 8d7d7b36"]}
+  ],
+  "passed": ["All foundation-02a acceptance criteria"],
   "failed": [],
-  "not_run_reason": "Task has not started.",
-  "residual_risk": []
+  "not_run_reason": null,
+  "residual_risk": ["Turbopack emits upstream deprecation/experimental warnings.", "Rust checks remain an environment gate for Task 5."]
 }

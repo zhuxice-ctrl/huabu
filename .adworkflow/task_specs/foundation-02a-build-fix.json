@@ -13,6 +13,6 @@
   "do_not_touch": ["all files except src/app/core/main/canvas/canvas-editor.tsx and src/stores/canvas.ts"],
   "entrypoints": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
   "context_sources": ["Task 2 build logs", "node_modules/elkjs/lib/elk-api.d.ts"],
-  "notes": ["This task was inserted after Task 2 exposed two upstream build defects.", "Use fixed-io-encoding for PowerShell and non-ASCII I/O."],
+  "notes": ["This task was inserted after Task 2 exposed two upstream build defects."],
   "implementation_owner": "root-orchestrator"
 }

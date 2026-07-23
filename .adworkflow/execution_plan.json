@@ -39,14 +39,27 @@
       }]
     },
     {
-      "batch_id": "foundation-contract",
+      "batch_id": "foundation-build-fix",
       "parallel": false,
       "depends_on": ["foundation-baseline"],
+      "tasks": [{
+        "task_id": "foundation-02a-build-fix",
+        "module": "upstream-build-fix",
+        "goal": "Apply the minimal fixes required for the pinned canvas commit to pass the frontend build.",
+        "depends_on": ["foundation-02-baseline-build"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-02a-build-fix.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-contract",
+      "parallel": false,
+      "depends_on": ["foundation-build-fix"],
       "tasks": [{
         "task_id": "foundation-03-contract",
         "module": "foundation-contract",
         "goal": "Add and commit a deterministic failing Huabu identity contract.",
-        "depends_on": ["foundation-02-baseline-build"],
+        "depends_on": ["foundation-02a-build-fix"],
         "task_spec_path": ".adworkflow/task_specs/foundation-03-contract.json",
         "expected_outputs": ["worker_state.json", "verification_result.json"]
       }]

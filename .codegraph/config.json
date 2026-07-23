@@ -15,7 +15,9 @@
     "__pycache__",
     ".next",
     ".turbo",
-    "coverage"
+    "coverage",
+    "target",
+    "src-tauri/target"
   ],
   "languages": [
     "typescript",
