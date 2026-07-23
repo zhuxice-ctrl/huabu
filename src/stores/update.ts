@@ -1,10 +1,7 @@
 import { Store } from '@tauri-apps/plugin-store'
 import { create } from 'zustand'
 import { check, Update } from '@tauri-apps/plugin-updater'
-import { fetch as httpFetch } from '@tauri-apps/plugin-http'
-import { compareVersions, extractVersionText } from '@/lib/version'
 
-export const MOBILE_UPDATE_MANIFEST_URL = 'https://download.notegen.top/updates/latest.json'
 export const ANDROID_DOWNLOAD_URL = 'https://notegen.top/download'
 export const IOS_TESTFLIGHT_URL = 'https://testflight.apple.com/join/8KjFRTCq'
 
@@ -15,12 +12,6 @@ export interface MobileUpdateInfo {
 }
 
 type MobileUpdateStatus = 'idle' | 'checking' | 'ready' | 'error'
-
-interface MobileUpdateManifest {
-  version?: unknown
-  notes?: unknown
-  pub_date?: unknown
-}
 
 interface UpdateState {
   hasUpdate: boolean
@@ -60,57 +51,14 @@ const useUpdateStore = create<UpdateState>((set, get) => ({
   mobileUpdate: null,
   mobileUpdateStatus: 'idle',
   mobileUpdateError: '',
-  checkForMobileUpdates: async (currentVersion) => {
-    set({ mobileUpdateStatus: 'checking', mobileUpdateError: '' })
-
-    try {
-      const response = await httpFetch(MOBILE_UPDATE_MANIFEST_URL, {
-        cache: 'no-store',
-        headers: {
-          Accept: 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Update manifest request failed: ${response.status}`)
-      }
-
-      const manifest = await response.json() as MobileUpdateManifest
-      const version = typeof manifest.version === 'string'
-        ? extractVersionText(manifest.version)
-        : null
-
-      if (!version) {
-        throw new Error('Update manifest does not contain a valid version')
-      }
-
-      const info: MobileUpdateInfo = {
-        version,
-        notes: typeof manifest.notes === 'string' ? manifest.notes : '',
-        pubDate: typeof manifest.pub_date === 'string' ? manifest.pub_date : '',
-      }
-      const { ignoredVersion } = get()
-      const hasUpdate = compareVersions(version, currentVersion) > 0
-        && version !== ignoredVersion
-
-      set({
-        mobileUpdate: hasUpdate ? info : null,
-        mobileUpdateStatus: 'ready',
-        latestVersion: version,
-        hasUpdate,
-      })
-
-      return hasUpdate ? info : null
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      set({
-        mobileUpdate: null,
-        mobileUpdateStatus: 'error',
-        mobileUpdateError: message,
-        hasUpdate: false,
-      })
-      throw error
-    }
+  checkForMobileUpdates: async () => {
+    set({
+      mobileUpdate: null,
+      mobileUpdateStatus: 'ready',
+      mobileUpdateError: '',
+      hasUpdate: false,
+    })
+    return null
   },
   
   ignoredVersion: '',

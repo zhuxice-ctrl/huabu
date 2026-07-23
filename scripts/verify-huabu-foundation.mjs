@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = (path) => readFileSync(join(root, path), 'utf8')
 const readJson = (path) => JSON.parse(read(path))
+const readTree = (path) => readdirSync(join(root, path), { withFileTypes: true })
+  .flatMap(entry => entry.isDirectory()
+    ? readTree(join(path, entry.name))
+    : [read(join(path, entry.name))])
+  .join('\n')
 
 const packageJson = readJson('package.json')
 const tauriConfig = readJson('src-tauri/tauri.conf.json')
@@ -13,6 +18,7 @@ const cargoToml = read('src-tauri/Cargo.toml')
 const license = read('LICENSE')
 const notice = read('NOTICE.md')
 const windowsCi = read('.github/workflows/windows-ci.yml')
+const runtimeSource = readTree('src')
 
 assert.equal(packageJson.name, 'huabu')
 assert.equal(packageJson.scripts['verify:foundation'], 'node scripts/verify-huabu-foundation.mjs')
@@ -22,6 +28,7 @@ assert.deepEqual(tauriConfig.bundle.targets, ['nsis', 'msi'])
 assert.equal(tauriConfig.bundle.createUpdaterArtifacts, false)
 assert.ok(!JSON.stringify(tauriConfig).includes('download.notegen.top'))
 assert.ok(!JSON.stringify(tauriConfig).includes('codexu/note-gen/releases'))
+assert.ok(!runtimeSource.includes('download.notegen.top'))
 assert.match(cargoToml, /^name = "huabu"$/m)
 assert.match(cargoToml, /^description = "AI-native spatial notes for Windows"$/m)
 assert.match(license, /GNU GENERAL PUBLIC LICENSE/)
@@ -30,5 +37,6 @@ assert.match(notice, /636d4f896850dfadfb7a5f74e1f9bd9a583c8096/)
 assert.ok(!existsSync(join(root, '.github/workflows/release.yml')))
 assert.match(windowsCi, /runs-on: windows-latest/)
 assert.doesNotMatch(windowsCi, /ubuntu-|macos-|android/i)
+assert.match(windowsCi, /cargo check --manifest-path src-tauri\/Cargo\.toml --locked/)
 
 console.log('Huabu foundation contract passed')

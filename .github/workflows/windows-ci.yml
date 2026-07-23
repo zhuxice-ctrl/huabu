@@ -25,4 +25,4 @@ jobs:
       - name: Build frontend
         run: pnpm build
       - name: Check Rust application
-        run: cargo check --manifest-path src-tauri/Cargo.toml
+        run: cargo check --manifest-path src-tauri/Cargo.toml --locked
