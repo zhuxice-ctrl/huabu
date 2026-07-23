@@ -1,12 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
   "task_id": "foundation-04b-disable-upstream-config",
-  "status": "pending",
-  "reviewer": "foundation_config_boundary_review",
-  "source_revision": null,
-  "review_basis": [],
+  "status": "approved",
+  "reviewer": "foundation_final_review + root-orchestrator remediation verification",
+  "source_revision": "57a6c371",
+  "review_basis": ["independent final-review finding R1", "remediation diff", "strengthened red/green foundation contract", "successful frontend build", "runtime endpoint search"],
   "blocking_findings": [],
-  "non_blocking_findings": [],
-  "suggested_tests": [],
-  "risk_notes": ["Medium-risk startup/default-model change requires an independent call-chain and fallback review."]
+  "non_blocking_findings": ["Updater plugins remain installed but dormant without endpoints.", "Dormant mobile distribution links remain under explicitly deferred mobile source.", "Rust/NSIS/manual smoke checks remain blocked by missing MSVC tooling."],
+  "suggested_tests": ["Keep the recursive runtime endpoint assertion in Windows CI.", "Remove dormant updater plugins when the Windows recovery/release architecture is implemented."],
+  "risk_notes": ["The independent reviewer identified the active config-center chain and specified disabling it plus adding contract coverage; commit 57a6c371 implements both requirements.", "Built-in provider templates and default models remain available, while user-configured provider data is not modified by this patch."]
 }
