@@ -1,20 +1,25 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-03-contract",
+  "task_id": "foundation-04-identity",
   "status": "passed",
-  "source_revision": "bcbd1dbf",
+  "source_revision": "6f539ccf",
   "commands": [
-    {"command": "npx -y pnpm@9.15.9 verify:foundation", "status": "passed", "summary": "Expected red phase: exited 1 on missing NOTICE.md and never printed the success message.", "exit_code": 1},
-    {"command": "git show --stat --oneline --summary bcbd1dbf", "status": "passed", "summary": "Commit contains only package.json and scripts/verify-huabu-foundation.mjs.", "exit_code": 0}
+    {"command": "npx -y pnpm@9.15.9 verify:foundation", "status": "passed", "summary": "Printed Huabu foundation contract passed.", "exit_code": 0},
+    {"command": "node manifest parse check", "status": "passed", "summary": "package.json and src-tauri/tauri.conf.json parsed successfully.", "exit_code": 0},
+    {"command": "git diff --cached --check", "status": "passed", "summary": "No whitespace errors in the identity patch.", "exit_code": 0},
+    {"command": "cargo check --manifest-path src-tauri/Cargo.toml --locked", "status": "blocked", "summary": "Lockfile identity is synchronized and Cargo advances to compilation; compilation is blocked by missing MSVC link.exe.", "exit_code": 1}
   ],
   "acceptance_criteria_coverage": [
-    {"criterion": "verification script exactly implements the plan assertions", "status": "passed", "evidence": ["scripts/verify-huabu-foundation.mjs"]},
-    {"criterion": "package.json exposes verify:foundation", "status": "passed", "evidence": ["package.json"]},
-    {"criterion": "pnpm verify:foundation fails before success output", "status": "passed", "evidence": ["ENOENT NOTICE.md, exit code 1"]},
-    {"criterion": "only contract files are committed", "status": "passed", "evidence": ["commit bcbd1dbf"]}
+    {"criterion": "package identity is huabu", "status": "passed", "evidence": ["package.json"]},
+    {"criterion": "Tauri product is Huabu with com.huabu.desktop and Windows bundle targets", "status": "passed", "evidence": ["src-tauri/tauri.conf.json"]},
+    {"criterion": "NoteGen updater endpoints and release workflow are absent", "status": "passed", "evidence": ["foundation contract", "deleted .github/workflows/release.yml"]},
+    {"criterion": "Cargo metadata is Huabu and macOS private feature is absent", "status": "passed", "evidence": ["src-tauri/Cargo.toml"]},
+    {"criterion": "NOTICE preserves GPL attribution", "status": "passed", "evidence": ["NOTICE.md"]},
+    {"criterion": "Windows-only CI exists", "status": "passed", "evidence": [".github/workflows/windows-ci.yml"]},
+    {"criterion": "foundation contract passes", "status": "passed", "evidence": ["exit code 0"]}
   ],
-  "passed": ["All foundation-03-contract acceptance criteria"],
+  "passed": ["All foundation-04-identity acceptance criteria"],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": ["The deliberate red contract must turn green in foundation-04-identity."]
+  "residual_risk": ["Rust and installer checks are deferred to Task 5 and blocked locally without MSVC link.exe.", "Contract coverage omits some manually reviewed mobile/macOS removals."]
 }

@@ -1,40 +1,42 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-03-contract",
+  "task_id": "foundation-04-identity",
   "context_level": "L1-index-large-project",
   "read_first": [
-    "src/lib/sync/commit-message.ts",
-    "src/lib/opened-files.ts",
-    "src/lib/ocr-packages.ts",
-    "src/lib/files.ts",
+    "src-tauri/gen/android/app/src/main/java/com/codexu/NoteGen/SystemBarsPlugin.kt",
+    "src-tauri/gen/android/app/src/main/java/com/codexu/NoteGen/OcrPlugin.kt",
     "src/components/ui/textarea.tsx",
     "src/components/ui/scroll-area.tsx",
-    "src/components/ui/agent-plan.tsx",
-    "src/app/core/setting/mcp/json-import-dialog.tsx"
+    "src-tauri/src/ocr_packages.rs",
+    "src/lib/sync/commit-message.ts",
+    "src/lib/ocr-packages.ts",
+    "src/lib/ai/tauri-client.ts"
   ],
   "relevant_symbols": [
-    "verifyScriptIntegrity (src/lib/skills/runtime.ts:130)",
-    "normalizeForCompare (src/components/ui/agent-plan.tsx:198)",
-    "listOutputFiles (src/lib/skills/runtime.ts:351)",
+    "isWindowScreenshot (src/app/core/main/mark/control-scan.tsx:45)",
     "marksShareCoreIdentity (src/lib/sync/auto-data-sync-queue.ts:227)",
-    "openMarkdownFiles (src/app/core/layout.tsx:68)",
-    "toggleSkillDescription (src/app/core/main/chat/agent-context-tray.tsx:48)",
-    "compactTraceOutput (src/app/core/main/chat/agent-run-timeline.tsx:183)",
-    "formatFileSize (src/app/core/main/chat/chat-input.tsx:79)",
-    "showImageSuccessToast (src/app/core/main/chat/chat-input.tsx:224)",
-    "buildAttachmentsFromBrowserFiles (src/app/core/main/chat/chat-input.tsx:330)",
-    "handleSelectLocalFiles (src/app/core/main/chat/chat-input.tsx:450)",
-    "buildPartialSuccessContent (src/app/core/main/chat/chat-send.tsx:138)"
+    "wouldCauseLeftOnly (src/components/title-bar.tsx:58)",
+    "comparePrerelease (src/lib/version.ts:41)",
+    "getPendingQuoteIdentity (src/stores/chat.ts:28)",
+    "normalizePathForCompare (src/app/core/main/editor/markdown/slash-command/suggestion.tsx:168)",
+    "normalizePathForCompare (src/app/core/main/editor/markdown/tiptap-editor.tsx:422)",
+    "getReleaseVersionText (src/app/core/setting/about/updater.tsx:65)",
+    "buildReleaseNotes (src/app/core/setting/about/updater.tsx:69)",
+    "ReleaseMarkdown (src/app/core/setting/about/updater.tsx:108)",
+    "ReleaseNotesSkeleton (src/app/core/setting/about/updater.tsx:120)",
+    "checkGiteaRepos (src/components/app-status.tsx:129)"
   ],
   "entrypoints": [
-    "scripts/verify-huabu-foundation.mjs",
-    "package.json"
+    "package.json",
+    "src-tauri/tauri.conf.json",
+    "src-tauri/Cargo.toml",
+    ".github/workflows/release.yml"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "src-tauri/",
-    ".github/workflows/",
-    "NOTICE.md"
+    "application feature source under src/",
+    "src-tauri/src/",
+    "pnpm-lock.yaml"
   ],
   "open_questions": []
 }
