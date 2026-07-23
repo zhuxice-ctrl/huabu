@@ -104,14 +104,27 @@
       }]
     },
     {
-      "batch_id": "foundation-final",
+      "batch_id": "foundation-network-boundary",
       "parallel": false,
       "depends_on": ["foundation-seams"],
+      "tasks": [{
+        "task_id": "foundation-04b-disable-upstream-config",
+        "module": "independent-product-boundary",
+        "goal": "Remove the active NoteGen remote configuration dependency found during final review.",
+        "depends_on": ["foundation-06-seams"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-04b-disable-upstream-config.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-final",
+      "parallel": false,
+      "depends_on": ["foundation-network-boundary"],
       "tasks": [{
         "task_id": "foundation-07-final-review",
         "module": "foundation-review",
         "goal": "Run final deterministic verification and independent branch review without merging main.",
-        "depends_on": ["foundation-06-seams"],
+        "depends_on": ["foundation-04b-disable-upstream-config"],
         "task_spec_path": ".adworkflow/task_specs/foundation-07-final-review.json",
         "expected_outputs": ["verification_result.json", "review_findings.json"]
       }]

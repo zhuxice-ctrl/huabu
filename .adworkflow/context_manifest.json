@@ -1,39 +1,45 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-07-final-review",
+  "task_id": "foundation-04b-disable-upstream-config",
   "context_level": "L1-index-large-project",
   "read_first": [
-    "src/app/core/main/editor/markdown/agent-diff-preview-extension.ts",
-    "src/components/photo-preview-provider.tsx",
-    "src/app/core/main/chat/quote-preview.ts",
-    "src/app/core/main/chat/chat-preview.tsx",
-    "src/lib/check.ts",
-    "src/lib/agent/react-diff-helpers.ts",
-    "src/components/ui/textarea.tsx",
-    "src/components/ui/scroll-area.tsx"
+    "src/lib/ai/notegen-default-models-runtime.ts",
+    "src-tauri/gen/android/app/src/main/java/com/codexu/NoteGen/SystemBarsPlugin.kt",
+    "src-tauri/gen/android/app/src/main/java/com/codexu/NoteGen/OcrPlugin.kt",
+    "src/stores/article-remote-sync.ts",
+    "src/lib/sync/remote-library.ts",
+    "src/lib/sync/remote-file.ts",
+    "src/lib/image-hosting-config.ts",
+    "src/lib/config-center/types.ts"
   ],
   "relevant_symbols": [
-    "buildDiffDecorations (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:37)",
-    "createInsertedContentWidget (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:26)",
-    "applyPreviewMeta (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:114)",
-    "handleAgentDiffPreview (src/app/core/main/editor/markdown/tiptap-editor.tsx:4607)",
-    "buildEditorApprovalPreview (src/lib/agent/tool-registry.ts:257)",
-    "buildFolderPreview (src/lib/chat-attachments.ts:111)",
-    "showPreview (src/app/core/main/canvas/canvas-editor.tsx:460)",
-    "clearPreview (src/app/core/main/canvas/canvas-editor.tsx:461)",
-    "previewClassName (src/app/core/main/canvas/nodes/canvas-nodes.tsx:27)",
-    "generateFilePreview (src/app/core/main/chat/chat-input.tsx:808)",
-    "isMacOS (src/app/core/main/chat/chat-preview.tsx:24)",
-    "handleDragStart (src/app/core/main/chat/chat-preview.tsx:151)"
+    "fetchNoteGenDefaultModelsFromConfigCenter (src/lib/ai/notegen-default-models-runtime.ts:124)",
+    "loadNoteGenDefaultConfig (src/lib/ai/notegen-default-models-runtime.ts:145)",
+    "applyNoteGenDefaultConfig (src/lib/ai/notegen-default-models-runtime.ts:171)",
+    "isNonEmptyString (src/lib/ai/notegen-default-models-runtime.ts:16)",
+    "isModelType (src/lib/ai/notegen-default-models-runtime.ts:20)",
+    "parseContentPayload (src/lib/ai/notegen-default-models-runtime.ts:32)",
+    "normalizeModelItem (src/lib/ai/notegen-default-models-runtime.ts:52)",
+    "normalizeNoteGenDefaultModelsPayload (src/lib/ai/notegen-default-models-runtime.ts:70)",
+    "mergeNoteGenDefaultModels (src/lib/ai/notegen-default-models-runtime.ts:97)",
+    "fetchProviderTemplatesFromConfigCenter (src/lib/ai/provider-templates-runtime.ts:133)",
+    "shouldExcludeFromSync (src/config/sync-exclusions.ts:113)",
+    "buildRepoContentsEndpoint (src/lib/sync/remote-file.ts:58)"
   ],
   "entrypoints": [
-    "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-7-final-branch-verification-and-review-handoff"
+    "src/app/core/layout.tsx",
+    "src/stores/setting.ts",
+    "src/lib/ai/notegen-default-models-runtime.ts",
+    "src/lib/config-center/client.ts",
+    "scripts/verify-huabu-foundation.mjs"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "product source",
-    "main branch",
-    "remote repositories"
+    "canvas feature source",
+    "database schema",
+    "user provider/API settings",
+    "pnpm-lock.yaml",
+    "src-tauri/Cargo.lock"
   ],
   "open_questions": []
 }

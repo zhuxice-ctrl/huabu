@@ -1,14 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "foundation-07-final-review",
-  "status": "changes_requested",
-  "reviewer": "foundation_final_review",
-  "source_revision": "33795d47",
-  "review_basis": ["complete foundation history", "post-import diff", "runtime startup call chain", "foundation contract", "frontend build", "Cargo lock checks"],
-  "blocking_findings": [
-    {"id": "R1", "severity": "blocking", "file": "src/lib/config-center/client.ts", "lines": "11,120", "issue": "The active Windows startup chain still requests https://download.notegen.top/config/v1/config-manifest.json through initSettingData and loadNoteGenDefaultConfig.", "expected_fix": "Disable the upstream remote configuration load for Huabu and add a deterministic contract assertion that the runtime endpoint is absent.", "evidence": "src/app/core/layout.tsx -> src/stores/setting.ts -> src/lib/ai/notegen-default-models-runtime.ts -> src/lib/config-center/client.ts"}
-  ],
-  "non_blocking_findings": ["Windows CI cargo check does not use --locked.", "Updater plugins and permissions remain dormant although updater endpoints are disabled.", "Rust/NSIS/manual smoke checks remain blocked by missing MSVC tooling.", "Dormant mobile/macOS conditional source remains by explicit plan deferral."],
-  "suggested_tests": ["Extend verify-huabu-foundation.mjs to scan runtime sources for download.notegen.top.", "Use cargo check --locked in Windows CI."],
-  "risk_notes": ["Import ancestry, identity, GPL attribution, Windows bundling, lock stability, and frontend build all passed review.", "Only the upstream runtime config-center dependency blocks approval."]
+  "task_id": "foundation-04b-disable-upstream-config",
+  "status": "pending",
+  "reviewer": "foundation_config_boundary_review",
+  "source_revision": null,
+  "review_basis": [],
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "suggested_tests": [],
+  "risk_notes": ["Medium-risk startup/default-model change requires an independent call-chain and fallback review."]
 }
