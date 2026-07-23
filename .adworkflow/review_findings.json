@@ -1,12 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "foundation-04b-disable-upstream-config",
+  "task_id": "foundation-07-final-review",
   "status": "approved",
   "reviewer": "foundation_final_review + root-orchestrator remediation verification",
-  "source_revision": "57a6c371",
-  "review_basis": ["independent final-review finding R1", "remediation diff", "strengthened red/green foundation contract", "successful frontend build", "runtime endpoint search"],
+  "source_revision": "25d4cf71",
+  "review_basis": ["complete foundation history", "import ancestry", "post-import diff", "runtime startup call chain", "remediation commit 57a6c371", "strengthened contract", "frontend build", "Cargo metadata and lock checks"],
   "blocking_findings": [],
-  "non_blocking_findings": ["Updater plugins remain installed but dormant without endpoints.", "Dormant mobile distribution links remain under explicitly deferred mobile source.", "Rust/NSIS/manual smoke checks remain blocked by missing MSVC tooling."],
-  "suggested_tests": ["Keep the recursive runtime endpoint assertion in Windows CI.", "Remove dormant updater plugins when the Windows recovery/release architecture is implemented."],
-  "risk_notes": ["The independent reviewer identified the active config-center chain and specified disabling it plus adding contract coverage; commit 57a6c371 implements both requirements.", "Built-in provider templates and default models remain available, while user-configured provider data is not modified by this patch."]
+  "non_blocking_findings": ["Rust, NSIS, and manual desktop smoke checks remain blocked by missing MSVC C++ Build Tools and Windows SDK.", "Updater plugins and permission code remain dormant without configured endpoints.", "Dormant mobile/macOS source remains by explicit foundation deferral."],
+  "suggested_tests": ["Run the documented Rust, NSIS, and smoke gates from a Visual Studio Developer PowerShell.", "Keep cargo --locked and runtime endpoint assertions in Windows CI."],
+  "risk_notes": ["Independent review R1 found an active NoteGen config-center startup chain; commit 57a6c371 removes the client, uses built-in model/template definitions, disables the legacy mobile manifest request, and adds recursive contract coverage.", "Import fidelity, GPL attribution, Huabu identity, Windows-only bundles/CI, lock stability, and frontend build remain valid after remediation."]
 }

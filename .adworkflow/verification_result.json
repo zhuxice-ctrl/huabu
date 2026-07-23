@@ -1,24 +1,28 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-04b-disable-upstream-config",
-  "status": "passed",
-  "source_revision": "57a6c371",
+  "task_id": "foundation-07-final-review",
+  "status": "partial",
+  "source_revision": "25d4cf71",
   "commands": [
-    {"command": "npx -y pnpm@9.15.9 verify:foundation before remediation", "status": "passed", "summary": "Expected red phase: new runtime-source assertion failed on download.notegen.top.", "exit_code": 1},
-    {"command": "rg upstream runtime endpoint and config-center imports", "status": "passed", "summary": "No download.notegen.top, config-center import, or fetchConfigCenterConfig reference remains in src or Tauri configuration.", "exit_code": 1},
-    {"command": "npx -y pnpm@9.15.9 verify:foundation after remediation", "status": "passed", "summary": "Strengthened Huabu foundation contract passed.", "exit_code": 0},
-    {"command": "npx -y pnpm@9.15.9 build", "status": "passed", "summary": "Lint, typecheck, 53-page static generation, export, and map pruning completed after one unused-parameter fix.", "exit_code": 0},
-    {"command": "git diff --exit-code -- pnpm-lock.yaml src-tauri/Cargo.lock", "status": "passed", "summary": "No dependency lockfile changed.", "exit_code": 0},
-    {"command": "git diff 57a6c371^..57a6c371 --check", "status": "passed", "summary": "Remediation commit contains no whitespace errors.", "exit_code": 0}
+    {"command": "npx -y pnpm@9.15.9 verify:foundation", "status": "passed", "summary": "Strengthened contract passed and recursively verified the upstream runtime endpoint is absent from src.", "exit_code": 0},
+    {"command": "npx -y pnpm@9.15.9 build", "status": "passed", "summary": "Post-remediation lint, typecheck, 53-page static generation, export, and map pruning completed.", "exit_code": 0},
+    {"command": "cargo metadata --manifest-path src-tauri/Cargo.toml --locked --no-deps --format-version 1", "status": "passed", "summary": "Huabu Cargo metadata and lockfile resolve without updates.", "exit_code": 0},
+    {"command": "cargo check --manifest-path src-tauri/Cargo.toml --locked", "status": "failed", "summary": "Compilation stops because MSVC link.exe is not installed; no project-source diagnostic precedes the environment failure.", "exit_code": 101},
+    {"command": "git diff --exit-code -- pnpm-lock.yaml src-tauri/Cargo.lock", "status": "passed", "summary": "Final verification did not modify dependency lockfiles.", "exit_code": 0},
+    {"command": "rg upstream runtime endpoint and config-center imports", "status": "passed", "summary": "No match in src or Tauri configuration.", "exit_code": 1},
+    {"command": "git diff --check 847ad7c7..25d4cf71", "status": "passed", "summary": "No whitespace errors in all post-import foundation changes.", "exit_code": 0},
+    {"command": "git merge-base ancestry checks", "status": "passed", "summary": "Both main and pinned NoteGen commit 636d4f8 are ancestors of the foundation branch.", "exit_code": 0}
   ],
   "acceptance_criteria_coverage": [
-    {"criterion": "Windows startup no longer invokes NoteGen remote default configuration", "status": "passed", "evidence": ["loadNoteGenDefaultConfig returns the built-in config without network or Store access"]},
-    {"criterion": "download.notegen.top is absent from Huabu runtime source and Tauri config", "status": "passed", "evidence": ["recursive runtime contract", "rg no-match result"]},
-    {"criterion": "foundation contract detects any reintroduction of the upstream endpoint", "status": "passed", "evidence": ["deliberate red phase before source fix"]},
-    {"criterion": "foundation contract and frontend build pass", "status": "passed", "evidence": ["both commands exit code 0"]}
+    {"criterion": "foundation contract passes", "status": "passed", "evidence": ["Huabu foundation contract passed"]},
+    {"criterion": "frontend build passes", "status": "passed", "evidence": ["post-remediation production build exit code 0"]},
+    {"criterion": "cargo check passes or its environment blocker is recorded", "status": "passed", "evidence": ["cargo metadata --locked passes", "link.exe blocker recorded in verification documentation and artifacts"]},
+    {"criterion": "branch is clean after review artifacts are committed", "status": "passed", "evidence": ["final handoff git status check"]},
+    {"criterion": "diff contains no out-of-scope Huabu feature implementation", "status": "passed", "evidence": ["post-import diff contains foundation identity, build repairs, runtime network boundary, contracts, workflow, and documentation only"]},
+    {"criterion": "independent review findings are resolved", "status": "passed", "evidence": ["R1 config-center chain removed in 57a6c371", "recursive contract red/green proof"]}
   ],
-  "passed": ["All foundation-04b-disable-upstream-config acceptance criteria"],
-  "failed": [],
+  "passed": ["Huabu foundation contract", "Frontend production build", "Cargo metadata and lock stability", "Independent product runtime network boundary", "Import ancestry", "Foundation-only scope"],
+  "failed": ["Rust compile gate in current environment", "NSIS installer and manual smoke gates dependent on Rust build"],
   "not_run_reason": null,
-  "residual_risk": ["Updater plugins remain dormant and are not removed in this foundation task.", "Full Rust/NSIS validation still requires MSVC tooling."]
+  "residual_risk": ["Install Visual Studio Build Tools with Desktop development with C++ and a Windows SDK, then rerun Cargo, NSIS, and manual smoke checks.", "No merge to main or remote publication has occurred."]
 }
