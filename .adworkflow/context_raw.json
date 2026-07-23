@@ -1,0 +1,54 @@
+{
+  "schema": "ADworkflo.context_raw.v1",
+  "task_id": "foundation-01-import",
+  "source": "architecture-docs",
+  "matched_files": [
+    {
+      "path": ".adworkflow/PROJECT.md",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/architecture_manifest.json",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/design_alignment_report.json",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/layer_plan.json",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/interface_contracts.json",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/module_skills.md",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/permissions.md",
+      "reason": "architecture-first"
+    },
+    {
+      "path": ".adworkflow/verification_commands.md",
+      "reason": "architecture-first"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": ".adworkflow/task_specs/foundation-01-import.json",
+      "reason": "task_spec.context_sources"
+    }
+  ],
+  "matched_symbols": [],
+  "likely_tests": [],
+  "warnings": []
+}

@@ -1,0 +1,109 @@
+{
+  "schema": "ADworkflo.execution_plan.v2",
+  "configured": true,
+  "mvp_id": "huabu-foundation",
+  "source_docs": [
+    "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md"
+  ],
+  "worker_policy": {
+    "max_parallel_workers": 1,
+    "batching_rule": "strict-sequential-shared-foundation-branch",
+    "handoff_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"]
+  },
+  "batches": [
+    {
+      "batch_id": "foundation-import",
+      "parallel": false,
+      "depends_on": [],
+      "tasks": [{
+        "task_id": "foundation-01-import",
+        "module": "git-foundation",
+        "goal": "Import the pinned NoteGen commit in an isolated worktree.",
+        "depends_on": [],
+        "task_spec_path": ".adworkflow/task_specs/foundation-01-import.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-baseline",
+      "parallel": false,
+      "depends_on": ["foundation-import"],
+      "tasks": [{
+        "task_id": "foundation-02-baseline-build",
+        "module": "windows-build",
+        "goal": "Prove the unmodified upstream frontend and Rust application build on Windows.",
+        "depends_on": ["foundation-01-import"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-02-baseline-build.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-contract",
+      "parallel": false,
+      "depends_on": ["foundation-baseline"],
+      "tasks": [{
+        "task_id": "foundation-03-contract",
+        "module": "foundation-contract",
+        "goal": "Add and commit a deterministic failing Huabu identity contract.",
+        "depends_on": ["foundation-02-baseline-build"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-03-contract.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-identity",
+      "parallel": false,
+      "depends_on": ["foundation-contract"],
+      "tasks": [{
+        "task_id": "foundation-04-identity",
+        "module": "windows-identity",
+        "goal": "Implement Huabu package identity, GPL attribution, and Windows-only CI.",
+        "depends_on": ["foundation-03-contract"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-04-identity.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-package",
+      "parallel": false,
+      "depends_on": ["foundation-identity"],
+      "tasks": [{
+        "task_id": "foundation-05-package",
+        "module": "windows-package",
+        "goal": "Build the renamed application and document reproducible Windows verification.",
+        "depends_on": ["foundation-04-identity"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-05-package.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-seams",
+      "parallel": false,
+      "depends_on": ["foundation-package"],
+      "tasks": [{
+        "task_id": "foundation-06-seams",
+        "module": "architecture-map",
+        "goal": "Record and verify the imported code seams needed by later plans.",
+        "depends_on": ["foundation-05-package"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-06-seams.json",
+        "expected_outputs": ["worker_state.json", "verification_result.json"]
+      }]
+    },
+    {
+      "batch_id": "foundation-final",
+      "parallel": false,
+      "depends_on": ["foundation-seams"],
+      "tasks": [{
+        "task_id": "foundation-07-final-review",
+        "module": "foundation-review",
+        "goal": "Run final deterministic verification and independent branch review without merging main.",
+        "depends_on": ["foundation-06-seams"],
+        "task_spec_path": ".adworkflow/task_specs/foundation-07-final-review.json",
+        "expected_outputs": ["verification_result.json", "review_findings.json"]
+      }]
+    }
+  ],
+  "integration_tasks": ["foundation-07-final-review"],
+  "open_questions": []
+}

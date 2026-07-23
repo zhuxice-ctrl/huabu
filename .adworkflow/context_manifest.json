@@ -1,0 +1,29 @@
+{
+  "schema": "ADworkflo.context_manifest.v1",
+  "task_id": "foundation-01-import",
+  "context_level": "architecture-first-l2-semantic-codegraph",
+  "read_first": [
+    ".adworkflow/PROJECT.md",
+    ".adworkflow/architecture_manifest.json",
+    ".adworkflow/design_alignment_report.json",
+    ".adworkflow/layer_plan.json",
+    ".adworkflow/interface_contracts.json",
+    ".adworkflow/module_skills.md",
+    ".adworkflow/permissions.md",
+    ".adworkflow/verification_commands.md",
+    "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
+    ".adworkflow/task_specs/foundation-01-import.json"
+  ],
+  "relevant_symbols": [],
+  "entrypoints": [
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-1-create-an-isolated-worktree-and-import-the-exact-upstream-commit"
+  ],
+  "likely_tests": [],
+  "do_not_touch": [
+    "docs/superpowers/specs/",
+    "docs/superpowers/plans/",
+    "product source files after import"
+  ],
+  "open_questions": []
+}

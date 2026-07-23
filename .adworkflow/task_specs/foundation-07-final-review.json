@@ -1,0 +1,18 @@
+{
+  "schema": "ADworkflo.task_spec.v2",
+  "configured": true,
+  "task_id": "foundation-07-final-review",
+  "task_type": "review",
+  "goal": "Verify and independently review the complete foundation branch without modifying or merging it.",
+  "non_goals": ["Do not fix findings directly.", "Do not merge main.", "Do not publish installers."],
+  "acceptance_criteria": ["foundation contract passes", "frontend build passes", "cargo check passes", "branch is clean", "diff contains no feature implementation", "independent review has no blocking findings or routes them back to the owning worker"],
+  "risk_level": "medium",
+  "execution_mode": "worker_plus_reviewer",
+  "allowed_actions": ["read", "test", "shell"],
+  "required_outputs": ["verification_result.json", "review_findings.json"],
+  "do_not_touch": ["all tracked files"],
+  "entrypoints": ["docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-7-final-branch-verification-and-review-handoff"],
+  "context_sources": ["docs/superpowers/specs/2026-07-24-huabu-product-design.md", "docs/superpowers/plans/2026-07-24-huabu-foundation.md", "docs/architecture/fork-baseline.md", "docs/verification/windows-foundation.md"],
+  "notes": [],
+  "implementation_owner": null
+}

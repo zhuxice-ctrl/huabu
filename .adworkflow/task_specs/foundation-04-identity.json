@@ -1,0 +1,18 @@
+{
+  "schema": "ADworkflo.task_spec.v2",
+  "configured": true,
+  "task_id": "foundation-04-identity",
+  "task_type": "code",
+  "goal": "Make the foundation contract pass by implementing Huabu Windows identity, attribution, and Windows-only CI.",
+  "non_goals": ["Do not rename all UI strings.", "Do not delete dormant conditional mobile source.", "Do not configure Huabu releases or signing."],
+  "acceptance_criteria": ["package identity is huabu", "Tauri product is Huabu with com.huabu.desktop and Windows bundle targets", "NoteGen updater endpoints and release workflow are absent", "Cargo metadata is Huabu and macOS private feature is absent", "NOTICE preserves GPL attribution", "Windows-only CI exists", "foundation contract passes"],
+  "risk_level": "medium",
+  "execution_mode": "worker_plus_reviewer",
+  "allowed_actions": ["read", "edit", "test", "shell"],
+  "required_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"],
+  "do_not_touch": ["application feature source under src/", "src-tauri/src/", "pnpm-lock.yaml"],
+  "entrypoints": ["package.json", "src-tauri/tauri.conf.json", "src-tauri/Cargo.toml", ".github/workflows/release.yml"],
+  "context_sources": ["scripts/verify-huabu-foundation.mjs", "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-4-implement-the-huabu-windows-identity-and-attribution"],
+  "notes": [],
+  "implementation_owner": null
+}

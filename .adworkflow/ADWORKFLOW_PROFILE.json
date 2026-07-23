@@ -1,0 +1,64 @@
+{
+  "schema": "ADworkflo.profile.v1",
+  "project_size": "large",
+  "context_strategy": "architecture-first-l2-semantic-codegraph",
+  "source_file_count": 0,
+  "source_line_count": 0,
+  "languages": [],
+  "include_dirs": [
+    "."
+  ],
+  "supported_queries": [
+    "summary",
+    "find_definition",
+    "find_importers",
+    "tests_for",
+    "summarize_file",
+    "make_context",
+    "capabilities",
+    "find_references",
+    "callers",
+    "callees",
+    "impact",
+    "slice",
+    "expand"
+  ],
+  "classification_source": "product_docs",
+  "execution_mode": "orchestrator-with-workers-and-reviewers",
+  "expected_complexity_score": 23,
+  "planned_modules": [],
+  "suggested_modules": [
+    "agent_orchestrator",
+    "auth_permissions",
+    "backend",
+    "database",
+    "deployment",
+    "frontend",
+    "memory_system",
+    "multi_platform_clients",
+    "observability",
+    "rag_pipeline",
+    "risk_control",
+    "state_machine",
+    "testing",
+    "third_party_integrations",
+    "tool_runtime"
+  ],
+  "risk_areas": [
+    "external dependency failure",
+    "hallucination",
+    "irreversible action",
+    "memory pollution",
+    "permission boundary",
+    "runtime observability gap",
+    "safety boundary",
+    "state drift",
+    "tool misuse"
+  ],
+  "agent_features": [
+    "long_term_memory",
+    "rag",
+    "stateful_orchestration",
+    "tool_calling"
+  ]
+}

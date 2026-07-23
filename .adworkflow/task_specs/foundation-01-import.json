@@ -1,0 +1,18 @@
+{
+  "schema": "ADworkflo.task_spec.v2",
+  "configured": true,
+  "task_id": "foundation-01-import",
+  "task_type": "workflow",
+  "goal": "Create an isolated foundation worktree and merge the exact NoteGen canvas commit while preserving both Git histories.",
+  "non_goals": ["Do not install dependencies or build.", "Do not edit product files.", "Do not merge main."],
+  "acceptance_criteria": ["upstream remote is correct", "pinned commit is an ancestor of upstream/dev", "foundation worktree and branch exist", "unrelated histories merge is clean", "main is unchanged"],
+  "risk_level": "medium",
+  "execution_mode": "worker_plus_reviewer",
+  "allowed_actions": ["read", "shell", "network"],
+  "required_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"],
+  "do_not_touch": ["docs/superpowers/specs/", "docs/superpowers/plans/", "product files"],
+  "entrypoints": ["docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-1-create-an-isolated-worktree-and-import-the-exact-upstream-commit"],
+  "context_sources": ["docs/superpowers/plans/2026-07-24-huabu-foundation.md", ".adworkflow/execution_plan.json"],
+  "notes": [],
+  "implementation_owner": null
+}

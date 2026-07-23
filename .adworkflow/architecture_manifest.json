@@ -1,0 +1,201 @@
+{
+  "schema": "ADworkflo.architecture_manifest.v1",
+  "configured": true,
+  "created_at": "2026-07-23T21:29:30.628983+00:00",
+  "project_size": "large",
+  "classification_source": "product_docs",
+  "expected_complexity_score": 23,
+  "context_strategy": "architecture-first-l2-semantic-codegraph",
+  "execution_mode": "orchestrator-with-workers-and-reviewers",
+  "analysis_basis": [
+    {
+      "path": "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
+      "chars": 7187
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-24-huabu-implementation-roadmap.md",
+      "chars": 1358
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
+      "chars": 20129
+    }
+  ],
+  "source_hashes": {
+    "docs/superpowers/specs/2026-07-24-huabu-product-design.md": "e8440a57a323658b2044f7064eb642397d17fe392d9708d26b2fe46d781a0910",
+    "docs/superpowers/plans/2026-07-24-huabu-implementation-roadmap.md": "14581a0a1f1dde13a8e578f2d3902c64b8a7d786426ee7eebf7053ecd6338a81",
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md": "e892cb64f39325972c662345e10a27b543cd0ea7bcb3e4f7969cbc55d072c865"
+  },
+  "detected_signals": {
+    "frontend_backend": {
+      "detected": true,
+      "hits": [
+        "前端",
+        "接口",
+        "frontend",
+        "api"
+      ],
+      "score": 2
+    },
+    "database": {
+      "detected": true,
+      "hits": [
+        "数据库",
+        "sqlite",
+        "db",
+        "schema"
+      ],
+      "score": 2
+    },
+    "auth_permissions": {
+      "detected": true,
+      "hits": [
+        "权限",
+        "permission",
+        "role"
+      ],
+      "score": 2
+    },
+    "agent_rag_tools": {
+      "detected": true,
+      "hits": [
+        "agent",
+        "rag",
+        "大模型",
+        "llm",
+        "向量",
+        "embedding",
+        "检索"
+      ],
+      "score": 3
+    },
+    "memory_state": {
+      "detected": true,
+      "hits": [
+        "记忆",
+        "状态",
+        "workflow"
+      ],
+      "score": 3
+    },
+    "third_party_services": {
+      "detected": true,
+      "hits": [
+        "openai",
+        "github"
+      ],
+      "score": 1
+    },
+    "high_risk_actions": {
+      "detected": true,
+      "hits": [
+        "删除",
+        "发送",
+        "密钥",
+        "隐私",
+        "审计"
+      ],
+      "score": 4
+    },
+    "multi_platform": {
+      "detected": true,
+      "hits": [
+        "移动端",
+        "app",
+        "android",
+        "ios",
+        "desktop"
+      ],
+      "score": 3
+    },
+    "deployment_observability": {
+      "detected": true,
+      "hits": [
+        "日志",
+        "ci",
+        "回滚",
+        "审计"
+      ],
+      "score": 2
+    },
+    "tests_verification": {
+      "detected": true,
+      "hits": [
+        "测试",
+        "验收",
+        "单元测试",
+        "集成测试",
+        "verification"
+      ],
+      "score": 1
+    },
+    "count_hints": {
+      "score": 0,
+      "details": {
+        "module_count": 3,
+        "api_count": 8,
+        "page_count": 0,
+        "table_count": 3
+      }
+    }
+  },
+  "planned_modules": [],
+  "suggested_modules": [
+    "agent_orchestrator",
+    "auth_permissions",
+    "backend",
+    "database",
+    "deployment",
+    "frontend",
+    "memory_system",
+    "multi_platform_clients",
+    "observability",
+    "rag_pipeline",
+    "risk_control",
+    "state_machine",
+    "testing",
+    "third_party_integrations",
+    "tool_runtime"
+  ],
+  "data_stores": [
+    "sqlite"
+  ],
+  "agent_features": [
+    "long_term_memory",
+    "rag",
+    "stateful_orchestration",
+    "tool_calling"
+  ],
+  "risk_areas": [
+    "external dependency failure",
+    "hallucination",
+    "irreversible action",
+    "memory pollution",
+    "permission boundary",
+    "runtime observability gap",
+    "safety boundary",
+    "state drift",
+    "tool misuse"
+  ],
+  "recommended_artifacts": [
+    "context_expansion_request.json",
+    "context_manifest.json",
+    "context_preflight.json",
+    "impact_report.json",
+    "module_map",
+    "review_findings.json",
+    "risk_register",
+    "semantic_slice.json",
+    "task_spec.json",
+    "verification_plan",
+    "verification_result.json",
+    "worker_state.json"
+  ],
+  "recommended_next_actions": [
+    "Confirm or adjust project_size if the heuristic is wrong.",
+    "Create the first task_spec from PRD/ARCH/TODO.",
+    "Generate context_manifest from architecture_manifest before code exists.",
+    "Plan architecture-first module boundaries and add reviewer for high-risk modules.",
+    "After modules exist, build codegraph incrementally for impact analysis."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "ADworkflo.task_spec.v2",
+  "configured": true,
+  "task_id": "foundation-02-baseline-build",
+  "task_type": "code",
+  "goal": "Install the pinned upstream dependencies and prove the unmodified frontend and Rust desktop application build on Windows.",
+  "non_goals": ["Do not edit source or lockfiles.", "Do not rebrand.", "Do not package Huabu."],
+  "acceptance_criteria": ["Node 24, pnpm 9.15.9, Rust and Cargo are recorded", "frozen pnpm install succeeds without changes", "pnpm build passes", "cargo check passes", "worktree remains clean"],
+  "risk_level": "low",
+  "execution_mode": "solo_worker",
+  "allowed_actions": ["read", "test", "shell", "network"],
+  "required_outputs": ["worker_state.json", "verification_result.json"],
+  "do_not_touch": ["all tracked files"],
+  "entrypoints": ["package.json", "src-tauri/Cargo.toml", "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-2-prove-the-unmodified-upstream-baseline-builds-on-windows"],
+  "context_sources": ["package.json", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json"],
+  "notes": ["Dependency installation was explicitly approved as part of the selected execution plan."],
+  "implementation_owner": null
+}
