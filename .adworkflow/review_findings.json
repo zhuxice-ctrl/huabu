@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "foundation-05-package",
+  "task_id": "foundation-06-seams",
   "status": "not_required",
   "reviewer": null,
   "source_revision": null,
@@ -8,5 +8,5 @@
   "blocking_findings": [],
   "non_blocking_findings": [],
   "suggested_tests": [],
-  "risk_notes": ["Low-risk verification/documentation task; environment blockers must be recorded truthfully."]
+  "risk_notes": ["Low-risk architecture documentation task with deterministic path checks."]
 }

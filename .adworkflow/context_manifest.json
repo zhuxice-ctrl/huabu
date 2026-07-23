@@ -1,41 +1,40 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-05-package",
+  "task_id": "foundation-06-seams",
   "context_level": "L1-index-large-project",
   "read_first": [
-    "src-tauri/build.rs",
+    "src/lib/writing-assets-path.ts",
     "src/lib/vector-document-key.js",
-    "src/lib/agent/debug-log.ts",
-    "src-tauri/src/ocr_packages.rs",
-    "out/_next/static/7rlAVJTfV-igT-qa0RnEf/_buildManifest.js",
-    "src/lib/ocr-packages.ts",
-    "src/lib/check.ts",
-    "src/components/ui/checkbox.tsx"
+    "src/lib/skills/path-utils.ts",
+    "src/lib/path.ts",
+    "src/lib/markdown-image-path.ts",
+    "src/components/ui/textarea.tsx",
+    "src/components/ui/scroll-area.tsx",
+    "src/components/ui/agent-plan.tsx"
   ],
   "relevant_symbols": [
-    "buildHtmlDocument (src/app/core/main/editor/markdown/markdown-export.ts:471)",
-    "buildMarkdownExportDocument (src/app/core/main/editor/markdown/markdown-export.ts:486)",
+    "normalizePathForCompare (src/app/core/main/editor/markdown/slash-command/suggestion.tsx:168)",
+    "createMarkdownLinksForFilePaths (src/app/core/main/editor/markdown/slash-command/suggestion.tsx:216)",
+    "normalizePathForCompare (src/app/core/main/editor/markdown/tiptap-editor.tsx:422)",
+    "createMarkdownLinksForDroppedPaths (src/app/core/main/editor/markdown/tiptap-editor.tsx:470)",
+    "deleteVectorDocumentsByPaths (src/app/core/main/file/folder-item/delete-folder-utils.ts:136)",
+    "createGiteaRepo (src/app/core/setting/sync/gitea-sync.tsx:83)",
+    "parentPath (src/app/mobile/writing/browser-utils.ts:6)",
+    "normalizeForCompare (src/components/ui/agent-plan.tsx:198)",
     "checkVectorDocumentExists (src/db/vector.ts:329)",
-    "buildSkillInstallPackageTool (src/lib/agent/tool-registry.ts:1099)",
-    "buildVectorIndexedMap (src/lib/vector-document-key.js:4)",
-    "buildSkillValidatePackageTool (src/lib/agent/tool-registry.ts:1069)",
-    "replaceDocument (src/app/core/main/canvas/canvas-editor.tsx:539)",
-    "buildAttachmentsFromBrowserFiles (src/app/core/main/chat/chat-input.tsx:330)",
-    "buildAttachmentsFromLocalPaths (src/app/core/main/chat/chat-input.tsx:366)",
-    "buildPartialSuccessContent (src/app/core/main/chat/chat-send.tsx:138)",
-    "buildSteeringContext (src/app/core/main/chat/chat-send.tsx:187)",
-    "buildTypingFrames (src/app/core/main/chat/onboarding-typing.ts:1)"
+    "normalizeFilePathForCompare (src/lib/agent/runtime.ts:174)",
+    "normalizeFilePathForCompare (src/lib/agent/tool-registry.ts:177)",
+    "filePathFromCreateResult (src/lib/agent/tool-registry.ts:514)"
   ],
   "entrypoints": [
-    "docs/verification/windows-foundation.md",
-    "package.json",
-    "src-tauri/Cargo.toml"
+    "docs/architecture/fork-baseline.md"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "package dependencies",
-    "pnpm-lock.yaml",
-    "product feature source"
+    "src/",
+    "src-tauri/",
+    "package.json",
+    ".github/"
   ],
   "open_questions": []
 }
