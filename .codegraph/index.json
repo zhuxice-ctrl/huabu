@@ -1,7 +1,7 @@
 {
   "schema": "ADworkflo.codegraph.v1",
   "provider": "lightweight-l1",
-  "created_at": "2026-07-23T22:06:50.286868+00:00",
+  "created_at": "2026-07-23T22:10:41.824360+00:00",
   "project": "F:\\huabu-worktrees\\foundation",
   "limitations": [
     "No semantic reference or call edges.",

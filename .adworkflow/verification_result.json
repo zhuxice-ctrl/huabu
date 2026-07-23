@@ -1,20 +1,20 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-02a-build-fix",
+  "task_id": "foundation-03-contract",
   "status": "passed",
-  "source_revision": "8d7d7b36",
+  "source_revision": "bcbd1dbf",
   "commands": [
-    {"command": "npx -y pnpm@9.15.9 build", "status": "passed", "summary": "Next.js typecheck, static generation, export, and build:prune-maps completed.", "exit_code": 0},
-    {"command": "git diff of build-fix commit", "status": "passed", "summary": "Only two intended source files changed, with three insertions and two deletions.", "exit_code": 0}
+    {"command": "npx -y pnpm@9.15.9 verify:foundation", "status": "passed", "summary": "Expected red phase: exited 1 on missing NOTICE.md and never printed the success message.", "exit_code": 1},
+    {"command": "git show --stat --oneline --summary bcbd1dbf", "status": "passed", "summary": "Commit contains only package.json and scripts/verify-huabu-foundation.mjs.", "exit_code": 0}
   ],
   "acceptance_criteria_coverage": [
-    {"criterion": "ELK output is typed without any-casts", "status": "passed", "evidence": ["ElkNode type import and generic layout call"]},
-    {"criterion": "uploadCanvas is imported", "status": "passed", "evidence": ["existing canvas-sync export added to import"]},
-    {"criterion": "frontend build passes", "status": "passed", "evidence": ["npx pnpm 9.15.9 build exit code 0"]},
-    {"criterion": "only two source files change", "status": "passed", "evidence": ["commit 8d7d7b36"]}
+    {"criterion": "verification script exactly implements the plan assertions", "status": "passed", "evidence": ["scripts/verify-huabu-foundation.mjs"]},
+    {"criterion": "package.json exposes verify:foundation", "status": "passed", "evidence": ["package.json"]},
+    {"criterion": "pnpm verify:foundation fails before success output", "status": "passed", "evidence": ["ENOENT NOTICE.md, exit code 1"]},
+    {"criterion": "only contract files are committed", "status": "passed", "evidence": ["commit bcbd1dbf"]}
   ],
-  "passed": ["All foundation-02a acceptance criteria"],
+  "passed": ["All foundation-03-contract acceptance criteria"],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": ["Turbopack emits upstream deprecation/experimental warnings.", "Rust checks remain an environment gate for Task 5."]
+  "residual_risk": ["The deliberate red contract must turn green in foundation-04-identity."]
 }
