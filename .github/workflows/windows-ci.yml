@@ -1,0 +1,28 @@
+name: windows-ci
+
+on:
+  push:
+    branches: [main, 'foundation/**']
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify Huabu foundation
+        run: pnpm verify:foundation
+      - name: Build frontend
+        run: pnpm build
+      - name: Check Rust application
+        run: cargo check --manifest-path src-tauri/Cargo.toml
