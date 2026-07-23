@@ -1,29 +1,40 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-01-import",
-  "context_level": "architecture-first-l2-semantic-codegraph",
+  "task_id": "foundation-02-baseline-build",
+  "context_level": "L1-index-large-project",
   "read_first": [
-    ".adworkflow/PROJECT.md",
-    ".adworkflow/architecture_manifest.json",
-    ".adworkflow/design_alignment_report.json",
-    ".adworkflow/layer_plan.json",
-    ".adworkflow/interface_contracts.json",
-    ".adworkflow/module_skills.md",
-    ".adworkflow/permissions.md",
-    ".adworkflow/verification_commands.md",
-    "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
-    "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
-    ".adworkflow/task_specs/foundation-01-import.json"
+    "src-tauri/build.rs",
+    "src/app/core/setting/skills/components/skill-install-actions.tsx",
+    "src-tauri/src/window.rs",
+    "src-tauri/src/tray.rs",
+    "src-tauri/src/statusbar.rs",
+    "src-tauri/src/skills.rs",
+    "src-tauri/src/skill_runtime.rs",
+    "src-tauri/src/screenshot.rs"
   ],
-  "relevant_symbols": [],
+  "relevant_symbols": [
+    "buildSkillInstallPackageTool (src/lib/agent/tool-registry.ts:1099)",
+    "buildAttachmentsFromBrowserFiles (src/app/core/main/chat/chat-input.tsx:330)",
+    "buildAttachmentsFromLocalPaths (src/app/core/main/chat/chat-input.tsx:366)",
+    "buildPartialSuccessContent (src/app/core/main/chat/chat-send.tsx:138)",
+    "buildSteeringContext (src/app/core/main/chat/chat-send.tsx:187)",
+    "buildTypingFrames (src/app/core/main/chat/onboarding-typing.ts:1)",
+    "buildDiffDecorations (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:37)",
+    "buildHtmlDocument (src/app/core/main/editor/markdown/markdown-export.ts:471)",
+    "buildMarkdownExportDocument (src/app/core/main/editor/markdown/markdown-export.ts:486)",
+    "buildMobileEditorContextBarViewModel (src/app/core/main/editor/markdown/mobile-editor-context-bar-view-model.ts:44)",
+    "buildMobileSelectionContext (src/app/core/main/editor/markdown/mobile-selection-context.ts:36)",
+    "buildQuoteDataFromRange (src/app/core/main/editor/markdown/tiptap-editor.tsx:4231)"
+  ],
   "entrypoints": [
-    "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-1-create-an-isolated-worktree-and-import-the-exact-upstream-commit"
+    "package.json",
+    "src-tauri/Cargo.toml",
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-2-prove-the-unmodified-upstream-baseline-builds-on-windows"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "docs/superpowers/specs/",
-    "docs/superpowers/plans/",
-    "product source files after import"
+    "all tracked product files",
+    "pnpm-lock.yaml"
   ],
   "open_questions": []
 }

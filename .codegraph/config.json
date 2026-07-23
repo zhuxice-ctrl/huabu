@@ -3,8 +3,8 @@
   "level": "l2",
   "context_strategy": "L2-semantic-codegraph",
   "include": [
-  "."
-],
+    "src/**"
+  ],
   "exclude": [
     ".git",
     "node_modules",
@@ -17,7 +17,10 @@
     ".turbo",
     "coverage"
   ],
-  "languages": [],
+  "languages": [
+    "typescript",
+    "javascript"
+  ],
   "test_patterns": [
     "tests",
     "__tests__",

@@ -1,32 +1,18 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "foundation-01-import",
-  "task_type": "workflow",
-  "goal": "Create an isolated foundation worktree and merge the exact NoteGen canvas commit while preserving both Git histories.",
-  "non_goals": [
-    "Do not install dependencies or build the application.",
-    "Do not rebrand NoteGen or edit imported product files.",
-    "Do not merge the foundation branch into main."
-  ],
-  "acceptance_criteria": [
-    "The upstream remote points to https://github.com/codexu/note-gen.git.",
-    "Commit 636d4f896850dfadfb7a5f74e1f9bd9a583c8096 is verified as an ancestor of upstream/dev.",
-    "F:\\huabu-worktrees\\foundation exists on branch foundation/notegen-636d4f8.",
-    "The foundation branch contains a clean unrelated-histories merge with both Huabu and NoteGen ancestry.",
-    "The main branch is unchanged."
-  ],
-  "risk_level": "medium",
-  "execution_mode": "worker_plus_reviewer",
-  "allowed_actions": ["read", "shell", "network"],
-  "required_outputs": ["context_raw.json", "context_manifest.json", "worker_state.json", "verification_result.json", "review_findings.json"],
-  "do_not_touch": ["docs/superpowers/specs/", "docs/superpowers/plans/", "product source files after import"],
-  "entrypoints": ["docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-1-create-an-isolated-worktree-and-import-the-exact-upstream-commit"],
-  "context_sources": [
-    "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
-    "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
-    ".adworkflow/task_specs/foundation-01-import.json"
-  ],
-  "notes": ["The user approved network access, source retrieval, and the dependency/build plan by selecting execution option 1."],
+  "task_id": "foundation-02-baseline-build",
+  "task_type": "code",
+  "goal": "Install the pinned upstream dependencies and prove the unmodified frontend and Rust desktop application build on Windows.",
+  "non_goals": ["Do not edit source or lockfiles.", "Do not rebrand.", "Do not package Huabu."],
+  "acceptance_criteria": ["Node 24, pnpm 9.15.9, Rust and Cargo are recorded", "frozen pnpm install succeeds without changes", "pnpm build passes", "cargo check passes", "worktree remains clean"],
+  "risk_level": "low",
+  "execution_mode": "solo_worker",
+  "allowed_actions": ["read", "test", "shell", "network"],
+  "required_outputs": ["context_raw.json", "context_manifest.json", "worker_state.json", "verification_result.json"],
+  "do_not_touch": ["all tracked product files", "pnpm-lock.yaml"],
+  "entrypoints": ["package.json", "src-tauri/Cargo.toml", "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-2-prove-the-unmodified-upstream-baseline-builds-on-windows"],
+  "context_sources": ["package.json", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", ".adworkflow/task_specs/foundation-02-baseline-build.json"],
+  "notes": ["Dependency installation was explicitly approved as part of the selected execution plan.", "Use fixed-io-encoding for all PowerShell and non-ASCII I/O."],
   "implementation_owner": null
 }

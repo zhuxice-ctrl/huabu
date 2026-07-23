@@ -1,54 +1,9 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "foundation-01-import",
-  "source": "architecture-docs",
-  "matched_files": [
-    {
-      "path": ".adworkflow/PROJECT.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/architecture_manifest.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/design_alignment_report.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/layer_plan.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/interface_contracts.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/module_skills.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/permissions.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/verification_commands.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
-      "reason": "task_spec.context_sources"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
-      "reason": "task_spec.context_sources"
-    },
-    {
-      "path": ".adworkflow/task_specs/foundation-01-import.json",
-      "reason": "task_spec.context_sources"
-    }
-  ],
+  "task_id": "foundation-02-baseline-build",
+  "source": "L1 codegraph plus explicit task entrypoints",
+  "matched_files": ["package.json", "pnpm-lock.yaml", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", "docs/superpowers/plans/2026-07-24-huabu-foundation.md"],
   "matched_symbols": [],
   "likely_tests": [],
-  "warnings": []
+  "warnings": ["TypeScript L2 graph was not published because its source-stability gate failed. This read/test-only task uses the current L1 index and explicit build entrypoints."]
 }
