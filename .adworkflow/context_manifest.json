@@ -1,42 +1,41 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-04-identity",
+  "task_id": "foundation-05-package",
   "context_level": "L1-index-large-project",
   "read_first": [
-    "src-tauri/gen/android/app/src/main/java/com/codexu/NoteGen/SystemBarsPlugin.kt",
-    "src-tauri/gen/android/app/src/main/java/com/codexu/NoteGen/OcrPlugin.kt",
-    "src/components/ui/textarea.tsx",
-    "src/components/ui/scroll-area.tsx",
+    "src-tauri/build.rs",
+    "src/lib/vector-document-key.js",
+    "src/lib/agent/debug-log.ts",
     "src-tauri/src/ocr_packages.rs",
-    "src/lib/sync/commit-message.ts",
+    "out/_next/static/7rlAVJTfV-igT-qa0RnEf/_buildManifest.js",
     "src/lib/ocr-packages.ts",
-    "src/lib/ai/tauri-client.ts"
+    "src/lib/check.ts",
+    "src/components/ui/checkbox.tsx"
   ],
   "relevant_symbols": [
-    "isWindowScreenshot (src/app/core/main/mark/control-scan.tsx:45)",
-    "marksShareCoreIdentity (src/lib/sync/auto-data-sync-queue.ts:227)",
-    "wouldCauseLeftOnly (src/components/title-bar.tsx:58)",
-    "comparePrerelease (src/lib/version.ts:41)",
-    "getPendingQuoteIdentity (src/stores/chat.ts:28)",
-    "normalizePathForCompare (src/app/core/main/editor/markdown/slash-command/suggestion.tsx:168)",
-    "normalizePathForCompare (src/app/core/main/editor/markdown/tiptap-editor.tsx:422)",
-    "getReleaseVersionText (src/app/core/setting/about/updater.tsx:65)",
-    "buildReleaseNotes (src/app/core/setting/about/updater.tsx:69)",
-    "ReleaseMarkdown (src/app/core/setting/about/updater.tsx:108)",
-    "ReleaseNotesSkeleton (src/app/core/setting/about/updater.tsx:120)",
-    "checkGiteaRepos (src/components/app-status.tsx:129)"
+    "buildHtmlDocument (src/app/core/main/editor/markdown/markdown-export.ts:471)",
+    "buildMarkdownExportDocument (src/app/core/main/editor/markdown/markdown-export.ts:486)",
+    "checkVectorDocumentExists (src/db/vector.ts:329)",
+    "buildSkillInstallPackageTool (src/lib/agent/tool-registry.ts:1099)",
+    "buildVectorIndexedMap (src/lib/vector-document-key.js:4)",
+    "buildSkillValidatePackageTool (src/lib/agent/tool-registry.ts:1069)",
+    "replaceDocument (src/app/core/main/canvas/canvas-editor.tsx:539)",
+    "buildAttachmentsFromBrowserFiles (src/app/core/main/chat/chat-input.tsx:330)",
+    "buildAttachmentsFromLocalPaths (src/app/core/main/chat/chat-input.tsx:366)",
+    "buildPartialSuccessContent (src/app/core/main/chat/chat-send.tsx:138)",
+    "buildSteeringContext (src/app/core/main/chat/chat-send.tsx:187)",
+    "buildTypingFrames (src/app/core/main/chat/onboarding-typing.ts:1)"
   ],
   "entrypoints": [
+    "docs/verification/windows-foundation.md",
     "package.json",
-    "src-tauri/tauri.conf.json",
-    "src-tauri/Cargo.toml",
-    ".github/workflows/release.yml"
+    "src-tauri/Cargo.toml"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "application feature source under src/",
-    "src-tauri/src/",
-    "pnpm-lock.yaml"
+    "package dependencies",
+    "pnpm-lock.yaml",
+    "product feature source"
   ],
   "open_questions": []
 }

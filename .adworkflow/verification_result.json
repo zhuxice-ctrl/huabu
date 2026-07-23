@@ -1,25 +1,26 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-04-identity",
-  "status": "passed",
-  "source_revision": "6f539ccf",
+  "task_id": "foundation-05-package",
+  "status": "partial",
+  "source_revision": "af0af2e0",
   "commands": [
+    {"command": "npx -y pnpm@9.15.9 install --frozen-lockfile", "status": "passed", "summary": "Lockfile was current and dependencies were already installed; pnpm-lock.yaml remained unchanged.", "exit_code": 0},
     {"command": "npx -y pnpm@9.15.9 verify:foundation", "status": "passed", "summary": "Printed Huabu foundation contract passed.", "exit_code": 0},
-    {"command": "node manifest parse check", "status": "passed", "summary": "package.json and src-tauri/tauri.conf.json parsed successfully.", "exit_code": 0},
-    {"command": "git diff --cached --check", "status": "passed", "summary": "No whitespace errors in the identity patch.", "exit_code": 0},
-    {"command": "cargo check --manifest-path src-tauri/Cargo.toml --locked", "status": "blocked", "summary": "Lockfile identity is synchronized and Cargo advances to compilation; compilation is blocked by missing MSVC link.exe.", "exit_code": 1}
+    {"command": "npx -y pnpm@9.15.9 build", "status": "passed", "summary": "Next.js typecheck, 53 static pages, export, and build:prune-maps completed.", "exit_code": 0},
+    {"command": "cargo check --manifest-path src-tauri/Cargo.toml --locked", "status": "failed", "summary": "Cargo lock validation passed and remained unchanged; compilation stopped because link.exe is not installed.", "exit_code": 101},
+    {"command": "npx -y pnpm@9.15.9 tauri build --debug --bundles nsis", "status": "failed", "summary": "Frontend pre-build passed; Rust compilation stopped on missing link.exe and no installer was produced.", "exit_code": 1},
+    {"command": "git diff --exit-code -- pnpm-lock.yaml src-tauri/Cargo.lock", "status": "passed", "summary": "Verification left both dependency lockfiles unchanged after Cargo lock normalization was committed.", "exit_code": 0}
   ],
   "acceptance_criteria_coverage": [
-    {"criterion": "package identity is huabu", "status": "passed", "evidence": ["package.json"]},
-    {"criterion": "Tauri product is Huabu with com.huabu.desktop and Windows bundle targets", "status": "passed", "evidence": ["src-tauri/tauri.conf.json"]},
-    {"criterion": "NoteGen updater endpoints and release workflow are absent", "status": "passed", "evidence": ["foundation contract", "deleted .github/workflows/release.yml"]},
-    {"criterion": "Cargo metadata is Huabu and macOS private feature is absent", "status": "passed", "evidence": ["src-tauri/Cargo.toml"]},
-    {"criterion": "NOTICE preserves GPL attribution", "status": "passed", "evidence": ["NOTICE.md"]},
-    {"criterion": "Windows-only CI exists", "status": "passed", "evidence": [".github/workflows/windows-ci.yml"]},
-    {"criterion": "foundation contract passes", "status": "passed", "evidence": ["exit code 0"]}
+    {"criterion": "frozen install succeeds", "status": "passed", "evidence": ["pnpm 9.15.9 install exit code 0"]},
+    {"criterion": "foundation contract passes", "status": "passed", "evidence": ["foundation success output"]},
+    {"criterion": "frontend build passes", "status": "passed", "evidence": ["Next.js build exit code 0"]},
+    {"criterion": "cargo check passes", "status": "failed", "evidence": ["link.exe not found before project compilation"]},
+    {"criterion": "Huabu NSIS debug installer exists", "status": "failed", "evidence": ["Tauri build stopped at missing linker", "NSIS output directory absent"]},
+    {"criterion": "verification document matches actual commands", "status": "passed", "evidence": ["docs/verification/windows-foundation.md"]}
   ],
-  "passed": ["All foundation-04-identity acceptance criteria"],
-  "failed": [],
+  "passed": ["Frozen dependency installation", "Huabu identity contract", "Frontend production build", "Lockfile stability", "Reproducible verification documentation"],
+  "failed": ["Rust compile gate in current environment", "Debug NSIS package gate in current environment"],
   "not_run_reason": null,
-  "residual_risk": ["Rust and installer checks are deferred to Task 5 and blocked locally without MSVC link.exe.", "Contract coverage omits some manually reviewed mobile/macOS removals."]
+  "residual_risk": ["Visual Studio Build Tools with Desktop development with C++ and a Windows SDK are required to complete Rust/NSIS verification.", "Manual application smoke testing remains pending until a desktop binary can be built."]
 }

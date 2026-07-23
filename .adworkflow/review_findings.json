@@ -1,12 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "foundation-04-identity",
-  "status": "approved",
-  "reviewer": "foundation_identity_review + root-orchestrator",
-  "source_revision": "6f539ccf",
-  "review_basis": ["task_spec", "identity commit 06a7172c", "lockfile fix 6f539ccf", "foundation contract", "cargo check --locked preflight"],
+  "task_id": "foundation-05-package",
+  "status": "not_required",
+  "reviewer": null,
+  "source_revision": null,
+  "review_basis": [],
   "blocking_findings": [],
-  "non_blocking_findings": ["The exact plan verification script does not assert removal of sync-version, ios-build, macos-private-api, Cargo authors, or the Tauri iOS/macOS fields; the review checked these manually."],
-  "suggested_tests": ["Add broader platform-removal assertions when the foundation contract is intentionally revised.", "Use cargo check --locked in a future CI-hardening change."],
-  "risk_notes": ["Independent review found stale root package identity in Cargo.lock; commit 6f539ccf resolves it.", "cargo check --locked now passes lock validation and reaches the known missing-link.exe environment blocker."]
+  "non_blocking_findings": [],
+  "suggested_tests": [],
+  "risk_notes": ["Low-risk verification/documentation task; environment blockers must be recorded truthfully."]
 }
