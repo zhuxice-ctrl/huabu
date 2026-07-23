@@ -21,6 +21,7 @@ import {
   SelectionMode,
 } from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled.js'
+import type { ElkNode } from 'elkjs/lib/elk-api'
 import { toPng, toSvg } from 'html-to-image'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { mkdir, readFile, readTextFile, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
@@ -1111,7 +1112,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         .map(id => arrangedById.get(id))
         .filter((node): node is FlowCanvasNode => Boolean(node))
       if (children.length === 0) continue
-      const innerGraph = await elk.layout({
+      const innerGraph = await elk.layout<ElkNode>({
         id: `group-${group.id}`,
         layoutOptions,
         children: children.map(node => ({ id: node.id, ...getLayoutSize(node) })),

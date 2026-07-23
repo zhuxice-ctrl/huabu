@@ -14,7 +14,7 @@ import {
 } from '@/db/canvases'
 import { createCanvasDocument } from '@/lib/canvas/templates'
 import { CANVAS_THUMBNAIL_VERSION, generateCanvasThumbnail, removeCanvasThumbnail } from '@/lib/canvas/thumbnail'
-import { purgeCanvas } from '@/lib/sync/canvas-sync'
+import { purgeCanvas, uploadCanvas } from '@/lib/sync/canvas-sync'
 import { enqueueAutoDataSync, isAutoDataSyncProviderConfigured } from '@/lib/sync/auto-data-sync-queue'
 import type { CanvasDocument, CanvasHistoryState, CanvasProject, CanvasProjectType } from '@/types/canvas'
 
