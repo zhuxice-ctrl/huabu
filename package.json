@@ -10,6 +10,7 @@
     "lint": "next lint",
     "tauri": "tauri",
     "docs:build": "npm --prefix ./docs run build",
+    "verify:foundation": "node scripts/verify-huabu-foundation.mjs",
     "sync-version": "./scripts/sync-version.sh",
     "ios-build": "npm run sync-version && pnpm tauri ios build --open"
   },
