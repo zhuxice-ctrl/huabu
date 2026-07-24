@@ -116,14 +116,14 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
     <div
       style={nodeStyle(data)}
       className={cn(
-        'relative size-full min-h-[72px] min-w-[120px] rounded-xl border bg-card p-2 text-card-foreground shadow-sm in-[.selected]:ring-2 in-[.selected]:ring-ring/45',
+        'relative size-full overflow-hidden rounded-xl border bg-card p-2 text-card-foreground shadow-sm in-[.selected]:ring-2 in-[.selected]:ring-ring/45',
         previewClassName(data.previewState),
       )}
     >
       <NodeResizer
         isVisible={selected}
-        minWidth={120}
-        minHeight={72}
+        minWidth={1}
+        minHeight={1}
       />
       <ConnectionHandles />
       <textarea

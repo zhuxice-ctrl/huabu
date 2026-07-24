@@ -100,6 +100,22 @@ export const CanvasRelationEdge = memo(function CanvasRelationEdge(props: EdgePr
             style={{ transform: `translate(-50%, -50%) translate(${waypoint.x}px, ${waypoint.y}px)` }}
             aria-label={`关系路径节点 ${index + 1}`}
             onPointerDown={event => beginWaypointDrag(event, index)}
+            onContextMenu={event => {
+              event.preventDefault()
+              event.stopPropagation()
+              emitter.emit('canvas-history-checkpoint')
+              setEdges(current => current.map(edge => {
+                if (edge.id !== props.id) return edge
+                const data = normalizeRelationData(edge.data)
+                return {
+                  ...edge,
+                  data: {
+                    ...data,
+                    waypoints: data.waypoints.filter((_point, pointIndex) => pointIndex !== index),
+                  },
+                }
+              }))
+            }}
           />
         ))}
       </EdgeLabelRenderer>

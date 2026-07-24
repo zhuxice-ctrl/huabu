@@ -15,6 +15,7 @@ import {
   type Connection,
   type Edge,
   type EdgeChange,
+  type EdgeTypes,
   type NodeChange,
   type NodeTypes,
   MarkerType,
@@ -42,11 +43,8 @@ import {
   MousePointer2,
   Palette,
   Pencil,
-  RectangleHorizontal,
   Route,
-  SquareRoundCorner,
   Trash2,
-  Type,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -106,6 +104,7 @@ import type {
   CanvasPoint,
   CanvasTool,
   CanvasRelationData,
+  CanvasRelationWaypoint,
 } from '@/types/canvas'
 import { flattenFileTree } from '@/app/core/main/file/file-selection'
 import { applyCanvasOperations } from '@/lib/canvas/operations'
@@ -136,9 +135,12 @@ import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
-import { DEFAULT_RELATION, isValidRelationTarget, relationEdgeVisuals } from '@/lib/canvas/relation-policy'
+import { DEFAULT_RELATION, isValidRelationTarget, normalizeRelationData, relationEdgeVisuals } from '@/lib/canvas/relation-policy'
 import { CanvasRelationEditor } from './canvas-relation-editor'
+import { CanvasRelationEdge } from './canvas-edge'
 import {
+  hasDrawableArea,
+  intersectingRectIds,
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
 } from '@/lib/canvas/gesture-policy'
@@ -179,6 +181,8 @@ interface CanvasSnapshot {
   edges: Edge[]
 }
 
+const edgeTypes: EdgeTypes = { relation: CanvasRelationEdge }
+
 interface DrawDraft {
   pointerId: number
   start: { x: number; y: number }
@@ -194,6 +198,20 @@ interface RelationPointerSession {
   active: boolean
   targetId: string | null
   timer?: ReturnType<typeof setTimeout>
+}
+
+interface MarqueePointerSession {
+  pointerId: number
+  start: { x: number; y: number }
+  current: { x: number; y: number }
+  active: boolean
+}
+
+interface RelationEditorState {
+  edgeId: string
+  mode: 'create' | 'edit'
+  anchor: { x: number; y: number }
+  suggestedWaypoint?: CanvasRelationWaypoint
 }
 
 function CanvasToolbarTooltip({
@@ -252,6 +270,22 @@ function serializeNodes(nodes: FlowCanvasNode[]): CanvasNode[] {
   }))
 }
 
+function nearestPointOnRect(rect: DOMRect, target: { x: number; y: number }) {
+  const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+  const dx = target.x - center.x
+  const dy = target.y - center.y
+  if (Math.abs(dx / Math.max(rect.width, 1)) >= Math.abs(dy / Math.max(rect.height, 1))) {
+    return { x: dx >= 0 ? rect.right : rect.left, y: Math.min(rect.bottom, Math.max(rect.top, target.y)) }
+  }
+  return { x: Math.min(rect.right, Math.max(rect.left, target.x)), y: dy >= 0 ? rect.bottom : rect.top }
+}
+
+function relationPreviewPath(start: { x: number; y: number }, end: { x: number; y: number }) {
+  const direction = end.x >= start.x ? 1 : -1
+  const control = Math.max(48, Math.abs(end.x - start.x) * 0.45)
+  return `M ${start.x} ${start.y} C ${start.x + control * direction} ${start.y}, ${end.x - control * direction} ${end.y}, ${end.x} ${end.y}`
+}
+
 function serializeEdges(edges: Edge[]): CanvasEdge[] {
   return edges.map(edge => ({
     id: edge.id,
@@ -291,6 +325,7 @@ function havePersistentEdgesChanged(previous: Edge[], current: Edge[]) {
       || prior.target !== edge.target
       || prior.label !== edge.label
       || prior.type !== edge.type
+      || (prior.data !== edge.data && JSON.stringify(prior.data) !== JSON.stringify(edge.data))
   })
 }
 
@@ -333,8 +368,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [importContentDraft, setImportContentDraft] = useState('')
   const [contextTarget, setContextTarget] = useState<'pane' | 'node' | 'edge'>('pane')
   const [drawDraft, setDrawDraft] = useState<DrawDraft | null>(null)
+  const [marqueePreview, setMarqueePreview] = useState<MarqueePointerSession | null>(null)
   const [relationPreview, setRelationPreview] = useState<RelationPointerSession | null>(null)
-  const [relationEditor, setRelationEditor] = useState<{ edgeId: string; mode: 'create' | 'edit'; anchor: { x: number; y: number } } | null>(null)
+  const [relationEditor, setRelationEditor] = useState<RelationEditorState | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<CanvasSnapshot[]>((initialHistory?.undo || []).map(restoreHistorySnapshot))
   const redoRef = useRef<CanvasSnapshot[]>((initialHistory?.redo || []).map(restoreHistorySnapshot))
@@ -350,6 +386,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     children: Map<string, { x: number; y: number }>
   } | null>(null)
   const relationSessionRef = useRef<RelationPointerSession | null>(null)
+  const marqueeSessionRef = useRef<MarqueePointerSession | null>(null)
+  const relationTargetRef = useRef<string | null>(null)
   const suppressContextMenuRef = useRef(false)
   const persistedNodesRef = useRef(nodes)
   const persistedEdgesRef = useRef(edges)
@@ -458,12 +496,15 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const displayEdges = useMemo(() => (previewSnapshot?.edges || edges).map(edge => {
     const relation = edge.data as CanvasRelationData | undefined
     if (!relation) return edge
-    const visuals = relationEdgeVisuals(relation)
+    const normalized = normalizeRelationData(relation)
+    const visuals = relationEdgeVisuals(normalized)
     return {
       ...edge,
-      style: { ...(edge.style || {}), stroke: visuals.stroke, strokeDasharray: visuals.strokeDasharray },
-      markerStart: visuals.markerStart ? { type: MarkerType.ArrowClosed, color: relation.color } : undefined,
-      markerEnd: visuals.markerEnd ? { type: MarkerType.ArrowClosed, color: relation.color } : undefined,
+      type: 'relation',
+      data: normalized,
+      style: { ...(edge.style || {}), stroke: visuals.stroke, strokeWidth: visuals.strokeWidth, strokeDasharray: visuals.strokeDasharray },
+      markerStart: visuals.markerStart ? { type: MarkerType.ArrowClosed, color: normalized.color } : undefined,
+      markerEnd: visuals.markerEnd ? { type: MarkerType.ArrowClosed, color: normalized.color } : undefined,
     }
   }), [edges, previewSnapshot])
 
@@ -666,15 +707,15 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
 
   const onConnect = useCallback((connection: Connection) => {
     pushHistory()
-    setEdges(current => addEdge({ ...connection, type: 'smoothstep' }, current))
+    setEdges(current => addEdge({
+      ...connection,
+      type: 'relation',
+      data: normalizeRelationData(DEFAULT_RELATION),
+    }, current))
   }, [pushHistory, setEdges])
 
   const finishBlockDraw = useCallback((draft: DrawDraft) => {
-    const distance = Math.hypot(
-      draft.current.x - draft.start.x,
-      draft.current.y - draft.start.y,
-    )
-    if (distance < POINTER_DRAG_THRESHOLD) {
+    if (!hasDrawableArea(draft.start, draft.current)) {
       setNodes(current => current.map(node => ({ ...node, selected: false })))
       setEdges(current => current.map(edge => ({ ...edge, selected: false })))
       return
@@ -694,8 +735,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         id,
         type: 'text',
         position,
-        width: Math.max(120, end.x - position.x),
-        height: Math.max(72, end.y - position.y),
+        width: end.x - position.x,
+        height: end.y - position.y,
         selected: true,
         data: {
           label: '',
@@ -707,6 +748,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     setEdges(current => current.map(edge => ({ ...edge, selected: false })))
     requestAnimationFrame(() => emitter.emit('canvas-focus-node', id))
   }, [pushHistory, screenToFlowPosition, setEdges, setNodes])
+
+  const setRelationTargetHighlight = useCallback((targetId: string | null) => {
+    if (relationTargetRef.current === targetId) return
+    const root = containerRef.current
+    if (relationTargetRef.current) {
+      root?.querySelector(`[data-id="${CSS.escape(relationTargetRef.current)}"]`)?.classList.remove('relation-target-active')
+    }
+    relationTargetRef.current = targetId
+    if (targetId) {
+      root?.querySelector(`[data-id="${CSS.escape(targetId)}"]`)?.classList.add('relation-target-active')
+    }
+  }, [])
 
   const handleBlockDrawPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button === 2 && event.target instanceof Element) {
@@ -732,6 +785,20 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           setRelationPreview({ ...current })
         }, 320)
         relationSessionRef.current = session
+        return
+      }
+      if (
+        tool === 'select'
+        && !previewSnapshot
+        && event.target.classList.contains('react-flow__pane')
+      ) {
+        const point = { x: event.clientX, y: event.clientY }
+        marqueeSessionRef.current = {
+          pointerId: event.pointerId,
+          start: point,
+          current: point,
+          active: false,
+        }
       }
       return
     }
@@ -757,8 +824,30 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       if (relation.active) {
         const target = globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
         relation.targetId = target
+        const sourceElement = containerRef.current?.querySelector(`[data-id="${CSS.escape(relation.sourceId)}"]`)
+        const sourceRect = sourceElement?.getBoundingClientRect()
+        if (sourceRect) relation.start = nearestPointOnRect(sourceRect, relation.current)
+        setRelationTargetHighlight(target && target !== relation.sourceId ? target : null)
         event.preventDefault()
         setRelationPreview({ ...relation })
+      }
+      return
+    }
+    const marquee = marqueeSessionRef.current
+    if (marquee?.pointerId === event.pointerId) {
+      marquee.current = { x: event.clientX, y: event.clientY }
+      if (!marquee.active && Math.hypot(
+        marquee.current.x - marquee.start.x,
+        marquee.current.y - marquee.start.y,
+      ) >= POINTER_DRAG_THRESHOLD) {
+        marquee.active = true
+        suppressContextMenuRef.current = true
+        try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* pointer already released */ }
+      }
+      if (marquee.active) {
+        event.preventDefault()
+        event.stopPropagation()
+        setMarqueePreview({ ...marquee })
       }
       return
     }
@@ -767,7 +856,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         ? { ...current, current: { x: event.clientX, y: event.clientY } }
         : current
     ))
-  }, [])
+  }, [setRelationTargetHighlight])
 
   const handleBlockDrawPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -778,8 +867,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       event.preventDefault()
       event.stopPropagation()
       suppressContextMenuRef.current = true
+      window.setTimeout(() => { suppressContextMenuRef.current = false }, 0)
       if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
       setRelationPreview(null)
+      setRelationTargetHighlight(null)
       const targetId = relation.targetId || globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
       const nodeIds = new Set(nodes.map(node => node.id))
       if (!isValidRelationTarget(relation.sourceId, targetId, nodeIds)) return
@@ -789,9 +880,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         id: edgeId,
         source: relation.sourceId,
         target: targetId!,
-        type: 'smoothstep',
+        type: 'relation',
         label: '',
-        data: DEFAULT_RELATION,
+        data: normalizeRelationData(DEFAULT_RELATION),
       }])
       const root = containerRef.current
       const sourceElement = root?.querySelector(`[data-id="${CSS.escape(relation.sourceId)}"]`)
@@ -802,7 +893,35 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         ? { x: (sourceRect.left + sourceRect.width / 2 + targetRect.left + targetRect.width / 2) / 2, y: (sourceRect.top + sourceRect.height / 2 + targetRect.top + targetRect.height / 2) / 2 }
         : { x: relation.current.x, y: relation.current.y }
       const bounds = root?.getBoundingClientRect()
-      setRelationEditor({ edgeId, mode: 'create', anchor: { x: anchor.x - (bounds?.left || 0), y: anchor.y - (bounds?.top || 0) } })
+      setRelationEditor({
+        edgeId,
+        mode: 'create',
+        anchor: { x: anchor.x - (bounds?.left || 0), y: anchor.y - (bounds?.top || 0) },
+        suggestedWaypoint: sourceRect && targetRect
+          ? screenToFlowPosition({ x: anchor.x, y: anchor.y })
+          : undefined,
+      })
+      return
+    }
+    const marquee = marqueeSessionRef.current
+    if (marquee?.pointerId === event.pointerId) {
+      marqueeSessionRef.current = null
+      if (!marquee.active) return
+      event.preventDefault()
+      event.stopPropagation()
+      suppressContextMenuRef.current = false
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+      const completed = { ...marquee, current: { x: event.clientX, y: event.clientY } }
+      setMarqueePreview(null)
+      const selection = normalizeDrawRect(completed.start, completed.current)
+      const candidates = Array.from(containerRef.current?.querySelectorAll('.react-flow__node[data-id]') || []).flatMap(element => {
+        const id = element.getAttribute('data-id')
+        const rect = element.getBoundingClientRect()
+        return id ? [{ id, x: rect.left, y: rect.top, width: rect.width, height: rect.height }] : []
+      })
+      const selectedIds = new Set(intersectingRectIds(selection, candidates))
+      setNodes(current => current.map(node => ({ ...node, selected: selectedIds.has(node.id) })))
+      setEdges(current => current.map(edge => ({ ...edge, selected: false })))
       return
     }
     if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
@@ -817,7 +936,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     setDrawDraft(null)
     finishBlockDraw(completed)
-  }, [drawDraft, finishBlockDraw, nodes, pushHistory, setEdges])
+  }, [drawDraft, finishBlockDraw, nodes, pushHistory, screenToFlowPosition, setEdges, setNodes, setRelationTargetHighlight])
 
   const handleBlockDrawPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -825,6 +944,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       if (relation.timer) clearTimeout(relation.timer)
       relationSessionRef.current = null
       setRelationPreview(null)
+      setRelationTargetHighlight(null)
+      suppressContextMenuRef.current = false
+      return
+    }
+    const marquee = marqueeSessionRef.current
+    if (marquee?.pointerId === event.pointerId) {
+      marqueeSessionRef.current = null
+      setMarqueePreview(null)
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
       return
     }
     if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
@@ -832,13 +962,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     setDrawDraft(null)
-  }, [drawDraft])
+  }, [drawDraft, setRelationTargetHighlight])
 
   const saveRelationEditor = useCallback((value: CanvasRelationData) => {
     if (!relationEditor) return
+    const normalized = normalizeRelationData(value)
     pushHistory()
     setEdges(current => current.map(edge => edge.id === relationEditor.edgeId
-      ? { ...edge, label: value.label, data: value }
+      ? { ...edge, type: 'relation', label: normalized.label, data: normalized }
       : edge))
     setRelationEditor(null)
   }, [pushHistory, relationEditor, setEdges])
@@ -1004,28 +1135,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       window.removeEventListener('keyup', handleKeyUp)
     }
   }, [canvasId, copySelection, deleteSelection, duplicateSelection, fitView, pasteSelection, redo, selectAll, undo])
-
-  const addNode = useCallback((nodeType: 'process' | 'decision' | 'terminator' | 'text') => {
-    pushHistory()
-    const position = screenToFlowPosition({
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-    })
-    setNodes(current => [...current, {
-      id: crypto.randomUUID(),
-      type: nodeType,
-      position,
-      data: {
-        label: nodeType === 'decision'
-          ? t('nodes.decision')
-          : nodeType === 'terminator'
-            ? t('nodes.terminator')
-            : nodeType === 'text'
-              ? t('nodes.text')
-              : t('nodes.process'),
-      },
-    }])
-  }, [pushHistory, screenToFlowPosition, setNodes, t])
 
   const addNoteNode = useCallback((filePath: string, name: string) => {
     pushHistory()
@@ -1737,35 +1846,16 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             >
               <ReactFlow
         className={cn(
-          tool === 'select' && '[&_.react-flow__pane]:!cursor-default',
+          tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background',
           tool === 'hand' && '[&_.react-flow__node]:!cursor-grab [&_.react-flow__node:active]:!cursor-grabbing [&_.react-flow__pane]:!cursor-grab [&_.react-flow__pane.dragging]:!cursor-grabbing'
         )}
         nodes={displayNodes}
         edges={displayEdges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChangeTracked}
         onConnect={onConnect}
-        onConnectEnd={(event, connectionState) => {
-          if (connectionState.isValid || !connectionState.fromNode) return
-          const clientX = 'clientX' in event ? event.clientX : event.changedTouches[0]?.clientX
-          const clientY = 'clientY' in event ? event.clientY : event.changedTouches[0]?.clientY
-          if (clientX === undefined || clientY === undefined) return
-          const id = crypto.randomUUID()
-          pushHistory()
-          setNodes(current => [...current, {
-            id,
-            type: 'process',
-            position: screenToFlowPosition({ x: clientX, y: clientY }),
-            data: { label: t('nodes.process') },
-          }])
-          setEdges(current => addEdge({
-            id: crypto.randomUUID(),
-            source: connectionState.fromNode.id,
-            target: id,
-            type: 'smoothstep',
-          }, current))
-        }}
         onNodeContextMenu={(_event, targetNode) => {
           setContextTarget('node')
           if (!targetNode.selected) {
@@ -1773,7 +1863,33 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             setEdges(current => current.map(edge => ({ ...edge, selected: false })))
           }
         }}
-        onEdgeContextMenu={(_event, targetEdge) => {
+        onEdgeContextMenu={(event, targetEdge) => {
+          const relation = targetEdge.data as CanvasRelationData | undefined
+          if (relation) {
+            event.preventDefault()
+            event.stopPropagation()
+            setNodes(current => current.map(node => ({ ...node, selected: false })))
+            setEdges(current => current.map(edge => ({ ...edge, selected: edge.id === targetEdge.id })))
+            const root = containerRef.current
+            const bounds = root?.getBoundingClientRect()
+            const source = nodes.find(node => node.id === targetEdge.source)
+            const target = nodes.find(node => node.id === targetEdge.target)
+            const sourceWidth = source?.measured?.width ?? source?.width ?? 0
+            const sourceHeight = source?.measured?.height ?? source?.height ?? 0
+            const targetWidth = target?.measured?.width ?? target?.width ?? 0
+            const targetHeight = target?.measured?.height ?? target?.height ?? 0
+            const suggestedWaypoint = source && target ? {
+              x: (source.position.x + sourceWidth / 2 + target.position.x + targetWidth / 2) / 2,
+              y: (source.position.y + sourceHeight / 2 + target.position.y + targetHeight / 2) / 2,
+            } : screenToFlowPosition({ x: event.clientX, y: event.clientY })
+            setRelationEditor({
+              edgeId: targetEdge.id,
+              mode: 'edit',
+              anchor: { x: event.clientX - (bounds?.left || 0), y: event.clientY - (bounds?.top || 0) },
+              suggestedWaypoint,
+            })
+            return
+          }
           setContextTarget('edge')
           if (!targetEdge.selected) {
             setNodes(current => current.map(node => ({ ...node, selected: false })))
@@ -1789,6 +1905,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               edgeId: targetEdge.id,
               mode: 'edit',
               anchor: { x: event.clientX - (bounds?.left || 0), y: event.clientY - (bounds?.top || 0) },
+              suggestedWaypoint: screenToFlowPosition({ x: event.clientX, y: event.clientY }),
             })
             return
           }
@@ -1856,16 +1973,40 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                   />
                 )
               })()}
+              {marqueePreview?.active && (() => {
+                const rect = normalizeDrawRect(marqueePreview.start, marqueePreview.current)
+                const bounds = containerRef.current?.getBoundingClientRect()
+                return (
+                  <div
+                    className="pointer-events-none absolute rounded-md border border-primary/80 bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.18)]"
+                    style={{
+                      left: rect.x - (bounds?.left || 0),
+                      top: rect.y - (bounds?.top || 0),
+                      width: rect.width,
+                      height: rect.height,
+                    }}
+                  />
+                )
+              })()}
               {relationPreview?.active && (
                 <svg className="pointer-events-none absolute inset-0 size-full overflow-visible">
-                  <line
-                    x1={relationPreview.start.x - (containerRef.current?.getBoundingClientRect().left || 0)}
-                    y1={relationPreview.start.y - (containerRef.current?.getBoundingClientRect().top || 0)}
-                    x2={relationPreview.current.x - (containerRef.current?.getBoundingClientRect().left || 0)}
-                    y2={relationPreview.current.y - (containerRef.current?.getBoundingClientRect().top || 0)}
+                  <path
+                    d={relationPreviewPath(
+                      {
+                        x: relationPreview.start.x - (containerRef.current?.getBoundingClientRect().left || 0),
+                        y: relationPreview.start.y - (containerRef.current?.getBoundingClientRect().top || 0),
+                      },
+                      {
+                        x: relationPreview.current.x - (containerRef.current?.getBoundingClientRect().left || 0),
+                        y: relationPreview.current.y - (containerRef.current?.getBoundingClientRect().top || 0),
+                      },
+                    )}
+                    fill="none"
                     stroke="var(--primary)"
-                    strokeWidth="2"
-                    strokeDasharray="6 5"
+                    strokeWidth="2.25"
+                    strokeDasharray="7 6"
+                    strokeLinecap="round"
+                    style={{ filter: 'drop-shadow(0 0 5px hsl(var(--primary) / 0.45))' }}
                   />
                 </svg>
               )}
@@ -1880,6 +2021,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                     <CanvasRelationEditor
                       initial={initial}
                       mode={relationEditor.mode}
+                      suggestedWaypoint={relationEditor.suggestedWaypoint}
                       onSave={saveRelationEditor}
                       onCancel={cancelRelationEditor}
                     />
@@ -1914,6 +2056,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                 <ContextMenuItem onSelect={() => updateCanvasBackground('#0f172a')}>深色画布</ContextMenuItem>
                 <ContextMenuItem onSelect={() => updateCanvasBackground(undefined)}>跟随主题</ContextMenuItem>
               </ContextMenuGroup>
+            )}
+            {contextTarget === 'pane' && selectedCount > 0 && (
+              <>
+                <ContextMenuSeparator />
+                <ContextMenuGroup>
+                  <ContextMenuItem variant="destructive" onSelect={deleteSelection}>
+                    <Trash2 />
+                    {t('contextMenu.delete')}
+                    <ContextMenuShortcut>⌫</ContextMenuShortcut>
+                  </ContextMenuItem>
+                </ContextMenuGroup>
+              </>
             )}
             {contextTarget !== 'pane' && <ContextMenuGroup>
               <ContextMenuItem onSelect={selectAll}>
@@ -1993,26 +2147,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             ))}
           </div>
 
-          <CanvasToolbarTooltip label={t('nodes.process')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('nodes.process')} onClick={() => addNode('process')}>
-              <RectangleHorizontal />
-            </Button>
-          </CanvasToolbarTooltip>
-          <CanvasToolbarTooltip label={t('nodes.decision')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('nodes.decision')} onClick={() => addNode('decision')}>
-              <Route />
-            </Button>
-          </CanvasToolbarTooltip>
-          <CanvasToolbarTooltip label={t('nodes.terminator')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('nodes.terminator')} onClick={() => addNode('terminator')}>
-              <SquareRoundCorner />
-            </Button>
-          </CanvasToolbarTooltip>
-          <CanvasToolbarTooltip label={t('nodes.text')}>
-            <Button variant="ghost" size="icon-sm" aria-label={t('nodes.text')} onClick={() => addNode('text')}>
-              <Type />
-            </Button>
-          </CanvasToolbarTooltip>
           <CanvasToolbarTooltip label={t('nodes.note')}>
             <Button variant="ghost" size="icon-sm" aria-label={t('nodes.note')} onClick={() => setNotePickerOpen(true)}>
               <FileText />
