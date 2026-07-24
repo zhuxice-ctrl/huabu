@@ -1,24 +1,24 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
-  "task_type": "code",
-  "goal": "Refine the zeroxB canvas to use React Flow-style selection and relationship interactions: right-drag marquee selection on empty canvas, live right-hold relationship previews, editable routed relationship paths, exact-area block creation, and removal of obsolete shape shortcuts, then rebuild, reinstall, and verify the Windows application.",
+  "task_id": "zeroxb-viewport-normalized-content-scaling-design",
+  "task_type": "docs",
+  "goal": "Write a formal design specification for viewport-normalized creation and editing of canvas blocks, text, images and media in zeroxB, with an initial zoom of 65 percent and a supported viewport range of 10 to 600 percent.",
   "non_goals": [
-    "Do not replace React Flow or redesign the bottom AI conversation surface.",
-    "Do not add export features, cloud sync, or non-Windows packaging.",
-    "Do not move user-authored blocks or rewrite their content.",
-    "Do not expose or commit the localhost model API credential."
+    "Do not implement or modify runtime behavior in this task.",
+    "Do not add a new rich-text editor or change existing content types.",
+    "Do not make AI-created blocks depend directly on the current camera zoom.",
+    "Do not migrate or rewrite existing canvas documents.",
+    "Do not expose or modify the configured localhost AI credential."
   ],
   "acceptance_criteria": [
-    "Right-dragging empty canvas renders a marquee and selects every node that partially intersects it; the selected set can be deleted in one operation and restored through undo.",
-    "A right click without a drag keeps the existing context-menu behavior, while right-holding a node starts a relationship drag without creating a text block.",
-    "The relationship preview follows the pointer in real time with a React Flow-style curved path and highlights a valid target.",
-    "Saved relationships default to a curved route and can be reopened from their context menu to change route type, color, width, dash style, arrows, and manual routing points.",
-    "Relationship routing points remain editable after save and changes participate in undo history.",
-    "A click or single-axis drag on empty canvas creates nothing; a two-dimensional drag creates a text block using the drawn dimensions without the previous 120 by 72 minimum.",
-    "The process, decision, terminator, and text quick-create toolbar buttons shown in the supplied screenshot are removed.",
-    "Canvas interaction tests, TypeScript checks, frontend build, locked Cargo check, NSIS packaging, F-drive reinstall, responsive launch, local AI configuration persistence, and canvas startup verification pass."
+    "The specification defines creation-time conversion as canvas size equals screen size divided by the captured viewport zoom.",
+    "The specification covers direct mouse drawing, pasted text, dropped images, files, links and media cards.",
+    "The specification defines perceived font-size editing, image sizing, block sizing, undo behavior and compatibility with existing content.",
+    "The specification fixes the initial zoom at 65 percent, minimum zoom at 10 percent and maximum zoom at 600 percent.",
+    "The specification states that AI-created content uses nearby block scale or a 100 percent fallback rather than current viewport zoom.",
+    "The specification includes extreme-zoom safeguards, failure behavior and verification scenarios.",
+    "The document contains no placeholders, contradictions or ambiguous conversion rules and is committed for user review."
   ],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
@@ -26,41 +26,39 @@
     "read",
     "edit",
     "test",
-    "shell",
-    "network"
+    "shell"
   ],
   "required_outputs": [
-    "worker_state.json",
-    "verification_result.json",
-    "review_findings.json",
-    "context_preflight.json",
-    "impact_report.json"
+    "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md",
+    "context_manifest.json",
+    ".adworkflow/artifacts/zeroxb-viewport-normalized-content-scaling-design/review_findings.json"
   ],
   "do_not_touch": [
+    "runtime source files",
     "main branch",
     "remote repositories",
-    "release publishing",
+    "release artifacts",
     "zeroxB user documents",
     "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.gesture-policy:classifyPointerRelease:function",
-    "typescript:src.lib.canvas.relation-policy:relationEdgeVisuals:function"
+    "typescript:src.lib.canvas.gesture-policy:normalizeDrawRect:function",
+    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function"
   ],
   "context_sources": [
-    "src/app/core/main/canvas/canvas-editor.tsx is the manual integration source for pointer routing, React Flow configuration, overlays, context menus, and the toolbar.",
-    "src/app/core/main/canvas/canvas-relation-editor.tsx is the manual integration source for the line-adjacent relationship editor.",
-    "src/types/canvas.ts defines persisted relationship data and must remain backward compatible with existing canvases.",
-    "src/lib/canvas/gesture-policy.ts and src/lib/canvas/relation-policy.ts are testable policy seams.",
-    "User-supplied screenshots define the obsolete quick actions and the desired React Flow-style visual behavior."
+    "src/app/core/main/canvas/canvas-editor.tsx owns React Flow viewport state, creation entry points, viewport persistence and fit-view behavior.",
+    "src/app/core/main/canvas/canvas-footer.tsx owns visible zoom controls.",
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx owns text-size editing.",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx renders block text, images and resizers.",
+    "src/lib/canvas/content-ingest.ts defines pasted and dropped content defaults.",
+    "src/types/canvas.ts defines persisted viewport and node data."
   ],
   "notes": [
     "Use the fixed UTF-8 I/O baseline.",
-    "Partial overlap is the approved marquee-selection rule.",
-    "Preserve middle-button canvas panning and single right-click context menus.",
-    "Relationship routing changes must not reposition manually placed nodes.",
-    "Never print or include the API credential in reports, commits, source files, or verification evidence.",
-    "Portable MSVC entrypoint: F:\\toolchains\\portable-msvc\\msvc\\setup_x64.bat."
+    "Direct user creation captures zoom once at gesture or ingest start and does not change if zoom moves mid-gesture.",
+    "Existing content is never rescaled merely because the viewport changes.",
+    "The design must remain compatible with the current infinite-canvas and undo/redo model.",
+    "Stop after writing and committing the specification so the user can add requirements."
   ],
   "implementation_owner": "root-orchestrator"
 }
