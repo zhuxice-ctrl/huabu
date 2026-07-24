@@ -1780,7 +1780,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             setEdges(current => current.map(edge => ({ ...edge, selected: edge.id === targetEdge.id })))
           }
         }}
-        onEdgeDoubleClick={(_event, targetEdge) => {
+        onEdgeDoubleClick={(event, targetEdge) => {
+          const relation = targetEdge.data as CanvasRelationData | undefined
+          if (relation) {
+            const root = containerRef.current
+            const bounds = root?.getBoundingClientRect()
+            setRelationEditor({
+              edgeId: targetEdge.id,
+              mode: 'edit',
+              anchor: { x: event.clientX - (bounds?.left || 0), y: event.clientY - (bounds?.top || 0) },
+            })
+            return
+          }
           setEditingEdgeId(targetEdge.id)
           setEdgeLabelDraft(typeof targetEdge.label === 'string' ? targetEdge.label : '')
           setEdgeEditorOpen(true)
