@@ -14,7 +14,7 @@
     "window": "窗口",
     "pinToggle": "置顶/取消置顶",
     "hideWindow": "隐藏到托盘",
-    "quit": "退出 Huabu"
+    "quit": "退出 zeroxB"
   },
   "settings": {
     "defaultModels": {
@@ -377,7 +377,7 @@
       "runtimeManualOnly": "当前平台暂不支持自动安装该运行时，请手动安装后重新检查。",
       "installRuntime": "安装运行时",
       "runtimeInstallTitle": "安装运行时",
-      "runtimeInstallDesc": "确认后，Huabu 将执行以下安装命令。",
+      "runtimeInstallDesc": "确认后，zeroxB 将执行以下安装命令。",
       "runtimeInstallPreparing": "准备安装",
       "runtimeInstallRunning": "安装中",
       "runtimeInstallCompleted": "安装完成",
@@ -428,7 +428,7 @@
       "userInvocable": "在斜杠菜单显示",
       "importHelp": "支持导入 zip 格式的 Skill，zip 文件需包含 SKILL.md 文件。",
       "workspaceInstallHelp": "安装到当前工作区的 skills 目录，仅供当前工作区使用。",
-      "globalInstallHelp": "安装到 Huabu 的全局 Skills 目录，可供所有工作区使用。",
+      "globalInstallHelp": "安装到 zeroxB 的全局 Skills 目录，可供所有工作区使用。",
       "metadata": "元数据",
       "content": "指令内容",
       "noSkills": "还没有 Skills",
@@ -744,7 +744,7 @@
       "resourcesTitle": "资源与支持",
       "resourcesDesc": "查看文档、版本记录，或进入社区反馈问题。",
       "licenseText": "开源项目 · GitHub · GPL-3.0",
-      "version": "Huabu v{version}",
+      "version": "zeroxB v{version}",
       "checkReleases": "查询历史版本",
       "language": "语言",
       "checkUpdate": "检查更新",
@@ -791,7 +791,7 @@
         },
         "donation": {
           "title": "捐赠支持",
-          "desc": "如果 Huabu 对你有帮助，可以通过捐赠支持项目持续维护。"
+          "desc": "如果 zeroxB 对你有帮助，可以通过捐赠支持项目持续维护。"
         },
         "docs": {
           "title": "文档与配置",
@@ -814,7 +814,7 @@
           "desc": "配置 Git、S3 和 WebDAV 同步。"
         },
         "donate": {
-          "title": "支持 Huabu",
+          "title": "支持 zeroxB",
           "buttonName": "捐赠",
           "desc": "前往捐赠页面支持项目。"
         },
@@ -884,7 +884,7 @@
       "newToken": "创建 access token",
       "tokenPermissionGuide": "查看权限说明",
       "toggleTokenVisibility": "显示或隐藏 Access Token",
-      "newTokenDesc": "建议使用 Fine-grained token。已有仓库需要 Contents 读写权限；由 Huabu 创建仓库还需要 Administration 读写权限。",
+      "newTokenDesc": "建议使用 Fine-grained token。已有仓库需要 Contents 读写权限；由 zeroxB 创建仓库还需要 Administration 读写权限。",
       "giteeTokenDesc": "Gitee 私人令牌用于同步数据，需要有仓库的读写权限，配置后将自动创建文件仓库（私有）和图床仓库。",
       "imageRepoSetting": "开启图床",
       "imageRepoSettingDesc": "你已经配置了图床仓库，开启此项将使用图床仓库，否则将使用本地存储。",
@@ -1445,7 +1445,7 @@
       "model": "模型",
       "defaultModels": {
         "title": "配置你的 AI",
-        "desc": "Huabu 不内置第三方密钥。请在下方添加模型平台，并填写你自己的 API 地址和密钥。",
+        "desc": "zeroxB 不内置第三方密钥。请在下方添加模型平台，并填写你自己的 API 地址和密钥。",
         "chatModel": {
           "name": "Qwen/Qwen3-8B",
           "type": "对话模型",
@@ -1533,7 +1533,7 @@
     },
     "shortcuts": {
       "title": "快捷键",
-      "desc": "在这里，你可以配置快捷键，帮助你更高效地使用 Huabu。",
+      "desc": "在这里，你可以配置快捷键，帮助你更高效地使用 zeroxB。",
       "resetDefaults": "重置",
       "clear": "清空",
       "noShortcut": "未设置",
@@ -1542,7 +1542,7 @@
       "conflictGlobal": "与全局快捷键「{name}」冲突",
       "globalShortcuts": {
         "title": "全局快捷键",
-        "desc": "这些快捷键由系统注册，Huabu 不在前台时也可能触发。"
+        "desc": "这些快捷键由系统注册，zeroxB 不在前台时也可能触发。"
       },
       "editorShortcuts": {
         "title": "编辑器快捷键",
@@ -2651,8 +2651,8 @@
       "fit": "适应视图",
       "layout": "自动整理",
       "export": "导出 PNG",
-      "import": { "title": "导入", "file": "选择文件", "content": "输入内容", "contentTitle": "导入画布内容", "contentDescription": "支持 Huabu Canvas JSON 或 Mermaid 流程图内容，导入后会替换当前画布。", "contentPlaceholder": "粘贴 Canvas JSON 或 Mermaid 内容…", "confirm": "导入到当前画布" },
-      "exportMenu": { "computer": "保存到电脑", "source": "可编辑文件", "png2x": "PNG · 2× 高清", "png4x": "PNG · 4× 超清", "svg": "SVG · 矢量图", "canvasFile": "Huabu Canvas JSON", "mermaid": "Mermaid 流程图" }
+      "import": { "title": "导入", "file": "选择文件", "content": "输入内容", "contentTitle": "导入画布内容", "contentDescription": "支持 zeroxB Canvas JSON 或 Mermaid 流程图内容，导入后会替换当前画布。", "contentPlaceholder": "粘贴 Canvas JSON 或 Mermaid 内容…", "confirm": "导入到当前画布" },
+      "exportMenu": { "computer": "保存到电脑", "source": "可编辑文件", "png2x": "PNG · 2× 高清", "png4x": "PNG · 4× 超清", "svg": "SVG · 矢量图", "canvasFile": "zeroxB Canvas JSON", "mermaid": "Mermaid 流程图" }
     },
     "contextMenu": { "selectAll": "全选", "copy": "复制", "paste": "粘贴", "duplicate": "创建副本", "delete": "删除所选内容" },
     "empty": {
@@ -2791,14 +2791,14 @@
       },
       "onboarding": {
         "title": "新手引导",
-        "subtitle": "跟着这三步体验 Huabu 的核心工作流。",
+        "subtitle": "跟着这三步体验 zeroxB 的核心工作流。",
         "dismiss": "跳过新手引导",
         "reopen": "重新显示新手引导",
         "start": "开始引导",
         "viewHint": "查看提示",
         "continue": "继续下一步",
         "completed": "已完成",
-        "allDone": "新手任务已全部完成，你已经体验了 Huabu 的基础工作流。",
+        "allDone": "新手任务已全部完成，你已经体验了 zeroxB 的基础工作流。",
         "stepLabel": "任务 ({current}/{total})",
         "stepCompletedLabel": "已完成任务 ({current}/{total})",
         "afterOrganizeDialog": {

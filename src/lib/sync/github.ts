@@ -388,7 +388,7 @@ export async function createSyncRepo(name: string, isPrivate?: boolean) {
       headers,
       body: JSON.stringify({
         name,
-        description: 'This is a Huabu sync repository.',
+        description: 'This is a zeroxB sync repository.',
         private: isPrivate
       }),
       proxy

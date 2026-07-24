@@ -198,13 +198,13 @@ export function EmptyState({
           <div className="flex items-center justify-center gap-3 mb-2">
             <Image 
               src="/app-icon.png" 
-              alt="Huabu"
+              alt="zeroxB"
               width={60}
               height={60}
               className="w-10 h-10 dark:invert"
             />
             <h1 className="text-4xl font-bold tracking-tight">
-              Huabu
+              zeroxB
             </h1>
           </div>
           <EmptyTitle className="text-xl">

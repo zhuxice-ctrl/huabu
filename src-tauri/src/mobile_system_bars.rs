@@ -9,7 +9,7 @@ use tauri::{
 #[cfg(target_os = "android")]
 const PLUGIN_NAME: &str = "system_bars";
 #[cfg(target_os = "android")]
-const ANDROID_PLUGIN_IDENTIFIER: &str = "com.codexu.Huabu";
+const ANDROID_PLUGIN_IDENTIFIER: &str = "com.zeroxb.desktop";
 #[cfg(target_os = "android")]
 const ANDROID_PLUGIN_CLASS: &str = "SystemBarsPlugin";
 

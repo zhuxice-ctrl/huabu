@@ -3,7 +3,7 @@
   "configured": true,
   "task_id": "foundation-03-contract",
   "task_type": "code",
-  "goal": "Add and commit the deterministic Huabu foundation verification contract and prove it fails against the upstream identity.",
+  "goal": "Add and commit the deterministic zeroxB foundation verification contract and prove it fails against the upstream identity.",
   "non_goals": ["Do not make the contract pass.", "Do not edit Tauri or Rust manifests."],
   "acceptance_criteria": ["verification script exactly implements the plan assertions", "package.json exposes verify:foundation", "pnpm verify:foundation fails before success output", "only contract files are committed"],
   "risk_level": "low",

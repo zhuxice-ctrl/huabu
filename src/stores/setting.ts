@@ -336,7 +336,7 @@ const useSettingStore = create<SettingState>((set, get) => ({
     const existingAiModelList = (await store.get('aiModelList') as AiConfig[]) || []
     const isLegacyUpstreamModel = (config: AiConfig) => (
       config.key.startsWith('note-gen-')
-      || config.title === 'Huabu Limited'
+      || config.title === 'NoteGen Limited'
       || config.models?.some(model => model.id.startsWith('note-gen-'))
     )
     const finalAiModelList = existingAiModelList.filter(config => !isLegacyUpstreamModel(config))

@@ -4,7 +4,7 @@
   "task_id": "foundation-02-baseline-build",
   "task_type": "code",
   "goal": "Install the pinned upstream dependencies and prove the unmodified frontend and Rust desktop application build on Windows.",
-  "non_goals": ["Do not edit source or lockfiles.", "Do not rebrand.", "Do not package Huabu."],
+  "non_goals": ["Do not edit source or lockfiles.", "Do not rebrand.", "Do not package zeroxB."],
   "acceptance_criteria": ["Node 24, pnpm 9.15.9, Rust and Cargo are recorded", "frozen pnpm install succeeds without changes", "pnpm build passes", "cargo check passes", "worktree remains clean"],
   "risk_level": "low",
   "execution_mode": "solo_worker",

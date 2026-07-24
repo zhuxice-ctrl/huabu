@@ -58,7 +58,7 @@
       "tasks": [{
         "task_id": "foundation-03-contract",
         "module": "foundation-contract",
-        "goal": "Add and commit a deterministic failing Huabu identity contract.",
+        "goal": "Add and commit a deterministic failing zeroxB identity contract.",
         "depends_on": ["foundation-02a-build-fix"],
         "task_spec_path": ".adworkflow/task_specs/foundation-03-contract.json",
         "expected_outputs": ["worker_state.json", "verification_result.json"]
@@ -71,7 +71,7 @@
       "tasks": [{
         "task_id": "foundation-04-identity",
         "module": "windows-identity",
-        "goal": "Implement Huabu package identity, GPL attribution, and Windows-only CI.",
+        "goal": "Implement zeroxB package identity, GPL attribution, and Windows-only CI.",
         "depends_on": ["foundation-03-contract"],
         "task_spec_path": ".adworkflow/task_specs/foundation-04-identity.json",
         "expected_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"]

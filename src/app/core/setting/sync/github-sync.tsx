@@ -17,7 +17,7 @@ const GITHUB_CONFIG = {
   tokenKey: 'accessToken',
   tokenLabel: 'Github Access Token',
   tokenDesc: '',
-  tokenUrl: 'https://github.com/settings/personal-access-tokens/new?name=Huabu&description=Huabu+sync&expires_in=none&contents=write&administration=write',
+  tokenUrl: 'https://github.com/settings/personal-access-tokens/new?name=zeroxB&description=zeroxB+sync&expires_in=none&contents=write&administration=write',
   tokenUrlText: '',
 }
 

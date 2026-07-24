@@ -1,4 +1,4 @@
-package com.codexu.Huabu
+package com.zeroxb.desktop
 
 import android.app.Activity
 import android.graphics.Color

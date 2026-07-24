@@ -3,7 +3,7 @@
   "configured": true,
   "task_id": "foundation-06-seams",
   "task_type": "architecture",
-  "goal": "Create and verify the imported architecture seam map for subsequent Huabu plans.",
+  "goal": "Create and verify the imported architecture seam map for subsequent zeroxB plans.",
   "non_goals": ["Do not modify product code.", "Do not expand future feature scope."],
   "acceptance_criteria": ["fork-baseline.md matches the plan", "every referenced path exists", "explicit deferrals are recorded", "only the architecture document is committed"],
   "risk_level": "low",

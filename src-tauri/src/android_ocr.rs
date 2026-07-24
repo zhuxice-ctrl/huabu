@@ -6,7 +6,7 @@ use tauri::{
 };
 
 const PLUGIN_NAME: &str = "ocr";
-const ANDROID_PLUGIN_IDENTIFIER: &str = "com.codexu.Huabu";
+const ANDROID_PLUGIN_IDENTIFIER: &str = "com.zeroxb.desktop";
 const ANDROID_PLUGIN_CLASS: &str = "OcrPlugin";
 
 pub struct AndroidOcrPlugin<R: Runtime>(PluginHandle<R>);

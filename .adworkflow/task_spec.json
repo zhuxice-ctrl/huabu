@@ -3,9 +3,9 @@
   "configured": true,
   "task_id": "foundation-08-msvc-package-verification",
   "task_type": "code",
-  "goal": "Complete the Windows toolchain and installer verification, remove inherited runtime services and branding, and deliver the installed Huabu canvas with its bottom AI dock and safety modes.",
+  "goal": "Complete the Windows toolchain and installer verification, remove inherited runtime services and branding, and deliver the installed zeroxB canvas with its bottom AI dock and safety modes.",
   "non_goals": ["Do not publish artifacts to a remote service.", "Do not merge main.", "Do not configure signing or updater endpoints.", "Do not target non-Windows platforms."],
-  "acceptance_criteria": ["MSVC link.exe is available from an automated build environment", "cargo check --locked passes", "debug NSIS build passes", "Huabu installer exists and carries Huabu identity", "installed desktop launch smoke test passes", "foundation contract and frontend build remain green", "no inherited API key, analytics endpoint, or upstream runtime update service remains", "canvas opens in an immersive layout with a bottom AI dock and visible permission safety modes"],
+  "acceptance_criteria": ["MSVC link.exe is available from an automated build environment", "cargo check --locked passes", "debug NSIS build passes", "zeroxB installer exists and carries zeroxB identity", "installed desktop launch smoke test passes", "foundation contract and frontend build remain green", "no inherited API key, analytics endpoint, or upstream runtime update service remains", "canvas opens in an immersive layout with a bottom AI dock and visible permission safety modes"],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell", "network", "install-system-dependencies", "launch-local-application"],
@@ -13,6 +13,6 @@
   "do_not_touch": ["main branch", "remote repositories", "release publishing", "user documents"],
   "entrypoints": ["src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", "docs/verification/windows-foundation.md"],
   "context_sources": ["foundation-07 residual MSVC/link.exe blocker", "user authorization to install the toolchain and fix verification failures"],
-  "notes": ["The official Visual Studio Build Tools installer was attempted under F:\\VSBuildTools but its UAC prompt was not accepted; use the portable MSVC environment under F:\\toolchains\\portable-msvc instead.", "Use the fixed UTF-8 I/O baseline.", "Do not claim a smoke test unless the installed F:\\HuabuApp\\huabu.exe launches and responds."],
+  "notes": ["The official Visual Studio Build Tools installer was attempted under F:\\VSBuildTools but its UAC prompt was not accepted; use the portable MSVC environment under F:\\toolchains\\portable-msvc instead.", "Use the fixed UTF-8 I/O baseline.", "Do not claim a smoke test unless the installed F:\\zeroxBApp\\zeroxb.exe launches and responds."],
   "implementation_owner": "root-orchestrator"
 }

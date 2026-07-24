@@ -1,5 +1,5 @@
 {
-  "name": "huabu",
+  "name": "zeroxb",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "lint": "next lint",
     "tauri": "tauri",
     "docs:build": "npm --prefix ./docs run build",
-    "verify:foundation": "node scripts/verify-huabu-foundation.mjs"
+    "verify:foundation": "node scripts/verify-zeroxb-foundation.mjs"
   },
   "dependencies": {
     "@antv/infographic": "^0.2.7",

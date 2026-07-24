@@ -1,8 +1,8 @@
-# Huabu Windows Fork Foundation Implementation Plan
+# zeroxB Windows Fork Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Import the exact NoteGen canvas commit into Huabu with full upstream history, establish a legally correct GPL-3.0 Windows-only product identity, and produce a reproducible Windows build baseline.
+**Goal:** Import the exact NoteGen canvas commit into zeroxB with full upstream history, establish a legally correct GPL-3.0 Windows-only product identity, and produce a reproducible Windows build baseline.
 
 **Architecture:** Keep NoteGen as an `upstream` Git remote and merge commit `636d4f8` into a dedicated foundation branch without rewriting either history. Make only identity, bundling, updater, CI, and attribution changes in this phase; defer UI and feature changes until the imported application builds unchanged on Windows.
 
@@ -15,7 +15,7 @@
 This plan creates or changes only these responsibilities:
 
 - `.git/config` — records the NoteGen `upstream` remote; not committed.
-- `package.json` — Huabu package name and foundation verification command.
+- `package.json` — zeroxB package name and foundation verification command.
 - `src-tauri/tauri.conf.json` — Windows product name, identifier, bundle targets, and removal of NoteGen updater endpoints.
 - `src-tauri/Cargo.toml` — Rust package identity and removal of the macOS-only Tauri feature.
 - `.github/workflows/release.yml` — removed because it publishes NoteGen Android/macOS/Linux/Windows artifacts and uses NoteGen release endpoints.
@@ -33,7 +33,7 @@ This phase does **not** rename every visible NoteGen string, remove dormant mobi
 - Modify: `.git/config` (Git remote metadata, not committed)
 - Import: NoteGen repository tree at commit `636d4f896850dfadfb7a5f74e1f9bd9a583c8096`
 
-- [ ] **Step 1: Verify the Huabu documentation branch is clean**
+- [ ] **Step 1: Verify the zeroxB documentation branch is clean**
 
 Run from `F:\huabu`:
 
@@ -82,7 +82,7 @@ git status --short --branch
 git log --graph --oneline -5
 ```
 
-Expected: merge succeeds without content conflicts; both the Huabu documentation root and NoteGen upstream are parents of the merge commit; the worktree is clean.
+Expected: merge succeeds without content conflicts; both the zeroxB documentation root and NoteGen upstream are parents of the merge commit; the worktree is clean.
 
 ### Task 2: Prove the unmodified upstream baseline builds on Windows
 
@@ -122,7 +122,7 @@ git status --short
 
 Expected: install succeeds and `git status --short` remains empty.
 
-- [ ] **Step 4: Build the imported frontend before any Huabu changes**
+- [ ] **Step 4: Build the imported frontend before any zeroxB changes**
 
 ```powershell
 pnpm build
@@ -138,7 +138,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 Expected: Rust compilation completes without errors. Record any warnings for later cleanup, but do not change code in this task.
 
-### Task 3: Add a failing Huabu foundation contract
+### Task 3: Add a failing zeroxB foundation contract
 
 **Files:**
 - Create: `scripts/verify-huabu-foundation.mjs`
@@ -167,7 +167,7 @@ const windowsCi = read('.github/workflows/windows-ci.yml')
 
 assert.equal(packageJson.name, 'huabu')
 assert.equal(packageJson.scripts['verify:foundation'], 'node scripts/verify-huabu-foundation.mjs')
-assert.equal(tauriConfig.productName, 'Huabu')
+assert.equal(tauriConfig.productName, 'zeroxB')
 assert.equal(tauriConfig.identifier, 'com.huabu.desktop')
 assert.deepEqual(tauriConfig.bundle.targets, ['nsis', 'msi'])
 assert.equal(tauriConfig.bundle.createUpdaterArtifacts, false)
@@ -182,7 +182,7 @@ assert.ok(!existsSync(join(root, '.github/workflows/release.yml')))
 assert.match(windowsCi, /runs-on: windows-latest/)
 assert.doesNotMatch(windowsCi, /ubuntu-|macos-|android/i)
 
-console.log('Huabu foundation contract passed')
+console.log('zeroxB foundation contract passed')
 ```
 
 - [ ] **Step 2: Add the verification command to `package.json`**
@@ -205,12 +205,12 @@ Expected: FAIL before reaching the success message. The first failure is accepta
 
 ```powershell
 git add package.json scripts/verify-huabu-foundation.mjs
-git commit -m 'test: define Huabu fork foundation contract'
+git commit -m 'test: define zeroxB fork foundation contract'
 ```
 
 Expected: one commit containing only the contract and package script.
 
-### Task 4: Implement the Huabu Windows identity and attribution
+### Task 4: Implement the zeroxB Windows identity and attribution
 
 **Files:**
 - Modify: `package.json`
@@ -239,7 +239,7 @@ Apply these changes to `src-tauri/tauri.conf.json`:
 ```json
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Huabu",
+  "productName": "zeroxB",
   "version": "0.32.1",
   "identifier": "com.huabu.desktop",
   "build": {
@@ -307,7 +307,7 @@ Apply this diff to `src-tauri/Cargo.toml`:
 -description = "A Tauri App"
 -authors = ["codexu"]
 +description = "AI-native spatial notes for Windows"
-+authors = ["Huabu contributors"]
++authors = ["zeroxB contributors"]
 @@
 -tauri = { version = "2", features = [ "macos-private-api", "protocol-asset", "image-png", "devtools", "tray-icon" ] }
 +tauri = { version = "2", features = [ "protocol-asset", "image-png", "devtools", "tray-icon" ] }
@@ -342,7 +342,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Verify Huabu foundation
+      - name: Verify zeroxB foundation
         run: pnpm verify:foundation
       - name: Build frontend
         run: pnpm build
@@ -355,20 +355,20 @@ jobs:
 Create `NOTICE.md`:
 
 ```markdown
-# Huabu attribution notice
+# zeroxB attribution notice
 
-Huabu is an independent GPL-3.0 open-source product derived from NoteGen.
+zeroxB is an independent GPL-3.0 open-source product derived from NoteGen.
 
 - Upstream project: https://github.com/codexu/note-gen
 - Pinned foundation commit: `636d4f896850dfadfb7a5f74e1f9bd9a583c8096`
 - Upstream license: GNU General Public License v3.0
 
-Huabu preserves the upstream copyright and license notices. Modifications include
-the Huabu Windows product identity and, in later commits, a canvas-first interface,
+zeroxB preserves the upstream copyright and license notices. Modifications include
+the zeroxB Windows product identity and, in later commits, a canvas-first interface,
 AI permission modes, reversible AI operations, spatial memory retrieval, and AI
 relationship overlays.
 
-The Huabu source code and derivative distributions remain licensed under GPL-3.0.
+The zeroxB source code and derivative distributions remain licensed under GPL-3.0.
 ```
 
 - [ ] **Step 6: Run the foundation contract**
@@ -377,7 +377,7 @@ The Huabu source code and derivative distributions remain licensed under GPL-3.0
 pnpm verify:foundation
 ```
 
-Expected: `Huabu foundation contract passed`.
+Expected: `zeroxB foundation contract passed`.
 
 - [ ] **Step 7: Verify only the intended files changed**
 
@@ -393,7 +393,7 @@ Expected: only the files listed in this task are added, modified, or deleted; `g
 
 ```powershell
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml .github/workflows NOTICE.md
-git commit -m 'chore: establish Huabu Windows product identity'
+git commit -m 'chore: establish zeroxB Windows product identity'
 ```
 
 Expected: one commit containing the identity, attribution, and CI changes.
@@ -433,10 +433,10 @@ Expected: PASS without Rust errors.
 
 ```powershell
 pnpm tauri build --debug --bundles nsis
-Get-ChildItem -Recurse 'src-tauri\target\debug\bundle\nsis' -Filter 'Huabu*.exe'
+Get-ChildItem -Recurse 'src-tauri\target\debug\bundle\nsis' -Filter 'zeroxB*.exe'
 ```
 
-Expected: Tauri completes and the second command lists one Huabu NSIS installer.
+Expected: Tauri completes and the second command lists one zeroxB NSIS installer.
 
 - [ ] **Step 5: Create the reproducible verification checklist**
 
@@ -445,7 +445,7 @@ Create `docs/verification/windows-foundation.md`:
 ````markdown
 # Windows foundation verification
 
-Run from the Huabu repository root in PowerShell:
+Run from the zeroxB repository root in PowerShell:
 
 ```powershell
 corepack prepare pnpm@9.15.9 --activate
@@ -458,16 +458,16 @@ pnpm tauri build --debug --bundles nsis
 
 Expected results:
 
-- The foundation contract prints `Huabu foundation contract passed`.
+- The foundation contract prints `zeroxB foundation contract passed`.
 - Next.js creates `out/`.
 - Cargo completes without errors.
-- `src-tauri/target/debug/bundle/nsis/` contains a `Huabu*.exe` installer.
+- `src-tauri/target/debug/bundle/nsis/` contains a `zeroxB*.exe` installer.
 
 Manual smoke check:
 
 1. Launch the debug application with `pnpm tauri dev`.
 2. Confirm one Windows application window opens.
-3. Confirm the process and installer use the Huabu product identity.
+3. Confirm the process and installer use the zeroxB product identity.
 4. Confirm no request targets `download.notegen.top` or the NoteGen GitHub updater.
 5. Close the application and confirm it exits cleanly.
 ````
@@ -498,7 +498,7 @@ git commit -m 'docs: record Windows foundation verification'
 Create `docs/architecture/fork-baseline.md`:
 
 ```markdown
-# Huabu fork baseline
+# zeroxB fork baseline
 
 ## Pinned upstream
 
@@ -508,7 +508,7 @@ Create `docs/architecture/fork-baseline.md`:
 
 ## Preserved seams
 
-| Responsibility | Upstream path | Huabu follow-up phase |
+| Responsibility | Upstream path | zeroxB follow-up phase |
 |---|---|---|
 | Canvas schema | `src/types/canvas.ts` | permission and overlay plans |
 | Canvas UI | `src/app/core/main/canvas/canvas-editor.tsx` | canvas shell and AI dock plans |
@@ -528,7 +528,7 @@ Create `docs/architecture/fork-baseline.md`:
 - No global removal of NoteGen UI strings in the foundation phase.
 - No deletion of dormant mobile/macOS conditional source in the foundation phase.
 - No AI permission or data migration changes in the foundation phase.
-- No release publishing or updater endpoint is configured until Huabu owns signing keys and a release repository.
+- No release publishing or updater endpoint is configured until zeroxB owns signing keys and a release repository.
 ```
 
 - [ ] **Step 2: Verify every referenced path exists**
@@ -561,7 +561,7 @@ Expected: `Fork baseline paths verified`.
 
 ```powershell
 git add docs/architecture/fork-baseline.md
-git commit -m 'docs: map NoteGen seams for Huabu development'
+git commit -m 'docs: map NoteGen seams for zeroxB development'
 ```
 
 ### Task 7: Final branch verification and review handoff
@@ -588,14 +588,14 @@ git log --oneline --decorate -8
 
 Expected: clean `foundation/notegen-636d4f8` branch with separate import, contract, identity, verification, and architecture-map commits. Build output remains ignored.
 
-- [ ] **Step 3: Compare the branch with Huabu main**
+- [ ] **Step 3: Compare the branch with zeroxB main**
 
 ```powershell
 git diff --stat main...HEAD
 git diff --name-status main...HEAD
 ```
 
-Expected: the full NoteGen tree plus the explicitly listed Huabu foundation changes; no feature implementation beyond foundation scope.
+Expected: the full NoteGen tree plus the explicitly listed zeroxB foundation changes; no feature implementation beyond foundation scope.
 
 - [ ] **Step 4: Hand off for review without merging**
 
@@ -605,7 +605,7 @@ Report:
 Branch: foundation/notegen-636d4f8
 Pinned upstream: 636d4f896850dfadfb7a5f74e1f9bd9a583c8096
 Verification: foundation contract, frontend build, cargo check, NSIS debug build
-Next plan: Huabu canvas-first shell
+Next plan: zeroxB canvas-first shell
 ```
 
 Do not merge into `main` until the user reviews the imported application and foundation diff.

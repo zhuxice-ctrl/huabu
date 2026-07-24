@@ -20,7 +20,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Verify Huabu foundation
+      - name: Verify zeroxB foundation
         run: pnpm verify:foundation
       - name: Build frontend
         run: pnpm build

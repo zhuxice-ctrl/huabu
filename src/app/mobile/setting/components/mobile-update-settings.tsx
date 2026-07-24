@@ -36,14 +36,14 @@ export function MobileUpdateSettings() {
         <div className="flex items-center gap-3 p-4">
           <Image
             src="/app-icon.png"
-            alt="Huabu logo"
+            alt="zeroxB logo"
             className="size-12 shrink-0 rounded-xl dark:invert"
             width={48}
             height={48}
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold leading-none">Huabu</h2>
+              <h2 className="text-lg font-semibold leading-none">zeroxB</h2>
               <Badge variant="outline">v{version || '-'}</Badge>
               <ArrowRight className="size-3.5 text-muted-foreground" />
               <Badge className="border-transparent bg-green-600 text-white hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-500">

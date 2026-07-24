@@ -1,4 +1,4 @@
-# Huabu fork baseline
+# zeroxB fork baseline
 
 ## Pinned upstream
 
@@ -8,7 +8,7 @@
 
 ## Preserved seams
 
-| Responsibility | Upstream path | Huabu follow-up phase |
+| Responsibility | Upstream path | zeroxB follow-up phase |
 |---|---|---|
 | Canvas schema | `src/types/canvas.ts` | permission and overlay plans |
 | Canvas UI | `src/app/core/main/canvas/canvas-editor.tsx` | canvas shell and AI dock plans |
@@ -28,4 +28,4 @@
 - No global removal of NoteGen UI strings in the foundation phase.
 - No deletion of dormant mobile/macOS conditional source in the foundation phase.
 - No AI permission or data migration changes in the foundation phase.
-- No release publishing or updater endpoint is configured until Huabu owns signing keys and a release repository.
+- No release publishing or updater endpoint is configured until zeroxB owns signing keys and a release repository.
