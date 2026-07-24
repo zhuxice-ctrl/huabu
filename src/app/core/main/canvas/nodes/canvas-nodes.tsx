@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useState, type CSSProperties } from 'react'
+import { memo, useEffect, useRef, useState, type CSSProperties } from 'react'
 import Image from 'next/image'
 import { Handle, NodeResizer, Position, useReactFlow, type Node, type NodeProps } from '@xyflow/react'
 import { CheckSquare2, ExternalLink, FileText, ImageIcon, Square } from 'lucide-react'
@@ -94,10 +94,43 @@ export const TerminatorNode = memo(function TerminatorNode({ id, data }: NodePro
   )
 })
 
-export const TextCanvasNode = memo(function TextCanvasNode({ id, data }: NodeProps<FlowCanvasNode>) {
+export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
+  const { updateNodeData } = useReactFlow<FlowCanvasNode>()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const focusNode = (nodeId: string) => {
+      if (nodeId !== id) return
+      textareaRef.current?.focus()
+    }
+    emitter.on('canvas-focus-node', focusNode)
+    return () => emitter.off('canvas-focus-node', focusNode)
+  }, [id])
+
   return (
-    <div style={data.color ? { color: data.color } : undefined} className={cn('min-w-24 rounded-md px-2 py-1 text-sm text-foreground in-[.selected]:ring-1 in-[.selected]:ring-ring', previewClassName(data.previewState))}>
-      <EditableLabel id={id} value={data.label || '文本'} />
+    <div
+      style={nodeStyle(data)}
+      className={cn(
+        'relative size-full min-h-[72px] min-w-[120px] rounded-xl border bg-card p-2 text-card-foreground shadow-sm in-[.selected]:ring-2 in-[.selected]:ring-ring/45',
+        previewClassName(data.previewState),
+      )}
+    >
+      <NodeResizer
+        isVisible={selected}
+        minWidth={120}
+        minHeight={72}
+      />
+      <ConnectionHandles />
+      <textarea
+        ref={textareaRef}
+        className="nodrag nowheel size-full resize-none bg-transparent text-left text-sm leading-6 outline-none placeholder:text-muted-foreground"
+        value={data.label || ''}
+        placeholder="输入内容…"
+        onFocus={() => emitter.emit('canvas-history-checkpoint')}
+        onChange={event => updateNodeData(id, { label: event.target.value })}
+        onPointerDown={event => event.stopPropagation()}
+        aria-label="文本区块"
+      />
     </div>
   )
 })

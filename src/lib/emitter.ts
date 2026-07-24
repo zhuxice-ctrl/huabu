@@ -132,6 +132,7 @@ interface Events {
   'editor-undo-redo-changed': { undo: boolean; redo: boolean };
   'canvas-document-replace': { canvasId: string; document: CanvasDocument };
   'canvas-history-checkpoint': void;
+  'canvas-focus-node': string;
   'canvas-undo': { canvasId: string };
   'canvas-redo': { canvasId: string };
   'canvas-can-undo-redo': { canvasId: string; resolve: (can: { undo: boolean; redo: boolean }) => void };

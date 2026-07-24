@@ -131,6 +131,10 @@ import { CanvasFooter } from './canvas-footer'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
+import {
+  normalizeDrawRect,
+  POINTER_DRAG_THRESHOLD,
+} from '@/lib/canvas/gesture-policy'
 
 const elk = new ELK()
 const DRAWING_CURSORS = {
@@ -159,6 +163,12 @@ interface CanvasEditorProps {
 interface CanvasSnapshot {
   nodes: FlowCanvasNode[]
   edges: Edge[]
+}
+
+interface DrawDraft {
+  pointerId: number
+  start: { x: number; y: number }
+  current: { x: number; y: number }
 }
 
 function CanvasToolbarTooltip({
@@ -291,6 +301,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [edgeLabelDraft, setEdgeLabelDraft] = useState('')
   const [importContentOpen, setImportContentOpen] = useState(false)
   const [importContentDraft, setImportContentDraft] = useState('')
+  const [drawDraft, setDrawDraft] = useState<DrawDraft | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<CanvasSnapshot[]>((initialHistory?.undo || []).map(restoreHistorySnapshot))
   const redoRef = useRef<CanvasSnapshot[]>((initialHistory?.redo || []).map(restoreHistorySnapshot))
@@ -623,6 +634,92 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     pushHistory()
     setEdges(current => addEdge({ ...connection, type: 'smoothstep' }, current))
   }, [pushHistory, setEdges])
+
+  const finishBlockDraw = useCallback((draft: DrawDraft) => {
+    const distance = Math.hypot(
+      draft.current.x - draft.start.x,
+      draft.current.y - draft.start.y,
+    )
+    if (distance < POINTER_DRAG_THRESHOLD) {
+      setNodes(current => current.map(node => ({ ...node, selected: false })))
+      setEdges(current => current.map(edge => ({ ...edge, selected: false })))
+      return
+    }
+
+    const screenRect = normalizeDrawRect(draft.start, draft.current)
+    const position = screenToFlowPosition({ x: screenRect.x, y: screenRect.y })
+    const end = screenToFlowPosition({
+      x: screenRect.x + screenRect.width,
+      y: screenRect.y + screenRect.height,
+    })
+    const id = crypto.randomUUID()
+    pushHistory()
+    setNodes(current => [
+      ...current.map(node => ({ ...node, selected: false })),
+      {
+        id,
+        type: 'text',
+        position,
+        width: Math.max(120, end.x - position.x),
+        height: Math.max(72, end.y - position.y),
+        selected: true,
+        data: {
+          label: '',
+          fillColor: 'var(--card)',
+          color: 'var(--border)',
+        },
+      },
+    ])
+    setEdges(current => current.map(edge => ({ ...edge, selected: false })))
+    requestAnimationFrame(() => emitter.emit('canvas-focus-node', id))
+  }, [pushHistory, screenToFlowPosition, setEdges, setNodes])
+
+  const handleBlockDrawPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (
+      event.button !== 0
+      || tool !== 'select'
+      || previewSnapshot
+      || !(event.target instanceof Element)
+      || !event.target.classList.contains('react-flow__pane')
+    ) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const point = { x: event.clientX, y: event.clientY }
+    setDrawDraft({ pointerId: event.pointerId, start: point, current: point })
+  }, [previewSnapshot, tool])
+
+  const handleBlockDrawPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    setDrawDraft(current => (
+      current?.pointerId === event.pointerId
+        ? { ...current, current: { x: event.clientX, y: event.clientY } }
+        : current
+    ))
+  }, [])
+
+  const handleBlockDrawPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
+    event.preventDefault()
+    event.stopPropagation()
+    const completed = {
+      ...drawDraft,
+      current: { x: event.clientX, y: event.clientY },
+    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setDrawDraft(null)
+    finishBlockDraw(completed)
+  }, [drawDraft, finishBlockDraw])
+
+  const handleBlockDrawPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setDrawDraft(null)
+  }, [drawDraft])
 
   const getSelectedSnapshot = useCallback((): CanvasSnapshot | null => {
     const selectedNodes = nodes.filter(node => node.selected)
@@ -1401,7 +1498,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       >
         <ContextMenu>
           <ContextMenuTrigger asChild>
-            <div className="size-full">
+            <div
+              className="size-full"
+              onPointerDownCapture={handleBlockDrawPointerDown}
+              onPointerMove={handleBlockDrawPointerMove}
+              onPointerUp={handleBlockDrawPointerUp}
+              onPointerCancel={handleBlockDrawPointerCancel}
+            >
               <ReactFlow
         className={cn(
           tool === 'select' && '[&_.react-flow__pane]:!cursor-default',
@@ -1475,8 +1578,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         nodesDraggable={!previewSnapshot && tool === 'select'}
         nodesConnectable={!previewSnapshot && (tool === 'select' || tool === 'connector')}
         elementsSelectable={!previewSnapshot && tool === 'select'}
-        panOnDrag={tool === 'hand'}
-        selectionOnDrag={tool === 'select'}
+        panOnDrag={[1]}
+        selectionOnDrag={false}
         selectionMode={SelectionMode.Partial}
         snapToGrid={document.settings.snapToGrid}
         snapGrid={[20, 20]}
@@ -1487,6 +1590,21 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           {document.settings.showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} />}
           <MiniMap pannable zoomable />
               </ReactFlow>
+              {drawDraft && (() => {
+                const rect = normalizeDrawRect(drawDraft.start, drawDraft.current)
+                const bounds = containerRef.current?.getBoundingClientRect()
+                return (
+                  <div
+                    className="pointer-events-none absolute rounded-xl border-2 border-primary/70 bg-primary/10 shadow-[0_0_0_1px_rgba(255,255,255,0.5)_inset]"
+                    style={{
+                      left: rect.x - (bounds?.left || 0),
+                      top: rect.y - (bounds?.top || 0),
+                      width: rect.width,
+                      height: rect.height,
+                    }}
+                  />
+                )
+              })()}
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent>
