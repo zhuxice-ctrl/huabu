@@ -116,6 +116,7 @@ import {
 } from '@/lib/canvas/freehand'
 import {
   DecisionNode,
+  FileCanvasNode,
   FreehandNode,
   GroupCanvasNode,
   ImageCanvasNode,
@@ -135,6 +136,12 @@ import {
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
 } from '@/lib/canvas/gesture-policy'
+import {
+  draftsFromTransfer,
+  offsetIngestDrafts,
+  type CanvasIngestDraft,
+  type CanvasTransferInput,
+} from '@/lib/canvas/content-ingest'
 
 const elk = new ELK()
 const DRAWING_CURSORS = {
@@ -150,6 +157,7 @@ const nodeTypes: NodeTypes = {
   text: TextCanvasNode,
   note: NoteCanvasNode,
   image: ImageCanvasNode,
+  file: FileCanvasNode,
   link: LinkCanvasNode,
   todo: TodoCanvasNode,
   group: GroupCanvasNode,
@@ -932,47 +940,135 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }])
   }, [loadFileTree, pushHistory, screenToFlowPosition, setNodes, t])
 
-  useEffect(() => {
-    const handlePaste = async (event: ClipboardEvent) => {
-      if (useCanvasStore.getState().activeCanvasId !== canvasId) return
-      const root = containerRef.current
-      if (!root || !(event.target instanceof globalThis.Node) || !root.contains(event.target)) return
-      const target = event.target
-      if (isInteractiveCanvasTarget(target)) return
-      const image = [...(event.clipboardData?.files || [])].find(file => file.type.startsWith('image/'))
-      if (!image) return
-      event.preventDefault()
-      try {
-        const extension = image.type.split('/')[1]?.replace('svg+xml', 'svg') || 'png'
-        const relativePath = `画布资源/${crypto.randomUUID()}.${extension}`
+  const persistIngestFile = useCallback(async (file: File) => {
+    const rawExtension = file.name.includes('.')
+      ? file.name.split('.').pop()
+      : file.type.split('/').pop()?.replace('svg+xml', 'svg')
+    const extension = (rawExtension || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12) || 'bin'
+    const relativePath = `画布资源/${crypto.randomUUID()}.${extension}`
+    const targetOptions = await getFilePathOptions(relativePath)
+    await writeFile(
+      targetOptions.path,
+      new Uint8Array(await file.arrayBuffer()),
+      targetOptions.baseDir ? { baseDir: targetOptions.baseDir } : undefined,
+    )
+    return relativePath
+  }, [])
+
+  const ingestTransfer = useCallback(async (
+    input: CanvasTransferInput,
+    screenOrigin: { x: number; y: number },
+  ) => {
+    const drafts = draftsFromTransfer(input)
+    if (drafts.length === 0) return false
+
+    try {
+      if (drafts.some(draft => draft.kind === 'image' || draft.kind === 'file')) {
         const directoryOptions = await getFilePathOptions('画布资源')
         await mkdir(
           directoryOptions.path,
-          directoryOptions.baseDir ? { baseDir: directoryOptions.baseDir, recursive: true } : { recursive: true }
+          directoryOptions.baseDir
+            ? { baseDir: directoryOptions.baseDir, recursive: true }
+            : { recursive: true },
         )
-        const targetOptions = await getFilePathOptions(relativePath)
-        await writeFile(
-          targetOptions.path,
-          new Uint8Array(await image.arrayBuffer()),
-          targetOptions.baseDir ? { baseDir: targetOptions.baseDir } : undefined
-        )
-        await loadFileTree({ skipRemoteSync: true })
-        pushHistory()
-        setNodes(current => [...current, {
-          id: crypto.randomUUID(),
-          type: 'image',
-          position: screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }),
-          data: { label: image.name || t('nodes.image'), imagePath: relativePath },
-        }])
-        toast.success(t('selection.imagePasted'))
-      } catch (error) {
-        console.error('Failed to paste image into canvas:', error)
-        toast.error(t('selection.imagePasteError'))
       }
+
+      const prepared = await Promise.all(offsetIngestDrafts(drafts, screenOrigin).map(async item => {
+        const position = screenToFlowPosition(item.position)
+        const draft = item.draft as CanvasIngestDraft
+        if (draft.kind === 'text') {
+          return {
+            id: crypto.randomUUID(),
+            type: 'text' as const,
+            position,
+            width: draft.width,
+            height: draft.height,
+            selected: true,
+            data: { label: draft.text, fillColor: 'var(--card)', color: 'var(--border)' },
+          }
+        }
+        if (draft.kind === 'link') {
+          return {
+            id: crypto.randomUUID(),
+            type: 'link' as const,
+            position,
+            width: draft.width,
+            height: draft.height,
+            selected: true,
+            data: { label: draft.label, url: draft.url },
+          }
+        }
+        const relativePath = await persistIngestFile(draft.file)
+        return {
+          id: crypto.randomUUID(),
+          type: draft.kind,
+          position,
+          width: draft.width,
+          height: draft.height,
+          selected: true,
+          data: draft.kind === 'image'
+            ? { label: draft.label, imagePath: relativePath }
+            : { label: draft.label, filePath: relativePath },
+        }
+      }))
+
+      if (drafts.some(draft => draft.kind === 'image' || draft.kind === 'file')) {
+        await loadFileTree({ skipRemoteSync: true })
+      }
+      pushHistory()
+      setNodes(current => [
+        ...current.map(node => ({ ...node, selected: false })),
+        ...prepared,
+      ])
+      setEdges(current => current.map(edge => ({ ...edge, selected: false })))
+      return true
+    } catch (error) {
+      console.error('Failed to ingest canvas content:', error)
+      toast.error('无法把此内容加入画布')
+      return false
+    }
+  }, [loadFileTree, persistIngestFile, pushHistory, screenToFlowPosition, setEdges, setNodes])
+
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      if (useCanvasStore.getState().activeCanvasId !== canvasId) return
+      const root = containerRef.current
+      if (!root || !(event.target instanceof globalThis.Node) || !root.contains(event.target)) return
+      if (isInteractiveCanvasTarget(event.target)) return
+      const clipboard = event.clipboardData
+      if (!clipboard) return
+      const input: CanvasTransferInput = {
+        files: [...clipboard.files],
+        html: clipboard.getData('text/html'),
+        text: clipboard.getData('text/plain'),
+      }
+      if (draftsFromTransfer(input).length === 0) return
+      event.preventDefault()
+      const bounds = root.getBoundingClientRect()
+      void ingestTransfer(input, { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 })
     }
     window.addEventListener('paste', handlePaste)
     return () => window.removeEventListener('paste', handlePaste)
-  }, [canvasId, loadFileTree, pushHistory, screenToFlowPosition, setNodes, t])
+  }, [canvasId, ingestTransfer])
+
+  const handleCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    if (event.dataTransfer.types.includes('Files') || event.dataTransfer.types.includes('text/plain')) {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'copy'
+    }
+  }, [])
+
+  const handleCanvasDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    const input: CanvasTransferInput = {
+      files: [...event.dataTransfer.files],
+      html: event.dataTransfer.getData('text/html'),
+      text: event.dataTransfer.getData('text/plain'),
+    }
+    if (draftsFromTransfer(input).length === 0) return
+    event.preventDefault()
+    event.stopPropagation()
+    void ingestTransfer(input, { x: event.clientX, y: event.clientY })
+  }, [ingestTransfer])
 
   const alignSelection = useCallback((axis: 'horizontal' | 'vertical') => {
     const selected = nodes.filter(node => node.selected)
@@ -1500,6 +1596,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           <ContextMenuTrigger asChild>
             <div
               className="size-full"
+              onDragOver={handleCanvasDragOver}
+              onDrop={handleCanvasDrop}
               onPointerDownCapture={handleBlockDrawPointerDown}
               onPointerMove={handleBlockDrawPointerMove}
               onPointerUp={handleBlockDrawPointerUp}

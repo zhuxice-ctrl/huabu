@@ -3,14 +3,15 @@
 import { memo, useEffect, useRef, useState, type CSSProperties } from 'react'
 import Image from 'next/image'
 import { Handle, NodeResizer, Position, useReactFlow, type Node, type NodeProps } from '@xyflow/react'
-import { CheckSquare2, ExternalLink, FileText, ImageIcon, Square } from 'lucide-react'
-import { openUrl } from '@tauri-apps/plugin-opener'
+import { CheckSquare2, ExternalLink, FileArchive, FileText, ImageIcon, Square } from 'lucide-react'
+import { openPath, openUrl } from '@tauri-apps/plugin-opener'
 import { BaseNode, BaseNodeContent } from '@/components/base-node'
 import emitter from '@/lib/emitter'
 import type { CanvasNodeData, CanvasNodeType } from '@/types/canvas'
 import useArticleStore from '@/stores/article'
 import { useSidebarStore } from '@/stores/sidebar'
 import { cn, convertImageByWorkspace } from '@/lib/utils'
+import { getFilePathOptions } from '@/lib/workspace'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
 
@@ -175,6 +176,37 @@ export const LinkCanvasNode = memo(function LinkCanvasNode({ id, data }: NodePro
           <EditableLabel id={id} value={data.label || '网页链接'} className="text-left" />
         </span>
         <span className="truncate text-xs text-muted-foreground">{data.url}</span>
+      </BaseNodeContent>
+    </BaseNode>
+  )
+})
+
+export const FileCanvasNode = memo(function FileCanvasNode({ data }: NodeProps<FlowCanvasNode>) {
+  const filePath = data.filePath || ''
+  const fileName = data.label || filePath.split('/').pop() || '文件'
+  const extension = fileName.includes('.') ? fileName.split('.').pop()?.toUpperCase() : 'FILE'
+
+  const openStoredFile = async () => {
+    if (!filePath) return
+    const pathOptions = await getFilePathOptions(filePath)
+    await openPath(pathOptions.path)
+  }
+
+  return (
+    <BaseNode
+      style={nodeStyle(data)}
+      className={cn('w-80 shadow-sm', previewClassName(data.previewState))}
+      onDoubleClick={() => void openStoredFile()}
+    >
+      <ConnectionHandles />
+      <BaseNodeContent className="flex-row items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <FileArchive className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium">{fileName}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">{extension}</div>
+        </div>
       </BaseNodeContent>
     </BaseNode>
   )

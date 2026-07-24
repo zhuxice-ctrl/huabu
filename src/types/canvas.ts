@@ -24,6 +24,7 @@ export type CanvasNodeType =
   | 'text'
   | 'note'
   | 'image'
+  | 'file'
   | 'link'
   | 'todo'
   | 'group'
