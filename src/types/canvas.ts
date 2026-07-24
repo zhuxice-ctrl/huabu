@@ -77,12 +77,22 @@ export interface CanvasNode {
   zIndex?: number
 }
 
+export type CanvasRelationRouteType = 'auto' | 'bezier' | 'straight' | 'orthogonal' | 'manual'
+
+export interface CanvasRelationWaypoint {
+  x: number
+  y: number
+}
+
 export interface CanvasRelationData extends Record<string, unknown> {
   label: string
   direction: 'forward' | 'both'
   lineStyle: 'solid' | 'dashed' | 'dotted'
   color: string
   source: 'manual' | 'ai'
+  routeType?: CanvasRelationRouteType
+  strokeWidth?: number
+  waypoints?: CanvasRelationWaypoint[]
 }
 
 export interface CanvasEdge {

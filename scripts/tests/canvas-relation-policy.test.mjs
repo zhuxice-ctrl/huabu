@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   DEFAULT_RELATION,
   isValidRelationTarget,
+  normalizeRelationData,
   relationEdgeVisuals,
 } from '../../src/lib/canvas/relation-policy.ts'
 
@@ -25,4 +26,23 @@ test('forward relation has no start marker', () => {
   const visuals = relationEdgeVisuals({ ...DEFAULT_RELATION, direction: 'forward' })
   assert.equal(visuals.markerStart, false)
   assert.equal(visuals.markerEnd, true)
+})
+
+test('legacy relations normalize to auto routing and width two', () => {
+  const relation = normalizeRelationData({ label: '旧关系', direction: 'forward', lineStyle: 'solid', color: '#64748b', source: 'manual' })
+  assert.equal(relation.routeType, 'auto')
+  assert.equal(relation.strokeWidth, 2)
+  assert.deepEqual(relation.waypoints, [])
+})
+
+test('invalid route values and waypoint coordinates are discarded', () => {
+  const relation = normalizeRelationData({
+    ...DEFAULT_RELATION,
+    routeType: 'unknown',
+    strokeWidth: 99,
+    waypoints: [{ x: 20, y: 30 }, { x: Number.NaN, y: 8 }],
+  })
+  assert.equal(relation.routeType, 'auto')
+  assert.equal(relation.strokeWidth, 8)
+  assert.deepEqual(relation.waypoints, [{ x: 20, y: 30 }])
 })
