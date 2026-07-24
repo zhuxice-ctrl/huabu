@@ -35,29 +35,27 @@ Expected results on a fully provisioned machine:
 
 - The frozen install completes without changing `pnpm-lock.yaml`.
 - The foundation contract prints `zeroxB foundation contract passed`.
-- The canvas policy suite reports 16 passing tests.
+- The canvas policy suite reports 19 passing tests.
 - Next.js creates `out/` and completes `build:prune-maps`.
 - Cargo completes without errors and does not update `src-tauri/Cargo.lock`.
 - `src-tauri/target/debug/bundle/nsis/` contains a `zeroxB*.exe` installer.
 
-## Latest local result (2026-07-24)
+## Latest local result (2026-07-24, black-screen recovery)
 
-- Canvas policy tests: passed, 16/16.
-- Frozen dependency install: previously passed with pnpm 9.15.9; the lockfile was unchanged.
+- Canvas policy tests: passed, 19/19, including database initialization, loading-state and dot-grid regression contracts.
 - Foundation contract: passed (`zeroxB foundation contract passed`).
-- Frontend production build: passed, including static export and map pruning.
-- Portable MSVC 14.44.35207: installed under `F:\toolchains\portable-msvc`; `cl.exe`
-  and `link.exe` are available through `setup_x64.bat`.
-- Cargo check with `--locked`: passed without warnings.
-- Debug NSIS build: passed, producing one NSIS bundle.
-- Installer: `F:\zeroxB-builds\zeroxB_0.32.1_x64-setup.exe` (18,716,924 bytes).
-- Installer SHA-256: `AFE601F302E0F8323A651AA7353DBDBE1195DF3DF57E8B7FBE8A8806AB73C3C3`.
-- Installed application: `F:\zeroxBApp\zeroxb.exe`; process title `zeroxB`; responsive launch passed.
-- Installed executable SHA-256: `05A8BA4F997539CC6483ED3C9C7D78DA8097B7FCF6A61FF23F01987582CCF1D7`.
-- Installed executable file metadata reports version `0.1.0`; the Tauri bundle/installer version is `0.32.1`.
-- Authenticode: installer and executable are `NotSigned` (debug build).
-- Runtime source contract passed; no inherited updater/config endpoints were found by the foundation verifier.
-- No live model request was sent because no user API credential was configured.
+- TypeScript no-emit check: passed.
+- Frontend production build: passed with pnpm 9.15.9, including static export and map pruning.
+- Portable MSVC 14.44.35207 remains under `F:\toolchains\portable-msvc`.
+- Cargo check with `--locked`: passed without warnings or lockfile changes.
+- The latest debug executable compiled successfully and was installed to `F:\zeroxBApp\zeroxb.exe`.
+- Installed executable SHA-256: `CE0F5F5FC275F4BC0A88026D5F3EA16EB8FFA642F51E229C84FEF0B68627BB6E`.
+- Responsive launch passed. The active tab is a `canvas://project/...` tab; the SQLite `canvases` table exists with one canvas.
+- Visual smoke verification showed the infinite canvas on first load, a visible white-gray dot grid, canvas tools, bottom AI composer and breathing indicator.
+- Local OpenAI-compatible configuration persisted after restart with one provider and ten models. A minimal `gpt-5.6-sol` chat request returned `OK`; no canvas content was transmitted.
+- The obsolete `F:\HuabuApp` installation and both `com.huabu.desktop` application-data directories were removed.
+- Tauri bundle-tool downloads are redirected to `F:\toolchains\tauri-bundler-cache` through a junction at the default cache path.
+- A fresh NSIS installer was not generated because GitHub and SourceForge connections were closed by the local network while Tauri downloaded NSIS. The previously generated installer remains at `F:\zeroxB-builds\zeroxB_0.32.1_x64-setup.exe`; it predates this recovery, so the installed executable above is the authoritative tested artifact.
 
 ## Manual smoke check
 

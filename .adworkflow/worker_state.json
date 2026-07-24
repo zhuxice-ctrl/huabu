@@ -1,35 +1,45 @@
 {
   "schema": "ADworkflo.worker_state.v1",
   "task_id": "zeroxb-black-screen-local-ai-recovery",
-  "status": "completed",
-  "revision": 2,
+  "status": "verified",
+  "revision": 3,
   "done": [
-    "Reproduced the startup control-flow race from source inspection.",
-    "Verified the localhost model catalog and a minimal gpt-5.6-sol chat completion without canvas data.",
-    "Stored a redacted local-provider configuration in the zeroxB application store with a pre-change backup.",
-    "Added a shared database initialization promise that clears after failure and preserves rejection semantics.",
-    "Made canvas startup wait for database initialization and always release the loading state in finally.",
-    "Restored the required React Flow dot background and added focused source-contract regression tests.",
-    "Completed focused tests, foundation verification, TypeScript checking, and independent review."
+    "Reproduced and fixed the first-launch database initialization race.",
+    "Added a shared initialization promise that clears on failure and preserves rejection semantics.",
+    "Made canvas startup await database initialization and always release the loading state in finally.",
+    "Restored a visible React Flow dot grid and added focused regression contracts.",
+    "Passed canvas tests, foundation verification, TypeScript checking, production build and locked Cargo checking.",
+    "Compiled and installed the latest zeroxB executable to F:\\zeroxBApp.",
+    "Verified responsive canvas-first runtime, active canvas state and SQLite canvas creation.",
+    "Configured one localhost OpenAI-compatible provider with ten models and verified gpt-5.6-sol returned OK.",
+    "Moved Tauri bundle-tool caching to F:\\toolchains through a compatibility junction.",
+    "Removed the obsolete Huabu installation and both obsolete application-data directories."
   ],
   "changed_files": [
+    ".gitignore",
+    ".adworkflow/verification_result.json",
+    ".adworkflow/worker_state.json",
+    ".adworkflow/review_findings.json",
+    "docs/verification/windows-foundation.md",
+    "scripts/tests/canvas-black-screen-recovery.test.mjs",
     "src/db/index.ts",
     "src/app/core/main/canvas/canvas-startup-controller.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "scripts/tests/canvas-black-screen-recovery.test.mjs"
+    "src/app/core/main/canvas/canvas-editor.tsx"
   ],
   "current_problem": null,
-  "next_action": "Commit the reviewed source, test, plan, report, and task-scoped workflow artifacts.",
+  "next_action": null,
   "must_keep_context": [
-    "Base revision 0d616a98f4c2103cea32d66ce739b5a9449b8fad",
-    "Installed application target F:\\zeroxBApp\\zeroxb.exe",
-    "Installer target F:\\zeroxB-builds\\zeroxB_0.32.1_x64-setup.exe",
+    "Source recovery commit 48e5ea2e2ae76ccd8c37221d5092648374c698fc",
+    "Installed application F:\\zeroxBApp\\zeroxb.exe",
+    "Installed executable SHA-256 CE0F5F5FC275F4BC0A88026D5F3EA16EB8FFA642F51E229C84FEF0B68627BB6E",
     "The API credential is sensitive and must never be printed."
   ],
-  "discarded_context": [],
+  "discarded_context": [
+    "Repeated browser and command-line attempts to download NSIS through a network that closed GitHub and SourceForge connections."
+  ],
   "remaining_risks": [
-    "The focused regression test is a permitted source-contract test because Tauri module boundaries prevent importing the runtime database module in Node.",
-    "The full application rebuild and installed UI smoke test are outside this scoped source-recovery task."
+    "Fresh NSIS packaging remains unavailable until the external tool download succeeds; the latest executable itself is installed and verified.",
+    "The focused initialization regression remains source-contract coverage until the Tauri database module exposes an injectable runtime seam."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],

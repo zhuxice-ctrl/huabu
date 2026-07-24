@@ -1,12 +1,124 @@
 {
   "schema": "ADworkflo.verification_result.v1",
   "task_id": "zeroxb-black-screen-local-ai-recovery",
-  "status": "passed",
-  "source_revision": "working-tree-2026-07-24",
-  "commands": ["corepack pnpm test:canvas", "corepack pnpm verify:foundation", "corepack pnpm exec tsc --noEmit", "git diff --check", "independent source review"],
-  "acceptance_criteria_coverage": ["Canvas suite asserts the singleton promise cache, failure reset/rethrow, database-before-project ordering, finally readiness, and exact React Flow background props", "Foundation verifier passes", "TypeScript typecheck passes", "Independent review found no source defects"],
-  "passed": ["Canvas suite (19/19, including 3 black-screen recovery contracts)", "zeroxB foundation contract", "TypeScript no-emit check", "Whitespace diff check", "Independent implementation review"],
-  "failed": [],
+  "status": "partial",
+  "source_revision": "48e5ea2e2ae76ccd8c37221d5092648374c698fc",
+  "commands": [
+    {
+      "command": "corepack pnpm test:canvas",
+      "status": "passed",
+      "summary": "19/19 tests passed, including three black-screen recovery contracts.",
+      "exit_code": 0
+    },
+    {
+      "command": "corepack pnpm verify:foundation",
+      "status": "passed",
+      "summary": "zeroxB foundation contract passed.",
+      "exit_code": 0
+    },
+    {
+      "command": "corepack pnpm exec tsc --noEmit",
+      "status": "passed",
+      "summary": "TypeScript type checking passed.",
+      "exit_code": 0
+    },
+    {
+      "command": "npx -y pnpm@9.15.9 build",
+      "status": "passed",
+      "summary": "Production build, static export and source-map pruning passed.",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo check --manifest-path src-tauri/Cargo.toml --locked",
+      "status": "passed",
+      "summary": "Locked Cargo check passed without warnings or lockfile changes.",
+      "exit_code": 0
+    },
+    {
+      "command": "npx -y pnpm@9.15.9 tauri build --debug --bundles nsis",
+      "status": "failed",
+      "summary": "Application compilation passed, but the NSIS tool download ended early because the local network closed GitHub and SourceForge connections.",
+      "exit_code": 1
+    },
+    {
+      "command": "npx -y pnpm@9.15.9 tauri build --debug --no-bundle",
+      "status": "passed",
+      "summary": "The latest Windows debug executable compiled successfully.",
+      "exit_code": 0
+    },
+    {
+      "command": "localhost /v1/chat/completions smoke request",
+      "status": "passed",
+      "summary": "gpt-5.6-sol returned OK; no canvas content was sent.",
+      "exit_code": 0
+    },
+    {
+      "command": "installed runtime and SQLite state checks",
+      "status": "passed",
+      "summary": "F-drive executable was responsive; canvas tab was active; canvases table existed with one canvas; provider and ten models persisted after launch.",
+      "exit_code": 0
+    },
+    {
+      "command": "obsolete Huabu uninstall and exact-path cleanup",
+      "status": "passed",
+      "summary": "F:\\HuabuApp and both com.huabu.desktop application-data directories were removed.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance_criteria_coverage": [
+    {
+      "criterion": "Concurrent database initialization callers reuse one promise and failed initialization can retry.",
+      "status": "passed",
+      "evidence": ["Focused source-contract test", "Independent source review"]
+    },
+    {
+      "criterion": "Canvas startup cannot remain permanently on a blank loading background after an exception.",
+      "status": "passed",
+      "evidence": ["Focused source-contract test", "Responsive installed launch", "Active canvas tab and SQLite canvas"]
+    },
+    {
+      "criterion": "The dark canvas dot grid is visible and follows React Flow pan and zoom.",
+      "status": "passed",
+      "evidence": ["Exact React Flow background contract test", "Installed visual smoke verification"]
+    },
+    {
+      "criterion": "The localhost OpenAI-compatible provider is stored without exposing its credential.",
+      "status": "passed",
+      "evidence": ["One provider and ten models persisted after launch", "Credential presence checked as a boolean only"]
+    },
+    {
+      "criterion": "The configured primary model completes a minimal localhost chat request.",
+      "status": "passed",
+      "evidence": ["gpt-5.6-sol returned OK"]
+    },
+    {
+      "criterion": "The obsolete Huabu installation and application data are removed after exact-path verification.",
+      "status": "passed",
+      "evidence": ["Silent uninstaller exit code 0", "All three exact paths are absent"]
+    },
+    {
+      "criterion": "Frontend build, canvas tests, foundation contract, locked Cargo check, NSIS packaging, F-drive install and responsive launch pass.",
+      "status": "failed",
+      "evidence": ["All components passed except fresh NSIS packaging", "Latest compiled executable was installed and launched from F:\\zeroxBApp"]
+    }
+  ],
+  "passed": [
+    "Canvas recovery tests (19/19)",
+    "Foundation contract",
+    "TypeScript check",
+    "Production frontend build",
+    "Locked Cargo check",
+    "Latest executable compilation and F-drive installation",
+    "Responsive canvas-first launch with visible dot grid",
+    "Local model persistence and chat completion",
+    "Obsolete Huabu cleanup"
+  ],
+  "failed": [
+    "Fresh NSIS bundle generation: external tool download was blocked by repeated network connection closures."
+  ],
   "not_run_reason": null,
-  "residual_risk": ["The focused database test is source-contract coverage because Node cannot import the Tauri top-level database module without a runtime seam.", "No rebuilt desktop UI smoke test was run in this source-scoped task."]
+  "residual_risk": [
+    "The database regression test is a source-contract test because the Tauri database module lacks a Node injection seam.",
+    "The existing NSIS installer predates the black-screen recovery; the installed executable is the authoritative tested artifact until the network permits a fresh bundle."
+  ]
 }

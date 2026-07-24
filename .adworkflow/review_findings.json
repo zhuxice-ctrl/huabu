@@ -1,12 +1,33 @@
 {
   "schema": "ADworkflo.review_findings.v1",
   "task_id": "zeroxb-black-screen-local-ai-recovery",
-  "status": "passed",
-  "reviewer": "independent_review",
-  "source_revision": "working-tree-2026-07-24",
-  "review_basis": ["Source diff inspection", "Focused canvas contract test", "Foundation contract", "TypeScript no-emit check"],
+  "status": "approved",
+  "reviewer": "independent_task_review",
+  "source_revision": "48e5ea2e2ae76ccd8c37221d5092648374c698fc",
+  "review_basis": [
+    "Task brief and global constraints",
+    "Full source diff from 0d616a98 to 48e5ea2e",
+    "Accepted L2 context preflight",
+    "Post-edit impact report",
+    "Focused canvas recovery contracts",
+    "Foundation contract and TypeScript verification"
+  ],
   "blocking_findings": [],
-  "non_blocking_findings": ["The permitted source-contract tests do not dynamically execute Tauri database initialization; add a runtime seam test when the module boundary is available."],
-  "suggested_tests": ["Add injectable database and startup dependencies for dynamic promise identity and retry tests if the test harness gains Tauri mocks."],
-  "risk_notes": ["The initial review blocked commit because the new ignored test would not enter the index; it must be force-added.", "No remote publish, install, uninstall, data deletion, or secret handling occurred in this task."]
+  "non_blocking_findings": [
+    {
+      "id": "runtime-db-test-seam",
+      "severity": "non_blocking",
+      "issue": "The initialization regression test validates the source contract rather than dynamically importing the Tauri database module.",
+      "expected_fix": "Add injectable database and startup dependencies if a Tauri-aware unit-test seam is introduced.",
+      "evidence": "scripts/tests/canvas-black-screen-recovery.test.mjs and successful installed runtime verification"
+    }
+  ],
+  "suggested_tests": [
+    "Add a dynamic promise identity and rejection-retry test when Tauri database imports can be mocked without changing production behavior."
+  ],
+  "risk_notes": [
+    "The latest executable was installed and visually verified after source review.",
+    "Fresh NSIS packaging is an external network/tooling failure, not a source-review finding.",
+    "No credential value is present in source, reports or committed verification evidence."
+  ]
 }

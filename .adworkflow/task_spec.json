@@ -26,10 +26,7 @@
     "edit",
     "test",
     "shell",
-    "network-localhost",
-    "launch-local-application",
-    "install-local-build",
-    "delete-explicit-obsolete-installation"
+    "network"
   ],
   "required_outputs": [
     "worker_state.json",
