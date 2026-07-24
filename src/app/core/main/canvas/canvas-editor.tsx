@@ -129,6 +129,7 @@ import {
   type FlowCanvasNode,
 } from './nodes/canvas-nodes'
 import { CanvasFooter } from './canvas-footer'
+import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
@@ -309,6 +310,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [edgeLabelDraft, setEdgeLabelDraft] = useState('')
   const [importContentOpen, setImportContentOpen] = useState(false)
   const [importContentDraft, setImportContentDraft] = useState('')
+  const [contextTarget, setContextTarget] = useState<'pane' | 'node' | 'edge'>('pane')
   const [drawDraft, setDrawDraft] = useState<DrawDraft | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<CanvasSnapshot[]>((initialHistory?.undo || []).map(restoreHistorySnapshot))
@@ -343,6 +345,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const selectedFreehandNodes = nodes.filter(node => node.selected && node.type === 'freehand')
   const selectedFreehandIds = selectedFreehandNodes.map(node => node.id).join(':')
   const selectedOnlyFreehand = selectedNodeCount > 0 && selectedFreehandNodes.length === selectedNodeCount
+  const selectedStyleNode = nodes.find(node => node.selected && node.type !== 'freehand')
   const selectedBoxNode = nodes.find(node => node.selected && node.type !== 'freehand' && node.type !== 'text')
   const selectedBorderStyle = selectedBoxNode?.data.borderStyle || (selectedBoxNode?.type === 'group' ? 'dashed' : 'solid')
   const selectedFillColor = selectedBoxNode?.data.fillColor
@@ -798,6 +801,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     setNodes(current => current.map(node => ({ ...node, selected: true })))
     setEdges(current => current.map(edge => ({ ...edge, selected: true })))
   }, [setEdges, setNodes])
+
+  const applySelectedNodeStylePatch = useCallback((patch: Record<string, unknown>) => {
+    setNodes(current => current.map(node => node.selected ? { ...node, data: { ...node.data, ...patch } } : node))
+  }, [setNodes])
+
+  const updateCanvasBackground = useCallback((backgroundColor?: string) => {
+    if (!document) return
+    updateDocument(canvasId, {
+      ...document,
+      settings: { ...document.settings, backgroundColor },
+    })
+  }, [canvasId, document, updateDocument])
 
   useEffect(() => {
     const releaseCanvasFocus = (event: PointerEvent) => {
@@ -1583,7 +1598,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }
 
   return (
-    <div ref={containerRef} tabIndex={-1} className="flex size-full min-h-0 flex-col bg-background outline-none">
+    <div
+      ref={containerRef}
+      tabIndex={-1}
+      className="flex size-full min-h-0 flex-col bg-background outline-none"
+      style={document.settings.backgroundColor ? { backgroundColor: document.settings.backgroundColor } : undefined}
+    >
       <div
         className="relative min-h-0 flex-1 overflow-hidden"
         onPointerDownCapture={event => {
@@ -1592,7 +1612,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           }
         }}
       >
-        <ContextMenu>
+        <ContextMenu onOpenChange={open => { if (!open) setContextTarget('pane') }}>
           <ContextMenuTrigger asChild>
             <div
               className="size-full"
@@ -1635,12 +1655,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           }, current))
         }}
         onNodeContextMenu={(_event, targetNode) => {
+          setContextTarget('node')
           if (!targetNode.selected) {
             setNodes(current => current.map(node => ({ ...node, selected: node.id === targetNode.id })))
             setEdges(current => current.map(edge => ({ ...edge, selected: false })))
           }
         }}
         onEdgeContextMenu={(_event, targetEdge) => {
+          setContextTarget('edge')
           if (!targetEdge.selected) {
             setNodes(current => current.map(node => ({ ...node, selected: false })))
             setEdges(current => current.map(edge => ({ ...edge, selected: edge.id === targetEdge.id })))
@@ -1651,6 +1673,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           setEdgeLabelDraft(typeof targetEdge.label === 'string' ? targetEdge.label : '')
           setEdgeEditorOpen(true)
         }}
+        onPaneContextMenu={() => setContextTarget('pane')}
         onMoveEnd={(_event, viewport) => persistViewport(viewport)}
         onNodeDragStart={(_event, node) => {
           pushHistory()
@@ -1706,7 +1729,33 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent>
-            <ContextMenuGroup>
+            {contextTarget === 'node' && selectedStyleNode && (
+              <CanvasNodeStyleMenu
+                value={{
+                  backgroundColor: selectedStyleNode.data.backgroundColor as string | undefined ?? selectedStyleNode.data.fillColor as string | undefined,
+                  textColor: selectedStyleNode.data.textColor as string | undefined,
+                  fontSize: selectedStyleNode.data.fontSize as 13 | 15 | 18 | 24 | undefined,
+                  borderColor: selectedStyleNode.data.borderColor as string | undefined ?? selectedStyleNode.data.color as string | undefined,
+                  borderStyle: selectedStyleNode.data.borderStyle as 'none' | 'solid' | 'dashed' | 'dotted' | undefined,
+                }}
+                onSessionStart={pushHistory}
+                onChange={applySelectedNodeStylePatch}
+              />
+            )}
+            {contextTarget === 'node' && <ContextMenuSeparator />}
+            {contextTarget === 'pane' && (
+              <ContextMenuGroup>
+                <ContextMenuItem onSelect={() => setTool('select')}>选择模式</ContextMenuItem>
+                <ContextMenuItem onSelect={() => setTool('pen')}>画笔模式</ContextMenuItem>
+                <ContextMenuItem onSelect={() => setTool('highlighter')}>荧光笔模式</ContextMenuItem>
+                <ContextMenuItem onSelect={() => setTool('eraser')}>橡皮擦模式</ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem onSelect={() => updateCanvasBackground('#ffffff')}>浅色画布</ContextMenuItem>
+                <ContextMenuItem onSelect={() => updateCanvasBackground('#0f172a')}>深色画布</ContextMenuItem>
+                <ContextMenuItem onSelect={() => updateCanvasBackground(undefined)}>跟随主题</ContextMenuItem>
+              </ContextMenuGroup>
+            )}
+            {contextTarget !== 'pane' && <ContextMenuGroup>
               <ContextMenuItem onSelect={selectAll}>
                 {t('contextMenu.selectAll')}
                 <ContextMenuShortcut>{shortcutModifier}A</ContextMenuShortcut>
@@ -1726,9 +1775,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                 {t('contextMenu.duplicate')}
                 <ContextMenuShortcut>{shortcutModifier}D</ContextMenuShortcut>
               </ContextMenuItem>
-            </ContextMenuGroup>
-            <ContextMenuSeparator />
-            <ContextMenuGroup>
+            </ContextMenuGroup>}
+            {contextTarget !== 'pane' && <ContextMenuSeparator />}
+            {contextTarget !== 'pane' && <ContextMenuGroup>
               <ContextMenuItem disabled={selectedNodeCount === 0} onSelect={() => updateSelectedNodeLayer('front')}>
                 {t('layer.front')}
               </ContextMenuItem>
@@ -1741,15 +1790,15 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               <ContextMenuItem disabled={selectedNodeCount === 0} onSelect={() => updateSelectedNodeLayer('back')}>
                 {t('layer.back')}
               </ContextMenuItem>
-            </ContextMenuGroup>
-            <ContextMenuSeparator />
-            <ContextMenuGroup>
+            </ContextMenuGroup>}
+            {contextTarget !== 'pane' && <ContextMenuSeparator />}
+            {contextTarget !== 'pane' && <ContextMenuGroup>
               <ContextMenuItem variant="destructive" disabled={selectedCount === 0} onSelect={deleteSelection}>
                 <Trash2 />
                 {t('contextMenu.delete')}
                 <ContextMenuShortcut>⌫</ContextMenuShortcut>
               </ContextMenuItem>
-            </ContextMenuGroup>
+            </ContextMenuGroup>}
           </ContextMenuContent>
         </ContextMenu>
 

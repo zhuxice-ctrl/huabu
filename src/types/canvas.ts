@@ -40,7 +40,11 @@ export interface CanvasNodeData extends Record<string, unknown> {
   label?: string
   description?: string
   color?: string
-  borderStyle?: 'solid' | 'dashed' | 'dotted'
+  borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted'
+  backgroundColor?: string
+  textColor?: string
+  fontSize?: 13 | 15 | 18 | 24
+  borderColor?: string
   borderWidth?: number
   fillColor?: string
   fillStyle?: 'default' | 'tint'
@@ -104,6 +108,7 @@ export interface CanvasDocument {
     layoutDirection: 'TB' | 'LR'
     showGrid: boolean
     snapToGrid: boolean
+    backgroundColor?: string
   }
 }
 

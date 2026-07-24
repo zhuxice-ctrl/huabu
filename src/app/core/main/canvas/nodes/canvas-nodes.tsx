@@ -36,19 +36,23 @@ function previewClassName(state?: CanvasNodeData['previewState']) {
 
 function nodeStyle(data: CanvasNodeData): CSSProperties | undefined {
   const { color, borderStyle, borderWidth, fillColor, fillStyle } = data
-  if (!color && !borderStyle && !borderWidth && !fillColor && !fillStyle) return undefined
+  const backgroundColor = data.backgroundColor ?? fillColor
+  const borderColor = data.borderColor ?? color
+  if (!borderColor && !borderStyle && !borderWidth && !backgroundColor && !fillStyle && !data.textColor && !data.fontSize) return undefined
   return {
-    ...(color ? {
-      borderColor: color,
-      boxShadow: `0 0 0 1px ${color}20`,
+    ...(borderColor ? {
+      borderColor,
+      boxShadow: `0 0 0 1px ${borderColor}20`,
     } : {}),
-    ...(borderStyle ? { borderStyle } : {}),
+    ...(borderStyle ? { borderStyle: borderStyle === 'none' ? 'none' : borderStyle } : {}),
     ...(borderWidth ? { borderWidth } : {}),
-    ...(fillColor
-      ? { backgroundColor: fillColor }
+    ...(backgroundColor
+      ? { backgroundColor }
       : fillStyle === 'tint' && color
         ? { backgroundColor: `color-mix(in srgb, ${color} 12%, var(--card))` }
         : {}),
+    ...(data.textColor ? { color: data.textColor } : {}),
+    ...(data.fontSize ? { fontSize: data.fontSize } : {}),
   }
 }
 
@@ -124,7 +128,8 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
       <ConnectionHandles />
       <textarea
         ref={textareaRef}
-        className="nodrag nowheel size-full resize-none bg-transparent text-left text-sm leading-6 outline-none placeholder:text-muted-foreground"
+        className="nodrag nowheel size-full resize-none bg-transparent text-left leading-6 text-inherit outline-none placeholder:text-muted-foreground"
+        style={{ fontSize: data.fontSize }}
         value={data.label || ''}
         placeholder="输入内容…"
         onFocus={() => emitter.emit('canvas-history-checkpoint')}
