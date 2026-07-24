@@ -1,9 +1,19 @@
 export const POINTER_DRAG_THRESHOLD = 6
+export const POINTER_AXIS_THRESHOLD = 3
 export const RELATION_LONG_PRESS_MS = 320
+
+export interface CanvasRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 export type PointerReleaseIntent =
   | 'pane-click'
+  | 'pane-context'
   | 'draw-block'
+  | 'marquee-select'
   | 'node-context'
   | 'relation-drag'
   | 'none'
@@ -11,11 +21,14 @@ export type PointerReleaseIntent =
 export function classifyPointerRelease(input: {
   button: number
   elapsedMs: number
-  distance: number
+  deltaX: number
+  deltaY: number
   startedOnNode: boolean
 }): PointerReleaseIntent {
   if (input.button === 0 && !input.startedOnNode) {
-    return input.distance >= POINTER_DRAG_THRESHOLD ? 'draw-block' : 'pane-click'
+    return hasDrawableArea({ x: 0, y: 0 }, { x: input.deltaX, y: input.deltaY })
+      ? 'draw-block'
+      : 'pane-click'
   }
 
   if (input.button === 2 && input.startedOnNode) {
@@ -24,20 +37,43 @@ export function classifyPointerRelease(input: {
       : 'node-context'
   }
 
+  if (input.button === 2 && !input.startedOnNode) {
+    const distance = Math.hypot(input.deltaX, input.deltaY)
+    return distance >= POINTER_DRAG_THRESHOLD ? 'marquee-select' : 'pane-context'
+  }
+
   return 'none'
+}
+
+export function hasDrawableArea(start: { x: number; y: number }, end: { x: number; y: number }) {
+  return Math.abs(end.x - start.x) >= POINTER_AXIS_THRESHOLD
+    && Math.abs(end.y - start.y) >= POINTER_AXIS_THRESHOLD
 }
 
 export function normalizeDrawRect(
   start: { x: number; y: number },
   end: { x: number; y: number },
-) {
-  const width = Math.max(120, Math.abs(end.x - start.x))
-  const height = Math.max(72, Math.abs(end.y - start.y))
-
+) : CanvasRect {
   return {
-    x: end.x < start.x ? start.x - width : start.x,
-    y: end.y < start.y ? start.y - height : start.y,
-    width,
-    height,
+    x: Math.min(start.x, end.x),
+    y: Math.min(start.y, end.y),
+    width: Math.abs(end.x - start.x),
+    height: Math.abs(end.y - start.y),
   }
+}
+
+export function rectanglesIntersect(a: CanvasRect, b: CanvasRect) {
+  return a.x <= b.x + b.width
+    && a.x + a.width >= b.x
+    && a.y <= b.y + b.height
+    && a.y + a.height >= b.y
+}
+
+export function intersectingRectIds(
+  selection: CanvasRect,
+  candidates: Array<CanvasRect & { id: string }>,
+) {
+  return candidates
+    .filter(candidate => rectanglesIntersect(selection, candidate))
+    .map(candidate => candidate.id)
 }
