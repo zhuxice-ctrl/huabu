@@ -21,3 +21,15 @@ test('draw rectangle keeps direction and minimum size', () => {
     x: 100, y: 120, width: 200, height: 100,
   })
 })
+
+test('small forward drag expands from the start point', () => {
+  assert.deepEqual(normalizeDrawRect({ x: 100, y: 120 }, { x: 105, y: 125 }), {
+    x: 100, y: 120, width: 120, height: 72,
+  })
+})
+
+test('small reverse drag expands left and up from the start point', () => {
+  assert.deepEqual(normalizeDrawRect({ x: 300, y: 220 }, { x: 295, y: 215 }), {
+    x: 180, y: 148, width: 120, height: 72,
+  })
+})

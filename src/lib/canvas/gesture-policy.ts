@@ -31,10 +31,13 @@ export function normalizeDrawRect(
   start: { x: number; y: number },
   end: { x: number; y: number },
 ) {
+  const width = Math.max(120, Math.abs(end.x - start.x))
+  const height = Math.max(72, Math.abs(end.y - start.y))
+
   return {
-    x: Math.min(start.x, end.x),
-    y: Math.min(start.y, end.y),
-    width: Math.max(120, Math.abs(end.x - start.x)),
-    height: Math.max(72, Math.abs(end.y - start.y)),
+    x: end.x < start.x ? start.x - width : start.x,
+    y: end.y < start.y ? start.y - height : start.y,
+    width,
+    height,
   }
 }
