@@ -10,7 +10,8 @@
     "lint": "next lint",
     "tauri": "tauri",
     "docs:build": "npm --prefix ./docs run build",
-    "verify:foundation": "node scripts/verify-zeroxb-foundation.mjs"
+    "verify:foundation": "node scripts/verify-zeroxb-foundation.mjs",
+    "test:canvas": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs"
   },
   "dependencies": {
     "@antv/infographic": "^0.2.7",

@@ -72,6 +72,14 @@ export interface CanvasNode {
   zIndex?: number
 }
 
+export interface CanvasRelationData {
+  label: string
+  direction: 'forward' | 'both'
+  lineStyle: 'solid' | 'dashed' | 'dotted'
+  color: string
+  source: 'manual' | 'ai'
+}
+
 export interface CanvasEdge {
   id: string
   source: string
