@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-black-screen-local-ai-recovery",
+  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
   "status": "accepted",
-  "graph_revision": "f1d851da515763162de37a53",
-  "slice_revision": "f1d851da515763162de37a53",
+  "graph_revision": "6ebd3a29cc8599bab7ce4177",
+  "slice_revision": "6ebd3a29cc8599bab7ce4177",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

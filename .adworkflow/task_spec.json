@@ -1,23 +1,24 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-black-screen-local-ai-recovery",
+  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
   "task_type": "code",
-  "goal": "Eliminate the first-launch black screen by serializing database initialization before canvas startup, restore the interactive high-contrast canvas dot grid, configure the user-authorized localhost OpenAI-compatible provider, remove the explicitly obsolete Huabu installation and data, rebuild, reinstall, and verify zeroxB.",
+  "goal": "Refine the zeroxB canvas to use React Flow-style selection and relationship interactions: right-drag marquee selection on empty canvas, live right-hold relationship previews, editable routed relationship paths, exact-area block creation, and removal of obsolete shape shortcuts, then rebuild, reinstall, and verify the Windows application.",
   "non_goals": [
-    "Do not transmit canvas or user-document content to the model during verification.",
-    "Do not publish artifacts or push remote branches.",
-    "Do not change updater, signing, or non-Windows behavior.",
-    "Do not delete zeroxB user data."
+    "Do not replace React Flow or redesign the bottom AI conversation surface.",
+    "Do not add export features, cloud sync, or non-Windows packaging.",
+    "Do not move user-authored blocks or rewrite their content.",
+    "Do not expose or commit the localhost model API credential."
   ],
   "acceptance_criteria": [
-    "Concurrent callers reuse one database initialization promise and canvas loading cannot query before the canvases table exists.",
-    "Canvas startup cannot remain permanently on a blank loading background after an initialization exception.",
-    "The React Flow dot grid is visible with adequate contrast on a dark canvas and still follows pan and zoom.",
-    "The localhost OpenAI-compatible endpoint is stored with the user-supplied credential without exposing it in verification output.",
-    "The configured primary model completes a minimal localhost chat request.",
-    "F:\\HuabuApp and the com.huabu.desktop application-data directories are removed after exact-path verification.",
-    "Frontend build, canvas tests, foundation contract, locked Cargo check, NSIS packaging, F-drive install, and responsive launch pass."
+    "Right-dragging empty canvas renders a marquee and selects every node that partially intersects it; the selected set can be deleted in one operation and restored through undo.",
+    "A right click without a drag keeps the existing context-menu behavior, while right-holding a node starts a relationship drag without creating a text block.",
+    "The relationship preview follows the pointer in real time with a React Flow-style curved path and highlights a valid target.",
+    "Saved relationships default to a curved route and can be reopened from their context menu to change route type, color, width, dash style, arrows, and manual routing points.",
+    "Relationship routing points remain editable after save and changes participate in undo history.",
+    "A click or single-axis drag on empty canvas creates nothing; a two-dimensional drag creates a text block using the drawn dimensions without the previous 120 by 72 minimum.",
+    "The process, decision, terminator, and text quick-create toolbar buttons shown in the supplied screenshot are removed.",
+    "Canvas interaction tests, TypeScript checks, frontend build, locked Cargo check, NSIS packaging, F-drive reinstall, responsive launch, local AI configuration persistence, and canvas startup verification pass."
   ],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
@@ -40,24 +41,25 @@
     "remote repositories",
     "release publishing",
     "zeroxB user documents",
-    "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop except store.json provider configuration"
+    "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"
   ],
   "entrypoints": [
-    "typescript:src.db:initAllDatabasesPromise:variable",
-    "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function"
+    "typescript:src.lib.canvas.gesture-policy:classifyPointerRelease:function",
+    "typescript:src.lib.canvas.relation-policy:relationEdgeVisuals:function"
   ],
   "context_sources": [
-    "src/db/index.ts and src/app/core/main/canvas/canvas-startup-controller.tsx are manual impact sources because dynamic import and Zustand/React dispatch are intentionally opaque to the TypeScript L2 provider.",
-    "src/app/core/main/canvas/canvas-editor.tsx is a manual impact source for the React Flow background contrast change, not an L2 semantic entrypoint.",
-    "User report that the installed zeroxB window is black and lacks the expected dot grid.",
-    "User-authorized localhost OpenAI-compatible endpoint and API credential.",
-    "User explicitly confirmed that the obsolete Huabu installation and data contain nothing important and may be deleted."
+    "src/app/core/main/canvas/canvas-editor.tsx is the manual integration source for pointer routing, React Flow configuration, overlays, context menus, and the toolbar.",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx is the manual integration source for the line-adjacent relationship editor.",
+    "src/types/canvas.ts defines persisted relationship data and must remain backward compatible with existing canvases.",
+    "src/lib/canvas/gesture-policy.ts and src/lib/canvas/relation-policy.ts are testable policy seams.",
+    "User-supplied screenshots define the obsolete quick actions and the desired React Flow-style visual behavior."
   ],
   "notes": [
     "Use the fixed UTF-8 I/O baseline.",
-    "Normalize the chat endpoint to the provider base URL http://localhost:61771/v1 because the client appends /chat/completions.",
+    "Partial overlap is the approved marquee-selection rule.",
+    "Preserve middle-button canvas panning and single right-click context menus.",
+    "Relationship routing changes must not reposition manually placed nodes.",
     "Never print or include the API credential in reports, commits, source files, or verification evidence.",
-    "Use exact resolved-path checks before every recursive delete.",
     "Portable MSVC entrypoint: F:\\toolchains\\portable-msvc\\msvc\\setup_x64.bat."
   ],
   "implementation_owner": "root-orchestrator"
