@@ -77,7 +77,7 @@ export interface CanvasNode {
   zIndex?: number
 }
 
-export interface CanvasRelationData {
+export interface CanvasRelationData extends Record<string, unknown> {
   label: string
   direction: 'forward' | 'both'
   lineStyle: 'solid' | 'dashed' | 'dotted'
@@ -91,6 +91,7 @@ export interface CanvasEdge {
   target: string
   label?: string
   type?: string
+  data?: CanvasRelationData
 }
 
 export interface CanvasViewport {

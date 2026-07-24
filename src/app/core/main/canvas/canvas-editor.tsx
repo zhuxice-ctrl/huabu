@@ -17,6 +17,7 @@ import {
   type EdgeChange,
   type NodeChange,
   type NodeTypes,
+  MarkerType,
   SelectionMode,
 } from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled.js'
@@ -99,10 +100,12 @@ import useCanvasStore from '@/stores/canvas'
 import useArticleStore from '@/stores/article'
 import type {
   CanvasDocument,
+  CanvasEdge,
   CanvasHistorySnapshot,
   CanvasNode,
   CanvasPoint,
   CanvasTool,
+  CanvasRelationData,
 } from '@/types/canvas'
 import { flattenFileTree } from '@/app/core/main/file/file-selection'
 import { applyCanvasOperations } from '@/lib/canvas/operations'
@@ -133,6 +136,8 @@ import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
+import { DEFAULT_RELATION, isValidRelationTarget, relationEdgeVisuals } from '@/lib/canvas/relation-policy'
+import { CanvasRelationEditor } from './canvas-relation-editor'
 import {
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
@@ -180,6 +185,17 @@ interface DrawDraft {
   current: { x: number; y: number }
 }
 
+interface RelationPointerSession {
+  pointerId: number
+  sourceId: string
+  startedAt: number
+  start: { x: number; y: number }
+  current: { x: number; y: number }
+  active: boolean
+  targetId: string | null
+  timer?: ReturnType<typeof setTimeout>
+}
+
 function CanvasToolbarTooltip({
   label,
   disabled = false,
@@ -212,13 +228,7 @@ function cloneSnapshot(nodes: FlowCanvasNode[], edges: Edge[]): CanvasSnapshot {
 function serializeHistorySnapshot(snapshot: CanvasSnapshot): CanvasHistorySnapshot {
   return {
     nodes: serializeNodes(snapshot.nodes),
-    edges: snapshot.edges.map(edge => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-      label: typeof edge.label === 'string' ? edge.label : undefined,
-      type: edge.type,
-    })),
+    edges: serializeEdges(snapshot.edges),
   }
 }
 
@@ -239,6 +249,17 @@ function serializeNodes(nodes: FlowCanvasNode[]): CanvasNode[] {
     ...(typeof node.height === 'number' ? { height: node.height } : {}),
     ...(node.connectable === false ? { connectable: false } : {}),
     ...(typeof node.zIndex === 'number' ? { zIndex: node.zIndex } : {}),
+  }))
+}
+
+function serializeEdges(edges: Edge[]): CanvasEdge[] {
+  return edges.map(edge => ({
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    label: typeof edge.label === 'string' ? edge.label : undefined,
+    type: edge.type,
+    ...(edge.data ? { data: edge.data as CanvasRelationData } : {}),
   }))
 }
 
@@ -312,6 +333,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [importContentDraft, setImportContentDraft] = useState('')
   const [contextTarget, setContextTarget] = useState<'pane' | 'node' | 'edge'>('pane')
   const [drawDraft, setDrawDraft] = useState<DrawDraft | null>(null)
+  const [relationPreview, setRelationPreview] = useState<RelationPointerSession | null>(null)
+  const [relationEditor, setRelationEditor] = useState<{ edgeId: string; mode: 'create' | 'edit'; anchor: { x: number; y: number } } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<CanvasSnapshot[]>((initialHistory?.undo || []).map(restoreHistorySnapshot))
   const redoRef = useRef<CanvasSnapshot[]>((initialHistory?.redo || []).map(restoreHistorySnapshot))
@@ -326,6 +349,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     start: { x: number; y: number }
     children: Map<string, { x: number; y: number }>
   } | null>(null)
+  const relationSessionRef = useRef<RelationPointerSession | null>(null)
+  const suppressContextMenuRef = useRef(false)
   const persistedNodesRef = useRef(nodes)
   const persistedEdgesRef = useRef(edges)
   const pendingDocumentRef = useRef<CanvasDocument | null>(null)
@@ -369,13 +394,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const currentDocument: CanvasDocument = {
       ...document,
       nodes: serializeNodes(nodes),
-      edges: edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: typeof edge.label === 'string' ? edge.label : undefined,
-        type: edge.type,
-      })),
+      edges: serializeEdges(edges),
     }
     const result = applyCanvasOperations(currentDocument, agentPreviewOperations).document
     const currentNodeMap = new Map(currentDocument.nodes.map(node => [node.id, node]))
@@ -436,7 +455,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     return { nodes: previewNodes, edges: previewEdges }
   }, [agentPreviewOperations, document, edges, nodes])
   const displayNodes = previewSnapshot?.nodes || nodes
-  const displayEdges = previewSnapshot?.edges || edges
+  const displayEdges = useMemo(() => (previewSnapshot?.edges || edges).map(edge => {
+    const relation = edge.data as CanvasRelationData | undefined
+    if (!relation) return edge
+    const visuals = relationEdgeVisuals(relation)
+    return {
+      ...edge,
+      style: { ...(edge.style || {}), stroke: visuals.stroke, strokeDasharray: visuals.strokeDasharray },
+      markerStart: visuals.markerStart ? { type: MarkerType.ArrowClosed, color: relation.color } : undefined,
+      markerEnd: visuals.markerEnd ? { type: MarkerType.ArrowClosed, color: relation.color } : undefined,
+    }
+  }), [edges, previewSnapshot])
 
   useEffect(() => {
     if (!document) {
@@ -509,13 +538,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const nextDocument: CanvasDocument = {
       ...document,
       nodes: serializeNodes(nodes),
-      edges: edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: typeof edge.label === 'string' ? edge.label : undefined,
-        type: edge.type,
-      })),
+      edges: serializeEdges(edges),
       viewport: getViewport(),
     }
     pendingDocumentRef.current = nextDocument
@@ -686,6 +709,32 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [pushHistory, screenToFlowPosition, setEdges, setNodes])
 
   const handleBlockDrawPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button === 2 && event.target instanceof Element) {
+      const nodeElement = event.target.closest('.react-flow__node')
+      const sourceId = nodeElement?.getAttribute('data-id')
+      if (sourceId) {
+        const element = event.currentTarget
+        const session: RelationPointerSession = {
+          pointerId: event.pointerId,
+          sourceId,
+          startedAt: Date.now(),
+          start: { x: event.clientX, y: event.clientY },
+          current: { x: event.clientX, y: event.clientY },
+          active: false,
+          targetId: null,
+        }
+        session.timer = setTimeout(() => {
+          const current = relationSessionRef.current
+          if (!current || current.pointerId !== event.pointerId) return
+          current.active = true
+          suppressContextMenuRef.current = true
+          try { element.setPointerCapture(event.pointerId) } catch { /* pointer already released */ }
+          setRelationPreview({ ...current })
+        }, 320)
+        relationSessionRef.current = session
+      }
+      return
+    }
     if (
       event.button !== 0
       || tool !== 'select'
@@ -702,6 +751,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [previewSnapshot, tool])
 
   const handleBlockDrawPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const relation = relationSessionRef.current
+    if (relation?.pointerId === event.pointerId) {
+      relation.current = { x: event.clientX, y: event.clientY }
+      if (relation.active) {
+        const target = globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
+        relation.targetId = target
+        event.preventDefault()
+        setRelationPreview({ ...relation })
+      }
+      return
+    }
     setDrawDraft(current => (
       current?.pointerId === event.pointerId
         ? { ...current, current: { x: event.clientX, y: event.clientY } }
@@ -710,6 +770,41 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [])
 
   const handleBlockDrawPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const relation = relationSessionRef.current
+    if (relation?.pointerId === event.pointerId) {
+      if (relation.timer) clearTimeout(relation.timer)
+      relationSessionRef.current = null
+      if (!relation.active) return
+      event.preventDefault()
+      event.stopPropagation()
+      suppressContextMenuRef.current = true
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+      setRelationPreview(null)
+      const targetId = relation.targetId || globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
+      const nodeIds = new Set(nodes.map(node => node.id))
+      if (!isValidRelationTarget(relation.sourceId, targetId, nodeIds)) return
+      const edgeId = crypto.randomUUID()
+      pushHistory()
+      setEdges(current => [...current, {
+        id: edgeId,
+        source: relation.sourceId,
+        target: targetId!,
+        type: 'smoothstep',
+        label: '',
+        data: DEFAULT_RELATION,
+      }])
+      const root = containerRef.current
+      const sourceElement = root?.querySelector(`[data-id="${CSS.escape(relation.sourceId)}"]`)
+      const targetElement = root?.querySelector(`[data-id="${CSS.escape(targetId!)}"]`)
+      const sourceRect = sourceElement?.getBoundingClientRect()
+      const targetRect = targetElement?.getBoundingClientRect()
+      const anchor = sourceRect && targetRect
+        ? { x: (sourceRect.left + sourceRect.width / 2 + targetRect.left + targetRect.width / 2) / 2, y: (sourceRect.top + sourceRect.height / 2 + targetRect.top + targetRect.height / 2) / 2 }
+        : { x: relation.current.x, y: relation.current.y }
+      const bounds = root?.getBoundingClientRect()
+      setRelationEditor({ edgeId, mode: 'create', anchor: { x: anchor.x - (bounds?.left || 0), y: anchor.y - (bounds?.top || 0) } })
+      return
+    }
     if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
     event.preventDefault()
     event.stopPropagation()
@@ -722,15 +817,38 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     setDrawDraft(null)
     finishBlockDraw(completed)
-  }, [drawDraft, finishBlockDraw])
+  }, [drawDraft, finishBlockDraw, nodes, pushHistory, setEdges])
 
   const handleBlockDrawPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const relation = relationSessionRef.current
+    if (relation?.pointerId === event.pointerId) {
+      if (relation.timer) clearTimeout(relation.timer)
+      relationSessionRef.current = null
+      setRelationPreview(null)
+      return
+    }
     if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     setDrawDraft(null)
   }, [drawDraft])
+
+  const saveRelationEditor = useCallback((value: CanvasRelationData) => {
+    if (!relationEditor) return
+    pushHistory()
+    setEdges(current => current.map(edge => edge.id === relationEditor.edgeId
+      ? { ...edge, label: value.label, data: value }
+      : edge))
+    setRelationEditor(null)
+  }, [pushHistory, relationEditor, setEdges])
+
+  const cancelRelationEditor = useCallback(() => {
+    if (relationEditor?.mode === 'create') {
+      setEdges(current => current.filter(edge => edge.id !== relationEditor.edgeId))
+    }
+    setRelationEditor(null)
+  }, [relationEditor, setEdges])
 
   const getSelectedSnapshot = useCallback((): CanvasSnapshot | null => {
     const selectedNodes = nodes.filter(node => node.selected)
@@ -1428,13 +1546,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const nextDocument: CanvasDocument = {
       ...document,
       nodes: serializeNodes(nodes),
-      edges: edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: typeof edge.label === 'string' ? edge.label : undefined,
-        type: edge.type,
-      })),
+      edges: serializeEdges(edges),
       viewport: getViewport(),
       settings: { ...document.settings, ...settings },
     }
@@ -1571,13 +1683,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const nextDocument: CanvasDocument = {
       ...(pendingDocumentRef.current || document),
       nodes: serializeNodes(nodes),
-      edges: edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: typeof edge.label === 'string' ? edge.label : undefined,
-        type: edge.type,
-      })),
+      edges: serializeEdges(edges),
       viewport,
     }
     pendingDocumentRef.current = null
@@ -1616,6 +1722,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           <ContextMenuTrigger asChild>
             <div
               className="size-full"
+              onContextMenu={event => {
+                if (!suppressContextMenuRef.current) return
+                event.preventDefault()
+                event.stopPropagation()
+                suppressContextMenuRef.current = false
+              }}
               onDragOver={handleCanvasDragOver}
               onDrop={handleCanvasDrop}
               onPointerDownCapture={handleBlockDrawPointerDown}
@@ -1724,6 +1836,36 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                       height: rect.height,
                     }}
                   />
+                )
+              })()}
+              {relationPreview?.active && (
+                <svg className="pointer-events-none absolute inset-0 size-full overflow-visible">
+                  <line
+                    x1={relationPreview.start.x - (containerRef.current?.getBoundingClientRect().left || 0)}
+                    y1={relationPreview.start.y - (containerRef.current?.getBoundingClientRect().top || 0)}
+                    x2={relationPreview.current.x - (containerRef.current?.getBoundingClientRect().left || 0)}
+                    y2={relationPreview.current.y - (containerRef.current?.getBoundingClientRect().top || 0)}
+                    stroke="var(--primary)"
+                    strokeWidth="2"
+                    strokeDasharray="6 5"
+                  />
+                </svg>
+              )}
+              {relationEditor && (() => {
+                const edge = edges.find(item => item.id === relationEditor.edgeId)
+                const initial = (edge?.data as CanvasRelationData | undefined) || DEFAULT_RELATION
+                return (
+                  <div
+                    className="absolute z-30"
+                    style={{ left: relationEditor.anchor.x, top: relationEditor.anchor.y, transform: 'translate(-50%, -50%)' }}
+                  >
+                    <CanvasRelationEditor
+                      initial={initial}
+                      mode={relationEditor.mode}
+                      onSave={saveRelationEditor}
+                      onCancel={cancelRelationEditor}
+                    />
+                  </div>
                 )
               })()}
             </div>
