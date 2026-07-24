@@ -2,8 +2,8 @@
   "schema": "ADworkflo.context_preflight.v1",
   "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
   "status": "accepted",
-  "graph_revision": "6ebd3a29cc8599bab7ce4177",
-  "slice_revision": "6ebd3a29cc8599bab7ce4177",
+  "graph_revision": "e081fcbc7669732a10d632b8",
+  "slice_revision": "e081fcbc7669732a10d632b8",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

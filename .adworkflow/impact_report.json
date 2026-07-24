@@ -1,18 +1,108 @@
 {
   "schema": "ADworkflo.impact_report.v1",
-  "task_id": "zeroxb-black-screen-local-ai-recovery",
+  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
   "status": "passed",
-  "baseline_revision": "f1d851da515763162de37a53",
-  "current_revision": "working-tree-task-1",
-  "declared_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "scripts/tests/canvas-black-screen-recovery.test.mjs"],
-  "predicted_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "src/app/core/layout.tsx", "src/app/core/main/page.tsx"],
-  "changed_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "scripts/tests/canvas-black-screen-recovery.test.mjs"],
-  "observed_impact_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "src/app/core/layout.tsx", "src/app/core/main/page.tsx", "scripts/tests/canvas-black-screen-recovery.test.mjs"],
+  "baseline_revision": "6ebd3a29cc8599bab7ce4177",
+  "current_revision": "e081fcbc7669732a10d632b8",
+  "declared_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/relation-policy.ts",
+    "src/lib/canvas/relation-routing.ts",
+    "src/types/canvas.ts"
+  ],
+  "predicted_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/relation-policy.ts",
+    "src/lib/canvas/relation-routing.ts",
+    "src/stores/canvas.ts",
+    "src/types/canvas.ts"
+  ],
+  "changed_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/relation-policy.ts",
+    "src/lib/canvas/relation-routing.ts",
+    "src/types/canvas.ts"
+  ],
+  "observed_impact_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/operations.ts",
+    "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/relation-policy.ts",
+    "src/lib/canvas/relation-routing.ts",
+    "src/lib/sync/canvas-sync.ts",
+    "src/stores/canvas.ts",
+    "src/types/canvas.ts"
+  ],
   "unexpected_impact": [],
-  "symbol_delta": {"summary": "initAllDatabases now returns the shared cached promise rather than an async wrapper; no public parameter contract changed."},
-  "edge_delta": {"summary": "Canvas startup adds the existing database initializer dependency before tab and project loading; the React Flow background remains nested in the existing ReactFlow component."},
+  "symbol_delta": {
+    "added": [
+      "CanvasRelationEdge",
+      "CanvasRelationData routing fields",
+      "relation interaction policy helpers",
+      "relation routing helpers"
+    ],
+    "removed": []
+  },
+  "edge_delta": {
+    "calls": {
+      "added": [
+        "React Flow useNodes/useReactFlow controlled edge updates",
+        "React state setters for pointer-session cleanup and relation editing"
+      ],
+      "removed": []
+    },
+    "references": {
+      "added": [
+        "CanvasRelationData optional routing and handle persistence"
+      ],
+      "removed": []
+    },
+    "imports": {
+      "added": [
+        "relation-interaction",
+        "relation-routing",
+        "custom CanvasRelationEdge"
+      ],
+      "removed": [
+        "obsolete quick-create toolbar icons"
+      ]
+    }
+  },
   "new_critical_unresolved_edges": [],
-  "review_required": true,
-  "review_status": "passed",
-  "analysis_method": "Targeted post-edit source and caller review against the accepted L2 manifest; the generic full-graph post-edit helper exceeded the bounded task window and was stopped before it wrote an artifact."
+  "review_required": false,
+  "automated_analysis": {
+    "status": "reviewed",
+    "original_status": "failed",
+    "reason": "The automated graph conservatively propagated the shared CanvasRelationData type through canvas, store, sync, chat, settings and mobile consumers, and classified React/React Flow dispatchers plus JSX IIFEs as dynamic-dispatch edges."
+  },
+  "independent_review": {
+    "status": "approved",
+    "reviewed_range": "e66858ff..60c3d5ed",
+    "report": ".superpowers/sdd/2026-07-24-canvas-gestures-editable-relations/final-re-review.md",
+    "findings": [
+      "getNodes/useNodes, setEdges, screenToFlowPosition and React state setters are expected framework dispatch.",
+      "Shared-type propagation is a conservative reference boundary, not evidence of behavior changes in unrelated screens.",
+      "The semantic risks found by the first review were fixed and the scoped re-review found no new Critical or Important breakage."
+    ]
+  }
 }

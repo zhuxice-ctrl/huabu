@@ -9,11 +9,19 @@
   ],
   "relevant_symbols": [
     "src.lib.canvas.gesture-policy.POINTER_DRAG_THRESHOLD (src/lib/canvas/gesture-policy.ts:1)",
-    "src.lib.canvas.gesture-policy.RELATION_LONG_PRESS_MS (src/lib/canvas/gesture-policy.ts:2)",
-    "src.lib.canvas.gesture-policy.PointerReleaseIntent (src/lib/canvas/gesture-policy.ts:4)",
-    "src.lib.canvas.gesture-policy.classifyPointerRelease (src/lib/canvas/gesture-policy.ts:11)",
-    "src.lib.canvas.relation-policy.relationEdgeVisuals (src/lib/canvas/relation-policy.ts:11)",
-    "src.types.canvas.CanvasRelationData (src/types/canvas.ts:80)"
+    "src.lib.canvas.gesture-policy.POINTER_AXIS_THRESHOLD (src/lib/canvas/gesture-policy.ts:2)",
+    "src.lib.canvas.gesture-policy.RELATION_LONG_PRESS_MS (src/lib/canvas/gesture-policy.ts:3)",
+    "src.lib.canvas.gesture-policy.PointerReleaseIntent (src/lib/canvas/gesture-policy.ts:12)",
+    "src.lib.canvas.gesture-policy.classifyPointerRelease (src/lib/canvas/gesture-policy.ts:21)",
+    "src.lib.canvas.gesture-policy.classifyPointerRelease.distance (src/lib/canvas/gesture-policy.ts:41)",
+    "src.lib.canvas.gesture-policy.hasDrawableArea (src/lib/canvas/gesture-policy.ts:48)",
+    "src.lib.canvas.relation-policy.DEFAULT_RELATION (src/lib/canvas/relation-policy.ts:9)",
+    "src.lib.canvas.relation-policy.normalizeRelationData (src/lib/canvas/relation-policy.ts:20)",
+    "src.lib.canvas.relation-policy.normalizeRelationData.candidate (src/lib/canvas/relation-policy.ts:25)",
+    "src.lib.canvas.relation-policy.relationEdgeVisuals (src/lib/canvas/relation-policy.ts:59)",
+    "src.types.canvas.CanvasRelationRouteType (src/types/canvas.ts:80)",
+    "src.types.canvas.CanvasRelationWaypoint (src/types/canvas.ts:82)",
+    "src.types.canvas.CanvasRelationData (src/types/canvas.ts:87)"
   ],
   "entrypoints": [
     "typescript:src.lib.canvas.gesture-policy:classifyPointerRelease:function",
@@ -28,14 +36,17 @@
     "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"
   ],
   "open_questions": [],
-  "graph_revision": "6ebd3a29cc8599bab7ce4177",
+  "graph_revision": "e081fcbc7669732a10d632b8",
   "context_confidence": 1.0,
   "preflight_status": "accepted",
   "semantic_slice": ".adworkflow/semantic_slice.json",
   "context_preflight": ".adworkflow/context_preflight.json",
   "predicted_impact_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
     "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/relation-interaction.ts",
     "src/lib/canvas/relation-policy.ts"
   ]
 }

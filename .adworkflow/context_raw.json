@@ -5,17 +5,17 @@
   "matched_files": [
     {
       "path": "src/lib/canvas/gesture-policy.ts",
-      "sha256": "f7569fea3b7686904862db5acd98cf48f76d72df438e165e33d4a9be019488e1",
+      "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
       "reason": "semantic-slice"
     },
     {
       "path": "src/lib/canvas/relation-policy.ts",
-      "sha256": "c437d1bae208119496fcf566e6d88a83f7d293c4950ca59bae956fae4a6549eb",
+      "sha256": "bf6b9d6bb03ee0e996b7f7f78e7de96c606c11898da0207c78b1b7207b5122c1",
       "reason": "semantic-slice"
     },
     {
       "path": "src/types/canvas.ts",
-      "sha256": "cf17819655c005c0d95f92c594777fe6f92236a731ae4ca85a325cf5de080c9e",
+      "sha256": "f01cd076257cf1e5b5eb70123352fda4f1f28e52083ec2efe3ff0df0e5f7362f",
       "reason": "semantic-slice"
     }
   ],
@@ -29,55 +29,249 @@
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.lib.canvas.gesture-policy:RELATION_LONG_PRESS_MS:variable",
-      "qualified_name": "src.lib.canvas.gesture-policy.RELATION_LONG_PRESS_MS",
+      "stable_id": "typescript:src.lib.canvas.gesture-policy:POINTER_AXIS_THRESHOLD:variable",
+      "qualified_name": "src.lib.canvas.gesture-policy.POINTER_AXIS_THRESHOLD",
       "file": "src/lib/canvas/gesture-policy.ts",
       "start_line": 2,
       "end_line": 2,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.gesture-policy:RELATION_LONG_PRESS_MS:variable",
+      "qualified_name": "src.lib.canvas.gesture-policy.RELATION_LONG_PRESS_MS",
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "start_line": 3,
+      "end_line": 3,
       "distance": 1
     },
     {
       "stable_id": "typescript:src.lib.canvas.gesture-policy:PointerReleaseIntent:type",
       "qualified_name": "src.lib.canvas.gesture-policy.PointerReleaseIntent",
       "file": "src/lib/canvas/gesture-policy.ts",
-      "start_line": 4,
-      "end_line": 9,
+      "start_line": 12,
+      "end_line": 19,
       "distance": 1
     },
     {
       "stable_id": "typescript:src.lib.canvas.gesture-policy:classifyPointerRelease:function",
       "qualified_name": "src.lib.canvas.gesture-policy.classifyPointerRelease",
       "file": "src/lib/canvas/gesture-policy.ts",
-      "start_line": 11,
-      "end_line": 28,
+      "start_line": 21,
+      "end_line": 46,
       "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.gesture-policy:classifyPointerRelease.distance:variable",
+      "qualified_name": "src.lib.canvas.gesture-policy.classifyPointerRelease.distance",
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "start_line": 41,
+      "end_line": 41,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.gesture-policy:hasDrawableArea:function",
+      "qualified_name": "src.lib.canvas.gesture-policy.hasDrawableArea",
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "start_line": 48,
+      "end_line": 51,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.relation-policy:DEFAULT_RELATION:variable",
+      "qualified_name": "src.lib.canvas.relation-policy.DEFAULT_RELATION",
+      "file": "src/lib/canvas/relation-policy.ts",
+      "start_line": 9,
+      "end_line": 18,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "qualified_name": "src.lib.canvas.relation-policy.normalizeRelationData",
+      "file": "src/lib/canvas/relation-policy.ts",
+      "start_line": 20,
+      "end_line": 57,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData.candidate:variable",
+      "qualified_name": "src.lib.canvas.relation-policy.normalizeRelationData.candidate",
+      "file": "src/lib/canvas/relation-policy.ts",
+      "start_line": 25,
+      "end_line": 27,
+      "distance": 2
     },
     {
       "stable_id": "typescript:src.lib.canvas.relation-policy:relationEdgeVisuals:function",
       "qualified_name": "src.lib.canvas.relation-policy.relationEdgeVisuals",
       "file": "src/lib/canvas/relation-policy.ts",
-      "start_line": 11,
-      "end_line": 22,
+      "start_line": 59,
+      "end_line": 72,
       "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.types.canvas:CanvasRelationRouteType:type",
+      "qualified_name": "src.types.canvas.CanvasRelationRouteType",
+      "file": "src/types/canvas.ts",
+      "start_line": 80,
+      "end_line": 80,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.types.canvas:CanvasRelationWaypoint:interface",
+      "qualified_name": "src.types.canvas.CanvasRelationWaypoint",
+      "file": "src/types/canvas.ts",
+      "start_line": 82,
+      "end_line": 85,
+      "distance": 2
     },
     {
       "stable_id": "typescript:src.types.canvas:CanvasRelationData:interface",
       "qualified_name": "src.types.canvas.CanvasRelationData",
       "file": "src/types/canvas.ts",
-      "start_line": 80,
-      "end_line": 86,
+      "start_line": 87,
+      "end_line": 96,
       "distance": 1
     }
   ],
   "likely_tests": [],
   "warnings": [],
-  "graph_revision": "6ebd3a29cc8599bab7ce4177",
+  "graph_revision": "e081fcbc7669732a10d632b8",
   "confidence": 1.0,
-  "unresolved_edges": [],
+  "unresolved_edges": [
+    {
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.gesture-policy:classifyPointerRelease:function",
+      "kind": "call",
+      "target": "Math.hypot",
+      "line": 41,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.gesture-policy:hasDrawableArea:function",
+      "kind": "call",
+      "target": "Math.abs",
+      "line": 49,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.gesture-policy:hasDrawableArea:function",
+      "kind": "call",
+      "target": "Math.abs",
+      "line": 50,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "ROUTE_TYPES.has",
+      "line": 29,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Number.isFinite",
+      "line": 32,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Math.min",
+      "line": 33,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Math.max",
+      "line": 33,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Number",
+      "line": 33,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Array.isArray",
+      "line": 35,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "candidate.waypoints.filter((point): point is CanvasRelationWaypoint => Boolean(\n        point\n        && Number.isFinite(point.x)\n        && Number.isFinite(point.y)\n      )).map",
+      "line": 36,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "candidate.waypoints.filter",
+      "line": 36,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Boolean",
+      "line": 36,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Number.isFinite",
+      "line": 38,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/relation-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.relation-policy:normalizeRelationData:function",
+      "kind": "call",
+      "target": "Number.isFinite",
+      "line": 39,
+      "reason": "external-call",
+      "critical": 0
+    }
+  ],
   "boundary_symbols": [],
   "predicted_impact_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
     "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/relation-interaction.ts",
     "src/lib/canvas/relation-policy.ts"
   ]
 }

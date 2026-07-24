@@ -35,27 +35,28 @@ Expected results on a fully provisioned machine:
 
 - The frozen install completes without changing `pnpm-lock.yaml`.
 - The foundation contract prints `zeroxB foundation contract passed`.
-- The canvas policy suite reports 19 passing tests.
+- The canvas suite reports 36 passing tests.
 - Next.js creates `out/` and completes `build:prune-maps`.
 - Cargo completes without errors and does not update `src-tauri/Cargo.lock`.
 - `src-tauri/target/debug/bundle/nsis/` contains a `zeroxB*.exe` installer.
 
-## Latest local result (2026-07-24, black-screen recovery)
+## Latest local result (2026-07-25, editable canvas relations)
 
-- Canvas policy tests: passed, 19/19, including database initialization, loading-state and dot-grid regression contracts.
-- Foundation contract: passed (`zeroxB foundation contract passed`).
-- TypeScript no-emit check: passed.
+- Canvas tests: passed, 36/36. Coverage includes exact-area block drawing, partial-overlap marquee selection, short/long right-button routing, relation draft transactions, exact persisted handles, context-menu suppression, waypoint deletion and 24-pixel obstacle clearance.
+- Foundation contract and TypeScript no-emit check: passed.
 - Frontend production build: passed with pnpm 9.15.9, including static export and map pruning.
-- Portable MSVC 14.44.35207 remains under `F:\toolchains\portable-msvc`.
-- Cargo check with `--locked`: passed without warnings or lockfile changes.
-- The latest debug executable compiled successfully and was installed to `F:\zeroxBApp\zeroxb.exe`.
-- Installed executable SHA-256: `CE0F5F5FC275F4BC0A88026D5F3EA16EB8FFA642F51E229C84FEF0B68627BB6E`.
-- Responsive launch passed. The active tab is a `canvas://project/...` tab; the SQLite `canvases` table exists with one canvas.
-- Visual smoke verification showed the infinite canvas on first load, a visible white-gray dot grid, canvas tools, bottom AI composer and breathing indicator.
-- Local OpenAI-compatible configuration persisted after restart with one provider and ten models. A minimal `gpt-5.6-sol` chat request returned `OK`; no canvas content was transmitted.
-- The obsolete `F:\HuabuApp` installation and both `com.huabu.desktop` application-data directories were removed.
-- Tauri bundle-tool downloads are redirected to `F:\toolchains\tauri-bundler-cache` through a junction at the default cache path.
-- A fresh NSIS installer was not generated because GitHub and SourceForge connections were closed by the local network while Tauri downloaded NSIS. The previously generated installer remains at `F:\zeroxB-builds\zeroxB_0.32.1_x64-setup.exe`; it predates this recovery, so the installed executable above is the authoritative tested artifact.
+- Portable MSVC Cargo check with `--locked`: passed; `src-tauri/Cargo.lock` remains unchanged.
+- Independent full review found seven Important interaction defects. Commit `9940c7f3` fixed all of them; the scoped re-review of `e66858ff..60c3d5ed` marked every finding ADDRESSED with no new Critical or Important breakage.
+- Current L2 preflight is accepted at graph revision `e081fcbc7669732a10d632b8` with confidence `1.0`. Shared canvas-type propagation and React/React Flow dynamic dispatch were independently assessed with no unexpected behavioral impact.
+- A fresh debug NSIS installer was generated with upstream hash validation and copied to `F:\zeroxB-builds\zeroxB_0.32.1_x64-setup.exe`.
+- Installer SHA-256: `4D95A12BF445FBFE008F80A0837AB40CA0D559FC85C37B00C35ABD680DEF0A57`.
+- The installer completed silently with exit code `0` into `F:\zeroxBApp`. The installed executable exactly matches the packaged debug executable.
+- Installed executable SHA-256: `2E6A252704D0673B846E275B3B7901A5F560C46F67AC4178CEC583F49E6EC517`.
+- Responsive launch passed with window title `zeroxB`. The persisted active tab is a `canvas://project/...` tab; the SQLite `canvases` table exists with one canvas.
+- The visible-dot-grid React Flow contract, canvas-first startup contract and removal of obsolete quick-create controls pass the installed source revision's test/build gates.
+- Local OpenAI-compatible configuration persisted with one provider and ten models. A minimal localhost chat request returned a non-empty reply; no canvas content was transmitted and no credential value was printed.
+- `F:\HuabuApp` and both obsolete `com.huabu.desktop` application-data paths remain absent.
+- The default Tauri cache root remains a junction to `F:\toolchains\tauri-bundler-cache\cache-root`.
 
 ## Manual smoke check
 
