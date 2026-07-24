@@ -24,6 +24,7 @@ administrator access when Node.js is installed under `C:\Program Files`:
 ```powershell
 npx -y pnpm@9.15.9 install --frozen-lockfile
 npx -y pnpm@9.15.9 verify:foundation
+npx -y pnpm@9.15.9 test:canvas
 npx -y pnpm@9.15.9 build
 cargo check --manifest-path src-tauri/Cargo.toml --locked
 npx -y pnpm@9.15.9 tauri build --debug --bundles nsis
@@ -34,33 +35,36 @@ Expected results on a fully provisioned machine:
 
 - The frozen install completes without changing `pnpm-lock.yaml`.
 - The foundation contract prints `zeroxB foundation contract passed`.
+- The canvas policy suite reports 16 passing tests.
 - Next.js creates `out/` and completes `build:prune-maps`.
 - Cargo completes without errors and does not update `src-tauri/Cargo.lock`.
 - `src-tauri/target/debug/bundle/nsis/` contains a `zeroxB*.exe` installer.
 
 ## Latest local result (2026-07-24)
 
-- Frozen dependency install: passed with pnpm 9.15.9; the lockfile was unchanged.
-- Foundation contract: passed.
+- Canvas policy tests: passed, 16/16.
+- Frozen dependency install: previously passed with pnpm 9.15.9; the lockfile was unchanged.
+- Foundation contract: passed (`zeroxB foundation contract passed`).
 - Frontend production build: passed, including static export and map pruning.
 - Portable MSVC 14.44.35207: installed under `F:\toolchains\portable-msvc`; `cl.exe`
   and `link.exe` are available through `setup_x64.bat`.
 - Cargo check with `--locked`: passed without warnings.
-- Debug NSIS build: passed.
-- Installer: `F:\huabu-builds\zeroxB_0.32.1_x64-setup.exe`.
-- Installer SHA-256: `9129926328DF9936ABBB6AD3AF344783D30C357EA71BCCDD1FBA4D2B2672B26C`.
-- Installed application: `F:\zeroxBApp\huabu.exe`; product identity `zeroxB`; responsive launch passed.
-- Installed UI smoke test: canvas creation, text block creation, bottom AI dock,
-  breathing status strip, and all three Agent permission modes passed.
-- Runtime independence check: inherited API key, analytics endpoint, upstream model
-  service, and upstream release lookups were removed.
+- Debug NSIS build: passed, producing one NSIS bundle.
+- Installer: `F:\zeroxB-builds\zeroxB_0.32.1_x64-setup.exe` (18,716,924 bytes).
+- Installer SHA-256: `AFE601F302E0F8323A651AA7353DBDBE1195DF3DF57E8B7FBE8A8806AB73C3C3`.
+- Installed application: `F:\zeroxBApp\zeroxb.exe`; process title `zeroxB`; responsive launch passed.
+- Installed executable SHA-256: `05A8BA4F997539CC6483ED3C9C7D78DA8097B7FCF6A61FF23F01987582CCF1D7`.
+- Installed executable file metadata reports version `0.1.0`; the Tauri bundle/installer version is `0.32.1`.
+- Authenticode: installer and executable are `NotSigned` (debug build).
+- Runtime source contract passed; no inherited updater/config endpoints were found by the foundation verifier.
+- No live model request was sent because no user API credential was configured.
 
 ## Manual smoke check
 
 After the automated checks pass:
 
-1. Launch the debug application with `npx -y pnpm@9.15.9 tauri dev`.
-2. Confirm one Windows application window opens.
-3. Confirm the process and installer use the zeroxB product identity.
-4. Confirm no request targets `download.notegen.top` or the NoteGen GitHub updater.
+1. Launch `F:\zeroxBApp\zeroxb.exe`.
+2. Confirm one Windows application window opens with title `zeroxB` (verified locally; process remained responsive).
+3. Confirm the installed path and NSIS installer use the zeroxB product identity.
+4. Confirm no request targets `download.notegen.top` or the NoteGen GitHub updater (source contract verified; no live network model request made).
 5. Close the application and confirm it exits cleanly.
