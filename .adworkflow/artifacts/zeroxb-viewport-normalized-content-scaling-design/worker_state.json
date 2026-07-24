@@ -1,0 +1,38 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-viewport-normalized-content-scaling-design",
+  "status": "verified",
+  "revision": 1,
+  "done": [
+    "Converted the confirmed viewport-normalized sizing decisions into a formal Windows desktop design specification.",
+    "Defined 65 percent initial zoom, 10 to 600 percent zoom range, one-snapshot conversion rules and four-decimal persistence.",
+    "Defined direct-user ingest, full-canvas import, existing-content compatibility, AI sizing, history, rollback and resource-cleanup boundaries.",
+    "Defined deterministic extreme-zoom font editing and invalid-viewport fallback behavior.",
+    "Completed iterative independent review and resolved every Critical or Important finding.",
+    "Committed the specification for user review without changing runtime source files."
+  ],
+  "changed_files": [
+    ".adworkflow/task_spec.json",
+    ".adworkflow/context_raw.json",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/artifacts/zeroxb-viewport-normalized-content-scaling-design/review_findings.json",
+    ".adworkflow/artifacts/zeroxb-viewport-normalized-content-scaling-design/worker_state.json",
+    ".adworkflow/artifacts/zeroxb-viewport-normalized-content-scaling-design/verification_result.json",
+    "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md"
+  ],
+  "current_problem": null,
+  "next_action": "Await user additions and explicit approval before writing an implementation plan.",
+  "must_keep_context": [
+    "The formal design is anchored at source revision 4be01d09a186c25f3ba7e7fa3671624894ce7d3d.",
+    "No runtime implementation is authorized by this design-only task.",
+    "Existing canvas content must never be rewritten merely because viewport zoom changes."
+  ],
+  "discarded_context": [],
+  "remaining_risks": [
+    "The user may add or revise product requirements before approving the specification.",
+    "Runtime and Windows installation verification belong to the later implementation task."
+  ],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}
