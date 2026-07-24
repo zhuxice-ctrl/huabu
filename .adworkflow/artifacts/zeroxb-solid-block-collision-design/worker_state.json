@@ -1,0 +1,44 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-solid-block-collision-design",
+  "status": "verified",
+  "revision": 1,
+  "done": [
+    "Captured the user's rejection of nesting and defined independent solid content entities.",
+    "Defined 6px safety spacing, 8px snap entry, 14px snap break, invalid draw and resize cancellation, continuous swept collision and axis sliding.",
+    "Defined rigid multi-selection, legacy-conflict recovery, deterministic collision-safe ingest and internal-copy placement.",
+    "Defined stale-index cancellation against latest authoritative geometry without unsafe local overwrite.",
+    "Defined cold-white and blue-cyan selection glow, red invalid state, amber legacy conflict and #F2F1ED default text-block background.",
+    "Reconciled the prior viewport sizing specification by replacing its 28px overlapping cascade with a 6px non-overlapping vertical batch layout.",
+    "Completed independent review, fixed all Important findings and passed scoped re-review.",
+    "Committed documentation only; no runtime source file was changed."
+  ],
+  "changed_files": [
+    ".adworkflow/task_spec.json",
+    ".adworkflow/context_raw.json",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/artifacts/zeroxb-solid-block-collision-design/review_findings.json",
+    ".adworkflow/artifacts/zeroxb-solid-block-collision-design/worker_state.json",
+    ".adworkflow/artifacts/zeroxb-solid-block-collision-design/verification_result.json",
+    "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
+    "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md"
+  ],
+  "current_problem": null,
+  "next_action": "Await user changes or explicit approval before writing an implementation plan.",
+  "must_keep_context": [
+    "The reviewed design source revision is 1bca004f9460b7876afabfb8a7866faa87f8bf4b.",
+    "No runtime implementation is authorized by this documentation-only task.",
+    "New conflicts are forbidden; legacy conflict recovery may only retain baseline pair identities while monotonically reducing changing conflicts.",
+    "Viewport sizing remains authoritative except where this later collision spec explicitly replaces batch placement and captures collision-only snapshots for internal copy."
+  ],
+  "discarded_context": [
+    "The earlier embedding concept was rejected by the user and is not part of the design."
+  ],
+  "remaining_risks": [
+    "The user may add or revise requirements before approving the specification.",
+    "Runtime performance, native pointer feel and visual preference require implementation-stage automated and Windows hands-on verification."
+  ],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}

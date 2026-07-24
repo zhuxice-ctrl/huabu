@@ -1,0 +1,29 @@
+{
+  "schema": "ADworkflo.review_findings.v1",
+  "task_id": "zeroxb-solid-block-collision-design",
+  "status": "approved",
+  "reviewer": "independent_external_final_and_scoped_re_review",
+  "source_revision": "1bca004f9460b7876afabfb8a7866faa87f8bf4b",
+  "review_basis": [
+    "Current committed solid-block collision specification",
+    "Referenced current committed viewport-normalized sizing specification",
+    "Entity and no-nesting scope",
+    "Soft snap, invalid release, swept collision and rigid-set behavior",
+    "Legacy conflict recovery and conflict-pair identity safety",
+    "Collision-safe ingest and internal copy placement",
+    "Stale-index authoritative-state recovery",
+    "Selection visual, warm-white text background, history, acceptance and tests"
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "suggested_tests": [
+    "Implement all pure geometry, interaction, compatibility, visual and Windows integration scenarios in section 15 after the user approves this specification and an implementation plan is written."
+  ],
+  "risk_notes": [
+    "The first independent review found four Important specification gaps: movement from an initially conflicting AABB, new conflict-pair substitution, missing internal-copy placement rules and stale-index fallback safety.",
+    "The specification now defines a separate monotonic recovery branch, forbids new conflict-pair identities, routes internal copy through deterministic collision-safe placement and restores only latest authoritative geometry after stale-index cancellation.",
+    "The scoped re-review marked all four areas resolved, found no new Critical or Important contradiction and returned APPROVED.",
+    "This task changes design and workflow artifacts only; runtime behavior has not been implemented or tested.",
+    "Implementation planning remains blocked on explicit user approval of the written specification."
+  ]
+}
