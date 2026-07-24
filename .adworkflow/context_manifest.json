@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "zeroxb-viewport-normalized-content-scaling-design",
+  "task_id": "zeroxb-solid-block-collision-design",
   "context_level": "architecture-first-l2-semantic-codegraph",
   "read_first": [
     ".adworkflow/PROJECT.md",
@@ -15,7 +15,8 @@
   "relevant_symbols": [],
   "entrypoints": [
     "typescript:src.lib.canvas.gesture-policy:normalizeDrawRect:function",
-    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function"
+    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function",
+    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:TextCanvasNode:function"
   ],
   "likely_tests": [],
   "do_not_touch": [
