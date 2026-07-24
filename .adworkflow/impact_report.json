@@ -1,16 +1,18 @@
 {
   "schema": "ADworkflo.impact_report.v1",
-  "task_id": "foundation-02a-build-fix",
+  "task_id": "zeroxb-black-screen-local-ai-recovery",
   "status": "passed",
-  "baseline_revision": "b9e2edbb",
-  "current_revision": "8d7d7b36",
-  "declared_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
-  "predicted_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
-  "changed_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
-  "observed_impact_files": ["src/app/core/main/canvas/canvas-editor.tsx", "src/stores/canvas.ts"],
+  "baseline_revision": "f1d851da515763162de37a53",
+  "current_revision": "working-tree-task-1",
+  "declared_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "scripts/tests/canvas-black-screen-recovery.test.mjs"],
+  "predicted_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "src/app/core/layout.tsx", "src/app/core/main/page.tsx"],
+  "changed_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "scripts/tests/canvas-black-screen-recovery.test.mjs"],
+  "observed_impact_files": ["src/db/index.ts", "src/app/core/main/canvas/canvas-startup-controller.tsx", "src/app/core/main/canvas/canvas-editor.tsx", "src/app/core/layout.tsx", "src/app/core/main/page.tsx", "scripts/tests/canvas-black-screen-recovery.test.mjs"],
   "unexpected_impact": [],
-  "symbol_delta": {"summary": "No public symbol contract changed; one type-only import/generic and one existing runtime import were added."},
-  "edge_delta": {"summary": "canvas store now resolves the existing uploadCanvas dependency; no new module introduced."},
+  "symbol_delta": {"summary": "initAllDatabases now returns the shared cached promise rather than an async wrapper; no public parameter contract changed."},
+  "edge_delta": {"summary": "Canvas startup adds the existing database initializer dependency before tab and project loading; the React Flow background remains nested in the existing ReactFlow component."},
   "new_critical_unresolved_edges": [],
-  "review_required": true
+  "review_required": true,
+  "review_status": "passed",
+  "analysis_method": "Targeted post-edit source and caller review against the accepted L2 manifest; the generic full-graph post-edit helper exceeded the bounded task window and was stopped before it wrote an artifact."
 }

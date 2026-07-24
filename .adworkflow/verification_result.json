@@ -1,12 +1,12 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "foundation-08-msvc-package-verification",
+  "task_id": "zeroxb-black-screen-local-ai-recovery",
   "status": "passed",
   "source_revision": "working-tree-2026-07-24",
-  "commands": ["npx -y pnpm@9.15.9 test:canvas", "npx -y pnpm@9.15.9 verify:foundation", "npx -y pnpm@9.15.9 build", "cmd /d /s /c call F:\\toolchains\\portable-msvc\\msvc\\setup_x64.bat && cargo check --manifest-path src-tauri\\Cargo.toml --locked", "cmd /d /s /c call F:\\toolchains\\portable-msvc\\msvc\\setup_x64.bat && npx -y pnpm@9.15.9 tauri build --debug --bundles nsis", "silent NSIS install to F:\\zeroxBApp", "direct process/window metadata smoke test"],
-  "acceptance_criteria_coverage": ["Portable MSVC exposes cl.exe and link.exe", "Canvas policy tests, frontend, foundation contract, locked Cargo check, and NSIS build passed", "Installed application launches with zeroxB product identity and remains responsive", "Runtime source contains no inherited updater/config endpoint according to the verifier", "Installed path and installer are present on the F drive"],
-  "passed": ["Canvas policy suite (16/16)", "zeroxB foundation contract", "Next.js production build and typecheck", "Cargo check --locked", "Debug NSIS bundle", "Silent F-drive installation", "Installed launch and responsive-window metadata smoke test"],
+  "commands": ["corepack pnpm test:canvas", "corepack pnpm verify:foundation", "corepack pnpm exec tsc --noEmit", "git diff --check", "independent source review"],
+  "acceptance_criteria_coverage": ["Canvas suite asserts the singleton promise cache, failure reset/rethrow, database-before-project ordering, finally readiness, and exact React Flow background props", "Foundation verifier passes", "TypeScript typecheck passes", "Independent review found no source defects"],
+  "passed": ["Canvas suite (19/19, including 3 black-screen recovery contracts)", "zeroxB foundation contract", "TypeScript no-emit check", "Whitespace diff check", "Independent implementation review"],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": ["Authenticode status is NotSigned.", "No live model request was sent because no user API credential was configured.", "Canvas gestures and menus were covered by build/type/policy tests but not by screenshot-driven UI automation in this run."]
+  "residual_risk": ["The focused database test is source-contract coverage because Node cannot import the Tauri top-level database module without a runtime seam.", "No rebuilt desktop UI smoke test was run in this source-scoped task."]
 }

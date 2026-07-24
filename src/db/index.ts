@@ -9,8 +9,9 @@ export async function getDb() {
   return db;
 }
 
-// 初始化所有数据库
-export async function initAllDatabases() {
+let initAllDatabasesPromise: Promise<void> | null = null
+
+async function runDatabaseInitialization() {
   // 引入各数据库初始化函数
   const { initChatsDb } = await import('./chats');
   const { initMarksDb } = await import('./marks');
@@ -32,4 +33,16 @@ export async function initAllDatabases() {
   await initMemoriesDb();
   await initActivityDb();
   await initCanvasesDb();
+}
+
+// 初始化所有数据库。父布局与画布首屏可能同时触发初始化，必须复用同一个 Promise，
+// 避免画布在 canvases 表创建前抢先查询并永久停留在加载背景。
+export function initAllDatabases(): Promise<void> {
+  if (!initAllDatabasesPromise) {
+    initAllDatabasesPromise = runDatabaseInitialization().catch(error => {
+      initAllDatabasesPromise = null
+      throw error
+    })
+  }
+  return initAllDatabasesPromise
 }

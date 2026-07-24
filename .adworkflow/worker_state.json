@@ -1,15 +1,36 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "foundation-08-msvc-package-verification",
-  "status": "complete",
-  "revision": 1,
-  "done": ["Installed a portable MSVC 14.44.35207 environment under F:\\toolchains\\portable-msvc", "Removed inherited model credentials, upstream analytics, update lookups, and visible NoteGen branding", "Added an immersive canvas layout with a bottom AI dock and breathing status strip", "Built and installed the NSIS package under F:\\zeroxBApp", "Verified canvas creation, text-block creation, and the read-only / confirm-before-write / automatic modes through the installed UI"],
-  "changed_files": ["src/app/core/main/page.tsx", "src/app/core/main/chat/chat-input.tsx", "src/stores/setting.ts", "src/lib/ai/placeholder.ts", "src-tauri/src/main.rs", "src-tauri/tauri.conf.json", "messages/*.json", "scripts/verify-huabu-foundation.mjs"],
+  "task_id": "zeroxb-black-screen-local-ai-recovery",
+  "status": "completed",
+  "revision": 2,
+  "done": [
+    "Reproduced the startup control-flow race from source inspection.",
+    "Verified the localhost model catalog and a minimal gpt-5.6-sol chat completion without canvas data.",
+    "Stored a redacted local-provider configuration in the zeroxB application store with a pre-change backup.",
+    "Added a shared database initialization promise that clears after failure and preserves rejection semantics.",
+    "Made canvas startup wait for database initialization and always release the loading state in finally.",
+    "Restored the required React Flow dot background and added focused source-contract regression tests.",
+    "Completed focused tests, foundation verification, TypeScript checking, and independent review."
+  ],
+  "changed_files": [
+    "src/db/index.ts",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "scripts/tests/canvas-black-screen-recovery.test.mjs"
+  ],
   "current_problem": null,
-  "next_action": null,
-  "must_keep_context": ["Foundation branch foundation/notegen-636d4f8", "Installed application: F:\\zeroxBApp\\zeroxb.exe", "Installer: F:\\zeroxB-builds\\zeroxB_0.32.1_x64-setup.exe", "Portable MSVC entrypoint: F:\\toolchains\\portable-msvc\\msvc\\setup_x64.bat"],
+  "next_action": "Commit the reviewed source, test, plan, report, and task-scoped workflow artifacts.",
+  "must_keep_context": [
+    "Base revision 0d616a98f4c2103cea32d66ce739b5a9449b8fad",
+    "Installed application target F:\\zeroxBApp\\zeroxb.exe",
+    "Installer target F:\\zeroxB-builds\\zeroxB_0.32.1_x64-setup.exe",
+    "The API credential is sensitive and must never be printed."
+  ],
   "discarded_context": [],
-  "remaining_risks": ["The local installer is unsigned, so Windows may show an unknown-publisher warning outside this development machine.", "AI interaction remains disabled until the user configures a model endpoint and API key."],
+  "remaining_risks": [
+    "The focused regression test is a permitted source-contract test because Tauri module boundaries prevent importing the runtime database module in Node.",
+    "The full application rebuild and installed UI smoke test are outside this scoped source-recovery task."
+  ],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": []

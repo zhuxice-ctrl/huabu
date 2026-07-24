@@ -1,18 +1,67 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "foundation-08-msvc-package-verification",
+  "task_id": "zeroxb-black-screen-local-ai-recovery",
   "task_type": "code",
-  "goal": "Complete the Windows toolchain and installer verification, remove inherited runtime services and branding, and deliver the installed zeroxB canvas with its bottom AI dock and safety modes.",
-  "non_goals": ["Do not publish artifacts to a remote service.", "Do not merge main.", "Do not configure signing or updater endpoints.", "Do not target non-Windows platforms."],
-  "acceptance_criteria": ["MSVC link.exe is available from an automated build environment", "cargo check --locked passes", "debug NSIS build passes", "zeroxB installer exists and carries zeroxB identity", "installed desktop launch smoke test passes", "foundation contract and frontend build remain green", "no inherited API key, analytics endpoint, or upstream runtime update service remains", "canvas opens in an immersive layout with a bottom AI dock and visible permission safety modes"],
+  "goal": "Eliminate the first-launch black screen by serializing database initialization before canvas startup, restore the interactive high-contrast canvas dot grid, configure the user-authorized localhost OpenAI-compatible provider, remove the explicitly obsolete Huabu installation and data, rebuild, reinstall, and verify zeroxB.",
+  "non_goals": [
+    "Do not transmit canvas or user-document content to the model during verification.",
+    "Do not publish artifacts or push remote branches.",
+    "Do not change updater, signing, or non-Windows behavior.",
+    "Do not delete zeroxB user data."
+  ],
+  "acceptance_criteria": [
+    "Concurrent callers reuse one database initialization promise and canvas loading cannot query before the canvases table exists.",
+    "Canvas startup cannot remain permanently on a blank loading background after an initialization exception.",
+    "The React Flow dot grid is visible with adequate contrast on a dark canvas and still follows pan and zoom.",
+    "The localhost OpenAI-compatible endpoint is stored with the user-supplied credential without exposing it in verification output.",
+    "The configured primary model completes a minimal localhost chat request.",
+    "F:\\HuabuApp and the com.huabu.desktop application-data directories are removed after exact-path verification.",
+    "Frontend build, canvas tests, foundation contract, locked Cargo check, NSIS packaging, F-drive install, and responsive launch pass."
+  ],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
-  "allowed_actions": ["read", "edit", "test", "shell", "network", "install-system-dependencies", "launch-local-application"],
-  "required_outputs": ["worker_state.json", "verification_result.json", "review_findings.json"],
-  "do_not_touch": ["main branch", "remote repositories", "release publishing", "user documents"],
-  "entrypoints": ["src-tauri/Cargo.toml", "src-tauri/tauri.conf.json", "docs/verification/windows-foundation.md"],
-  "context_sources": ["foundation-07 residual MSVC/link.exe blocker", "user authorization to install the toolchain and fix verification failures"],
-  "notes": ["The official Visual Studio Build Tools installer was attempted under F:\\VSBuildTools but its UAC prompt was not accepted; use the portable MSVC environment under F:\\toolchains\\portable-msvc instead.", "Use the fixed UTF-8 I/O baseline.", "Do not claim a smoke test unless the installed F:\\zeroxBApp\\zeroxb.exe launches and responds."],
+  "allowed_actions": [
+    "read",
+    "edit",
+    "test",
+    "shell",
+    "network-localhost",
+    "launch-local-application",
+    "install-local-build",
+    "delete-explicit-obsolete-installation"
+  ],
+  "required_outputs": [
+    "worker_state.json",
+    "verification_result.json",
+    "review_findings.json",
+    "context_preflight.json",
+    "impact_report.json"
+  ],
+  "do_not_touch": [
+    "main branch",
+    "remote repositories",
+    "release publishing",
+    "zeroxB user documents",
+    "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop except store.json provider configuration"
+  ],
+  "entrypoints": [
+    "typescript:src.db:initAllDatabasesPromise:variable",
+    "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function"
+  ],
+  "context_sources": [
+    "src/db/index.ts and src/app/core/main/canvas/canvas-startup-controller.tsx are manual impact sources because dynamic import and Zustand/React dispatch are intentionally opaque to the TypeScript L2 provider.",
+    "src/app/core/main/canvas/canvas-editor.tsx is a manual impact source for the React Flow background contrast change, not an L2 semantic entrypoint.",
+    "User report that the installed zeroxB window is black and lacks the expected dot grid.",
+    "User-authorized localhost OpenAI-compatible endpoint and API credential.",
+    "User explicitly confirmed that the obsolete Huabu installation and data contain nothing important and may be deleted."
+  ],
+  "notes": [
+    "Use the fixed UTF-8 I/O baseline.",
+    "Normalize the chat endpoint to the provider base URL http://localhost:61771/v1 because the client appends /chat/completions.",
+    "Never print or include the API credential in reports, commits, source files, or verification evidence.",
+    "Use exact resolved-path checks before every recursive delete.",
+    "Portable MSVC entrypoint: F:\\toolchains\\portable-msvc\\msvc\\setup_x64.bat."
+  ],
   "implementation_owner": "root-orchestrator"
 }

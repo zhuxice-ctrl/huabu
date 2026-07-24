@@ -1831,7 +1831,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         onlyRenderVisibleElements={nodes.length >= 150}
         colorMode="system"
         >
-          {document.settings.showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} />}
+          {document.settings.showGrid && (
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={22}
+              size={1.35}
+              color="hsl(var(--muted-foreground))"
+            />
+          )}
           <MiniMap pannable zoomable />
               </ReactFlow>
               {drawDraft && (() => {

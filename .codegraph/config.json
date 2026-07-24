@@ -17,7 +17,10 @@
     ".turbo",
     "coverage",
     "target",
-    "src-tauri/target"
+    "src-tauri/target",
+    "src/app/core/main/file/folder-item/paste-target.spec.mjs",
+    "src/app/core/main/mark/mark-view-mode.spec.mjs",
+    "src/lib/vector-document-key.spec.mjs"
   ],
   "languages": [
     "typescript",

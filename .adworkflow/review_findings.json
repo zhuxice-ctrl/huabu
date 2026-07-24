@@ -1,12 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "foundation-08-msvc-package-verification",
+  "task_id": "zeroxb-black-screen-local-ai-recovery",
   "status": "passed",
-  "reviewer": "root-final-verification",
+  "reviewer": "independent_review",
   "source_revision": "working-tree-2026-07-24",
-  "review_basis": ["Source diff inspection", "Foundation contract", "Frontend typecheck and production build", "Locked Rust compilation", "NSIS packaging and silent installation", "Installed UI inspection with accessibility tree and screenshots"],
+  "review_basis": ["Source diff inspection", "Focused canvas contract test", "Foundation contract", "TypeScript no-emit check"],
   "blocking_findings": [],
-  "non_blocking_findings": ["The debug installer is not code signed.", "The Next.js build reports the existing Turbopack experimental/deprecation warnings."],
-  "suggested_tests": ["Configure a disposable model key and run one canvas-grounded query in a future credentialed test.", "Add a CI assertion for the immersive canvas dock once UI component tests are introduced."],
-  "risk_notes": ["No remote publish, branch merge, or updater endpoint configuration was performed.", "Review was completed locally because multi-agent delegation was not authorized for this continuation."]
+  "non_blocking_findings": ["The permitted source-contract tests do not dynamically execute Tauri database initialization; add a runtime seam test when the module boundary is available."],
+  "suggested_tests": ["Add injectable database and startup dependencies for dynamic promise identity and retry tests if the test harness gains Tauri mocks."],
+  "risk_notes": ["The initial review blocked commit because the new ignored test would not enter the index; it must be force-added.", "No remote publish, install, uninstall, data deletion, or secret handling occurred in this task."]
 }

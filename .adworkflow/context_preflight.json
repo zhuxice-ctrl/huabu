@@ -1,14 +1,38 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "foundation-02-baseline-build",
+  "task_id": "zeroxb-black-screen-local-ai-recovery",
   "status": "accepted",
-  "graph_revision": null,
-  "slice_revision": null,
-  "confidence": 0.9,
+  "graph_revision": "f1d851da515763162de37a53",
+  "slice_revision": "f1d851da515763162de37a53",
+  "confidence": 1.0,
   "confidence_threshold": 0.8,
-  "freshness": {"l1_index": "current for foundation branch before Task 2 execution"},
-  "provider_capabilities": ["L1 file, language, symbol, import, and test index"],
-  "missing_capabilities": {"typescript_l2": "Provider source-stability gate did not publish a graph; Task 2 performs no source edits and uses L1 context."},
+  "freshness": {
+    "fresh": true,
+    "changed": [],
+    "missing": [],
+    "added": [],
+    "config_changed": false
+  },
+  "provider_capabilities": [
+    {
+      "capabilities": [
+        "calls",
+        "definitions",
+        "imports",
+        "references",
+        "source_ranges",
+        "unresolved_edges"
+      ],
+      "implementation_identity": "956d7372dd6d7d0a484bdeb2277832282caeac439116e70d9b4927b98b96c18a",
+      "languages": [
+        "javascript",
+        "typescript"
+      ],
+      "provider": "typescript-compiler-api",
+      "version": "5.9.3"
+    }
+  ],
+  "missing_capabilities": {},
   "invalid_reasons": [],
   "expansion_reasons": [],
   "required_actions": [],
