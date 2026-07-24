@@ -14,6 +14,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Store } from '@tauri-apps/plugin-store'
 import { Layout, PanelImperativeHandle } from 'react-resizable-panels'
 import { isCanvasTabPath } from './canvas/canvas-tab'
+import { CanvasStartupController } from './canvas/canvas-startup-controller'
 import { cn } from '@/lib/utils'
 
 function CanvasAiPulse() {
@@ -303,7 +304,11 @@ function Page() {
     saveCurrentPage()
   }, [])
 
-  return <ResizableWrapper />
+  return (
+    <CanvasStartupController>
+      <ResizableWrapper />
+    </CanvasStartupController>
+  )
 }
 
 export default dynamic(() => Promise.resolve(Page), { ssr: false })

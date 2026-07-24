@@ -8,3 +8,7 @@ test('last canvas wins, then newest project', () => {
   assert.equal(chooseStartupCanvasId(projects, 'missing'), 'newer')
   assert.equal(chooseStartupCanvasId([], null), null)
 })
+
+test('startup selection does not depend on a Markdown active tab', () => {
+  assert.equal(chooseStartupCanvasId([{ id: 'canvas', updatedAt: 1 }], null), 'canvas')
+})
