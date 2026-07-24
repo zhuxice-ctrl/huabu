@@ -119,7 +119,7 @@ export function GitlabSync() {
 
   // 获取当前实例的 Token 创建 URL
   function getTokenCreateUrl() {
-    const query = '?name=NoteGen&description=NoteGen+sync&scopes=api'
+    const query = '?name=Huabu&description=Huabu+sync&scopes=api'
     if (gitlabInstanceType === GitlabInstanceType.SELF_HOSTED) {
       const baseUrl = gitlabCustomUrl.replace(/\/+$/, '')
       return baseUrl ? `${baseUrl}/-/user_settings/personal_access_tokens${query}` : '#'

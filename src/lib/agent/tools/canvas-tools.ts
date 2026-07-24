@@ -36,7 +36,7 @@ function summarizeDocument(document: CanvasDocument) {
 const getCanvasStateTool: AgentTool = {
   name: 'canvas_get_state',
   title: '读取当前画布',
-  description: '读取 NoteGen 当前打开的原生可视化画布，包括节点、连线、位置和设置。用户提到当前画布、流程图、节点或连线时必须优先使用，不能用 note_read_file 或 Mermaid 文件代替。',
+  description: '读取 Huabu 当前打开的原生可视化画布，包括节点、连线、位置和设置。用户提到当前画布、流程图、节点或连线时必须优先使用，不能用 note_read_file 或 Mermaid 文件代替。',
   category: 'canvas',
   risk: 'read',
   inputSchema: {
@@ -61,7 +61,7 @@ const getCanvasStateTool: AgentTool = {
 const applyCanvasOperationsTool: AgentTool = {
   name: 'canvas_apply_operations',
   title: '编辑当前画布',
-  description: '直接编辑 NoteGen 当前打开的原生可视化画布。批量添加、更新或删除节点与连线；不要改写 Markdown/Mermaid 文件来代替画布操作。使用稳定 ID，以便在同一次调用中创建节点后连接或更新它们。',
+  description: '直接编辑 Huabu 当前打开的原生可视化画布。批量添加、更新或删除节点与连线；不要改写 Markdown/Mermaid 文件来代替画布操作。使用稳定 ID，以便在同一次调用中创建节点后连接或更新它们。',
   category: 'canvas',
   risk: 'editor-write',
   inputSchema: {

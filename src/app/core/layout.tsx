@@ -19,7 +19,6 @@ import initShowWindow from "@/lib/shortcut/show-window"
 import { initMcp } from "@/lib/mcp/init"
 import { SearchDialog } from "@/components/search-dialog"
 import { ActivityDrawer } from "@/components/activity/activity-drawer"
-import { reportAppStart } from "@/lib/event-report"
 import { TitleBar } from "@/components/title-bar"
 import { Store } from '@tauri-apps/plugin-store'
 import { getCurrentWindow } from '@tauri-apps/api/window'
@@ -311,8 +310,6 @@ export default function RootLayout({
 
   useEffect(() => {
     let cancelled = false
-
-    void reportAppStart()
 
     const initializeApp = async () => {
       try {

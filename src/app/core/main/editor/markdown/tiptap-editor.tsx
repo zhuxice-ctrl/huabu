@@ -2725,7 +2725,7 @@ export function TipTapEditor({
           const project = canvasId ? await getCanvasProject(canvasId) : null
           const activeFilePath = activeFilePathRef.current
           if (!project || !activeFilePath) throw new Error('无法读取画布或当前 Markdown 文件')
-          const safeTitle = project.title.replace(/[\\/:*?"<>|]/g, '-').trim() || 'NoteGen-Canvas'
+          const safeTitle = project.title.replace(/[\\/:*?"<>|]/g, '-').trim() || 'Huabu-Canvas'
           const imageFile = await canvasDocumentToPngFile(project.document, `${safeTitle}.png`)
           const result = await saveImageToWorkspace(imageFile, activeFilePath)
           editor.chain()

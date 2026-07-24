@@ -214,7 +214,7 @@ export function GithubImageHosting() {
             onChange={tokenChangeHandler}
             visible={accessTokenVisible}
             onVisibleChange={setAccessTokenVisible}
-            tokenUrl="https://github.com/settings/personal-access-tokens/new?name=NoteGen&description=NoteGen+image+hosting&expires_in=none&contents=write&administration=write"
+            tokenUrl="https://github.com/settings/personal-access-tokens/new?name=Huabu&description=Huabu+image+hosting&expires_in=none&contents=write&administration=write"
             placeholder={t('settings.sync.enterToken')}
             docsSection="image-hosting"
           />

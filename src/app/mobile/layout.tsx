@@ -17,7 +17,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import './mobile-styles.css'
 import useImageStore from "@/stores/imageHosting";
 import { initMcp } from "@/lib/mcp/init"
-import { reportAppStart } from "@/lib/event-report"
 import { MobileStatusBar } from "@/components/mobile-statusbar"
 import { TextSizeProvider } from "@/contexts/text-size-context"
 import { SyncConfirmDialog } from "@/components/sync-confirm-dialog"
@@ -67,8 +66,6 @@ export default function RootLayout({
 
   useEffect(() => {
     let cancelled = false
-
-    void reportAppStart()
 
     const initializeApp = async () => {
       try {

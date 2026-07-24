@@ -1101,7 +1101,7 @@ function buildSkillInstallPackageTool(): AgentTool {
   return {
     name: 'skill_install_package',
     title: '安装 Skill 包',
-    description: 'Atomically install a package that already passed skill_validate_package. This writes to NoteGen Skills, backs up an explicitly replaced version, reloads Skills, and requires write approval according to the current permission mode.',
+    description: 'Atomically install a package that already passed skill_validate_package. This writes to Huabu Skills, backs up an explicitly replaced version, reloads Skills, and requires write approval according to the current permission mode.',
     category: 'skill',
     risk: 'skill-install',
     inputSchema: SKILL_PACKAGE_SCHEMA,
@@ -1514,7 +1514,7 @@ function buildTools(): AgentTool[] {
     adaptLegacyTool({
       name: 'note_list_files',
       title: '列出笔记文件',
-      description: 'List Markdown files in the NoteGen workspace. Never use this tool to inspect a user-selected folder attachment; use attachment_list for attachments.',
+      description: 'List Markdown files in the Huabu workspace. Never use this tool to inspect a user-selected folder attachment; use attachment_list for attachments.',
       category: 'note',
       risk: 'read',
       legacy: listMarkdownFilesTool,
@@ -1530,7 +1530,7 @@ function buildTools(): AgentTool[] {
     adaptLegacyTool({
       name: 'note_read_file',
       title: '读取笔记文件',
-      description: 'Read a text-based NoteGen workspace file by relative path. This includes Markdown notes and generated text artifacts such as JSON, CSV, TXT, and Jupyter .ipynb files. Never use this tool for a user-selected attachment; use attachment_read with its attachment ID.',
+      description: 'Read a text-based Huabu workspace file by relative path. This includes Markdown notes and generated text artifacts such as JSON, CSV, TXT, and Jupyter .ipynb files. Never use this tool for a user-selected attachment; use attachment_read with its attachment ID.',
       category: 'note',
       risk: 'read',
       legacy: readMarkdownFileTool,
@@ -1539,7 +1539,7 @@ function buildTools(): AgentTool[] {
     adaptLegacyTool({
       name: 'note_open_file',
       title: '打开笔记文件',
-      description: 'Open an existing NoteGen workspace note in the editor only when the user explicitly asks to open or switch to that note. Never use this tool to inspect, read, summarize, or analyze a user-selected attachment; use attachment_read for attachments.',
+      description: 'Open an existing Huabu workspace note in the editor only when the user explicitly asks to open or switch to that note. Never use this tool to inspect, read, summarize, or analyze a user-selected attachment; use attachment_read for attachments.',
       category: 'note',
       risk: 'read',
       legacy: openMarkdownFileTool,

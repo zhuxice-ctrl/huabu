@@ -14,7 +14,7 @@
     "window": "視窗",
     "pinToggle": "置頂/取消置頂",
     "hideWindow": "隱藏到托盤",
-    "quit": "退出 NoteGen"
+    "quit": "退出 Huabu"
   },
   "settings": {
     "defaultModels": {
@@ -375,7 +375,7 @@
       "runtimeManualOnly": "目前平台暫不支援自動安裝此執行環境，請手動安裝後重新檢查。",
       "installRuntime": "安裝執行環境",
       "runtimeInstallTitle": "安裝執行環境",
-      "runtimeInstallDesc": "確認後，NoteGen 將執行以下安裝命令。",
+      "runtimeInstallDesc": "確認後，Huabu 將執行以下安裝命令。",
       "runtimeInstallPreparing": "準備安裝",
       "runtimeInstallRunning": "安裝中",
       "runtimeInstallCompleted": "安裝完成",
@@ -649,7 +649,7 @@
       "resourcesTitle": "資源與支援",
       "resourcesDesc": "查看文件、版本記錄，或進入社群回饋問題。",
       "licenseText": "開源專案 · GitHub · GPL-3.0",
-      "version": "NoteGen v{version}",
+      "version": "Huabu v{version}",
       "checkReleases": "查詢歷史版本",
       "language": "語言",
       "checkUpdate": "檢查更新",
@@ -696,7 +696,7 @@
         },
         "donation": {
           "title": "捐贈支持",
-          "desc": "如果 NoteGen 對你有幫助，可以透過捐贈支持專案持續維護。"
+          "desc": "如果 Huabu 對你有幫助，可以透過捐贈支持專案持續維護。"
         },
         "docs": {
           "title": "文件與配置",
@@ -719,7 +719,7 @@
           "desc": "配置 Git、S3 和 WebDAV 同步。"
         },
         "donate": {
-          "title": "支持 NoteGen",
+          "title": "支持 Huabu",
           "buttonName": "捐贈",
           "desc": "前往捐贈頁面支持專案。"
         },
@@ -789,7 +789,7 @@
       "newToken": "創建 access token",
       "tokenPermissionGuide": "查看權限說明",
       "toggleTokenVisibility": "顯示或隱藏 Access Token",
-      "newTokenDesc": "建議使用 Fine-grained token。現有倉庫需要 Contents 讀寫權限；由 NoteGen 建立倉庫還需要 Administration 讀寫權限。",
+      "newTokenDesc": "建議使用 Fine-grained token。現有倉庫需要 Contents 讀寫權限；由 Huabu 建立倉庫還需要 Administration 讀寫權限。",
       "giteeTokenDesc": "Gitee 私人令牌用於同步數據，需要有倉庫的讀寫權限，配置後將自動創建文件倉庫（私有）和圖床倉庫。",
       "imageRepoSetting": "開啟圖床",
       "imageRepoSettingDesc": "你已經配置了圖床倉庫，開啟此項將使用圖床倉庫，否則將使用本地儲存。",
@@ -1349,8 +1349,8 @@
       "checkConnection": "檢測連接",
       "model": "模型",
       "defaultModels": {
-        "title": "默認免費模型",
-        "desc": "NoteGen 為用戶提供免費的 AI 模型服務，由矽基流動提供支持，無需配置即可使用基礎功能。",
+        "title": "設定你的 AI",
+        "desc": "Huabu 不內建第三方金鑰。請在下方新增模型平台，並填寫你自己的 API 位址與金鑰。",
         "chatModel": {
           "name": "Qwen/Qwen3-8B",
           "type": "對話模型",
@@ -1438,7 +1438,7 @@
     },
     "shortcuts": {
       "title": "快捷鍵",
-      "desc": "在這裡，你可以配置快捷鍵，幫助你更高效地使用 NoteGen。",
+      "desc": "在這裡，你可以配置快捷鍵，幫助你更高效地使用 Huabu。",
       "resetDefaults": "重設",
       "clear": "清空",
       "noShortcut": "未設置",
@@ -1447,7 +1447,7 @@
       "conflictGlobal": "與全域快捷鍵「{name}」衝突",
       "globalShortcuts": {
         "title": "全域快捷鍵",
-        "desc": "這些快捷鍵由系統註冊，NoteGen 不在前台時也可能觸發。"
+        "desc": "這些快捷鍵由系統註冊，Huabu 不在前台時也可能觸發。"
       },
       "editorShortcuts": {
         "title": "編輯器快捷鍵",
@@ -1713,7 +1713,7 @@
       "userInvocable": "在斜杠菜单显示",
       "importHelp": "支持导入 zip 格式的 Skill，zip 文件需包含 SKILL.md 文件。",
       "workspaceInstallHelp": "安裝到目前工作區的 skills 目錄，僅供目前工作區使用。",
-      "globalInstallHelp": "安裝到 NoteGen 的全域 Skills 目錄，可供所有工作區使用。",
+      "globalInstallHelp": "安裝到 Huabu 的全域 Skills 目錄，可供所有工作區使用。",
       "metadata": "元数据",
       "content": "指令内容",
       "noSkills": "还没有 Skills",
@@ -2554,8 +2554,8 @@
       "fit": "符合檢視",
       "layout": "自動整理",
       "export": "匯出 PNG",
-      "import": { "title": "匯入", "file": "選擇檔案", "content": "輸入內容", "contentTitle": "匯入畫布內容", "contentDescription": "支援 NoteGen Canvas JSON 或 Mermaid 流程圖內容，匯入後會取代目前畫布。", "contentPlaceholder": "貼上 Canvas JSON 或 Mermaid 內容…", "confirm": "匯入目前畫布" },
-      "exportMenu": { "computer": "儲存到電腦", "source": "可編輯檔案", "png2x": "PNG · 2× 高解析", "png4x": "PNG · 4× 超高解析", "svg": "SVG · 向量圖", "canvasFile": "NoteGen Canvas JSON", "mermaid": "Mermaid 流程圖" }
+      "import": { "title": "匯入", "file": "選擇檔案", "content": "輸入內容", "contentTitle": "匯入畫布內容", "contentDescription": "支援 Huabu Canvas JSON 或 Mermaid 流程圖內容，匯入後會取代目前畫布。", "contentPlaceholder": "貼上 Canvas JSON 或 Mermaid 內容…", "confirm": "匯入目前畫布" },
+      "exportMenu": { "computer": "儲存到電腦", "source": "可編輯檔案", "png2x": "PNG · 2× 高解析", "png4x": "PNG · 4× 超高解析", "svg": "SVG · 向量圖", "canvasFile": "Huabu Canvas JSON", "mermaid": "Mermaid 流程圖" }
     },
     "contextMenu": { "selectAll": "全選", "copy": "複製", "paste": "貼上", "duplicate": "建立副本", "delete": "刪除所選內容" },
     "empty": {
@@ -2694,14 +2694,14 @@
       },
       "onboarding": {
         "title": "新手引導",
-        "subtitle": "跟著這三步體驗 NoteGen 的核心工作流。",
+        "subtitle": "跟著這三步體驗 Huabu 的核心工作流。",
         "dismiss": "跳過新手引導",
         "reopen": "重新顯示新手引導",
         "start": "開始引導",
         "viewHint": "查看提示",
         "continue": "繼續下一步",
         "completed": "已完成",
-        "allDone": "新手任務已全部完成，你已經體驗了 NoteGen 的基礎工作流。",
+        "allDone": "新手任務已全部完成，你已經體驗了 Huabu 的基礎工作流。",
         "stepLabel": "任務 ({current}/{total})",
         "stepCompletedLabel": "已完成任務 ({current}/{total})",
         "afterOrganizeDialog": {

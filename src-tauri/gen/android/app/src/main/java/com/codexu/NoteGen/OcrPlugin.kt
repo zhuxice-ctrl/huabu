@@ -1,4 +1,4 @@
-package com.codexu.NoteGen
+package com.codexu.Huabu
 
 import android.app.Activity
 import android.net.Uri

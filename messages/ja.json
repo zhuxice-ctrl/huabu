@@ -14,7 +14,7 @@
     "window": "ウィンドウ",
     "pinToggle": "ピン留め/解除",
     "hideWindow": "トレイに隠す",
-    "quit": "NoteGenを終了"
+    "quit": "Huabuを終了"
   },
   "settings": {
     "defaultModels": {
@@ -375,7 +375,7 @@
       "runtimeManualOnly": "このプラットフォームでは自動インストールに対応していません。手動でインストールしてから再チェックしてください。",
       "installRuntime": "ランタイムをインストール",
       "runtimeInstallTitle": "ランタイムをインストール",
-      "runtimeInstallDesc": "確認後、NoteGen は以下のインストールコマンドを実行します。",
+      "runtimeInstallDesc": "確認後、Huabu は以下のインストールコマンドを実行します。",
       "runtimeInstallPreparing": "インストールを準備中",
       "runtimeInstallRunning": "インストール中",
       "runtimeInstallCompleted": "インストール完了",
@@ -649,7 +649,7 @@
       "resourcesTitle": "リソースとサポート",
       "resourcesDesc": "ドキュメント、リリースノート、コミュニティでのフィードバックを確認できます。",
       "licenseText": "オープンソース · GitHub · GPL-3.0",
-      "version": "NoteGen v{version}",
+      "version": "Huabu v{version}",
       "checkReleases": "過去のバージョンを確認",
       "language": "言語",
       "checkUpdate": "アップデートを確認",
@@ -696,7 +696,7 @@
         },
         "donation": {
           "title": "寄付",
-          "desc": "NoteGen が役立っている場合は、寄付で継続的なメンテナンスを支援できます。"
+          "desc": "Huabu が役立っている場合は、寄付で継続的なメンテナンスを支援できます。"
         },
         "docs": {
           "title": "ドキュメントと設定",
@@ -719,7 +719,7 @@
           "desc": "Git、S3、WebDAV同期を設定します。"
         },
         "donate": {
-          "title": "NoteGen を支援",
+          "title": "Huabu を支援",
           "buttonName": "寄付",
           "desc": "寄付ページを開いてプロジェクトを支援します。"
         },
@@ -789,7 +789,7 @@
       "newToken": "作成 access token",
       "tokenPermissionGuide": "権限ガイドを見る",
       "toggleTokenVisibility": "Access Token の表示を切り替える",
-      "newTokenDesc": "Fine-grained token を推奨します。既存リポジトリには Contents の読み書き権限、NoteGen で作成する場合は Administration の読み書き権限も必要です。",
+      "newTokenDesc": "Fine-grained token を推奨します。既存リポジトリには Contents の読み書き権限、Huabu で作成する場合は Administration の読み書き権限も必要です。",
       "giteeTokenDesc": "Giteeの個人アクセストークンはデータ同期に使用されます。リポジトリの読み書き権限が必要です。設定後、自動的にファイルリポジトリ（プライベート）と画像リポジトリが作成されます。",
       "imageRepoSetting": "画像ホスティングを有効化",
       "imageRepoSettingDesc": "画像ホスティングリポジトリが設定されています。有効にすると画像はそちらに保存され、無効の場合はローカル保存となります。",
@@ -1356,8 +1356,8 @@
       "voiceDesc": "音声モデルで使用する音声タイプを指定します（例：'alloy'、'echo'、'fable'など）。",
       "voicePlaceholder": "音声タイプを入力してください（例：alloy）",
       "defaultModels": {
-        "title": "デフォルト無料モデル",
-        "desc": "NoteGenはユーザーに無料のAIモデルサービスを提供し、設定なしで基本機能を使用できます。",
+        "title": "AI を設定",
+        "desc": "Huabu に第三者の API キーは内蔵されていません。下でプロバイダーを追加し、ご自身の API 接続先とキーを入力してください。",
         "chatModel": {
           "name": "Qwen/Qwen3-8B",
           "type": "チャットモデル",
@@ -1438,7 +1438,7 @@
     },
     "shortcuts": {
       "title": "ショートカット",
-      "desc": "ここで、NoteGen をより効率的に使用するためのショートカットを設定できます。",
+      "desc": "ここで、Huabu をより効率的に使用するためのショートカットを設定できます。",
       "resetDefaults": "リセットします",
       "clear": "クリア",
       "noShortcut": "未設定",
@@ -1447,7 +1447,7 @@
       "conflictGlobal": "グローバルショートカット「{name}」と競合しています",
       "globalShortcuts": {
         "title": "グローバルショートカット",
-        "desc": "これらはシステムに登録され、NoteGen が前面になくても動作する場合があります。"
+        "desc": "これらはシステムに登録され、Huabu が前面になくても動作する場合があります。"
       },
       "editorShortcuts": {
         "title": "エディタショートカット",
@@ -1713,7 +1713,7 @@
       "userInvocable": "在斜杠菜单显示",
       "importHelp": "支持导入 zip 格式的 Skill，zip 文件需包含 SKILL.md 文件。",
       "workspaceInstallHelp": "現在のワークスペースの skills フォルダーにインストールされ、このワークスペースだけで利用できます。",
-      "globalInstallHelp": "NoteGen のグローバル Skills フォルダーにインストールされ、すべてのワークスペースで利用できます。",
+      "globalInstallHelp": "Huabu のグローバル Skills フォルダーにインストールされ、すべてのワークスペースで利用できます。",
       "metadata": "元数据",
       "content": "指令内容",
       "noSkills": "还没有 Skills",
@@ -2541,8 +2541,8 @@
       "fit": "全体を表示",
       "layout": "自動整列",
       "export": "PNGを書き出す",
-      "import": { "title": "インポート", "file": "ファイルを選択", "content": "内容を入力", "contentTitle": "キャンバス内容をインポート", "contentDescription": "NoteGen Canvas JSON または Mermaid フローチャートに対応しています。現在のキャンバスは置き換えられます。", "contentPlaceholder": "Canvas JSON または Mermaid の内容を貼り付け…", "confirm": "現在のキャンバスにインポート" },
-      "exportMenu": { "computer": "コンピューターに保存", "source": "編集可能なファイル", "png2x": "PNG · 2× 高解像度", "png4x": "PNG · 4× 超高解像度", "svg": "SVG · ベクター", "canvasFile": "NoteGen Canvas JSON", "mermaid": "Mermaid フローチャート" }
+      "import": { "title": "インポート", "file": "ファイルを選択", "content": "内容を入力", "contentTitle": "キャンバス内容をインポート", "contentDescription": "Huabu Canvas JSON または Mermaid フローチャートに対応しています。現在のキャンバスは置き換えられます。", "contentPlaceholder": "Canvas JSON または Mermaid の内容を貼り付け…", "confirm": "現在のキャンバスにインポート" },
+      "exportMenu": { "computer": "コンピューターに保存", "source": "編集可能なファイル", "png2x": "PNG · 2× 高解像度", "png4x": "PNG · 4× 超高解像度", "svg": "SVG · ベクター", "canvasFile": "Huabu Canvas JSON", "mermaid": "Mermaid フローチャート" }
     },
     "contextMenu": { "selectAll": "すべて選択", "copy": "コピー", "paste": "貼り付け", "duplicate": "複製", "delete": "選択項目を削除" },
     "empty": {
@@ -2704,14 +2704,14 @@
       },
       "onboarding": {
         "title": "初回ガイド",
-        "subtitle": "この 3 つのタスクで NoteGen の基本フローを体験できます。",
+        "subtitle": "この 3 つのタスクで Huabu の基本フローを体験できます。",
         "dismiss": "オンボーディングをスキップ",
         "reopen": "初回ガイドを再表示",
         "start": "開始",
         "viewHint": "ヒントを見る",
         "continue": "次へ進む",
         "completed": "完了",
-        "allDone": "スタートガイドのタスクはすべて完了しました。NoteGen の基本フローは体験済みです。",
+        "allDone": "スタートガイドのタスクはすべて完了しました。Huabu の基本フローは体験済みです。",
         "stepLabel": "タスク ({current}/{total})",
         "stepCompletedLabel": "完了したタスク ({current}/{total})",
         "afterOrganizeDialog": {
@@ -2755,7 +2755,7 @@
           },
           "ai-polish": {
             "title": "Agent でノートを処理しました",
-            "desc": "記録から整理、さらに Agent による処理まで、NoteGen の基本フローを体験できました。"
+            "desc": "記録から整理、さらに Agent による処理まで、Huabu の基本フローを体験できました。"
           }
         },
         "spotlight": {

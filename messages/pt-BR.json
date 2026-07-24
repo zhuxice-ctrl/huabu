@@ -14,7 +14,7 @@
     "window": "Janela",
     "pinToggle": "Fixar/Desafixar",
     "hideWindow": "Ocultar na bandeja",
-    "quit": "Sair do NoteGen"
+    "quit": "Sair do Huabu"
   },
   "settings": {
     "defaultModels": {
@@ -375,7 +375,7 @@
       "runtimeManualOnly": "A instalação automática não está disponível para este runtime na plataforma atual. Instale manualmente e verifique novamente.",
       "installRuntime": "Instalar runtime",
       "runtimeInstallTitle": "Instalar runtime",
-      "runtimeInstallDesc": "Após sua confirmação, o NoteGen executará o seguinte comando de instalação.",
+      "runtimeInstallDesc": "Após sua confirmação, o Huabu executará o seguinte comando de instalação.",
       "runtimeInstallPreparing": "Preparando instalação",
       "runtimeInstallRunning": "Instalando",
       "runtimeInstallCompleted": "Instalação concluída",
@@ -508,7 +508,7 @@
       "resourcesTitle": "Recursos e suporte",
       "resourcesDesc": "Abra documentos, notas de versão ou canais da comunidade para feedback.",
       "licenseText": "Código aberto · GitHub · GPL-3.0",
-      "version": "NoteGen v{version}",
+      "version": "Huabu v{version}",
       "checkReleases": "Verificar Histórico de Lançamentos",
       "language": "Idioma",
       "checkUpdate": "Verificar Atualizações",
@@ -555,7 +555,7 @@
         },
         "donation": {
           "title": "Doação",
-          "desc": "Se o NoteGen ajuda você, apoie a manutenção contínua com uma doação."
+          "desc": "Se o Huabu ajuda você, apoie a manutenção contínua com uma doação."
         },
         "docs": {
           "title": "Documentos e configuração",
@@ -578,7 +578,7 @@
           "desc": "Configure sync com Git, S3 e WebDAV."
         },
         "donate": {
-          "title": "Apoiar o NoteGen",
+          "title": "Apoiar o Huabu",
           "buttonName": "Doar",
           "desc": "Abra a página de doação para apoiar o projeto."
         },
@@ -814,7 +814,7 @@
       "newToken": "Criar Token de Acesso",
       "tokenPermissionGuide": "Ver guia de permissões",
       "toggleTokenVisibility": "Mostrar ou ocultar o Access Token",
-      "newTokenDesc": "Use um token fine-grained. Repositórios existentes precisam de leitura/gravação em Contents; para criá-los no NoteGen, também é necessária leitura/gravação em Administration.",
+      "newTokenDesc": "Use um token fine-grained. Repositórios existentes precisam de leitura/gravação em Contents; para criá-los no Huabu, também é necessária leitura/gravação em Administration.",
       "giteeTokenDesc": "O token de acesso pessoal do Gitee é usado para sincronização de dados. Ele precisa de permissões de leitura e escrita do repositório. Após a configuração, ele criará automaticamente um repositório de arquivos (privado) e um repositório de imagens.",
       "imageRepoSetting": "Ativar Hospedagem de Imagens",
       "imageRepoSettingDesc": "Você já configurou um repositório de imagens, pode escolher usar o repositório de imagens ou usar o armazenamento local.",
@@ -1381,8 +1381,8 @@
       "voiceDesc": "Especifique o tipo de voz para modelos de áudio, como 'alloy', 'echo', 'fable', etc.",
       "voicePlaceholder": "Insira o tipo de voz, ex: alloy",
       "defaultModels": {
-        "title": "Modelos Gratuitos Padrão",
-        "desc": "O NoteGen fornece serviços de modelo de IA gratuitos para usuários, permitindo funcionalidade básica sem configuração.",
+        "title": "Configure sua IA",
+        "desc": "O Huabu não inclui chaves de API de terceiros. Adicione um provedor abaixo e informe seu endpoint e sua chave.",
         "chatModel": {
           "name": "Qwen/Qwen3-8B",
           "type": "Modelo de Chat",
@@ -1463,7 +1463,7 @@
     },
     "shortcuts": {
       "title": "Atalhos",
-      "desc": "Aqui, você pode configurar atalhos para ajudá-lo a usar o NoteGen com mais eficiência.",
+      "desc": "Aqui, você pode configurar atalhos para ajudá-lo a usar o Huabu com mais eficiência.",
       "resetDefaults": "Redefinir",
       "clear": "Limpar",
       "noShortcut": "Nenhum Atalho",
@@ -1472,7 +1472,7 @@
       "conflictGlobal": "Conflita com o atalho global \"{name}\"",
       "globalShortcuts": {
         "title": "Atalhos globais",
-        "desc": "Esses atalhos são registrados pelo sistema e podem funcionar quando o NoteGen não está em foco."
+        "desc": "Esses atalhos são registrados pelo sistema e podem funcionar quando o Huabu não está em foco."
       },
       "editorShortcuts": {
         "title": "Atalhos do editor",
@@ -1732,7 +1732,7 @@
       "importSuccess": "Importado com sucesso",
       "importError": "Falha ao importar",
       "workspaceInstallHelp": "Instalada na pasta skills do workspace atual e disponível apenas neste workspace.",
-      "globalInstallHelp": "Instalada na pasta global de Skills do NoteGen e disponível em todos os workspaces.",
+      "globalInstallHelp": "Instalada na pasta global de Skills do Huabu e disponível em todos os workspaces.",
       "noSkills": "Ainda não há Skills",
       "noSkillsDesc": "Crie ou importe Skills para começar a usar.",
       "noSkillsGlobal": "Ainda não há Skills globais",
@@ -2547,8 +2547,8 @@
       "fit": "Ajustar visualização",
       "layout": "Organizar automaticamente",
       "export": "Exportar PNG",
-      "import": { "title": "Importar", "file": "Escolher arquivo", "content": "Inserir conteúdo", "contentTitle": "Importar conteúdo da tela", "contentDescription": "Aceita NoteGen Canvas JSON ou fluxograma Mermaid. A importação substitui a tela atual.", "contentPlaceholder": "Cole o conteúdo Canvas JSON ou Mermaid…", "confirm": "Importar para a tela atual" },
-      "exportMenu": { "computer": "Salvar no computador", "source": "Arquivos editáveis", "png2x": "PNG · 2× alta resolução", "png4x": "PNG · 4× ultra resolução", "svg": "SVG · vetorial", "canvasFile": "NoteGen Canvas JSON", "mermaid": "Fluxograma Mermaid" }
+      "import": { "title": "Importar", "file": "Escolher arquivo", "content": "Inserir conteúdo", "contentTitle": "Importar conteúdo da tela", "contentDescription": "Aceita Huabu Canvas JSON ou fluxograma Mermaid. A importação substitui a tela atual.", "contentPlaceholder": "Cole o conteúdo Canvas JSON ou Mermaid…", "confirm": "Importar para a tela atual" },
+      "exportMenu": { "computer": "Salvar no computador", "source": "Arquivos editáveis", "png2x": "PNG · 2× alta resolução", "png4x": "PNG · 4× ultra resolução", "svg": "SVG · vetorial", "canvasFile": "Huabu Canvas JSON", "mermaid": "Fluxograma Mermaid" }
     },
     "contextMenu": { "selectAll": "Selecionar tudo", "copy": "Copiar", "paste": "Colar", "duplicate": "Duplicar", "delete": "Excluir seleção" },
     "empty": {
@@ -2687,14 +2687,14 @@
       },
       "onboarding": {
         "title": "Onboarding",
-        "subtitle": "Siga estas três tarefas para conhecer o fluxo principal do NoteGen.",
+        "subtitle": "Siga estas três tarefas para conhecer o fluxo principal do Huabu.",
         "dismiss": "Pular introducao",
         "reopen": "Mostrar onboarding novamente",
         "start": "Começar",
         "viewHint": "Ver dica",
         "continue": "Continuar",
         "completed": "Concluído",
-        "allDone": "Todas as tarefas iniciais foram concluídas. Você já experimentou o fluxo principal do NoteGen.",
+        "allDone": "Todas as tarefas iniciais foram concluídas. Você já experimentou o fluxo principal do Huabu.",
         "stepLabel": "Tarefa ({current}/{total})",
         "stepCompletedLabel": "Tarefa concluída ({current}/{total})",
         "afterOrganizeDialog": {
@@ -2738,7 +2738,7 @@
           },
           "ai-polish": {
             "title": "Você usou o Agent na nota",
-            "desc": "Você concluiu o fluxo de captura, organização e processamento com Agent no NoteGen."
+            "desc": "Você concluiu o fluxo de captura, organização e processamento com Agent no Huabu."
           }
         },
         "spotlight": {

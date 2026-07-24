@@ -4,14 +4,11 @@ import { getVersion } from '@tauri-apps/api/app'
 import { AiConfig } from '@/app/core/setting/config'
 import { GitlabInstanceType } from '@/lib/sync/gitlab.types'
 import { GiteaInstanceType } from '@/lib/sync/gitea.types'
-import { noteGenDefaultModels, noteGenModelKeys } from '@/app/model-config'
-import { fetch } from '@tauri-apps/plugin-http'
 import { CustomThemeColors } from '@/types/theme'
 import { applyThemeColors, removeThemeColors } from '@/lib/theme-utils'
 import { getNormalizedImageHosting } from '@/lib/image-hosting-config'
 import { normalizeSpeechMode } from '@/lib/speech/preferences'
 import type { SpeechMode } from '@/lib/speech/types'
-import { applyNoteGenDefaultConfig, loadNoteGenDefaultConfig } from '@/lib/ai/notegen-default-models-runtime'
 import { enqueueAutoDataSync, isAutoDataSyncApplyingRemote } from '@/lib/sync/auto-data-sync-queue'
 import { shouldExcludeFromSync } from '@/config/sync-exclusions'
 import { DEFAULT_SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
@@ -335,205 +332,42 @@ const useSettingStore = create<SettingState>((set, get) => ({
       set({ useImageRepo: savedUseImageRepo })
     }
 
-    // 初始化默认的NoteGen模型配置
+    // 独立产品迁移：移除上游内置模型和密钥，只保留用户主动配置的平台。
     const existingAiModelList = (await store.get('aiModelList') as AiConfig[]) || []
-    const hasNoteGenModels = existingAiModelList.some(config => 
-      config.key === 'note-gen-free' || 
-      noteGenModelKeys.includes(config.key) ||
-      config.models?.some(model => noteGenModelKeys.includes(model.id))
+    const isLegacyUpstreamModel = (config: AiConfig) => (
+      config.key.startsWith('note-gen-')
+      || config.title === 'Huabu Limited'
+      || config.models?.some(model => model.id.startsWith('note-gen-'))
     )
-    
-    const noteGenDefaultConfig = await loadNoteGenDefaultConfig(noteGenDefaultModels[0])
-    let finalAiModelList = applyNoteGenDefaultConfig(existingAiModelList, noteGenDefaultConfig)
+    const finalAiModelList = existingAiModelList.filter(config => !isLegacyUpstreamModel(config))
     if (JSON.stringify(finalAiModelList) !== JSON.stringify(existingAiModelList)) {
       await store.set('aiModelList', finalAiModelList)
-      set({ aiModelList: finalAiModelList })
     }
 
-    // 检查是否设置了主要模型，如果没有且存在note-gen-chat，则设置为主要模型
-    const currentPrimaryModel = await store.get('primaryModel') as string
-    const hasNoteGenChat = finalAiModelList.some(config => 
-      config.models?.some(model => model.id === 'note-gen-chat') || config.key === 'note-gen-chat'
-    )
-    
-    if (!currentPrimaryModel && hasNoteGenChat) {
-      const noteGenFreeConfig = finalAiModelList.find(config => config.key === 'note-gen-free')
-      if (noteGenFreeConfig?.models?.some(model => model.id === 'note-gen-chat')) {
-        await store.set('primaryModel', 'note-gen-chat')
-        set({ primaryModel: 'note-gen-chat' })
-      } else {
-        await store.set('primaryModel', 'note-gen-chat')
-        set({ primaryModel: 'note-gen-chat' })
+    const legacySelectionKeys = [
+      'primaryModel',
+      'embeddingModel',
+      'audioModel',
+      'sttModel',
+      'completionModel',
+      'markDescModel',
+      'commitModel',
+      'condenseModel',
+      'inspirationModel',
+    ]
+    for (const key of legacySelectionKeys) {
+      const value = await store.get<string>(key)
+      if (value?.startsWith('note-gen-')) {
+        await store.set(key, '')
       }
     }
-
-    // 检查是否设置了嵌入模型，如果没有且存在note-gen-embedding，则设置为默认嵌入模型
-    const currentEmbeddingModel = await store.get('embeddingModel') as string
-    const hasNoteGenEmbedding = finalAiModelList.some(config => 
-      config.models?.some(model => model.id === 'note-gen-embedding') || config.key === 'note-gen-embedding'
-    )
-    
-    if (!currentEmbeddingModel && hasNoteGenEmbedding) {
-      const noteGenFreeConfig = finalAiModelList.find(config => config.key === 'note-gen-free')
-      if (noteGenFreeConfig?.models?.some(model => model.id === 'note-gen-embedding')) {
-        await store.set('embeddingModel', 'note-gen-embedding')
-        set({ embeddingModel: 'note-gen-embedding' })
-      } else {
-        await store.set('embeddingModel', 'note-gen-embedding')
-        set({ embeddingModel: 'note-gen-embedding' })
-      }
-    }
-
-    // 检查是否设置了TTS模型，如果没有且存在note-gen-tts，则设置为默认TTS模型
-    const currentAudioModel = await store.get('audioModel') as string
-    const hasNoteGenTTS = finalAiModelList.some(config => 
-      config.models?.some(model => model.modelType === 'tts') || config.modelType === 'tts'
-    )
-    
-    if (!currentAudioModel && hasNoteGenTTS) {
-      // 查找第一个可用的TTS模型
-      for (const config of finalAiModelList) {
-        if (config.models && config.models.length > 0) {
-          const ttsModel = config.models.find(model => model.modelType === 'tts')
-          if (ttsModel) {
-            await store.set('audioModel', `${config.key}-${ttsModel.id}`)
-            set({ audioModel: `${config.key}-${ttsModel.id}` })
-            break
-          }
-        } else if (config.modelType === 'tts') {
-          await store.set('audioModel', config.key)
-          set({ audioModel: config.key })
-          break
-        }
-      }
-    }
-
-    // 检查是否设置了STT模型，如果没有且存在note-gen-stt，则设置为默认STT模型
-    const currentSttModel = await store.get('sttModel') as string
-    const hasNoteGenSTT = finalAiModelList.some(config => 
-      config.models?.some(model => model.modelType === 'stt') || config.modelType === 'stt'
-    )
-    
-    if (!currentSttModel && hasNoteGenSTT) {
-      // 查找第一个可用的STT模型
-      for (const config of finalAiModelList) {
-        if (config.models && config.models.length > 0) {
-          const sttModel = config.models.find(model => model.modelType === 'stt')
-          if (sttModel) {
-            await store.set('sttModel', `${config.key}-${sttModel.id}`)
-            set({ sttModel: `${config.key}-${sttModel.id}` })
-            break
-          }
-        } else if (config.modelType === 'stt') {
-          await store.set('sttModel', config.key)
-          set({ sttModel: config.key })
-          break
-        }
-      }
-    }
+    await store.save()
 
     const currentTextToSpeechMode = await store.get('textToSpeechMode')
     set({ textToSpeechMode: normalizeSpeechMode(currentTextToSpeechMode) })
 
     const currentSpeechToTextMode = await store.get('speechToTextMode')
     set({ speechToTextMode: normalizeSpeechMode(currentSpeechToTextMode) })
-
-    // 检查并初始化其他模型类型
-    const modelTypes = [
-      { storeKey: 'completionModel', modelType: 'chat' },
-      { storeKey: 'markDescModel', modelType: 'chat' },
-      { storeKey: 'commitModel', modelType: 'chat' },
-      { storeKey: 'condenseModel', modelType: 'chat' },
-      { storeKey: 'inspirationModel', modelType: 'chat' }
-    ]
-
-    for (const { storeKey, modelType } of modelTypes) {
-      const currentModel = await store.get(storeKey) as string
-      if (!currentModel) {
-        // 查找第一个可用的聊天模型作为默认值
-        const noteGenFreeConfig = finalAiModelList.find(config => config.key === 'note-gen-free')
-        if (noteGenFreeConfig?.models?.some(model => model.id === 'note-gen-chat' && model.modelType === modelType)) {
-          await store.set(storeKey, 'note-gen-chat')
-          set({ [storeKey]: 'note-gen-chat' })
-        } else {
-          // 查找其他可用的聊天模型
-          for (const config of finalAiModelList) {
-            if (config.models && config.models.length > 0) {
-              const chatModel = config.models.find(model => model.modelType === modelType)
-              if (chatModel) {
-                await store.set(storeKey, `${config.key}-${chatModel.id}`)
-                set({ [storeKey]: `${config.key}-${chatModel.id}` })
-                break
-              }
-            } else if (config.modelType === modelType || !config.modelType) {
-              await store.set(storeKey, config.key)
-              set({ [storeKey]: config.key })
-              break
-            }
-          }
-        }
-      }
-    }
-
-    // 获取 NoteGen 限时免费模型
-    // 如果服务不可用,静默失败,不影响用户使用自己的模型
-    try {
-      const apiKey = noteGenDefaultModels[0].apiKey
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      }
-      const res = await fetch('https://api.notegen.top/v1/models', {
-        method: 'GET',
-        headers
-      })
-
-      // 检查响应状态
-      if (!res.ok) {
-        throw new Error(`API responded with status: ${res.status}`)
-      }
-
-      const resModels = await res.json()
-
-      if (resModels.data && resModels.data.length > 0) {
-        // 移除旧的 NoteGen Limited 配置
-        finalAiModelList = finalAiModelList.filter(model => 
-          model.title !== 'NoteGen Limited' && model.key !== 'note-gen-limited'
-        )
-        
-        // 过滤出不在默认模型中的限时免费模型
-        const limitedModels = resModels.data.filter((model: any) => {
-          // 检查是否在 noteGenDefaultModels 的 models 数组中
-          const noteGenFreeConfig = finalAiModelList.find(config => config.key === 'note-gen-free')
-          return !noteGenFreeConfig?.models?.some(defaultModel => defaultModel.model === model.id)
-        })
-        
-        // 如果有限时免费模型,创建统一的 NoteGen Limited 配置
-        if (limitedModels.length > 0) {
-          const noteGenLimitedConfig = {
-            apiKey,
-            baseURL: "https://api.notegen.top/v1",
-            key: "note-gen-limited",
-            title: "NoteGen Limited",
-            models: limitedModels.map((model: any) => ({
-              id: `note-gen-limited-${model.id}`,
-              model: model.id,
-              modelType: "chat",
-              temperature: 0.7,
-              topP: 1,
-              enableStream: true
-            }))
-          }
-          
-          finalAiModelList.push(noteGenLimitedConfig)
-          await store.set('aiModelList', finalAiModelList)
-          set({ aiModelList: finalAiModelList })
-        }
-      }
-    } catch (error) {
-      // 静默处理错误,不影响应用初始化和用户使用自己的模型
-      console.debug('NoteGen API service unavailable, skipping limited models:', error)
-    }
 
     const hydratedSettings: Record<string, unknown> = {}
 
@@ -547,9 +381,8 @@ const useSettingStore = create<SettingState>((set, get) => ({
           setTimeout(() => {
             set({ [key]: res as GenTemplate[] })
           }, 0);
-        } else if (key === 'aiModelList' && hasNoteGenModels) {
-          // 如果已经有NoteGen模型，使用存储的配置
-          hydratedSettings[key] = res as AiConfig[]
+        } else if (key === 'aiModelList') {
+          hydratedSettings[key] = finalAiModelList
         } else if (key === 'recordToolbarConfig') {
           // 确保包含所有工具，如果缺少新工具则自动添加
           const storedConfig = res as RecordToolbarItem[]
@@ -574,7 +407,7 @@ const useSettingStore = create<SettingState>((set, get) => ({
           } else {
             hydratedSettings[key] = res as RecordToolbarItem[]
           }
-        } else if (key !== 'aiModelList') {
+        } else {
           hydratedSettings[key] = res
         }
       } else {

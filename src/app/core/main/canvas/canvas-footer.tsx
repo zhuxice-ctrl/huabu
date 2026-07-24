@@ -2,11 +2,8 @@
 
 import {
   ClipboardPaste,
-  Download,
-  FileCode2,
   FileInput,
   Grid3X3,
-  ImageDown,
   Magnet,
   Maximize2,
   WandSparkles,
@@ -19,10 +16,7 @@ import { Slider } from '@/components/ui/slider'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -36,8 +30,6 @@ interface CanvasFooterProps {
   onZoomChange: (zoom: number) => void
   onFitView: () => void
   onLayout: () => void
-  onExport: (format: 'png' | 'svg', pixelRatio: number) => void
-  onExportSource: (format: 'canvas' | 'mermaid') => void
   onImportFile: () => void
   onImportContent: () => void
 }
@@ -80,8 +72,6 @@ export function CanvasFooter({
   onZoomChange,
   onFitView,
   onLayout,
-  onExport,
-  onExportSource,
   onImportFile,
   onImportContent,
 }: CanvasFooterProps) {
@@ -119,47 +109,6 @@ export function CanvasFooter({
               <ClipboardPaste />
               {t('import.content')}
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-xs" aria-label={t('export')}>
-                  <Download />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="top">{t('export')}</TooltipContent>
-          </Tooltip>
-          <DropdownMenuContent align="start" side="top" className="w-56">
-            <DropdownMenuLabel>{t('exportMenu.computer')}</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={() => onExport('png', 2)}>
-                <ImageDown />
-                {t('exportMenu.png2x')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onExport('png', 4)}>
-                <ImageDown />
-                {t('exportMenu.png4x')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onExport('svg', 1)}>
-                <FileCode2 />
-                {t('exportMenu.svg')}
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>{t('exportMenu.source')}</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={() => onExportSource('canvas')}>
-                <FileCode2 />
-                {t('exportMenu.canvasFile')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onExportSource('mermaid')}>
-                <FileCode2 />
-                {t('exportMenu.mermaid')}
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

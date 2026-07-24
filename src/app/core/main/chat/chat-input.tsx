@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import useChatStore from "@/stores/chat"
 import useMarkStore from "@/stores/mark"
 import useArticleStore from "@/stores/article"
+import { isCanvasTabPath } from "../canvas/canvas-tab"
 import { fetchAiQuickPrompts } from "@/lib/ai/placeholder"
 import { useTranslations } from 'next-intl'
 import { useLocalStorage } from 'react-use';
@@ -108,7 +109,7 @@ export const ChatInput = React.memo(function ChatInput() {
     isTemporaryConversation,
   } = useChatStore()
   const { marks, trashState } = useMarkStore()
-  const { activeFilePath } = useArticleStore()
+  const { activeFilePath, activeTabId } = useArticleStore()
   const [isComposing, setIsComposing] = useState(false)
   const [placeholder, setPlaceholder] = useState('')
   const t = useTranslations()
@@ -892,6 +893,13 @@ ${previewLines.join('\n')}
   // 自动关联当前打开的 markdown 文件或文件夹
   useEffect(() => {
     async function linkCurrentResource() {
+      if (isCanvasTabPath(activeTabId)) {
+        setLinkedResource(null)
+        setChatLinkedResource(null)
+        setLinkedResourcePreview(null)
+        return
+      }
+
       if (!activeFilePath) {
         setLinkedResource(null)
         setChatLinkedResource(null)
@@ -975,7 +983,7 @@ ${previewLines.join('\n')}
     }
 
     linkCurrentResource()
-  }, [activeFilePath])
+  }, [activeFilePath, activeTabId, setChatLinkedResource, setLinkedResourcePreview])
 
   // 当关联文件变化时，触发防抖的 placeholder 重新生成
   useEffect(() => {

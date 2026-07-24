@@ -1,7 +1,7 @@
 'use client'
 
 import { Eye, EyeOff } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { OpenBroswer } from '@/components/open-broswer'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -25,12 +25,8 @@ export function TokenInputControl({
   tokenUrl,
   placeholder,
   disabled = false,
-  docsSection = 'sync',
 }: TokenInputControlProps) {
-  const locale = useLocale()
   const t = useTranslations()
-  const docsLocale = locale === 'zh' || locale === 'zh-TW' ? 'cn' : 'en'
-  const docsUrl = `https://notegen.top/${docsLocale}/docs/settings/${docsSection}#token-permissions-guide`
 
   return (
     <div className="flex flex-col gap-2">
@@ -66,11 +62,6 @@ export function TokenInputControl({
           />
         )}
       </div>
-      <OpenBroswer
-        url={docsUrl}
-        title={t('settings.sync.tokenPermissionGuide')}
-        className="text-sm text-blue-500 hover:underline"
-      />
     </div>
   )
 }

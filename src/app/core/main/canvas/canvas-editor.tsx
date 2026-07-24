@@ -8,7 +8,6 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
-  getViewportForBounds,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -22,9 +21,8 @@ import {
 } from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled.js'
 import type { ElkNode } from 'elkjs/lib/elk-api'
-import { toPng, toSvg } from 'html-to-image'
-import { open, save } from '@tauri-apps/plugin-dialog'
-import { mkdir, readFile, readTextFile, writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { open } from '@tauri-apps/plugin-dialog'
+import { mkdir, readFile, readTextFile, writeFile } from '@tauri-apps/plugin-fs'
 import {
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -130,8 +128,8 @@ import {
   type FlowCanvasNode,
 } from './nodes/canvas-nodes'
 import { CanvasFooter } from './canvas-footer'
-import { canvasDocumentToMermaid, mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
-import { parseCanvasProjectFile, serializeCanvasProject } from '@/lib/canvas/file-format'
+import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
+import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
 
 const elk = new ELK()
@@ -288,7 +286,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [hasClipboard, setHasClipboard] = useState(false)
   const [notePickerOpen, setNotePickerOpen] = useState(false)
   const [agentPreviewOperations, setAgentPreviewOperations] = useState<unknown[] | null>(null)
-  const [isExporting, setIsExporting] = useState(false)
   const [edgeEditorOpen, setEdgeEditorOpen] = useState(false)
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
   const [edgeLabelDraft, setEdgeLabelDraft] = useState('')
@@ -1237,96 +1234,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     updateDocument(canvasId, nextDocument)
   }, [canvasId, document, edges, getViewport, nodes, updateDocument])
 
-  const exportCanvas = useCallback(async (
-    format: 'png' | 'svg',
-    pixelRatio: number
-  ) => {
-    setIsExporting(true)
-    try {
-      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
-      const viewport = containerRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
-      if (!viewport) return
-      const bounds = getNodesBounds(nodes)
-      const maxCssDimension = Math.floor(8192 / Math.max(1, pixelRatio))
-      const imageWidth = Math.min(maxCssDimension, Math.max(1200, Math.ceil(bounds.width + 240)))
-      const imageHeight = Math.min(maxCssDimension, Math.max(800, Math.ceil(bounds.height + 240)))
-      const exportViewport = getViewportForBounds(bounds, imageWidth, imageHeight, 0.1, 2, 0.12)
-      const backgroundColor = globalThis.document.documentElement.classList.contains('dark') ? '#09090b' : '#ffffff'
-      const exportOptions = {
-        cacheBust: true,
-        width: imageWidth,
-        height: imageHeight,
-        backgroundColor,
-        filter: (node: HTMLElement) => {
-          if (!(node instanceof HTMLElement)) return true
-          return !node.classList.contains('react-flow__handle')
-            && !node.classList.contains('react-flow__resize-control')
-        },
-        style: {
-          width: `${imageWidth}px`,
-          height: `${imageHeight}px`,
-          transform: `translate(${exportViewport.x}px, ${exportViewport.y}px) scale(${exportViewport.zoom})`,
-        },
-      }
-      const dataUrl = format === 'svg'
-        ? await toSvg(viewport, exportOptions)
-        : await toPng(viewport, { ...exportOptions, pixelRatio })
-      const response = await fetch(dataUrl)
-      const bytes = new Uint8Array(await response.arrayBuffer())
-      const projectTitle = projects.find(project => project.id === canvasId)?.title || t('untitled')
-      const safeTitle = projectTitle.replace(/[\\/:*?"<>|]/g, '-').trim() || 'NoteGen-Canvas'
-      const extension = format
-
-      const path = await save({
-        filters: [{ name: format.toUpperCase(), extensions: [extension] }],
-        defaultPath: `${safeTitle}.${extension}`,
-      })
-      if (!path) return
-      await writeFile(path, bytes)
-      toast.success(t('exportSuccess'))
-    } catch (error) {
-      console.error('Failed to export canvas:', error)
-      toast.error(t('exportError'))
-    } finally {
-      setIsExporting(false)
-    }
-  }, [canvasId, getNodesBounds, nodes, projects, t])
-
-  const getCurrentDocument = useCallback((): CanvasDocument => ({
-    ...document,
-    nodes: serializeNodes(nodes),
-    edges: edges.map(edge => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-      label: typeof edge.label === 'string' ? edge.label : undefined,
-      type: edge.type,
-    })),
-    viewport: getViewport(),
-  }), [document, edges, getViewport, nodes])
-
-  const exportPortableFile = useCallback(async (format: 'canvas' | 'mermaid') => {
-    try {
-      const project = projects.find(item => item.id === canvasId)
-      const title = project?.title || t('untitled')
-      const safeTitle = title.replace(/[\\/:*?"<>|]/g, '-').trim() || 'NoteGen-Canvas'
-      const path = await save({
-        defaultPath: `${safeTitle}.${format === 'canvas' ? 'canvas.json' : 'mmd'}`,
-        filters: [{ name: format === 'canvas' ? 'NoteGen Canvas' : 'Mermaid', extensions: format === 'canvas' ? ['json'] : ['mmd'] }],
-      })
-      if (!path) return
-      const currentDocument = getCurrentDocument()
-      const content = format === 'canvas'
-        ? serializeCanvasProject({ title, canvasType: project?.canvasType || 'blank', document: currentDocument })
-        : canvasDocumentToMermaid(currentDocument)
-      await writeTextFile(path, content)
-      toast.success(t('exportSuccess'))
-    } catch (error) {
-      console.error('Failed to export canvas source:', error)
-      toast.error(t('exportError'))
-    }
-  }, [canvasId, getCurrentDocument, projects, t])
-
   const applyImportedContent = useCallback((source: string) => {
     const trimmedSource = source.trim()
     const nextDocument = trimmedSource.startsWith('{')
@@ -1574,7 +1481,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         snapToGrid={document.settings.snapToGrid}
         snapGrid={[20, 20]}
         defaultViewport={document.viewport}
-        onlyRenderVisibleElements={!isExporting && nodes.length >= 150}
+        onlyRenderVisibleElements={nodes.length >= 150}
         colorMode="system"
         >
           {document.settings.showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} />}
@@ -1947,8 +1854,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         onZoomChange={zoom => void setViewport({ ...getViewport(), zoom }, { duration: 120 })}
         onFitView={() => void fitView({ padding: 0.2, duration: 300 })}
         onLayout={() => void layoutNodes()}
-        onExport={(format, pixelRatio) => void exportCanvas(format, pixelRatio)}
-        onExportSource={format => void exportPortableFile(format)}
         onImportFile={() => void importCanvasFile()}
         onImportContent={() => setImportContentOpen(true)}
       />

@@ -198,13 +198,13 @@ export function EmptyState({
           <div className="flex items-center justify-center gap-3 mb-2">
             <Image 
               src="/app-icon.png" 
-              alt="NoteGen" 
+              alt="Huabu"
               width={60}
               height={60}
               className="w-10 h-10 dark:invert"
             />
             <h1 className="text-4xl font-bold tracking-tight">
-              NoteGen
+              Huabu
             </h1>
           </div>
           <EmptyTitle className="text-xl">
@@ -313,20 +313,6 @@ export function EmptyState({
           ))}
         </div>
 
-        {/* Tips */}
-        <div className="flex flex-col gap-2 pt-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            查看使用文档：
-            <a 
-              href="https://notegen.top/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:underline ml-1"
-            >
-              https://notegen.top/
-            </a>
-          </p>
-        </div>
       </div>
     </Empty>
   )

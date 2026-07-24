@@ -2,8 +2,8 @@ import { Store } from '@tauri-apps/plugin-store'
 import { create } from 'zustand'
 import { check, Update } from '@tauri-apps/plugin-updater'
 
-export const ANDROID_DOWNLOAD_URL = 'https://notegen.top/download'
-export const IOS_TESTFLIGHT_URL = 'https://testflight.apple.com/join/8KjFRTCq'
+export const ANDROID_DOWNLOAD_URL = ''
+export const IOS_TESTFLIGHT_URL = ''
 
 export interface MobileUpdateInfo {
   version: string

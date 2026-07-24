@@ -13,26 +13,16 @@ export interface QuickPrompt {
  */
 async function getInspirationModelConfig() {
   const settingStore = useSettingStore.getState()
-  const inspirationModelId = settingStore.inspirationModel
+  const modelReference = settingStore.inspirationModel || settingStore.primaryModel
 
-  // 从 AI 模型列表中查找配置的灵感模型
-  const aiModelList = settingStore.aiModelList
-  for (const config of aiModelList) {
+  for (const config of settingStore.aiModelList) {
     if (config.models) {
-      const model = config.models.find(m => m.id === inspirationModelId || `${config.key}-${m.id}` === inspirationModelId)
+      const model = config.models.find(m => m.id === modelReference || `${config.key}-${m.id}` === modelReference)
       if (model) {
-        return config
+        return { config, model }
       }
     }
   }
-
-  // 如果没找到配置的灵感模型，使用默认的 NoteGen 聊天模型作为 fallback
-  const { noteGenDefaultModels } = await import('@/app/model-config')
-  const noteGenChat = noteGenDefaultModels[0]?.models?.find(m => m.modelType === 'chat')
-  if (noteGenChat) {
-    return noteGenDefaultModels[0]
-  }
-
   return null
 }
 
@@ -43,17 +33,11 @@ async function getInspirationModelConfig() {
  */
 export async function fetchAiPlaceholder(text: string): Promise<string | false> {
   try {
-    // 动态导入 model-config 以获取默认模型配置
-    const { noteGenDefaultModels } = await import('@/app/model-config')
-
-    // 使用第一个默认模型配置（NoteGen Free）
-    const defaultConfig = noteGenDefaultModels[0]
-    const chatModel = defaultConfig.models?.find(m => m.modelType === 'chat')
-
-    if (!defaultConfig || !chatModel) {
-      console.error('No default chat model found in noteGenDefaultModels')
+    const selected = await getInspirationModelConfig()
+    if (!selected) {
       return false
     }
+    const { config, model: chatModel } = selected
 
     // 构建 placeholder 提示词
     const placeholderPrompt = `
@@ -71,7 +55,7 @@ export async function fetchAiPlaceholder(text: string): Promise<string | false> 
       { role: 'user', content: placeholderPrompt }
     ]
 
-    const openai = await createOpenAIClient(defaultConfig)
+    const openai = await createOpenAIClient(config)
 
     const completion = await openai.chat.completions.create({
       model: chatModel.model || '',
@@ -97,13 +81,12 @@ export async function fetchAiPlaceholder(text: string): Promise<string | false> 
  */
 export async function fetchAiQuickPrompts(text: string): Promise<QuickPrompt[]> {
   try {
-    const config = await getInspirationModelConfig()
-    const chatModel = config?.models?.find(m => m.modelType === 'chat')
-
-    if (!config || !chatModel) {
+    const selected = await getInspirationModelConfig()
+    if (!selected) {
       console.error('No valid chat model found for inspiration')
       return []
     }
+    const { config, model: chatModel } = selected
 
     // 构建生成4条提示词的 prompt
     const prompt = `
@@ -199,13 +182,12 @@ Content: ${text || 'General note-taking'}`
  */
 export async function fetchAiSinglePrompt(text: string): Promise<string> {
   try {
-    const config = await getInspirationModelConfig()
-    const chatModel = config?.models?.find(m => m.modelType === 'chat')
-
-    if (!config || !chatModel) {
+    const selected = await getInspirationModelConfig()
+    if (!selected) {
       console.error('No valid chat model found for inspiration')
       return ''
     }
+    const { config, model: chatModel } = selected
 
     const prompt = `
 Generate ONE very short and actionable prompt suggestion (under 15 characters) based on the following content.

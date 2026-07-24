@@ -18,7 +18,6 @@ import {
 import { SettingType } from "../components/setting-base";
 import { AiConfig, ModelConfig, ProxyMode, builtinProviderTemplates } from "../config";
 import useSettingStore from "@/stores/setting";
-import { noteGenModelKeys } from "@/app/model-config";
 import { BotMessageSquare, Copy, Eye, EyeOff, KeyRound, LoaderCircle, Network, Plus, Server, Settings2, Trash2, X } from "lucide-react";
 import { OpenBroswer } from "@/components/open-broswer";
 import DefaultModelsSection from "./default-models";
@@ -64,8 +63,7 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
     setAiModelList
   } = useSettingStore()
 
-  // 过滤掉默认模型，只显示用户自定义模型
-  const userCustomModels = aiModelList.filter(model => !noteGenModelKeys.includes(model.key) && model.title !== 'NoteGen Limited')
+  const userCustomModels = aiModelList
   const [apiKeyVisible, setApiKeyVisible] = useState<boolean>(false)
   const [headerPairs, setHeaderPairs] = useState<Array<{key: string, value: string, id: string}>>([])
   const [expandedModels, setExpandedModels] = useState<string[]>([])
@@ -256,11 +254,6 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
   const deleteCurrentConfig = async () => {
     if (!currentConfig) return
     
-    // 检查是否是NoteGen默认模型
-    if (noteGenModelKeys.includes(currentConfig.key)) {
-      return // 不能删除默认模型
-    }
-
     const confirmed = await confirm(t('deleteCustomModelConfirm'))
     if (!confirmed) return
 
@@ -272,7 +265,7 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
     setAiModelList(updatedList)
 
     // 删除后选择下一个用户自定义模型
-    const remainingUserModels = updatedList.filter(model => !noteGenModelKeys.includes(model.key))
+    const remainingUserModels = updatedList
     if (remainingUserModels.length > 0) {
       setSelectedAiConfig(remainingUserModels[0].key)
     } else {
@@ -342,9 +335,7 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
       // 再次读取 Store，避免模板加载期间用户新建的平台被旧快照覆盖。
       const storedAiModelList = await store.get<AiConfig[]>('aiModelList') || []
       const migratedList = storedAiModelList.map(migrateOldConfig)
-      const existingPlatforms = migratedList.filter(model => (
-        !noteGenModelKeys.includes(model.key) && model.title !== 'NoteGen Limited'
-      ))
+      const existingPlatforms = migratedList
       const missingTemplates = templates.filter(template => {
         const templateKey = template.templateKey || template.key
         return !existingPlatforms.some(config => {
@@ -372,9 +363,7 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
       aiModelListRef.current = nextAiModelList
       setAiModelList(nextAiModelList)
 
-      const userModels = nextAiModelList.filter(model => (
-        !noteGenModelKeys.includes(model.key) && model.title !== 'NoteGen Limited'
-      ))
+      const userModels = nextAiModelList
       
       // 如果已经有保存的选择，且该配置仍然存在，则使用它
       if (selectedAiConfig && userModels.find(model => model.key === selectedAiConfig)) {

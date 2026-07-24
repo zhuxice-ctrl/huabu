@@ -7,11 +7,14 @@ Run from the Huabu repository root in PowerShell on Windows 10 or Windows 11.
 - Node.js 24
 - pnpm 9.15.9
 - Current stable Rust toolchain for `x86_64-pc-windows-msvc`
-- Visual Studio 2022 Build Tools with **Desktop development with C++**, MSVC, and a Windows SDK
+- Visual Studio 2022 Build Tools with **Desktop development with C++**, or the verified portable MSVC environment at `F:\toolchains\portable-msvc`
 - Microsoft Edge WebView2 Runtime
 
-Confirm that `link.exe` is available from the active developer environment before
-running the Rust and installer checks.
+For the portable environment, prefix Rust and Tauri commands with:
+
+```powershell
+cmd /d /s /c "call F:\toolchains\portable-msvc\msvc\setup_x64.bat && <command>"
+```
 
 ## Automated checks
 
@@ -40,14 +43,17 @@ Expected results on a fully provisioned machine:
 - Frozen dependency install: passed with pnpm 9.15.9; the lockfile was unchanged.
 - Foundation contract: passed.
 - Frontend production build: passed, including static export and map pruning.
-- Cargo check with `--locked`: lock validation passed, then compilation was blocked
-  because the current machine does not have the MSVC linker `link.exe`.
-- Debug NSIS build: the frontend pre-build passed, then Rust compilation stopped at
-  the same missing `link.exe` prerequisite; no installer was produced.
-
-The Rust and NSIS results above are an environment prerequisite gap, not a passing
-package verification. Re-run both commands from a Visual Studio Developer PowerShell
-after the C++ build tools are installed.
+- Portable MSVC 14.44.35207: installed under `F:\toolchains\portable-msvc`; `cl.exe`
+  and `link.exe` are available through `setup_x64.bat`.
+- Cargo check with `--locked`: passed without warnings.
+- Debug NSIS build: passed.
+- Installer: `F:\huabu-builds\Huabu_0.32.1_x64-setup.exe`.
+- Installer SHA-256: `9129926328DF9936ABBB6AD3AF344783D30C357EA71BCCDD1FBA4D2B2672B26C`.
+- Installed application: `F:\HuabuApp\huabu.exe`; product identity `Huabu`; responsive launch passed.
+- Installed UI smoke test: canvas creation, text block creation, bottom AI dock,
+  breathing status strip, and all three Agent permission modes passed.
+- Runtime independence check: inherited API key, analytics endpoint, upstream model
+  service, and upstream release lookups were removed.
 
 ## Manual smoke check
 

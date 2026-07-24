@@ -4,11 +4,52 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { LeftSidebar } from "./left-sidebar"
 import { EditorLayout } from './editor/editor-layout'
 import Chat from './chat'
+import { ChatInput } from './chat/chat-input'
+import { ChatFooter } from './chat/chat-footer'
 import dynamic from 'next/dynamic'
 import { useSidebarStore } from "@/stores/sidebar"
+import useArticleStore from '@/stores/article'
+import useChatStore from '@/stores/chat'
 import { useEffect, useState, useRef } from 'react'
 import { Store } from '@tauri-apps/plugin-store'
 import { Layout, PanelImperativeHandle } from 'react-resizable-panels'
+import { isCanvasTabPath } from './canvas/canvas-tab'
+import { cn } from '@/lib/utils'
+
+function CanvasAiPulse() {
+  const loading = useChatStore(state => state.loading)
+  const isRunning = useChatStore(state => state.agentState.isRunning)
+  const active = loading || isRunning
+
+  return (
+    <div
+      aria-label={active ? 'AI 正在处理画布' : 'AI 已就绪'}
+      className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2"
+    >
+      <div
+        className={cn(
+          'h-2.5 w-24 rounded-full bg-[linear-gradient(90deg,#5ee7df_0%,#7c3aed_38%,#fb7185_68%,#facc15_100%)] shadow-[0_0_24px_rgba(124,58,237,0.55)] transition-all duration-500',
+          active ? 'scale-x-110 animate-pulse opacity-100' : 'scale-x-75 opacity-65'
+        )}
+      />
+    </div>
+  )
+}
+
+function ImmersiveCanvasLayout() {
+  return (
+    <div className="relative h-full overflow-hidden bg-background">
+      <EditorLayout />
+      <div className="pointer-events-none absolute inset-x-0 bottom-5 z-50 flex justify-center px-5">
+        <div className="pointer-events-auto relative w-full max-w-2xl rounded-[1.65rem] border border-border/70 bg-background/82 p-1 shadow-[0_18px_70px_rgba(0,0,0,0.38)] backdrop-blur-2xl">
+          <CanvasAiPulse />
+          <ChatInput />
+          <ChatFooter />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function getDefaultLayout(layoutKey: string) {
   const storageKey = `react-resizable-panels:main-layout:${layoutKey}`
@@ -58,6 +99,8 @@ function ResizableWrapper() {
     rightSidebarVisible, 
     initSidebarState
   } = useSidebarStore()
+  const activeTabId = useArticleStore(state => state.activeTabId)
+  const isCanvasActive = isCanvasTabPath(activeTabId)
   
   const leftPanelRef = useRef<PanelImperativeHandle>(null)
   const centerPanelRef = useRef<PanelImperativeHandle>(null)
@@ -232,6 +275,10 @@ function ResizableWrapper() {
     )
 
     return panels
+  }
+
+  if (isCanvasActive) {
+    return <ImmersiveCanvasLayout />
   }
 
   return (

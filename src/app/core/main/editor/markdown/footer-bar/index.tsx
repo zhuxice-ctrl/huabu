@@ -4,7 +4,6 @@ import { Editor } from '@tiptap/react'
 import { FileText } from 'lucide-react'
 import { WordCount } from './word-count'
 import { CopyButton } from './copy-button'
-import { ExportButton } from './export-button'
 import { SyncTools } from '../sync/sync-tools'
 import { OutlineToggle } from './outline-toggle'
 import { SyncButton } from '../sync/sync-button'
@@ -53,11 +52,10 @@ export function FooterBar({
 
   return (
     <div className="h-6 flex items-center justify-between px-3 border-t border-border bg-background text-xs text-muted-foreground">
-      {/* Left side: Word count, Copy, Export, Outline */}
+      {/* Left side: Word count, Copy, Outline */}
       <div className="flex items-center gap-1">
         <WordCount editor={editor} />
         <CopyButton editor={editor} />
-        <ExportButton editor={editor} />
         <OutlineToggle
           editor={editor}
           outlineOpen={outlineOpen}

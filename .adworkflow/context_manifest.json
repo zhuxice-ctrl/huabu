@@ -1,39 +1,42 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "foundation-07-final-review",
+  "task_id": "foundation-08-msvc-package-verification",
   "context_level": "L1-index-large-project",
   "read_first": [
-    "src/app/core/main/editor/markdown/agent-diff-preview-extension.ts",
-    "src/components/photo-preview-provider.tsx",
-    "src/app/core/main/chat/quote-preview.ts",
-    "src/app/core/main/chat/chat-preview.tsx",
-    "src/components/ui/textarea.tsx",
-    "src/components/ui/scroll-area.tsx",
+    "src-tauri/build.rs",
     "out/_next/static/7rlAVJTfV-igT-qa0RnEf/_buildManifest.js",
-    "src/lib/outline-styles.ts"
+    "src-tauri/src/ocr_packages.rs",
+    "src/lib/skills/executor.ts",
+    "src/lib/ocr-packages.ts",
+    "src/lib/check.ts",
+    "src/lib/agent/debug-log.ts",
+    "src/components/ui/checkbox.tsx"
   ],
   "relevant_symbols": [
+    "buildSkillInstallPackageTool (src/lib/agent/tool-registry.ts:1099)",
+    "buildAttachmentsFromBrowserFiles (src/app/core/main/chat/chat-input.tsx:330)",
+    "buildAttachmentsFromLocalPaths (src/app/core/main/chat/chat-input.tsx:366)",
+    "buildQuoteDataFromRange (src/app/core/main/editor/markdown/tiptap-editor.tsx:4231)",
+    "buildSkillValidatePackageTool (src/lib/agent/tool-registry.ts:1069)",
+    "buildMcpListResourceTemplatesTool (src/lib/agent/tool-registry.ts:1295)",
+    "buildVectorIndexedMap (src/lib/vector-document-key.js:4)",
+    "buildPartialSuccessContent (src/app/core/main/chat/chat-send.tsx:138)",
+    "buildSteeringContext (src/app/core/main/chat/chat-send.tsx:187)",
+    "buildTypingFrames (src/app/core/main/chat/onboarding-typing.ts:1)",
     "buildDiffDecorations (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:37)",
-    "createInsertedContentWidget (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:26)",
-    "applyPreviewMeta (src/app/core/main/editor/markdown/agent-diff-preview-extension.ts:114)",
-    "handleAgentDiffPreview (src/app/core/main/editor/markdown/tiptap-editor.tsx:4607)",
-    "buildEditorApprovalPreview (src/lib/agent/tool-registry.ts:257)",
-    "buildFolderPreview (src/lib/chat-attachments.ts:111)",
-    "showPreview (src/app/core/main/canvas/canvas-editor.tsx:460)",
-    "clearPreview (src/app/core/main/canvas/canvas-editor.tsx:461)",
-    "previewClassName (src/app/core/main/canvas/nodes/canvas-nodes.tsx:27)",
-    "generateFilePreview (src/app/core/main/chat/chat-input.tsx:808)",
-    "isMacOS (src/app/core/main/chat/chat-preview.tsx:24)",
-    "handleDragStart (src/app/core/main/chat/chat-preview.tsx:151)"
+    "buildHtmlDocument (src/app/core/main/editor/markdown/markdown-export.ts:471)"
   ],
   "entrypoints": [
-    "docs/superpowers/plans/2026-07-24-huabu-foundation.md#task-7-final-branch-verification-and-review-handoff"
+    "src-tauri/Cargo.toml",
+    "src-tauri/tauri.conf.json",
+    "docs/verification/windows-foundation.md"
   ],
   "likely_tests": [],
   "do_not_touch": [
-    "product source",
     "main branch",
-    "remote repositories"
+    "remote repositories",
+    "release publishing",
+    "user documents"
   ],
   "open_questions": []
 }
