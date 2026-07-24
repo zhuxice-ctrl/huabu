@@ -1,9 +1,10 @@
 'use client'
 
-import { memo, type PointerEvent as ReactPointerEvent } from 'react'
+import { memo, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
+  useNodes,
   useReactFlow,
   type Edge,
   type EdgeProps,
@@ -12,15 +13,19 @@ import {
 import emitter from '@/lib/emitter'
 import { normalizeRelationData, relationEdgeVisuals } from '@/lib/canvas/relation-policy'
 import { buildRelationPath } from '@/lib/canvas/relation-routing'
+import { removeWaypointAt } from '@/lib/canvas/relation-interaction'
 import type { CanvasNodeData, CanvasRelationData } from '@/types/canvas'
 
 export type FlowRelationEdge = Edge<CanvasRelationData, 'relation'>
 
 export const CanvasRelationEdge = memo(function CanvasRelationEdge(props: EdgeProps<FlowRelationEdge>) {
-  const { getNodes, setEdges, screenToFlowPosition } = useReactFlow<Node<CanvasNodeData>, FlowRelationEdge>()
+  const { setEdges, screenToFlowPosition } = useReactFlow<Node<CanvasNodeData>, FlowRelationEdge>()
+  const nodes = useNodes<Node<CanvasNodeData>>()
+  const [selectedWaypointIndex, setSelectedWaypointIndex] = useState<number | null>(null)
+  const dragCleanupRef = useRef<(() => void) | null>(null)
   const relation = normalizeRelationData(props.data)
   const visuals = relationEdgeVisuals(relation)
-  const obstacles = getNodes()
+  const obstacles = nodes
     .filter(node => node.id !== props.source && node.id !== props.target)
     .flatMap(node => {
       const width = node.measured?.width ?? node.width
@@ -37,14 +42,53 @@ export const CanvasRelationEdge = memo(function CanvasRelationEdge(props: EdgePr
     obstacles,
   })
 
+  useEffect(() => {
+    if (
+      !props.selected
+      || relation.routeType !== 'manual'
+      || (selectedWaypointIndex !== null && selectedWaypointIndex >= relation.waypoints.length)
+    ) setSelectedWaypointIndex(null)
+  }, [props.selected, relation.routeType, relation.waypoints.length, selectedWaypointIndex])
+
+  useEffect(() => () => dragCleanupRef.current?.(), [])
+
+  useEffect(() => {
+    if (selectedWaypointIndex === null) return
+    const removeSelectedWaypoint = (event: KeyboardEvent) => {
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return
+      if (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]')) return
+      event.preventDefault()
+      event.stopPropagation()
+      emitter.emit('canvas-history-checkpoint')
+      setEdges(current => current.map(edge => {
+        if (edge.id !== props.id) return edge
+        const data = normalizeRelationData(edge.data)
+        return { ...edge, data: { ...data, waypoints: removeWaypointAt(data.waypoints, selectedWaypointIndex) } }
+      }))
+      setSelectedWaypointIndex(null)
+    }
+    window.addEventListener('keydown', removeSelectedWaypoint, true)
+    return () => window.removeEventListener('keydown', removeSelectedWaypoint, true)
+  }, [props.id, selectedWaypointIndex, setEdges])
+
   const beginWaypointDrag = (event: ReactPointerEvent<HTMLButtonElement>, waypointIndex: number) => {
     event.preventDefault()
     event.stopPropagation()
-    emitter.emit('canvas-history-checkpoint')
+    setSelectedWaypointIndex(waypointIndex)
     const pointerId = event.pointerId
+    const control = event.currentTarget
+    let stopped = false
+    let checkpointed = false
+    dragCleanupRef.current?.()
+
+    try { control.setPointerCapture(pointerId) } catch { /* window listeners still guarantee cleanup */ }
 
     const move = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return
+      if (!checkpointed) {
+        checkpointed = true
+        emitter.emit('canvas-history-checkpoint')
+      }
       const position = screenToFlowPosition({ x: pointerEvent.clientX, y: pointerEvent.clientY })
       setEdges(current => current.map(edge => {
         if (edge.id !== props.id) return edge
@@ -55,15 +99,27 @@ export const CanvasRelationEdge = memo(function CanvasRelationEdge(props: EdgePr
         return { ...edge, data: { ...data, routeType: 'manual', waypoints } }
       }))
     }
-    const stop = (pointerEvent: PointerEvent) => {
-      if (pointerEvent.pointerId !== pointerId) return
+    const cleanup = () => {
+      if (stopped) return
+      stopped = true
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', stop)
       window.removeEventListener('pointercancel', stop)
+      window.removeEventListener('blur', cleanup)
+      control.removeEventListener('lostpointercapture', cleanup)
+      if (control.hasPointerCapture(pointerId)) control.releasePointerCapture(pointerId)
+      if (dragCleanupRef.current === cleanup) dragCleanupRef.current = null
+    }
+    const stop = (pointerEvent: PointerEvent) => {
+      if (pointerEvent.pointerId !== pointerId) return
+      cleanup()
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', stop)
     window.addEventListener('pointercancel', stop)
+    window.addEventListener('blur', cleanup)
+    control.addEventListener('lostpointercapture', cleanup)
+    dragCleanupRef.current = cleanup
   }
 
   return (
@@ -96,26 +152,11 @@ export const CanvasRelationEdge = memo(function CanvasRelationEdge(props: EdgePr
           <button
             key={`${props.id}-waypoint-${index}`}
             type="button"
-            className="nodrag nopan pointer-events-auto absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-transparent before:absolute before:left-1/2 before:top-1/2 before:size-2.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:border-2 before:border-primary before:bg-background before:shadow-[0_0_0_3px_hsl(var(--primary)/0.18)]"
+            className={`nodrag nopan pointer-events-auto absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-transparent before:absolute before:left-1/2 before:top-1/2 before:size-2.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:border-2 before:border-primary before:bg-background ${selectedWaypointIndex === index ? 'before:shadow-[0_0_0_5px_hsl(var(--primary)/0.32)]' : 'before:shadow-[0_0_0_3px_hsl(var(--primary)/0.18)]'}`}
             style={{ transform: `translate(-50%, -50%) translate(${waypoint.x}px, ${waypoint.y}px)` }}
             aria-label={`关系路径节点 ${index + 1}`}
+            aria-pressed={selectedWaypointIndex === index}
             onPointerDown={event => beginWaypointDrag(event, index)}
-            onContextMenu={event => {
-              event.preventDefault()
-              event.stopPropagation()
-              emitter.emit('canvas-history-checkpoint')
-              setEdges(current => current.map(edge => {
-                if (edge.id !== props.id) return edge
-                const data = normalizeRelationData(edge.data)
-                return {
-                  ...edge,
-                  data: {
-                    ...data,
-                    waypoints: data.waypoints.filter((_point, pointIndex) => pointIndex !== index),
-                  },
-                }
-              }))
-            }}
           />
         ))}
       </EdgeLabelRenderer>

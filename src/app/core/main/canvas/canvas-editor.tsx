@@ -143,7 +143,17 @@ import {
   intersectingRectIds,
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
+  RELATION_LONG_PRESS_MS,
 } from '@/lib/canvas/gesture-policy'
+import {
+  armContextMenuSuppression,
+  canStartRelationGesture,
+  commitRelationEditorTransaction,
+  consumeContextMenuSuppression,
+  createPendingRelationEdge,
+  selectRelationHandles,
+  type ContextMenuSuppressionState,
+} from '@/lib/canvas/relation-interaction'
 import {
   draftsFromTransfer,
   offsetIngestDrafts,
@@ -197,6 +207,9 @@ interface RelationPointerSession {
   current: { x: number; y: number }
   active: boolean
   targetId: string | null
+  sourceHandle: string
+  targetHandle: string | null
+  captureElement: HTMLDivElement
   timer?: ReturnType<typeof setTimeout>
 }
 
@@ -205,6 +218,7 @@ interface MarqueePointerSession {
   start: { x: number; y: number }
   current: { x: number; y: number }
   active: boolean
+  captureElement: HTMLDivElement
 }
 
 interface RelationEditorState {
@@ -212,6 +226,7 @@ interface RelationEditorState {
   mode: 'create' | 'edit'
   anchor: { x: number; y: number }
   suggestedWaypoint?: CanvasRelationWaypoint
+  draft?: Edge
 }
 
 function CanvasToolbarTooltip({
@@ -270,14 +285,8 @@ function serializeNodes(nodes: FlowCanvasNode[]): CanvasNode[] {
   }))
 }
 
-function nearestPointOnRect(rect: DOMRect, target: { x: number; y: number }) {
-  const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
-  const dx = target.x - center.x
-  const dy = target.y - center.y
-  if (Math.abs(dx / Math.max(rect.width, 1)) >= Math.abs(dy / Math.max(rect.height, 1))) {
-    return { x: dx >= 0 ? rect.right : rect.left, y: Math.min(rect.bottom, Math.max(rect.top, target.y)) }
-  }
-  return { x: Math.min(rect.right, Math.max(rect.left, target.x)), y: dy >= 0 ? rect.bottom : rect.top }
+function screenRect(rect: DOMRect) {
+  return { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
 }
 
 function relationPreviewPath(start: { x: number; y: number }, end: { x: number; y: number }) {
@@ -291,6 +300,8 @@ function serializeEdges(edges: Edge[]): CanvasEdge[] {
     id: edge.id,
     source: edge.source,
     target: edge.target,
+    ...(edge.sourceHandle ? { sourceHandle: edge.sourceHandle } : {}),
+    ...(edge.targetHandle ? { targetHandle: edge.targetHandle } : {}),
     label: typeof edge.label === 'string' ? edge.label : undefined,
     type: edge.type,
     ...(edge.data ? { data: edge.data as CanvasRelationData } : {}),
@@ -323,6 +334,8 @@ function havePersistentEdgesChanged(previous: Edge[], current: Edge[]) {
       || prior.id !== edge.id
       || prior.source !== edge.source
       || prior.target !== edge.target
+      || prior.sourceHandle !== edge.sourceHandle
+      || prior.targetHandle !== edge.targetHandle
       || prior.label !== edge.label
       || prior.type !== edge.type
       || (prior.data !== edge.data && JSON.stringify(prior.data) !== JSON.stringify(edge.data))
@@ -388,7 +401,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const relationSessionRef = useRef<RelationPointerSession | null>(null)
   const marqueeSessionRef = useRef<MarqueePointerSession | null>(null)
   const relationTargetRef = useRef<string | null>(null)
-  const suppressContextMenuRef = useRef(false)
+  const suppressContextMenuRef = useRef<ContextMenuSuppressionState | null>(null)
   const persistedNodesRef = useRef(nodes)
   const persistedEdgesRef = useRef(edges)
   const pendingDocumentRef = useRef<CanvasDocument | null>(null)
@@ -749,41 +762,135 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     requestAnimationFrame(() => emitter.emit('canvas-focus-node', id))
   }, [pushHistory, screenToFlowPosition, setEdges, setNodes])
 
-  const setRelationTargetHighlight = useCallback((targetId: string | null) => {
-    if (relationTargetRef.current === targetId) return
+  const setRelationTargetHighlight = useCallback((targetId: string | null, targetHandle: string | null = null) => {
     const root = containerRef.current
     if (relationTargetRef.current) {
-      root?.querySelector(`[data-id="${CSS.escape(relationTargetRef.current)}"]`)?.classList.remove('relation-target-active')
+      const previous = root?.querySelector(`[data-id="${CSS.escape(relationTargetRef.current)}"]`)
+      previous?.classList.remove('relation-target-active')
+      previous?.querySelector('.relation-handle-target-active')?.classList.remove('relation-handle-target-active')
     }
     relationTargetRef.current = targetId
     if (targetId) {
-      root?.querySelector(`[data-id="${CSS.escape(targetId)}"]`)?.classList.add('relation-target-active')
+      const target = root?.querySelector(`[data-id="${CSS.escape(targetId)}"]`)
+      target?.classList.add('relation-target-active')
+      if (targetHandle) {
+        target?.querySelector(`.react-flow__handle[data-handleid="${CSS.escape(targetHandle)}"]`)
+          ?.classList.add('relation-handle-target-active')
+      }
     }
   }, [])
+
+  const updateRelationPointerGeometry = useCallback((
+    relation: RelationPointerSession,
+    pointer: { x: number; y: number },
+    targetId: string | null,
+  ) => {
+    const root = containerRef.current
+    const sourceElement = root?.querySelector(`[data-id="${CSS.escape(relation.sourceId)}"]`)
+    const sourceBounds = sourceElement?.getBoundingClientRect()
+    const validTargetId = targetId && targetId !== relation.sourceId ? targetId : null
+    const targetElement = validTargetId
+      ? root?.querySelector(`[data-id="${CSS.escape(validTargetId)}"]`)
+      : null
+    const targetBounds = targetElement?.getBoundingClientRect()
+    if (!sourceBounds) {
+      relation.current = pointer
+      relation.targetId = null
+      relation.targetHandle = null
+      setRelationTargetHighlight(null)
+      return
+    }
+    const handles = selectRelationHandles({
+      sourceRect: screenRect(sourceBounds),
+      ...(targetBounds ? { targetRect: screenRect(targetBounds) } : {}),
+      pointer,
+    })
+    relation.start = handles.source.point
+    relation.sourceHandle = handles.source.handleId
+    relation.current = handles.target?.point || pointer
+    relation.targetId = handles.target ? validTargetId : null
+    relation.targetHandle = handles.target?.handleId || null
+    setRelationTargetHighlight(relation.targetId, relation.targetHandle)
+  }, [setRelationTargetHighlight])
+
+  const cancelPointerSessions = useCallback((pointerId?: number) => {
+    let cancelledRightButtonSession = false
+    const relation = relationSessionRef.current
+    if (relation && (pointerId === undefined || relation.pointerId === pointerId)) {
+      cancelledRightButtonSession = true
+      if (relation.timer) clearTimeout(relation.timer)
+      relationSessionRef.current = null
+      if (relation.captureElement.hasPointerCapture(relation.pointerId)) {
+        relation.captureElement.releasePointerCapture(relation.pointerId)
+      }
+      setRelationPreview(null)
+      setRelationTargetHighlight(null)
+    }
+    const marquee = marqueeSessionRef.current
+    if (marquee && (pointerId === undefined || marquee.pointerId === pointerId)) {
+      cancelledRightButtonSession = true
+      marqueeSessionRef.current = null
+      if (marquee.captureElement.hasPointerCapture(marquee.pointerId)) {
+        marquee.captureElement.releasePointerCapture(marquee.pointerId)
+      }
+      setMarqueePreview(null)
+    }
+    setDrawDraft(current => (
+      current && (pointerId === undefined || current.pointerId === pointerId) ? null : current
+    ))
+    if (cancelledRightButtonSession) suppressContextMenuRef.current = null
+  }, [setRelationTargetHighlight])
+
+  useEffect(() => {
+    const cancelAll = () => cancelPointerSessions()
+    const cancelUncapturedPointer = (event: PointerEvent) => {
+      if (
+        relationSessionRef.current?.pointerId === event.pointerId
+        || marqueeSessionRef.current?.pointerId === event.pointerId
+      ) cancelPointerSessions(event.pointerId)
+    }
+    window.addEventListener('blur', cancelAll)
+    window.addEventListener('pointerup', cancelUncapturedPointer)
+    window.addEventListener('pointercancel', cancelUncapturedPointer)
+    return () => {
+      window.removeEventListener('blur', cancelAll)
+      window.removeEventListener('pointerup', cancelUncapturedPointer)
+      window.removeEventListener('pointercancel', cancelUncapturedPointer)
+      cancelAll()
+    }
+  }, [cancelPointerSessions])
 
   const handleBlockDrawPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button === 2 && event.target instanceof Element) {
       const nodeElement = event.target.closest('.react-flow__node')
-      const sourceId = nodeElement?.getAttribute('data-id')
-      if (sourceId) {
+      const sourceId = nodeElement?.getAttribute('data-id') || null
+      if (canStartRelationGesture({
+        button: event.button,
+        sourceId,
+        hasPreviewSnapshot: Boolean(previewSnapshot),
+      })) {
         const element = event.currentTarget
         const session: RelationPointerSession = {
           pointerId: event.pointerId,
-          sourceId,
+          sourceId: sourceId!,
           startedAt: Date.now(),
           start: { x: event.clientX, y: event.clientY },
           current: { x: event.clientX, y: event.clientY },
           active: false,
           targetId: null,
+          sourceHandle: 'bottom',
+          targetHandle: null,
+          captureElement: element,
         }
+        try { element.setPointerCapture(event.pointerId) } catch { /* window listeners still guarantee cleanup */ }
         session.timer = setTimeout(() => {
           const current = relationSessionRef.current
           if (!current || current.pointerId !== event.pointerId) return
           current.active = true
-          suppressContextMenuRef.current = true
-          try { element.setPointerCapture(event.pointerId) } catch { /* pointer already released */ }
+          suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
+          updateRelationPointerGeometry(current, current.current, null)
           setRelationPreview({ ...current })
-        }, 320)
+        }, RELATION_LONG_PRESS_MS)
         relationSessionRef.current = session
         return
       }
@@ -798,6 +905,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           start: point,
           current: point,
           active: false,
+          captureElement: event.currentTarget,
         }
       }
       return
@@ -815,7 +923,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     event.currentTarget.setPointerCapture(event.pointerId)
     const point = { x: event.clientX, y: event.clientY }
     setDrawDraft({ pointerId: event.pointerId, start: point, current: point })
-  }, [previewSnapshot, tool])
+  }, [previewSnapshot, tool, updateRelationPointerGeometry])
 
   const handleBlockDrawPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -823,11 +931,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       relation.current = { x: event.clientX, y: event.clientY }
       if (relation.active) {
         const target = globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
-        relation.targetId = target
-        const sourceElement = containerRef.current?.querySelector(`[data-id="${CSS.escape(relation.sourceId)}"]`)
-        const sourceRect = sourceElement?.getBoundingClientRect()
-        if (sourceRect) relation.start = nearestPointOnRect(sourceRect, relation.current)
-        setRelationTargetHighlight(target && target !== relation.sourceId ? target : null)
+        updateRelationPointerGeometry(relation, relation.current, target)
         event.preventDefault()
         setRelationPreview({ ...relation })
       }
@@ -841,7 +945,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         marquee.current.y - marquee.start.y,
       ) >= POINTER_DRAG_THRESHOLD) {
         marquee.active = true
-        suppressContextMenuRef.current = true
+        suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
         try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* pointer already released */ }
       }
       if (marquee.active) {
@@ -856,7 +960,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         ? { ...current, current: { x: event.clientX, y: event.clientY } }
         : current
     ))
-  }, [setRelationTargetHighlight])
+  }, [updateRelationPointerGeometry])
 
   const handleBlockDrawPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -866,27 +970,26 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       if (!relation.active) return
       event.preventDefault()
       event.stopPropagation()
-      suppressContextMenuRef.current = true
-      window.setTimeout(() => { suppressContextMenuRef.current = false }, 0)
+      suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
       if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
       setRelationPreview(null)
-      setRelationTargetHighlight(null)
       const targetId = relation.targetId || globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
+      updateRelationPointerGeometry(relation, { x: event.clientX, y: event.clientY }, targetId)
+      setRelationTargetHighlight(null)
       const nodeIds = new Set(nodes.map(node => node.id))
-      if (!isValidRelationTarget(relation.sourceId, targetId, nodeIds)) return
+      if (!isValidRelationTarget(relation.sourceId, relation.targetId, nodeIds) || !relation.targetHandle) return
       const edgeId = crypto.randomUUID()
-      pushHistory()
-      setEdges(current => [...current, {
+      const draft = createPendingRelationEdge({
         id: edgeId,
         source: relation.sourceId,
-        target: targetId!,
-        type: 'relation',
-        label: '',
+        target: relation.targetId!,
+        sourceHandle: relation.sourceHandle,
+        targetHandle: relation.targetHandle,
         data: normalizeRelationData(DEFAULT_RELATION),
-      }])
+      }) as Edge
       const root = containerRef.current
       const sourceElement = root?.querySelector(`[data-id="${CSS.escape(relation.sourceId)}"]`)
-      const targetElement = root?.querySelector(`[data-id="${CSS.escape(targetId!)}"]`)
+      const targetElement = root?.querySelector(`[data-id="${CSS.escape(relation.targetId!)}"]`)
       const sourceRect = sourceElement?.getBoundingClientRect()
       const targetRect = targetElement?.getBoundingClientRect()
       const anchor = sourceRect && targetRect
@@ -900,6 +1003,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         suggestedWaypoint: sourceRect && targetRect
           ? screenToFlowPosition({ x: anchor.x, y: anchor.y })
           : undefined,
+        draft,
       })
       return
     }
@@ -909,7 +1013,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       if (!marquee.active) return
       event.preventDefault()
       event.stopPropagation()
-      suppressContextMenuRef.current = false
+      suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
       if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
       const completed = { ...marquee, current: { x: event.clientX, y: event.clientY } }
       setMarqueePreview(null)
@@ -936,50 +1040,30 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     setDrawDraft(null)
     finishBlockDraw(completed)
-  }, [drawDraft, finishBlockDraw, nodes, pushHistory, screenToFlowPosition, setEdges, setNodes, setRelationTargetHighlight])
+  }, [drawDraft, finishBlockDraw, nodes, screenToFlowPosition, setEdges, setNodes, setRelationTargetHighlight, updateRelationPointerGeometry])
 
   const handleBlockDrawPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const relation = relationSessionRef.current
-    if (relation?.pointerId === event.pointerId) {
-      if (relation.timer) clearTimeout(relation.timer)
-      relationSessionRef.current = null
-      setRelationPreview(null)
-      setRelationTargetHighlight(null)
-      suppressContextMenuRef.current = false
-      return
-    }
-    const marquee = marqueeSessionRef.current
-    if (marquee?.pointerId === event.pointerId) {
-      marqueeSessionRef.current = null
-      setMarqueePreview(null)
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId)
-      }
-      return
-    }
-    if (!drawDraft || drawDraft.pointerId !== event.pointerId) return
+    cancelPointerSessions(event.pointerId)
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
-    setDrawDraft(null)
-  }, [drawDraft, setRelationTargetHighlight])
+  }, [cancelPointerSessions])
 
   const saveRelationEditor = useCallback((value: CanvasRelationData) => {
     if (!relationEditor) return
-    const normalized = normalizeRelationData(value)
+    const result = commitRelationEditorTransaction(edges, relationEditor, normalizeRelationData(value))
+    if (!result.changed) {
+      setRelationEditor(null)
+      return
+    }
     pushHistory()
-    setEdges(current => current.map(edge => edge.id === relationEditor.edgeId
-      ? { ...edge, type: 'relation', label: normalized.label, data: normalized }
-      : edge))
+    setEdges(result.edges)
     setRelationEditor(null)
-  }, [pushHistory, relationEditor, setEdges])
+  }, [edges, pushHistory, relationEditor, setEdges])
 
   const cancelRelationEditor = useCallback(() => {
-    if (relationEditor?.mode === 'create') {
-      setEdges(current => current.filter(edge => edge.id !== relationEditor.edgeId))
-    }
     setRelationEditor(null)
-  }, [relationEditor, setEdges])
+  }, [])
 
   const getSelectedSnapshot = useCallback((): CanvasSnapshot | null => {
     const selectedNodes = nodes.filter(node => node.selected)
@@ -1832,10 +1916,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             <div
               className="size-full"
               onContextMenu={event => {
-                if (!suppressContextMenuRef.current) return
+                const result = consumeContextMenuSuppression(suppressContextMenuRef.current, Date.now())
+                suppressContextMenuRef.current = result.next
+                if (!result.suppress) return
                 event.preventDefault()
                 event.stopPropagation()
-                suppressContextMenuRef.current = false
               }}
               onDragOver={handleCanvasDragOver}
               onDrop={handleCanvasDrop}
@@ -1843,10 +1928,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               onPointerMove={handleBlockDrawPointerMove}
               onPointerUp={handleBlockDrawPointerUp}
               onPointerCancel={handleBlockDrawPointerCancel}
+              onLostPointerCapture={event => cancelPointerSessions(event.pointerId)}
             >
               <ReactFlow
         className={cn(
-          tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background',
+          tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary/50 [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background [&_.react-flow__handle.relation-handle-target-active]:!size-3.5 [&_.react-flow__handle.relation-handle-target-active]:!border-2 [&_.react-flow__handle.relation-handle-target-active]:!border-background [&_.react-flow__handle.relation-handle-target-active]:!bg-primary [&_.react-flow__handle.relation-handle-target-active]:!shadow-[0_0_0_5px_hsl(var(--primary)/0.28)]',
           tool === 'hand' && '[&_.react-flow__node]:!cursor-grab [&_.react-flow__node:active]:!cursor-grabbing [&_.react-flow__pane]:!cursor-grab [&_.react-flow__pane.dragging]:!cursor-grabbing'
         )}
         nodes={displayNodes}
@@ -2011,7 +2097,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                 </svg>
               )}
               {relationEditor && (() => {
-                const edge = edges.find(item => item.id === relationEditor.edgeId)
+                const edge = relationEditor.mode === 'create'
+                  ? relationEditor.draft
+                  : edges.find(item => item.id === relationEditor.edgeId)
                 const initial = (edge?.data as CanvasRelationData | undefined) || DEFAULT_RELATION
                 return (
                   <div

@@ -21,6 +21,16 @@ test('auto routing inserts an outside route when a block intersects the direct c
   assert.notEqual(result.path, 'M 0 50 L 200 50')
 })
 
+test('auto routing treats the full 24 pixel clearance as an obstacle', () => {
+  const result = buildRelationPath({
+    source: { x: 0, y: 50 }, target: { x: 200, y: 50 }, routeType: 'auto', waypoints: [],
+    obstacles: [{ x: 80, y: 60, width: 40, height: 40 }],
+  })
+
+  assert.equal(result.avoidedObstacle, true)
+  assert.doesNotMatch(result.path, / C /)
+})
+
 test('straight and bezier modes use distinct paths', () => {
   const common = { source: { x: 0, y: 0 }, target: { x: 100, y: 50 }, waypoints: [], obstacles: [] }
   assert.equal(buildRelationPath({ ...common, routeType: 'straight' }).path, 'M 0 0 L 100 50')

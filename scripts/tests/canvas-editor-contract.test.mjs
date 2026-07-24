@@ -31,6 +31,15 @@ test('relationship preview and saved edges use editable curved paths', () => {
   assert.match(relationEditorSource, /清除节点/)
 })
 
+test('pointer sessions clean up capture loss and auto routes subscribe to node changes', () => {
+  assert.match(editorSource, /onLostPointerCapture=/)
+  assert.match(editorSource, /window\.addEventListener\('blur', cancelAll\)/)
+  assert.match(edgeSource, /control\.addEventListener\('lostpointercapture', cleanup\)/)
+  assert.match(edgeSource, /window\.addEventListener\('blur', cleanup\)/)
+  assert.match(edgeSource, /const nodes = useNodes/)
+  assert.doesNotMatch(edgeSource, /getNodes\(\)/)
+})
+
 test('obsolete shape quick-create buttons are absent', () => {
   assert.doesNotMatch(editorSource, /onClick=\{\(\) => addNode\('process'\)\}/)
   assert.doesNotMatch(editorSource, /onClick=\{\(\) => addNode\('decision'\)\}/)

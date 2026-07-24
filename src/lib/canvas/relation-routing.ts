@@ -88,13 +88,16 @@ function pathLength(points: RoutePoint[]) {
   return points.slice(1).reduce((total, current, index) => total + distance(points[index], current), 0)
 }
 
-function avoidancePoints(source: RoutePoint, target: RoutePoint, obstacle: RouteObstacle) {
-  const expanded = {
+function expandObstacle(obstacle: RouteObstacle): RouteObstacle {
+  return {
     x: obstacle.x - AVOIDANCE_PADDING,
     y: obstacle.y - AVOIDANCE_PADDING,
     width: obstacle.width + AVOIDANCE_PADDING * 2,
     height: obstacle.height + AVOIDANCE_PADDING * 2,
   }
+}
+
+function avoidancePoints(source: RoutePoint, target: RoutePoint, expanded: RouteObstacle) {
   if (Math.abs(target.x - source.x) >= Math.abs(target.y - source.y)) {
     const top = [
       { x: expanded.x, y: expanded.y },
@@ -163,7 +166,9 @@ export function buildRelationPath(input: RelationPathInput): RelationPathResult 
     const middleX = round((source.x + target.x) / 2)
     editablePoints = [{ x: middleX, y: source.y }, { x: middleX, y: target.y }]
   } else if (input.routeType === 'auto') {
-    const obstacle = input.obstacles.find(item => segmentIntersectsRect(source, target, item))
+    const obstacle = input.obstacles
+      .map(expandObstacle)
+      .find(item => segmentIntersectsRect(source, target, item))
     if (!obstacle) return bezierPath(source, target)
     editablePoints = avoidancePoints(source, target, obstacle)
     avoidedObstacle = true
