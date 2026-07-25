@@ -1,34 +1,29 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
-  "status": "passed_with_environment_exception",
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
+  "status": "not_run",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-viewport-sizing.test.mjs",
-      "status": "passed",
-      "summary": "7/7 viewport sizing and import-normalization regression tests passed.",
-      "exit_code": 0
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-content-ingest.test.mjs scripts/tests/canvas-creation-sizing.test.mjs",
+      "status": "pending",
+      "summary": "Pending implementation.",
+      "exit_code": null
+    },
+    {
+      "command": "pnpm test:canvas",
+      "status": "pending",
+      "summary": "Pending implementation.",
+      "exit_code": null
     },
     {
       "command": "pnpm exec tsc --noEmit",
-      "status": "environment_blocked",
-      "summary": "pnpm attempted a non-interactive modules-directory repair and aborted before running tsc.",
-      "exit_code": 1
-    },
-    {
-      "command": "node_modules\\.bin\\tsc.cmd --noEmit",
-      "status": "passed",
-      "summary": "TypeScript 5 check completed without diagnostics.",
-      "exit_code": 0
+      "status": "pending",
+      "summary": "Pending implementation.",
+      "exit_code": null
     }
   ],
-  "passed": [
-    "Viewport sizing contract tests",
-    "Direct TypeScript compiler check"
-  ],
+  "passed": [],
   "failed": [],
-  "not_run_reason": "The pnpm wrapper could not run because it requires an interactive dependency repair; no dependency changes were made.",
-  "residual_risk": [
-    "The pnpm wrapper command still needs a TTY-capable or CI environment; the same locked local TypeScript compiler passed directly."
-  ]
+  "not_run_reason": "Implementation has not started.",
+  "residual_risk": []
 }

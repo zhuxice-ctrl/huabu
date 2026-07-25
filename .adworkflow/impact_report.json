@@ -1,103 +1,57 @@
 {
   "schema": "ADworkflo.impact_report.v1",
-  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
-  "status": "passed",
-  "baseline_revision": "e081fcbc7669732a10d632b8",
-  "current_revision": "0f50b226bb0fe32390ea9036",
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
+  "status": "pending",
+  "baseline_revision": "573fa700d9dcbaeef21ee233",
+  "current_revision": "573fa700d9dcbaeef21ee233",
   "declared_files": [
-    "src/lib/canvas/viewport-sizing.ts",
-    "src/types/canvas.ts",
-    "src/lib/canvas/templates.ts",
-    "src/app/core/main/canvas/canvas-footer.tsx",
+    "src/lib/canvas/content-ingest.ts",
+    "src/lib/canvas/operations.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/canvas-node-style-menu.tsx",
-    "scripts/tests/canvas-viewport-sizing.test.mjs"
+    "scripts/tests/canvas-content-ingest.test.mjs",
+    "scripts/tests/canvas-creation-sizing.test.mjs"
   ],
   "predicted_files": [
-    "src/types/canvas.ts",
-    "src/lib/canvas/templates.ts",
-    "src/app/core/main/canvas/canvas-footer.tsx",
-    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/canvas/operations.ts",
-    "src/stores/canvas.ts",
-    "src/db/canvases.ts",
-    "src/lib/sync/canvas-sync.ts"
-    ,
-    "src/lib/canvas/file-format.ts"
+    "src/lib/agent/runtime.ts",
+    "src/lib/agent/tool-registry.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/agent/tools/index.ts",
+    "src/lib/canvas/content-ingest.ts",
+    "src/lib/canvas/operations.ts"
   ],
-  "changed_files": [
-    "src/lib/canvas/viewport-sizing.ts",
-    "src/types/canvas.ts",
-    "src/lib/canvas/templates.ts",
-    "src/app/core/main/canvas/canvas-footer.tsx",
-    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
-    "scripts/tests/canvas-viewport-sizing.test.mjs"
-  ],
-  "observed_impact_files": [
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/canvas/operations.ts",
-    "src/stores/canvas.ts",
-    "src/db/canvases.ts",
-    "src/lib/sync/canvas-sync.ts"
-    ,
-    "src/lib/canvas/file-format.ts"
-  ],
+  "changed_files": [],
+  "observed_impact_files": [],
   "unexpected_impact": [],
   "symbol_delta": {
-    "added": [
-      "ViewportSnapshot",
-      "CanvasSize",
-      "viewport sizing constants and conversion helpers",
-      "CanvasNodeData.contentScale"
-    ],
-    "changed": [
-      "CanvasNodeData.fontSize widened from fixed presets to finite number",
-      "Canvas document/template default viewport zoom",
-      "Canvas footer zoom bounds"
-    ],
+    "added": [],
+    "changed": [],
     "removed": []
   },
   "edge_delta": {
     "imports": {
-      "added": [
-        "templates -> viewport-sizing",
-        "canvas types -> viewport-sizing"
-      ],
+      "added": [],
       "removed": []
     },
     "references": {
-      "added": [
-      "CanvasNodeData optional contentScale field for later renderer integration"
-      ],
-      "removed": [
-        "fixed font-size union cast in canvas-node-style-menu"
-      ]
+      "added": [],
+      "removed": []
     }
   },
   "new_critical_unresolved_edges": [],
-  "review_required": false,
+  "review_required": true,
   "automated_analysis": {
-    "status": "bounded_timeout_after_graph_rebuild",
-    "reason": "The first post-edit run rebuilt the L2 graph successfully, but whole-graph reference-delta calculation over the shared CanvasNodeData type did not converge within the bounded review window. A second no-rebuild run showed the same sustained CPU behavior. The valid current graph revision and exact committed diff are provided to the independent reviewer instead of claiming an automated pass."
+    "status": "pending"
   },
   "independent_review": {
-    "status": "passed_after_resolution_audit",
-    "reviewer": "independent_task_reviewer_with_orchestrator_resolution_audit",
-    "review_revision": "6a10c177061c9c4fefa46c09b379c917e04c02d4",
-    "review_evidence": [
-      "Independent Task 1 review reported no Critical findings and identified four Important issues plus one Minor test gap.",
-      "Commit 6a10c177 preserves legacy fontSize/contentScale data, clamps every finite zoom, removes the remaining fixed font-size cast, and adds file-import and precision regressions.",
-      "The focused suite passes 7/7 and the direct project TypeScript 5 compiler check passes.",
-      "The actual normalization call sites in local DB, canvas sync and file import were inspected after the bounded graph timeout."
-    ],
+    "status": "pending",
     "required_checks": [
-      "Compatibility of widened fontSize and optional contentScale across unchanged consumers",
-      "No node geometry rewrite during normalizeCanvasDocument",
-      "Template/default zoom consistency",
-      "Footer bounds and style-menu cast cleanup",
-      "Focused test fidelity and environment exception"
+      "Every direct creation path consumes exactly one captured viewport.",
+      "Internal duplicate and document import geometry remains unchanged.",
+      "AI sizing is deterministic and zoom-independent.",
+      "Style editing converts only validated finite screen values.",
+      "No Task 3 collision behavior is introduced early."
     ]
   }
 }

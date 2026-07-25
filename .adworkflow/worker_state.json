@@ -1,50 +1,28 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
-  "status": "complete",
-  "revision": 3,
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
+  "status": "in_progress",
+  "revision": 1,
   "done": [
-    "Configured the Task 1 implementation contract.",
-    "Prepared the L2 semantic context.",
-    "Narrowed an over-broad React callback entrypoint to bounded manual context.",
-    "Accepted context preflight at confidence 1.0 with no critical unresolved edges.",
-    "Implemented the viewport sizing foundation with focused TDD coverage.",
-    "Ran the focused sizing test and direct TypeScript compiler check.",
-    "Resolved every Important independent-review finding in commit 6a10c177.",
-    "Completed the bounded manual impact audit after automated whole-graph analysis timed out."
+    "Configured the Task 2 implementation contract.",
+    "Prepared and read the L2 semantic context manifest.",
+    "Accepted context preflight at confidence 0.909 with no critical unresolved edges."
   ],
-  "changed_files": [
-    "src/lib/canvas/viewport-sizing.ts",
-    "src/types/canvas.ts",
-    "src/lib/canvas/templates.ts",
-    "src/app/core/main/canvas/canvas-footer.tsx",
-    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "scripts/tests/canvas-viewport-sizing.test.mjs"
-  ],
+  "changed_files": [],
   "current_problem": null,
-  "next_action": "Configure and execute Task 2 viewport-aware creation-path integration.",
+  "next_action": "Dispatch the Task 2 implementation worker with the captured context and strict TDD contract.",
   "must_keep_context": [
-    "Task 1 stops before draw/paste/drop/AI creation integration.",
-    "CanvasFooter is included as bounded read-first context, not an L2 entrypoint.",
+    "Every direct creation operation captures one viewport at operation start.",
+    "Internal paste/duplicate and full-document imports preserve stored geometry.",
+    "Task 2 stops before collision and snapping policy implementation.",
     "No provider secret may be read, printed or changed."
   ],
   "discarded_context": [],
   "remaining_risks": [
-    "pnpm exec refuses its non-interactive dependency repair, although node_modules/.bin/tsc passes."
+    "canvas-editor.tsx is a large integration surface and requires bounded edits plus independent review.",
+    "AI canvas operations share consumers in agent runtime and tool registry."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": [
-    {
-      "relation": "callers",
-      "targets": [
-        "typescript:src.app.core.main.canvas.canvas-footer:CanvasFooter:function"
-      ],
-      "depth": 2,
-      "budget": 120,
-      "reason": "The first expansion demonstrated that using CanvasFooter as an L2 entrypoint pulled in the whole editor through dynamic callbacks.",
-      "result": "The entrypoint was narrowed to data/template functions while CanvasFooter remained explicit bounded context; preflight then passed."
-    }
-  ]
+  "context_expansion_history": []
 }

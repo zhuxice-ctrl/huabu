@@ -1,10 +1,10 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
   "status": "accepted",
-  "graph_revision": "e081fcbc7669732a10d632b8",
-  "slice_revision": "e081fcbc7669732a10d632b8",
-  "confidence": 1.0,
+  "graph_revision": "573fa700d9dcbaeef21ee233",
+  "slice_revision": "573fa700d9dcbaeef21ee233",
+  "confidence": 0.909,
   "confidence_threshold": 0.8,
   "freshness": {
     "fresh": true,
