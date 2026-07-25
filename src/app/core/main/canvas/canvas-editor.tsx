@@ -2124,7 +2124,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                 value={{
                   backgroundColor: selectedStyleNode.data.backgroundColor as string | undefined ?? selectedStyleNode.data.fillColor as string | undefined,
                   textColor: selectedStyleNode.data.textColor as string | undefined,
-                  fontSize: selectedStyleNode.data.fontSize as 13 | 15 | 18 | 24 | undefined,
+                  fontSize: selectedStyleNode.data.fontSize,
                   borderColor: selectedStyleNode.data.borderColor as string | undefined ?? selectedStyleNode.data.color as string | undefined,
                   borderStyle: selectedStyleNode.data.borderStyle as 'none' | 'solid' | 'dashed' | 'dotted' | undefined,
                 }}

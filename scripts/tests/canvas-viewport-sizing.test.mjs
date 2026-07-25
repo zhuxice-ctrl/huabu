@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   INITIAL_CANVAS_ZOOM,
   MAX_CANVAS_ZOOM,
@@ -12,6 +13,7 @@ import {
   screenPointToCanvas,
   screenSizeToCanvas,
 } from '../../src/lib/canvas/viewport-sizing.ts'
+import { DEFAULT_CANVAS_DOCUMENT, normalizeCanvasDocument } from '../../src/types/canvas.ts'
 
 test('screen dimensions round-trip through one captured 65% snapshot', () => {
   const snapshot = captureViewportSnapshot({
@@ -32,11 +34,21 @@ test('screen dimensions round-trip through one captured 65% snapshot', () => {
   assert.ok(Object.isFrozen(snapshot))
 })
 
-test('conversion clamps captured zoom and uses persistent/display precision', () => {
-  const minimum = captureViewportSnapshot({
+test('conversion clamps every finite captured zoom and uses persistent/display precision', () => {
+  const zero = captureViewportSnapshot({
+    viewport: { x: 0, y: 0, zoom: 0 },
+    containerRect: { left: 0, top: 0 },
+    lastValid: { x: 0, y: 0, zoom: 2, containerLeft: 0, containerTop: 0, capturedAt: 1 },
+  })
+  const negative = captureViewportSnapshot({
     viewport: { x: 0, y: 0, zoom: -2 },
     containerRect: { left: 0, top: 0 },
-    lastValid: { x: 0, y: 0, zoom: 0.02, containerLeft: 0, containerTop: 0, capturedAt: 1 },
+    lastValid: { x: 0, y: 0, zoom: 2, containerLeft: 0, containerTop: 0, capturedAt: 1 },
+  })
+  const nonFinite = captureViewportSnapshot({
+    viewport: { x: 0, y: 0, zoom: Number.NaN },
+    containerRect: { left: 0, top: 0 },
+    lastValid: { x: 0, y: 0, zoom: 2, containerLeft: 0, containerTop: 0, capturedAt: 1 },
   })
   const maximum = captureViewportSnapshot({
     viewport: { x: 0, y: 0, zoom: 12 },
@@ -45,13 +57,63 @@ test('conversion clamps captured zoom and uses persistent/display precision', ()
 
   assert.equal(MIN_CANVAS_ZOOM, 0.1)
   assert.equal(MAX_CANVAS_ZOOM, 6)
-  assert.equal(minimum?.zoom, MIN_CANVAS_ZOOM)
+  assert.equal(zero?.zoom, MIN_CANVAS_ZOOM)
+  assert.equal(negative?.zoom, MIN_CANVAS_ZOOM)
+  assert.equal(nonFinite?.zoom, 2)
   assert.equal(maximum?.zoom, MAX_CANVAS_ZOOM)
   assert.equal(screenDistanceToCanvas(8.02, maximum), 1.3367)
   assert.deepEqual(canvasSizeToScreen({ width: 1.3367, height: -0.001 }, maximum), {
     width: 8.02,
     height: -0.01,
   })
+})
+
+test('document normalization clamps finite zoom, uses defaults only for non-finite zoom, and preserves node data', () => {
+  const nodes = [
+    {
+      id: 'missing-font',
+      type: 'text',
+      position: { x: 0, y: 0 },
+      width: 321.2345,
+      height: 123.4567,
+      data: { contentScale: undefined },
+    },
+    {
+      id: 'invalid-font',
+      type: 'text',
+      position: { x: 0, y: 0 },
+      width: 456.7891,
+      height: 987.6543,
+      data: { fontSize: Number.NaN, contentScale: Number.POSITIVE_INFINITY },
+    },
+  ]
+
+  const inRange = normalizeCanvasDocument({ nodes, edges: [], viewport: { x: 12, y: -8, zoom: 0.65 } })
+  const zero = normalizeCanvasDocument({ nodes, edges: [], viewport: { x: 12, y: -8, zoom: 0 } })
+  const negative = normalizeCanvasDocument({ nodes, edges: [], viewport: { x: 12, y: -8, zoom: -2 } })
+  const nonFinite = normalizeCanvasDocument({ nodes, edges: [], viewport: { x: 12, y: -8, zoom: Number.NaN } })
+
+  assert.deepEqual(inRange.viewport, { x: 12, y: -8, zoom: 0.65 })
+  assert.equal(zero.viewport.zoom, MIN_CANVAS_ZOOM)
+  assert.equal(negative.viewport.zoom, MIN_CANVAS_ZOOM)
+  assert.equal(nonFinite.viewport.zoom, INITIAL_CANVAS_ZOOM)
+  assert.equal(inRange.nodes[0], nodes[0])
+  assert.equal(inRange.nodes[1], nodes[1])
+  assert.equal(Object.hasOwn(inRange.nodes[0].data, 'fontSize'), false)
+  assert.ok(Number.isNaN(inRange.nodes[1].data.fontSize))
+  assert.equal(inRange.nodes[0].data.contentScale, undefined)
+  assert.equal(inRange.nodes[1].data.contentScale, Number.POSITIVE_INFINITY)
+  assert.equal(inRange.nodes[0].width, 321.2345)
+  assert.equal(inRange.nodes[1].height, 987.6543)
+})
+
+test('blank and template defaults use 65%, and file import delegates to document normalization', () => {
+  const templates = readFileSync(new URL('../../src/lib/canvas/templates.ts', import.meta.url), 'utf8')
+  const fileFormat = readFileSync(new URL('../../src/lib/canvas/file-format.ts', import.meta.url), 'utf8')
+
+  assert.equal(DEFAULT_CANVAS_DOCUMENT.viewport.zoom, INITIAL_CANVAS_ZOOM)
+  assert.equal((templates.match(/viewport: \{ x: -?\d+, y: -?\d+, zoom: 0\.65 \}/g) || []).length, 6)
+  assert.match(fileFormat, /const document = normalizeCanvasDocument\(rawDocument\)/)
 })
 
 test('font and content scaling retain valid values and safely fall back', () => {
@@ -62,6 +124,16 @@ test('font and content scaling retain valid values and safely fall back', () => 
   assert.equal(contentScaleForZoom(MIN_CANVAS_ZOOM), 10)
   assert.equal(contentScaleForZoom(MAX_CANVAS_ZOOM), 0.1667)
   assert.equal(contentScaleForZoom(Number.NaN), 1.5385)
+  const negativeZero = screenDistanceToCanvas(-0, {
+    x: 0,
+    y: 0,
+    zoom: 1,
+    containerLeft: 0,
+    containerTop: 0,
+    capturedAt: 1,
+  })
+  assert.equal(negativeZero, 0)
+  assert.equal(Object.is(negativeZero, -0), false)
 })
 
 test('point conversion applies the container origin and captured translation', () => {

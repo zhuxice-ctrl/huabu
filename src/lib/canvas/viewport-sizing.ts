@@ -44,9 +44,9 @@ function round2(value: number): number {
 }
 
 function normalizeZoom(value: unknown, fallback = INITIAL_CANVAS_ZOOM): number {
-  const resolved = isPositiveFiniteNumber(value)
+  const resolved = isFiniteNumber(value)
     ? value
-    : isPositiveFiniteNumber(fallback)
+    : isFiniteNumber(fallback)
       ? fallback
       : INITIAL_CANVAS_ZOOM
   return clamp(resolved, MIN_CANVAS_ZOOM, MAX_CANVAS_ZOOM)

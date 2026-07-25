@@ -1,5 +1,3 @@
-import { normalizeCanvasFontSize } from '@/lib/canvas/viewport-sizing'
-
 export type CanvasProjectType =
   | 'blank'
   | 'flowchart'
@@ -194,22 +192,12 @@ export function normalizeCanvasDocument(value: unknown): CanvasDocument {
   const viewport = candidate.viewport
   return {
     schemaVersion: 1,
-    nodes: Array.isArray(candidate.nodes)
-      ? candidate.nodes.map(node => {
-        if (!Object.prototype.hasOwnProperty.call(node.data, 'fontSize')) return node
-        const fontSize = node.data.fontSize
-        if (typeof fontSize === 'number' && Number.isFinite(fontSize) && fontSize > 0) return node
-        return {
-          ...node,
-          data: { ...node.data, fontSize: normalizeCanvasFontSize(fontSize) },
-        }
-      })
-      : [],
+    nodes: Array.isArray(candidate.nodes) ? candidate.nodes : [],
     edges: Array.isArray(candidate.edges) ? candidate.edges : [],
     viewport: {
       x: typeof viewport?.x === 'number' && Number.isFinite(viewport.x) ? viewport.x : 0,
       y: typeof viewport?.y === 'number' && Number.isFinite(viewport.y) ? viewport.y : 0,
-      zoom: typeof viewport?.zoom === 'number' && Number.isFinite(viewport.zoom) && viewport.zoom > 0
+      zoom: typeof viewport?.zoom === 'number' && Number.isFinite(viewport.zoom)
         ? Math.min(6, Math.max(0.1, viewport.zoom))
         : 0.65,
     },
