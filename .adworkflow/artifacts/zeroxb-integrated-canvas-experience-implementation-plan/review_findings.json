@@ -1,0 +1,75 @@
+{
+  "schema": "ADworkflo.review_findings.v1",
+  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
+  "status": "approved_after_resolution",
+  "reviewer": "independent_plan_reviewer_with_orchestrator_resolution_audit",
+  "source_revision": "393b2c1b73114edb51db1c2a3812ed506b383b7e",
+  "plan_sha256": "D9D25EAF846ED4789799E259C682C7710CBD35785B3D141DBCF27C078B347E0F",
+  "review_basis": [
+    "The committed integrated implementation plan",
+    "The three independently reviewed and approved 2026-07-25 design specifications",
+    "The earlier zeroxB product design and implementation roadmap",
+    "Current credential, canvas-tab, chat-sync, export, index and HUD source paths",
+    "Writing-plans task structure and ADworkflo medium-risk review checklist"
+  ],
+  "initial_verdict": "needs_changes",
+  "initial_findings": [
+    {
+      "severity": "critical",
+      "title": "Credential migration omitted shared native and provider request paths",
+      "resolution": "Task 19 now covers the JavaScript config/settings UI, tauri-client, chat, embedding, rerank, OCR/VLM, model checks, TTS/STT and Rust ai.rs path. JavaScript stores and sends only opaque credential/header references; Rust resolves and attaches secret values."
+    },
+    {
+      "severity": "important",
+      "title": "ViewportSnapshot lacked container origin and stable point conversion",
+      "resolution": "Task 1 now captures containerLeft/containerTop, defines screenPointToCanvas, cancels invalid-container operations and tests last-valid per-field fallbacks."
+    },
+    {
+      "severity": "important",
+      "title": "Permanent-canvas plan omitted legacy canvas-tab producers and restoration",
+      "resolution": "Task 7 now includes canvas sidebar/startup/tab utilities, article store and EditorLayout activation effects, with a persisted canvas-tab migration."
+    },
+    {
+      "severity": "important",
+      "title": "Index mutation/worker lifecycle was missing and overlay recall preceded its dependency",
+      "resolution": "Task 15 now establishes the tested job/index contract, authoritative save enqueue, revision deduplication, retries, startup resume, deletion/rebuild and candidate-query interface before overlay recall."
+    },
+    {
+      "severity": "important",
+      "title": "Canvas chat context conflicted with the local-only sync boundary",
+      "resolution": "Task 10 now classifies canvasContext as local-only, strips it from all chat sync/backup payloads and ignores remote context during restore."
+    },
+    {
+      "severity": "important",
+      "title": "Existing visible export actions were not removed",
+      "resolution": "New Task 18 removes Windows-visible file/config/theme/backup export actions and adds a reachability contract while preserving internal thumbnail/print/recovery primitives."
+    },
+    {
+      "severity": "important",
+      "title": "Geometry cancellation events were unplanned",
+      "resolution": "Task 5 now handles pointercancel, lostpointercapture and window blur for draw/resize/move with latest-authority restoration and no history."
+    },
+    {
+      "severity": "important",
+      "title": "HUD drafts and long-history segmented rendering were missing",
+      "resolution": "Task 12 now owns session-only per-conversation/per-canvas drafts and defines measurable 40-message segmentation with a 10,000-message rendering contract."
+    },
+    {
+      "severity": "important",
+      "title": "Security and AI policy thresholds were not deterministic",
+      "resolution": "Tasks 14-16 now define large-movement confirmation thresholds, 0.85/0.60 confidence bands and a fail-closed loopback/no-proxy raw-sensitive-context policy."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "suggested_tests": [
+    "Execute the plan task-by-task with the listed failing-first tests and commit gates.",
+    "Repeat independent review after implementation using the final L2 impact report and Windows installer evidence."
+  ],
+  "risk_notes": [
+    "The independent first pass found one Critical and eight Important gaps; every finding was converted into exact files, interfaces, constants and tests in commit 393b2c1b.",
+    "The resolution audit found no remaining placeholder or implementation-blocking ambiguity in the reviewed areas.",
+    "This task changes planning/workflow artifacts only; no runtime behavior has been implemented or tested.",
+    "Implementation remains a large multi-phase effort and requires task-scoped L2 preflight, post-edit impact reports and independent review at the release gate."
+  ]
+}

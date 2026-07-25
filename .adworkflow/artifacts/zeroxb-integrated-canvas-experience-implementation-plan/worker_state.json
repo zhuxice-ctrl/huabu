@@ -1,0 +1,44 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
+  "status": "verified",
+  "revision": 1,
+  "done": [
+    "Combined the earlier product specification and roadmap with all three approved 2026-07-25 specifications.",
+    "Inspected current canvas, shell, editor, note, chat, database, TTS/STT, credential, sync and test entrypoints.",
+    "Created a dependency-ordered 21-task TDD plan with exact files, interfaces, commands, expected results and commit boundaries.",
+    "Preserved completed foundation/rebranding work and made later shell/geometry specifications explicitly override earlier conflicting wording.",
+    "Completed an independent medium-risk review and resolved its one Critical and eight Important findings.",
+    "Committed documentation and workflow context only; no runtime source, dependency, package or installed application was changed."
+  ],
+  "changed_files": [
+    ".adworkflow/task_spec.json",
+    ".adworkflow/context_raw.json",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/artifacts/zeroxb-integrated-canvas-experience-implementation-plan/review_findings.json",
+    ".adworkflow/artifacts/zeroxb-integrated-canvas-experience-implementation-plan/worker_state.json",
+    ".adworkflow/artifacts/zeroxb-integrated-canvas-experience-implementation-plan/verification_result.json",
+    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md"
+  ],
+  "current_problem": null,
+  "next_action": "Await the user's choice between Subagent-Driven execution and Inline Execution before modifying runtime code.",
+  "must_keep_context": [
+    "Plan source revision is 393b2c1b73114edb51db1c2a3812ed506b383b7e before task-scoped evidence is committed.",
+    "Sizing precedes collision; collision precedes permanent shell/content integration; the canvas index contract precedes AI overlay recall.",
+    "CanvasChatContext is local-only and must be stripped from chat synchronization payloads.",
+    "All provider secrets and secret custom headers are native-resolved credential references, never plaintext JavaScript request values.",
+    "No user-facing export actions remain, while internal recovery/thumbnail/print primitives may remain unreachable from export UI."
+  ],
+  "discarded_context": [
+    "The original 28px overlapping ingest cascade is superseded by 6-screen-pixel collision-safe vertical placement.",
+    "The earlier no-sidebar statement is superseded by the approved collapsible left rail and right document panel.",
+    "Canvas editor tabs are legacy state only; the permanent canvas is controlled by activeCanvasId."
+  ],
+  "remaining_risks": [
+    "Runtime implementation and Windows hands-on verification have not started.",
+    "Credential migration, collision sessions, stream cancellation and index recovery require independent implementation-stage review."
+  ],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}

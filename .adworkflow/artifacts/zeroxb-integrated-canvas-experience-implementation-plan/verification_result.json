@@ -1,0 +1,93 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
+  "status": "passed",
+  "source_revision": "393b2c1b73114edb51db1c2a3812ed506b383b7e",
+  "commands": [
+    {
+      "command": "prepare_context.py --project F:/huabu-worktrees/foundation",
+      "status": "passed",
+      "summary": "Generated architecture-first context_raw/context_manifest with 14 read-first files and no warnings.",
+      "exit_code": 0
+    },
+    {
+      "command": "independent implementation-plan review plus scoped resolution audit",
+      "status": "passed",
+      "summary": "The first pass found one Critical and eight Important gaps; all were resolved with exact files, policies and tests and no blocking finding remains.",
+      "exit_code": 0
+    },
+    {
+      "command": "plan structure, placeholder and specification-constant scan",
+      "status": "passed",
+      "summary": "The plan contains 21 tasks, 21 commit boundaries, checkbox steps, required header, deterministic constants and no unresolved placeholder.",
+      "exit_code": 0
+    },
+    {
+      "command": "PowerShell ConvertFrom-Json for task and task-scoped evidence",
+      "status": "passed",
+      "summary": "All planning and evidence JSON parsed as explicit UTF-8.",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "summary": "No whitespace errors remain.",
+      "exit_code": 0
+    },
+    {
+      "command": "validate_adworkflow.py --project F:/huabu-worktrees/foundation",
+      "status": "passed",
+      "summary": "ADworkflo validation passed for the configured documentation task and evidence.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance_criteria_coverage": [
+    {
+      "criterion": "One implementation-ready plan integrates previous zeroxB requirements with the three approved designs.",
+      "status": "passed",
+      "evidence": [
+        "Plan scope/precedence and delivery invariants",
+        "Phases A-E and final acceptance gate"
+      ]
+    },
+    {
+      "criterion": "Tasks contain exact files, TDD steps, interfaces, commands, expected results and commit boundaries.",
+      "status": "passed",
+      "evidence": [
+        "21 task headings",
+        "21 git commit boundaries",
+        "Plan structure scan"
+      ]
+    },
+    {
+      "criterion": "Database compatibility, old-data preservation, offline behavior, security, NSIS and Windows acceptance are planned.",
+      "status": "passed",
+      "evidence": [
+        "Tasks 1, 5, 7, 10, 14-21",
+        "Independent review resolution audit"
+      ]
+    },
+    {
+      "criterion": "No runtime code is changed in this planning task.",
+      "status": "passed",
+      "evidence": [
+        "Git diff contains only docs and .adworkflow files"
+      ]
+    }
+  ],
+  "passed": [
+    "Writing-plans header and handoff contract",
+    "Dependency ordering",
+    "Three-spec and earlier-product coverage",
+    "Current-source file mapping",
+    "Independent review with finding resolution",
+    "UTF-8 and JSON validation",
+    "Git whitespace validation",
+    "ADworkflo validation"
+  ],
+  "failed": [],
+  "not_run_reason": "Runtime tests, TypeScript, production build, Cargo, NSIS and Windows hands-on checks are implementation-stage gates and were intentionally not run for this documentation-only task.",
+  "residual_risk": [
+    "The implementation plan is intentionally broad and should be executed one committed task at a time with fresh L2 context and reviewer evidence."
+  ]
+}
