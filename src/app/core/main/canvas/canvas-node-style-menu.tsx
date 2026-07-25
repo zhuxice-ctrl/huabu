@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 export interface CanvasNodeStyleValue {
   backgroundColor?: string
   textColor?: string
-  fontSize?: 13 | 15 | 18 | 24
+  fontSize?: number
   borderColor?: string
   borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted'
 }
@@ -84,7 +84,7 @@ export function CanvasNodeStyleMenu({ value, onSessionStart, onChange }: CanvasN
           <select
             className="h-8 w-full rounded-md border bg-background px-2 text-xs text-foreground"
             value={value.fontSize || 15}
-            onChange={event => onChange({ fontSize: Number(event.target.value) as 13 | 15 | 18 | 24 })}
+            onChange={event => onChange({ fontSize: Number(event.target.value) })}
           >
             <option value="13">小</option>
             <option value="15">标准</option>

@@ -117,8 +117,8 @@ export function CanvasFooter({
         <div className="flex items-center gap-1.5 px-1">
           <ZoomOut className="size-3" aria-hidden="true" />
           <Slider
-            min={0.25}
-            max={2}
+            min={0.1}
+            max={6}
             step={0.05}
             value={[zoom]}
             onValueChange={value => onZoomChange(value[0] ?? zoom)}

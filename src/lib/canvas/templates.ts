@@ -13,7 +13,7 @@ const FLOWCHART_TEMPLATE: CanvasDocument = {
     { id: 'process-decision', source: 'process', target: 'decision', type: 'smoothstep' },
     { id: 'decision-end', source: 'decision', target: 'end', label: '是', type: 'smoothstep' },
   ],
-  viewport: { x: 200, y: 40, zoom: 0.9 },
+  viewport: { x: 200, y: 40, zoom: 0.65 },
 }
 
 const MINDMAP_TEMPLATE: CanvasDocument = {
@@ -30,7 +30,7 @@ const MINDMAP_TEMPLATE: CanvasDocument = {
     { id: 'topic-branch-2', source: 'topic', target: 'branch-2', type: 'smoothstep' },
     { id: 'topic-branch-3', source: 'topic', target: 'branch-3', type: 'smoothstep' },
   ],
-  viewport: { x: 120, y: 80, zoom: 0.9 },
+  viewport: { x: 120, y: 80, zoom: 0.65 },
 }
 
 const TIMELINE_TEMPLATE: CanvasDocument = {
@@ -45,7 +45,7 @@ const TIMELINE_TEMPLATE: CanvasDocument = {
     { id: 'time-1-2', source: 'time-1', target: 'time-2', type: 'smoothstep' },
     { id: 'time-2-3', source: 'time-2', target: 'time-3', type: 'smoothstep' },
   ],
-  viewport: { x: 80, y: 80, zoom: 0.9 },
+  viewport: { x: 80, y: 80, zoom: 0.65 },
 }
 
 const QUADRANT_TEMPLATE: CanvasDocument = {
@@ -57,7 +57,7 @@ const QUADRANT_TEMPLATE: CanvasDocument = {
     { id: 'q4', type: 'group', position: { x: 330, y: 250 }, width: 300, height: 220, zIndex: -1, data: { label: '不重要不紧急', color: '#64748b', childIds: [] } },
   ],
   edges: [],
-  viewport: { x: 120, y: 60, zoom: 0.9 },
+  viewport: { x: 120, y: 60, zoom: 0.65 },
 }
 
 const KANBAN_TEMPLATE: CanvasDocument = {
@@ -71,7 +71,7 @@ const KANBAN_TEMPLATE: CanvasDocument = {
     { id: 'done-card', type: 'todo', position: { x: 590, y: 80 }, data: { label: '完成事项', checked: true } },
   ],
   edges: [],
-  viewport: { x: 80, y: 40, zoom: 0.82 },
+  viewport: { x: 80, y: 40, zoom: 0.65 },
 }
 
 const SWOT_TEMPLATE: CanvasDocument = {
@@ -83,7 +83,7 @@ const SWOT_TEMPLATE: CanvasDocument = {
     { id: 'threats', type: 'note', position: { x: 320, y: 230 }, width: 280, height: 190, data: { label: '威胁 Threats', description: '外部有哪些风险？', color: '#ef4444' } },
   ],
   edges: [],
-  viewport: { x: 160, y: 80, zoom: 0.9 },
+  viewport: { x: 160, y: 80, zoom: 0.65 },
 }
 
 export function createCanvasDocument(canvasType: CanvasProjectType): CanvasDocument {

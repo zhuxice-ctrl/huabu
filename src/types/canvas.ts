@@ -1,3 +1,5 @@
+import { normalizeCanvasFontSize } from '@/lib/canvas/viewport-sizing'
+
 export type CanvasProjectType =
   | 'blank'
   | 'flowchart'
@@ -43,7 +45,7 @@ export interface CanvasNodeData extends Record<string, unknown> {
   borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted'
   backgroundColor?: string
   textColor?: string
-  fontSize?: 13 | 15 | 18 | 24
+  fontSize?: number
   borderColor?: string
   borderWidth?: number
   fillColor?: string
@@ -51,6 +53,7 @@ export interface CanvasNodeData extends Record<string, unknown> {
   strokeWidth?: number
   pathStrokeWidth?: number
   opacity?: number
+  contentScale?: number
   points?: CanvasPoint[]
   path?: string
   width?: number
@@ -112,6 +115,11 @@ export interface CanvasViewport {
   zoom: number
 }
 
+export interface CanvasSize {
+  width: number
+  height: number
+}
+
 export interface CanvasDocument {
   schemaVersion: 1
   nodes: CanvasNode[]
@@ -169,7 +177,7 @@ export const DEFAULT_CANVAS_DOCUMENT: CanvasDocument = {
   schemaVersion: 1,
   nodes: [],
   edges: [],
-  viewport: { x: 0, y: 0, zoom: 1 },
+  viewport: { x: 0, y: 0, zoom: 0.65 },
   settings: {
     layoutDirection: 'TB',
     showGrid: true,
@@ -183,11 +191,28 @@ export function normalizeCanvasDocument(value: unknown): CanvasDocument {
   }
 
   const candidate = value as Partial<CanvasDocument>
+  const viewport = candidate.viewport
   return {
     schemaVersion: 1,
-    nodes: Array.isArray(candidate.nodes) ? candidate.nodes : [],
+    nodes: Array.isArray(candidate.nodes)
+      ? candidate.nodes.map(node => {
+        if (!Object.prototype.hasOwnProperty.call(node.data, 'fontSize')) return node
+        const fontSize = node.data.fontSize
+        if (typeof fontSize === 'number' && Number.isFinite(fontSize) && fontSize > 0) return node
+        return {
+          ...node,
+          data: { ...node.data, fontSize: normalizeCanvasFontSize(fontSize) },
+        }
+      })
+      : [],
     edges: Array.isArray(candidate.edges) ? candidate.edges : [],
-    viewport: candidate.viewport || { x: 0, y: 0, zoom: 1 },
+    viewport: {
+      x: typeof viewport?.x === 'number' && Number.isFinite(viewport.x) ? viewport.x : 0,
+      y: typeof viewport?.y === 'number' && Number.isFinite(viewport.y) ? viewport.y : 0,
+      zoom: typeof viewport?.zoom === 'number' && Number.isFinite(viewport.zoom) && viewport.zoom > 0
+        ? Math.min(6, Math.max(0.1, viewport.zoom))
+        : 0.65,
+    },
     settings: {
       ...DEFAULT_CANVAS_DOCUMENT.settings,
       ...(candidate.settings || {}),
