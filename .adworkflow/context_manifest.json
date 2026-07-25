@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "zeroxb-solid-block-collision-design",
+  "task_id": "zeroxb-canvas-shell-chat-hud-design",
   "context_level": "architecture-first-l2-semantic-codegraph",
   "read_first": [
     ".adworkflow/PROJECT.md",
@@ -14,8 +14,11 @@
   ],
   "relevant_symbols": [],
   "entrypoints": [
-    "typescript:src.lib.canvas.gesture-policy:normalizeDrawRect:function",
-    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function",
+    "typescript:src.app.core.main.page:ImmersiveCanvasLayout:function",
+    "typescript:src.app.core.main.left-sidebar:LeftSidebar:function",
+    "typescript:src.app.core.main.chat.chat-content:ChatContent:function",
+    "typescript:src.app.core.main.chat.chat-header:ChatHeader:function",
+    "typescript:src.stores.chat:useChatStore:function",
     "typescript:src.app.core.main.canvas.nodes.canvas-nodes:TextCanvasNode:function"
   ],
   "likely_tests": [],

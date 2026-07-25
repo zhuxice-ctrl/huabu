@@ -1,26 +1,27 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-solid-block-collision-design",
+  "task_id": "zeroxb-canvas-shell-chat-hud-design",
   "task_type": "docs",
-  "goal": "Write a formal design specification for solid non-overlapping canvas blocks, continuous collision and edge sliding, soft snapping, deterministic collision-safe ingest placement, clear selection glow and a low-saturation warm-white default text-block background in zeroxB.",
+  "goal": "Write a formal design specification for a permanent canvas-first desktop shell with a collapsible legacy sidebar, linked text-page references, a right multi-tab document panel, global AI conversation HUD rendered as a screen-space overlay, searchable conversation history and retained TTS interaction.",
   "non_goals": [
     "Do not implement or modify runtime behavior in this task.",
-    "Do not introduce parent-child nesting or automatic embedding between content blocks.",
-    "Do not make relation lines, freehand strokes or group backgrounds participate as solid collision obstacles.",
-    "Do not automatically move, resize or rewrite overlapping nodes in existing canvas documents.",
-    "Do not add a persistent collision information panel.",
+    "Do not replace the existing chat database, conversation model, RAG pipeline or TTS engine.",
+    "Do not duplicate note正文 into canvas nodes; canvas references must remain linked to source notes.",
+    "Do not turn chat messages into canvas entities or persist HUD layout inside canvas documents.",
+    "Do not remove existing file, note, canvas, editor, relationship, undo/redo or AI permission features.",
+    "Do not add mobile behavior in this Windows-only task.",
     "Do not expose or modify the configured localhost AI credential."
   ],
   "acceptance_criteria": [
-    "The specification defines the exact solid entity set and excludes nesting.",
-    "The specification defines a 6 screen-pixel safety gap, 8 screen-pixel snap-entry threshold and 14 screen-pixel snap-break threshold using one operation viewport snapshot.",
-    "The specification defines invalid draw and resize previews, release behavior, continuous swept collision and axis sliding without tunneling.",
-    "The specification defines rigid multi-selection collision against external entities while preserving internal gaps.",
-    "The specification preserves old overlaps and only allows user operations that reduce conflict until separation.",
-    "The specification defines deterministic nearest-free placement and vertical batch layout for paste, drop and picker creation.",
-    "The specification defines blue-cyan selection glow, red invalid preview, amber legacy conflict and a #F2F1ED default text-block background.",
-    "The document contains no placeholders, contradictions or implementation-blocking ambiguity and is committed for user review."
+    "The specification defines a permanently mounted canvas-first home shell and preserves the existing file, note and canvas sidebar functions.",
+    "The specification defines a collapsible 320px-class left sidebar with a 48px icon rail and persisted UI state.",
+    "The specification defines hover preview, click-to-open right text panel, retained multi-tab editing, and drag-to-canvas linked note references.",
+    "The specification allows multiple references to one note, automatic title/summary refresh for all references and safe missing-source behavior.",
+    "The specification defines global conversations with per-message source canvas metadata and current-canvas-only retrieval at send time.",
+    "The specification defines a bottom expandable chat HUD whose transcript is screen-space, follows the dialog, does not pan or zoom with the canvas, and supports a searchable history popover.",
+    "The specification defines collapsed latest-turn preview, full transcript scrolling, loading states, session switching safeguards and retained TTS/STT behavior.",
+    "The specification contains error handling, accessibility, performance and Windows verification scenarios with no unresolved placeholder or contradiction."
   ],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
@@ -31,9 +32,10 @@
     "shell"
   ],
   "required_outputs": [
-    "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
+    "docs/superpowers/specs/2026-07-25-canvas-shell-chat-hud-design.md",
+    ".adworkflow/artifacts/zeroxb-canvas-shell-chat-hud-design/requirements.md",
     "context_manifest.json",
-    ".adworkflow/artifacts/zeroxb-solid-block-collision-design/review_findings.json"
+    ".adworkflow/artifacts/zeroxb-canvas-shell-chat-hud-design/review_findings.json"
   ],
   "do_not_touch": [
     "runtime source files",
@@ -44,24 +46,29 @@
     "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.gesture-policy:normalizeDrawRect:function",
-    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function",
+    "typescript:src.app.core.main.page:ImmersiveCanvasLayout:function",
+    "typescript:src.app.core.main.left-sidebar:LeftSidebar:function",
+    "typescript:src.app.core.main.chat.chat-content:ChatContent:function",
+    "typescript:src.app.core.main.chat.chat-header:ChatHeader:function",
+    "typescript:src.stores.chat:useChatStore:function",
     "typescript:src.app.core.main.canvas.nodes.canvas-nodes:TextCanvasNode:function"
   ],
   "context_sources": [
-    "src/app/core/main/canvas/canvas-editor.tsx owns creation, selection, move, resize, ingest placement, grouping and history transactions.",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx renders text blocks, content cards, selection state and node resizers.",
-    "src/lib/canvas/gesture-policy.ts owns pure drawing and selection geometry helpers.",
-    "src/lib/canvas/content-ingest.ts defines pasted and dropped content drafts and batch ordering.",
-    "src/types/canvas.ts defines persisted node style and z-index data.",
-    "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md defines operation viewport snapshots and screen-to-canvas conversion."
+    "src/app/core/main/page.tsx currently bypasses the three-panel shell for canvas mode and renders only EditorLayout plus bottom ChatInput/ChatFooter.",
+    "src/app/core/main/left-sidebar.tsx owns Files, Notes and Canvases tabs and their existing actions.",
+    "src/app/core/main/chat/chat-content.tsx already renders persisted messages, loading, agent, RAG and TTS controls through child components.",
+    "src/app/core/main/chat/chat-header.tsx and history-dropdown.tsx already expose conversation switching, search, delete and new-chat behavior.",
+    "src/stores/chat.ts and the conversation/chat database own global conversation persistence and message loading.",
+    "src/app/core/main/editor/editor-layout.tsx and the note list/detail components own existing multi-tab text browsing and editing.",
+    "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md, docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md define linked sizing, collision and placement dependencies."
   ],
   "notes": [
     "Use the fixed UTF-8 I/O baseline.",
-    "The user explicitly rejected block nesting and automatic embedding.",
-    "All card-like content nodes are solid entities; relations, freehand and group backgrounds are not.",
-    "Draw and resize may break through soft snap and show a red invalid preview, but invalid release never commits overlap.",
-    "Stop after writing, independently reviewing and committing the specification so the user can review it before implementation planning."
+    "The user selected a right resizable text panel, hover preview after 400ms, a global conversation archive and a bottom screen-space chat HUD.",
+    "The user selected global conversations: each message carries source canvas metadata, while retrieval uses the current canvas at send time.",
+    "A linked note reference may appear multiple times on one canvas; all references refresh title, summary and timestamp when the source note changes.",
+    "The user selected voice-session auto-read for microphone prompts and manual read-aloud for ordinary text prompts.",
+    "Stop after writing and independently reviewing the specification so the user can review it before implementation planning."
   ],
   "implementation_owner": "root-orchestrator"
 }
