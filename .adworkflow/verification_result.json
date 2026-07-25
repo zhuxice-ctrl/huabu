@@ -1,153 +1,34 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
-  "status": "passed",
-  "source_revision": "60c3d5edd504a2c39bd1c8521ed4b79e08e758bc",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "status": "passed_with_environment_exception",
   "commands": [
     {
-      "command": "corepack pnpm test:canvas",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-viewport-sizing.test.mjs",
       "status": "passed",
-      "summary": "36/36 canvas tests passed, including executable relation interaction and 24-pixel routing coverage.",
+      "summary": "7/7 viewport sizing and import-normalization regression tests passed.",
       "exit_code": 0
     },
     {
-      "command": "corepack pnpm verify:foundation",
+      "command": "pnpm exec tsc --noEmit",
+      "status": "environment_blocked",
+      "summary": "pnpm attempted a non-interactive modules-directory repair and aborted before running tsc.",
+      "exit_code": 1
+    },
+    {
+      "command": "node_modules\\.bin\\tsc.cmd --noEmit",
       "status": "passed",
-      "summary": "zeroxB foundation contract passed.",
+      "summary": "TypeScript 5 check completed without diagnostics.",
       "exit_code": 0
-    },
-    {
-      "command": "corepack pnpm exec tsc --noEmit",
-      "status": "passed",
-      "summary": "TypeScript checking passed without diagnostics.",
-      "exit_code": 0
-    },
-    {
-      "command": "npx -y pnpm@9.15.9 build",
-      "status": "passed",
-      "summary": "Next.js production build, static export and map pruning passed.",
-      "exit_code": 0
-    },
-    {
-      "command": "cargo check --manifest-path src-tauri/Cargo.toml --locked",
-      "status": "passed",
-      "summary": "Portable MSVC locked Cargo check passed and Cargo.lock is unchanged.",
-      "exit_code": 0
-    },
-    {
-      "command": "npx -y pnpm@9.15.9 tauri build --debug --bundles nsis",
-      "status": "passed",
-      "summary": "Fresh NSIS installer completed with upstream hash validation.",
-      "exit_code": 0
-    },
-    {
-      "command": "silent NSIS reinstall to F:\\zeroxBApp",
-      "status": "passed",
-      "summary": "Installer exited 0 and the installed executable SHA-256 matches the packaged debug executable.",
-      "exit_code": 0
-    },
-    {
-      "command": "installed runtime, store and SQLite state checks",
-      "status": "passed",
-      "summary": "zeroxB was responsive with the correct title; a canvas project tab remained active; one canvas, one provider and ten models persisted.",
-      "exit_code": 0
-    },
-    {
-      "command": "localhost OpenAI-compatible chat smoke request",
-      "status": "passed",
-      "summary": "A minimal request returned a non-empty reply and sent no canvas content.",
-      "exit_code": 0
-    },
-    {
-      "command": "ADworkflo L2 preflight and independent impact review",
-      "status": "passed",
-      "summary": "Current graph revision e081fcbc7669732a10d632b8 has accepted confidence 1.0; independently reviewed impact has no unexpected or critical unresolved edge.",
-      "exit_code": 0
-    }
-  ],
-  "acceptance_criteria_coverage": [
-    {
-      "criterion": "Right-drag empty canvas selects every partially intersecting node and bulk deletion is undoable.",
-      "status": "passed",
-      "evidence": [
-        "Gesture policy and editor integration tests",
-        "Independent source re-review"
-      ]
-    },
-    {
-      "criterion": "Right click preserves context behavior and right-hold on a node starts relationship creation without creating a text block.",
-      "status": "passed",
-      "evidence": [
-        "Short-click/long-hold gesture tests",
-        "Pointer-session source review"
-      ]
-    },
-    {
-      "criterion": "Relationship preview follows the pointer, persists exact handles and highlights a valid target.",
-      "status": "passed",
-      "evidence": [
-        "Executable handle-selection tests",
-        "Independent source re-review"
-      ]
-    },
-    {
-      "criterion": "Saved relationships support curved, straight, orthogonal, automatic and manual routes plus complete styling edits.",
-      "status": "passed",
-      "evidence": [
-        "Relation policy/routing tests",
-        "TypeScript and production build",
-        "Independent source re-review"
-      ]
-    },
-    {
-      "criterion": "Saved waypoints remain draggable and deletable with history participation.",
-      "status": "passed",
-      "evidence": [
-        "Executable waypoint deletion policy test",
-        "Independent source re-review"
-      ]
-    },
-    {
-      "criterion": "Clicks and single-axis drags create nothing; two-axis drags preserve exact dimensions.",
-      "status": "passed",
-      "evidence": [
-        "Gesture policy tests",
-        "Editor and node source contracts"
-      ]
-    },
-    {
-      "criterion": "The four obsolete quick-create buttons are removed.",
-      "status": "passed",
-      "evidence": [
-        "Editor source contract",
-        "Production build"
-      ]
-    },
-    {
-      "criterion": "Windows tests, build, locked Cargo check, fresh NSIS packaging, F-drive install, responsive launch, local AI persistence and canvas startup pass.",
-      "status": "passed",
-      "evidence": [
-        "All recorded commands exited 0",
-        "Installed executable and packaged binary hashes match",
-        "Sanitized runtime, SQLite and provider checks"
-      ]
     }
   ],
   "passed": [
-    "Canvas tests 36/36",
-    "Foundation contract",
-    "TypeScript check",
-    "Production frontend build",
-    "Locked Cargo check",
-    "Fresh NSIS packaging",
-    "F-drive silent reinstall and responsive launch",
-    "Canvas/SQLite persistence",
-    "Local AI configuration and minimal completion",
-    "Independent source and impact review"
+    "Viewport sizing contract tests",
+    "Direct TypeScript compiler check"
   ],
   "failed": [],
-  "not_run_reason": null,
+  "not_run_reason": "The pnpm wrapper could not run because it requires an interactive dependency repair; no dependency changes were made.",
   "residual_risk": [
-    "Hands-on acceptance remains useful for subjective native pointer feel and visual preference across every edge style."
+    "The pnpm wrapper command still needs a TTY-capable or CI environment; the same locked local TypeScript compiler passed directly."
   ]
 }

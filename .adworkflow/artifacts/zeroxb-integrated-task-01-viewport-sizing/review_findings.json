@@ -1,0 +1,48 @@
+{
+  "schema": "ADworkflo.review_findings.v1",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "status": "approved_after_resolution",
+  "reviewer": "independent_task_reviewer_with_orchestrator_resolution_audit",
+  "source_revision": "6a10c177061c9c4fefa46c09b379c917e04c02d4",
+  "initial_verdict": "needs_changes",
+  "initial_findings": [
+    {
+      "severity": "important",
+      "title": "Imported invalid fontSize was rewritten",
+      "resolution": "normalizeCanvasDocument now preserves all legacy node data and renderer fallback remains non-mutating."
+    },
+    {
+      "severity": "important",
+      "title": "Finite zero and negative zoom used fallback instead of clamp",
+      "resolution": "All finite zoom values now clamp to 0.1–6; only non-finite values use last-valid/default fallback."
+    },
+    {
+      "severity": "important",
+      "title": "A fixed font-size union cast remained in canvas-editor",
+      "resolution": "The consumer now passes the numeric field without narrowing."
+    },
+    {
+      "severity": "important",
+      "title": "Manual impact scope omitted file import and overstated contentScale consumers",
+      "resolution": "The impact report includes file-format.ts, records all three normalization entry paths, and describes contentScale as a later integration field."
+    },
+    {
+      "severity": "minor",
+      "title": "Focused tests did not cover document normalization and negative zero",
+      "resolution": "The suite now covers imported zoom, legacy node-field preservation, geometry preservation, template/file-import delegation and explicit -0 elimination."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "id": "pnpm-noninteractive-repair",
+      "severity": "non_blocking",
+      "issue": "pnpm refuses to execute before repairing node_modules without a TTY.",
+      "evidence": "The locked local TypeScript 5 wrapper passes directly."
+    }
+  ],
+  "risk_notes": [
+    "Automated whole-graph reference-delta analysis timed out after a successful graph rebuild; the exact diff and DB, sync and file-import normalization call sites were reviewed manually.",
+    "No Task 2 creation entry point was implemented early."
+  ]
+}

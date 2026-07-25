@@ -1,0 +1,28 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "status": "passed_with_environment_exception",
+  "commands": [
+    {
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-viewport-sizing.test.mjs",
+      "status": "passed",
+      "summary": "7/7 tests passed.",
+      "exit_code": 0
+    },
+    {
+      "command": "node_modules\\.bin\\tsc.cmd --noEmit",
+      "status": "passed",
+      "summary": "TypeScript 5 check passed without diagnostics.",
+      "exit_code": 0
+    },
+    {
+      "command": "pnpm exec tsc --noEmit",
+      "status": "environment_blocked",
+      "summary": "pnpm requested a non-interactive modules-directory repair before TypeScript execution.",
+      "exit_code": 1
+    }
+  ],
+  "residual_risk": [
+    "Repeat the pnpm wrapper command in a TTY-capable or CI environment."
+  ]
+}

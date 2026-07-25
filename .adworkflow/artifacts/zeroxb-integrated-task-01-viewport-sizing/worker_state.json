@@ -1,0 +1,17 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "status": "complete",
+  "revision": 3,
+  "commits": [
+    "73d42f14",
+    "6a10c177"
+  ],
+  "done": [
+    "Implemented immutable viewport snapshots and deterministic size conversion.",
+    "Normalized initial zoom and footer zoom controls.",
+    "Preserved legacy node sizing fields and clamped all finite imported zoom values.",
+    "Resolved all independent-review Important findings."
+  ],
+  "next_action": "Begin Task 2."
+}

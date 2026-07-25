@@ -1,17 +1,29 @@
 {
   "schema": "ADworkflo.worker_state.v1",
   "task_id": "zeroxb-integrated-task-01-viewport-sizing",
-  "status": "in_progress",
-  "revision": 1,
+  "status": "complete",
+  "revision": 3,
   "done": [
     "Configured the Task 1 implementation contract.",
     "Prepared the L2 semantic context.",
     "Narrowed an over-broad React callback entrypoint to bounded manual context.",
-    "Accepted context preflight at confidence 1.0 with no critical unresolved edges."
+    "Accepted context preflight at confidence 1.0 with no critical unresolved edges.",
+    "Implemented the viewport sizing foundation with focused TDD coverage.",
+    "Ran the focused sizing test and direct TypeScript compiler check.",
+    "Resolved every Important independent-review finding in commit 6a10c177.",
+    "Completed the bounded manual impact audit after automated whole-graph analysis timed out."
   ],
-  "changed_files": [],
+  "changed_files": [
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/types/canvas.ts",
+    "src/lib/canvas/templates.ts",
+    "src/app/core/main/canvas/canvas-footer.tsx",
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "scripts/tests/canvas-viewport-sizing.test.mjs"
+  ],
   "current_problem": null,
-  "next_action": "Dispatch the Task 1 implementer with the generated brief.",
+  "next_action": "Configure and execute Task 2 viewport-aware creation-path integration.",
   "must_keep_context": [
     "Task 1 stops before draw/paste/drop/AI creation integration.",
     "CanvasFooter is included as bounded read-first context, not an L2 entrypoint.",
@@ -19,7 +31,7 @@
   ],
   "discarded_context": [],
   "remaining_risks": [
-    "Shared CanvasNodeData type changes require post-edit impact analysis and independent review."
+    "pnpm exec refuses its non-interactive dependency repair, although node_modules/.bin/tsc passes."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
