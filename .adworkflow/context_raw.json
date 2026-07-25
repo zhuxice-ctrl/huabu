@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "zeroxb-canvas-shell-chat-hud-design",
+  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
   "source": "architecture-docs",
   "matched_files": [
     {
@@ -34,6 +34,30 @@
     {
       "path": ".adworkflow/verification_commands.md",
       "reason": "architecture-first"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-24-huabu-implementation-roadmap.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-25-canvas-shell-chat-hud-design.md",
+      "reason": "task_spec.context_sources"
     }
   ],
   "matched_symbols": [],

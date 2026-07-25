@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "zeroxb-canvas-shell-chat-hud-design",
+  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
   "context_level": "architecture-first-l2-semantic-codegraph",
   "read_first": [
     ".adworkflow/PROJECT.md",
@@ -10,16 +10,22 @@
     ".adworkflow/interface_contracts.json",
     ".adworkflow/module_skills.md",
     ".adworkflow/permissions.md",
-    ".adworkflow/verification_commands.md"
+    ".adworkflow/verification_commands.md",
+    "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
+    "docs/superpowers/plans/2026-07-24-huabu-implementation-roadmap.md",
+    "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
+    "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md",
+    "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
+    "docs/superpowers/specs/2026-07-25-canvas-shell-chat-hud-design.md"
   ],
   "relevant_symbols": [],
   "entrypoints": [
-    "typescript:src.app.core.main.page:ImmersiveCanvasLayout:function",
-    "typescript:src.app.core.main.left-sidebar:LeftSidebar:function",
-    "typescript:src.app.core.main.chat.chat-content:ChatContent:function",
-    "typescript:src.app.core.main.chat.chat-header:ChatHeader:function",
-    "typescript:src.stores.chat:useChatStore:function",
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:TextCanvasNode:function"
+    "typescript:src.app.core.main.page:ResizableWrapper:function",
+    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function",
+    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:TextCanvasNode:function",
+    "typescript:src.lib.canvas.gesture-policy:normalizeDrawRect:function",
+    "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
+    "typescript:src.stores.chat:useChatStore:function"
   ],
   "likely_tests": [],
   "do_not_touch": [
@@ -27,6 +33,7 @@
     "main branch",
     "remote repositories",
     "release artifacts",
+    "installed zeroxB application",
     "zeroxB user documents",
     "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"
   ],
