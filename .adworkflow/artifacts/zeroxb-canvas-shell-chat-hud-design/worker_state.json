@@ -1,0 +1,43 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-canvas-shell-chat-hud-design",
+  "status": "verified",
+  "revision": 1,
+  "done": [
+    "Confirmed the root cause of invisible chat history: canvas mode bypassed the original three-panel shell and rendered only the bottom composer.",
+    "Translated the user's permanent canvas, collapsible sidebar, right multi-tab text panel and note drag-reference requirements.",
+    "Defined a global conversation model with per-message source canvas metadata and current-canvas-only retrieval at send time.",
+    "Defined screen-space chat HUD collapsed/expanded states, searchable history popover, loading, scroll routing and TTS/STT behavior.",
+    "Defined multiple linked references per note, automatic cache refresh and safe missing-source behavior.",
+    "Completed independent review, fixed all Important findings and passed scoped re-review.",
+    "Committed documentation only; no runtime source file was changed."
+  ],
+  "changed_files": [
+    ".adworkflow/task_spec.json",
+    ".adworkflow/context_raw.json",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/artifacts/zeroxb-canvas-shell-chat-hud-design/requirements.md",
+    ".adworkflow/artifacts/zeroxb-canvas-shell-chat-hud-design/review_findings.json",
+    ".adworkflow/artifacts/zeroxb-canvas-shell-chat-hud-design/worker_state.json",
+    ".adworkflow/artifacts/zeroxb-canvas-shell-chat-hud-design/verification_result.json",
+    "docs/superpowers/specs/2026-07-25-canvas-shell-chat-hud-design.md"
+  ],
+  "current_problem": null,
+  "next_action": "Await user changes or explicit approval before writing an implementation plan.",
+  "must_keep_context": [
+    "The reviewed design source revision is 2d70579b137103fd2b6dfc987e9e6756216c213d.",
+    "No runtime implementation is authorized by this documentation-only task.",
+    "Canvas remains permanently mounted; activeCanvasId and activeDocumentTabId are independent.",
+    "HUD is screen-space UI; linked note metadata and geometry belong to canvas nodes, but note正文 and chat messages do not."
+  ],
+  "discarded_context": [
+    "A separate per-canvas conversation database was rejected; conversations remain global with source-canvas metadata."
+  ],
+  "remaining_risks": [
+    "The user may add or revise requirements before approving the specification.",
+    "Runtime UI performance, native pointer feel, stream cancellation and Windows hands-on behavior require implementation-stage verification."
+  ],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}

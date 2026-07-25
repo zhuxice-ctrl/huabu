@@ -1,0 +1,78 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "zeroxb-canvas-shell-chat-hud-design",
+  "status": "passed",
+  "source_revision": "2d70579b137103fd2b6dfc987e9e6756216c213d",
+  "commands": [
+    {
+      "command": "independent read-only final specification review and scoped re-review",
+      "status": "passed",
+      "summary": "The first review found two Important gaps; both were corrected and the scoped re-review returned APPROVED with no new Critical or Important issue.",
+      "exit_code": 0
+    },
+    {
+      "command": "rg placeholder and cross-boundary scan",
+      "status": "passed",
+      "summary": "No TBD, TODO or unresolved placeholder remained; canvas-node metadata, chat/HUD state and note正文 ownership are explicitly separated.",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "summary": "No whitespace error remained in the specification changes.",
+      "exit_code": 0
+    },
+    {
+      "command": "validate_adworkflow.py --project F:/huabu-worktrees/foundation",
+      "status": "passed",
+      "summary": "ADworkflo validation passed for the configured documentation task and context artifacts.",
+      "exit_code": 0
+    },
+    {
+      "command": "PowerShell ConvertFrom-Json for task-scoped evidence",
+      "status": "passed",
+      "summary": "Task specification, requirements, review findings, worker state and verification result parsed as UTF-8 JSON where applicable.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance_criteria_coverage": [
+    {
+      "criterion": "The permanent canvas shell, collapsible sidebar and independent right text panel preserve original functions.",
+      "status": "passed",
+      "evidence": [
+        "Sections 5 through 7",
+        "Independent final review"
+      ]
+    },
+    {
+      "criterion": "Linked note references, global source-canvas conversations, screen-space HUD, history and TTS/STT behavior are deterministic and testable.",
+      "status": "passed",
+      "evidence": [
+        "Sections 7 through 14",
+        "Independent scoped re-review"
+      ]
+    },
+    {
+      "criterion": "The document contains no unresolved placeholder or blocking contradiction and is committed for user review.",
+      "status": "passed",
+      "evidence": [
+        "Placeholder scan",
+        "Committed source revision 2d70579b137103fd2b6dfc987e9e6756216c213d"
+      ]
+    }
+  ],
+  "passed": [
+    "Formal specification completeness",
+    "UTF-8 content inspection",
+    "Cross-spec compatibility review",
+    "Independent final and scoped re-review",
+    "Git whitespace check",
+    "ADworkflo validation",
+    "Task-scoped JSON evidence validation"
+  ],
+  "failed": [],
+  "not_run_reason": "Runtime tests, builds and Windows installation checks are intentionally out of scope because this task changes documentation only.",
+  "residual_risk": [
+    "The specification remains open for user additions before implementation planning."
+  ]
+}

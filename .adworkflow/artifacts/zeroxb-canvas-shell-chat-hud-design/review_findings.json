@@ -1,0 +1,28 @@
+{
+  "schema": "ADworkflo.review_findings.v1",
+  "task_id": "zeroxb-canvas-shell-chat-hud-design",
+  "status": "approved",
+  "reviewer": "independent_external_final_and_scoped_re_review",
+  "source_revision": "2d70579b137103fd2b6dfc987e9e6756216c213d",
+  "review_basis": [
+    "Current committed canvas-shell and chat-HUD specification",
+    "Viewport-normalized sizing and solid-block collision dependency specifications",
+    "Permanent canvas and independent document-tab state",
+    "Sidebar preview, drag-to-reference and multiple linked-note behavior",
+    "Global conversation source-canvas metadata and current-canvas retrieval boundary",
+    "Screen-space HUD, history popover, loading, TTS/STT and generation transactions",
+    "Persistence boundaries, accessibility, performance, acceptance and Windows verification"
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "suggested_tests": [
+    "Implement the automated and Windows integration scenarios in section 14 after user approval and an implementation plan."
+  ],
+  "risk_notes": [
+    "The first independent review found two Important gaps: contradictory ownership wording for linked-node metadata and unspecified generation-time delete/new/switch behavior.",
+    "The specification now explicitly stores only linked-node metadata and geometry in the canvas, keeps note正文 single-source, and defines serial cancellation, partial-reply persistence, delete-current, delete-other and failure behavior.",
+    "The scoped re-review marked both findings resolved, found no new Critical or Important contradiction and returned APPROVED.",
+    "This task changes design and workflow artifacts only; runtime behavior has not been implemented or tested.",
+    "Implementation planning remains blocked on explicit user approval of the written specification."
+  ]
+}
