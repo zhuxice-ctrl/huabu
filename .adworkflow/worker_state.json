@@ -1,61 +1,38 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
-  "status": "verified",
-  "revision": 4,
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "status": "in_progress",
+  "revision": 1,
   "done": [
-    "Implemented partial-overlap right-drag marquee selection and undoable bulk deletion.",
-    "Implemented exact-area text block drawing so clicks and single-axis drags create nothing.",
-    "Implemented right-hold relationship creation with live curved preview, handle highlighting and single-checkpoint save/cancel behavior.",
-    "Implemented editable auto, bezier, straight, orthogonal and manual relationship routes with color, width, dash, direction and waypoint controls.",
-    "Added pointer-capture, window-release, blur and lost-capture cleanup for relationship, marquee and waypoint sessions.",
-    "Made auto routes react to obstacle movement and use the full 24-pixel avoidance boundary.",
-    "Removed the four obsolete process, decision, terminator and text quick-create buttons.",
-    "Passed 36 canvas tests, foundation verification, TypeScript checking, production build and locked Cargo checking.",
-    "Passed independent scoped re-review with no remaining Critical or Important source finding.",
-    "Built a fresh NSIS installer, copied it to F:\\zeroxB-builds and silently installed the matching executable to F:\\zeroxBApp.",
-    "Verified a responsive zeroxB window, canvas-first persisted tab, visible-dot-grid source contract, SQLite canvas data and sanitized local AI state."
+    "Configured the Task 1 implementation contract.",
+    "Prepared the L2 semantic context.",
+    "Narrowed an over-broad React callback entrypoint to bounded manual context.",
+    "Accepted context preflight at confidence 1.0 with no critical unresolved edges."
   ],
-  "changed_files": [
-    ".adworkflow/context_manifest.json",
-    ".adworkflow/context_preflight.json",
-    ".adworkflow/context_raw.json",
-    ".adworkflow/impact_report.json",
-    ".adworkflow/review_findings.json",
-    ".adworkflow/semantic_slice.json",
-    ".adworkflow/verification_result.json",
-    ".adworkflow/worker_state.json",
-    "docs/verification/windows-foundation.md",
-    "scripts/tests/canvas-editor-contract.test.mjs",
-    "scripts/tests/canvas-gesture-policy.test.mjs",
-    "scripts/tests/canvas-relation-interaction.test.mjs",
-    "scripts/tests/canvas-relation-policy.test.mjs",
-    "scripts/tests/canvas-relation-routing.test.mjs",
-    "src/app/core/main/canvas/canvas-edge.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/canvas-relation-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/canvas/gesture-policy.ts",
-    "src/lib/canvas/relation-interaction.ts",
-    "src/lib/canvas/relation-policy.ts",
-    "src/lib/canvas/relation-routing.ts",
-    "src/types/canvas.ts"
-  ],
+  "changed_files": [],
   "current_problem": null,
-  "next_action": null,
+  "next_action": "Dispatch the Task 1 implementer with the generated brief.",
   "must_keep_context": [
-    "Verified source revision 60c3d5edd504a2c39bd1c8521ed4b79e08e758bc.",
-    "Installer F:\\zeroxB-builds\\zeroxB_0.32.1_x64-setup.exe.",
-    "Installed application F:\\zeroxBApp\\zeroxb.exe.",
-    "The local AI API credential is sensitive and was never printed or committed."
+    "Task 1 stops before draw/paste/drop/AI creation integration.",
+    "CanvasFooter is included as bounded read-first context, not an L2 entrypoint.",
+    "No provider secret may be read, printed or changed."
   ],
-  "discarded_context": [
-    "The raw multi-megabyte automated impact report was replaced by a concise independently reviewed impact record."
-  ],
+  "discarded_context": [],
   "remaining_risks": [
-    "Native Windows pointer feel and every relationship styling combination still benefit from the user's hands-on acceptance pass; executable policies, source integration, packaging and installed runtime state are verified."
+    "Shared CanvasNodeData type changes require post-edit impact analysis and independent review."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": []
+  "context_expansion_history": [
+    {
+      "relation": "callers",
+      "targets": [
+        "typescript:src.app.core.main.canvas.canvas-footer:CanvasFooter:function"
+      ],
+      "depth": 2,
+      "budget": 120,
+      "reason": "The first expansion demonstrated that using CanvasFooter as an L2 entrypoint pulled in the whole editor through dynamic callbacks.",
+      "result": "The entrypoint was narrowed to data/template functions while CanvasFooter remained explicit bounded context; preflight then passed."
+    }
+  ]
 }

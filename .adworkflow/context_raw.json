@@ -1,66 +1,360 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
-  "source": "architecture-docs",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "source": "semantic-codegraph-l2",
   "matched_files": [
     {
-      "path": ".adworkflow/PROJECT.md",
-      "reason": "architecture-first"
+      "path": "src/lib/canvas/templates.ts",
+      "sha256": "cb8bc0afb7448ab2132f0a7e6e375a386ad9f894d89bfba61fa7a8af7f69730a",
+      "reason": "semantic-slice"
     },
     {
-      "path": ".adworkflow/architecture_manifest.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/design_alignment_report.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/layer_plan.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/interface_contracts.json",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/module_skills.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/permissions.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": ".adworkflow/verification_commands.md",
-      "reason": "architecture-first"
-    },
-    {
-      "path": "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
-      "reason": "task_spec.context_sources"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-07-24-huabu-implementation-roadmap.md",
-      "reason": "task_spec.context_sources"
-    },
-    {
-      "path": "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
-      "reason": "task_spec.context_sources"
+      "path": "src/types/canvas.ts",
+      "sha256": "f01cd076257cf1e5b5eb70123352fda4f1f28e52083ec2efe3ff0df0e5f7362f",
+      "reason": "semantic-slice"
     },
     {
       "path": "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md",
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
-      "reason": "task_spec.context_sources"
-    },
-    {
-      "path": "docs/superpowers/specs/2026-07-25-canvas-shell-chat-hud-design.md",
+      "path": "src/app/core/main/canvas/canvas-footer.tsx",
       "reason": "task_spec.context_sources"
     }
   ],
-  "matched_symbols": [],
+  "matched_symbols": [
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:FLOWCHART_TEMPLATE:variable",
+      "qualified_name": "src.lib.canvas.templates.FLOWCHART_TEMPLATE",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 3,
+      "end_line": 17,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:MINDMAP_TEMPLATE:variable",
+      "qualified_name": "src.lib.canvas.templates.MINDMAP_TEMPLATE",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 19,
+      "end_line": 34,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:TIMELINE_TEMPLATE:variable",
+      "qualified_name": "src.lib.canvas.templates.TIMELINE_TEMPLATE",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 36,
+      "end_line": 49,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:QUADRANT_TEMPLATE:variable",
+      "qualified_name": "src.lib.canvas.templates.QUADRANT_TEMPLATE",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 51,
+      "end_line": 61,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:KANBAN_TEMPLATE:variable",
+      "qualified_name": "src.lib.canvas.templates.KANBAN_TEMPLATE",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 63,
+      "end_line": 75,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:SWOT_TEMPLATE:variable",
+      "qualified_name": "src.lib.canvas.templates.SWOT_TEMPLATE",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 77,
+      "end_line": 87,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "qualified_name": "src.lib.canvas.templates.createCanvasDocument",
+      "file": "src/lib/canvas/templates.ts",
+      "start_line": 89,
+      "end_line": 97,
+      "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.types.canvas:CanvasProjectType:type",
+      "qualified_name": "src.types.canvas.CanvasProjectType",
+      "file": "src/types/canvas.ts",
+      "start_line": 1,
+      "end_line": 8,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.types.canvas:CanvasDocument:interface",
+      "qualified_name": "src.types.canvas.CanvasDocument",
+      "file": "src/types/canvas.ts",
+      "start_line": 115,
+      "end_line": 126,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.types.canvas:DEFAULT_CANVAS_DOCUMENT:variable",
+      "qualified_name": "src.types.canvas.DEFAULT_CANVAS_DOCUMENT",
+      "file": "src/types/canvas.ts",
+      "start_line": 168,
+      "end_line": 178,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.types.canvas:normalizeCanvasDocument:function",
+      "qualified_name": "src.types.canvas.normalizeCanvasDocument",
+      "file": "src/types/canvas.ts",
+      "start_line": 180,
+      "end_line": 196,
+      "distance": 0
+    }
+  ],
   "likely_tests": [],
-  "warnings": []
+  "warnings": [],
+  "graph_revision": "e081fcbc7669732a10d632b8",
+  "confidence": 1.0,
+  "unresolved_edges": [
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 90,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 91,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 92,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 93,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 94,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 95,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/templates.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.templates:createCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 96,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/types/canvas.ts",
+      "source_symbol_id": "typescript:src.types.canvas:normalizeCanvasDocument:function",
+      "kind": "call",
+      "target": "structuredClone",
+      "line": 182,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/types/canvas.ts",
+      "source_symbol_id": "typescript:src.types.canvas:normalizeCanvasDocument:function",
+      "kind": "call",
+      "target": "Array.isArray",
+      "line": 188,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/types/canvas.ts",
+      "source_symbol_id": "typescript:src.types.canvas:normalizeCanvasDocument:function",
+      "kind": "call",
+      "target": "Array.isArray",
+      "line": 189,
+      "reason": "external-call",
+      "critical": 0
+    }
+  ],
+  "boundary_symbols": [],
+  "predicted_impact_files": [
+    "src/app/core/layout.tsx",
+    "src/app/core/main/canvas/canvas-edge.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-relation-editor.tsx",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/app/core/main/chat/agent-approval-panel.tsx",
+    "src/app/core/main/chat/agent-context-tray.tsx",
+    "src/app/core/main/chat/agent-panel-with-rag.tsx",
+    "src/app/core/main/chat/chat-clipboard.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/chat/chat-empty.tsx",
+    "src/app/core/main/chat/chat-input.tsx",
+    "src/app/core/main/chat/index.tsx",
+    "src/app/core/main/chat/message-control/note-output.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/app/core/main/editor/empty-state.tsx",
+    "src/app/core/main/editor/folder/folder-stats.tsx",
+    "src/app/core/main/editor/folder/index.tsx",
+    "src/app/core/main/editor/image/image-editor.tsx",
+    "src/app/core/main/editor/markdown/ai-suggestion-floating.tsx",
+    "src/app/core/main/editor/markdown/footer-bar/export-button.tsx",
+    "src/app/core/main/editor/markdown/footer-bar/index.tsx",
+    "src/app/core/main/editor/markdown/md-editor-wrapper.tsx",
+    "src/app/core/main/editor/markdown/slash-command/suggestion.tsx",
+    "src/app/core/main/editor/markdown/sync/conflict-dialog.tsx",
+    "src/app/core/main/editor/markdown/sync/history-sheet.tsx",
+    "src/app/core/main/editor/markdown/sync/pull-button.tsx",
+    "src/app/core/main/editor/markdown/sync/sync-button.tsx",
+    "src/app/core/main/editor/markdown/sync/sync-tools.tsx",
+    "src/app/core/main/editor/markdown/tiptap-editor.tsx",
+    "src/app/core/main/editor/tab-bar.tsx",
+    "src/app/core/main/file/cloud-library-menu.tsx",
+    "src/app/core/main/file/file-actions.tsx",
+    "src/app/core/main/file/file-footer.tsx",
+    "src/app/core/main/file/file-item.tsx",
+    "src/app/core/main/file/file-manager.tsx",
+    "src/app/core/main/file/file-more-menu.tsx",
+    "src/app/core/main/file/file-selection.ts",
+    "src/app/core/main/file/file-toolbar.tsx",
+    "src/app/core/main/file/folder-item/copy-folder.tsx",
+    "src/app/core/main/file/folder-item/cut-folder.tsx",
+    "src/app/core/main/file/folder-item/delete-folder-utils.ts",
+    "src/app/core/main/file/folder-item/delete-folder.tsx",
+    "src/app/core/main/file/folder-item/duplicate-folder.tsx",
+    "src/app/core/main/file/folder-item/folder-vector-menu.tsx",
+    "src/app/core/main/file/folder-item/index.tsx",
+    "src/app/core/main/file/folder-item/new-file.tsx",
+    "src/app/core/main/file/folder-item/new-folder.tsx",
+    "src/app/core/main/file/folder-item/paste-in-folder.tsx",
+    "src/app/core/main/file/folder-item/sync-folder.tsx",
+    "src/app/core/main/file/folder-item/upload-folder.tsx",
+    "src/app/core/main/file/folder-item/view-directory.tsx",
+    "src/app/core/main/file/index.tsx",
+    "src/app/core/main/file/use-markdown-import.ts",
+    "src/app/core/main/file/vector-knowledge-menu.tsx",
+    "src/app/core/main/file/workspace-selector.tsx",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/mark/control-file.tsx",
+    "src/app/core/main/mark/control-image.tsx",
+    "src/app/core/main/mark/control-link.tsx",
+    "src/app/core/main/mark/control-recording.tsx",
+    "src/app/core/main/mark/control-scan.tsx",
+    "src/app/core/main/mark/control-text.tsx",
+    "src/app/core/main/mark/control-todo.tsx",
+    "src/app/core/main/mark/image-gallery.tsx",
+    "src/app/core/main/mark/index.tsx",
+    "src/app/core/main/mark/mark-actions.tsx",
+    "src/app/core/main/mark/mark-detail-panel.tsx",
+    "src/app/core/main/mark/mark-header.tsx",
+    "src/app/core/main/mark/mark-item.tsx",
+    "src/app/core/main/mark/organize-notes.tsx",
+    "src/app/core/main/mark/tag-manage.tsx",
+    "src/app/core/main/mark/todo-edit-button.tsx",
+    "src/app/core/main/mark/use-record-completion.tsx",
+    "src/app/core/main/page.tsx",
+    "src/app/core/setting/ai/model-card.tsx",
+    "src/app/core/setting/ai/modelSelect.tsx",
+    "src/app/core/setting/file/setting-workspace.tsx",
+    "src/app/core/setting/shortcuts/editor-shortcut-input.tsx",
+    "src/app/core/setting/shortcuts/page.tsx",
+    "src/app/core/setting/shortcuts/shorcut-input.tsx",
+    "src/app/layout.tsx",
+    "src/app/mobile/chat/components/mobile-chat-header.tsx",
+    "src/app/mobile/chat/page.tsx",
+    "src/app/mobile/layout.tsx",
+    "src/app/mobile/record/mobile-record-detail.tsx",
+    "src/app/mobile/record/mobile-record-stream.tsx",
+    "src/app/mobile/writing/browser-utils.ts",
+    "src/app/mobile/writing/custom-header.tsx",
+    "src/app/mobile/writing/mobile-editor.tsx",
+    "src/app/mobile/writing/writing-screen.tsx",
+    "src/components/app-footbar.tsx",
+    "src/components/app-sidebar.tsx",
+    "src/components/image-viewer.tsx",
+    "src/components/local-image.tsx",
+    "src/components/mobile-record-tools.tsx",
+    "src/components/pin-toggle.tsx",
+    "src/components/search-dialog.tsx",
+    "src/components/sync-confirm-dialog.tsx",
+    "src/components/title-bar-toolbars/sync-toggle.tsx",
+    "src/components/title-bar.tsx",
+    "src/db/canvases.ts",
+    "src/db/marks.ts",
+    "src/hooks/use-file-shortcuts.ts",
+    "src/hooks/use-toolbar-shortcuts.ts",
+    "src/lib/agent/agent-handler.ts",
+    "src/lib/agent/runtime.ts",
+    "src/lib/agent/tool-registry.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/agent/tools/editor-tools.ts",
+    "src/lib/agent/tools/folder-tools.ts",
+    "src/lib/agent/tools/index.ts",
+    "src/lib/agent/tools/note-tools.ts",
+    "src/lib/agent/tools/system-tools.ts",
+    "src/lib/canvas/file-format.ts",
+    "src/lib/canvas/freehand.ts",
+    "src/lib/canvas/mermaid.ts",
+    "src/lib/canvas/operations.ts",
+    "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/relation-policy.ts",
+    "src/lib/canvas/relation-routing.ts",
+    "src/lib/canvas/static-export.ts",
+    "src/lib/canvas/templates.ts",
+    "src/lib/canvas/thumbnail.ts",
+    "src/lib/emitter.ts",
+    "src/lib/image-handler.ts",
+    "src/lib/path.ts",
+    "src/lib/rag.ts",
+    "src/lib/shortcut/quick-record-text.ts",
+    "src/lib/shortcut/show-window.ts",
+    "src/lib/sync/auto-data-sync-queue.ts",
+    "src/lib/sync/auto-sync.ts",
+    "src/lib/sync/canvas-sync.ts",
+    "src/lib/sync/folder-sync-helper.ts",
+    "src/lib/sync/record-assets.ts",
+    "src/lib/sync/remote-library.ts",
+    "src/lib/sync/sync-manager.ts",
+    "src/lib/sync/sync-push-queue.ts",
+    "src/stores/article.ts",
+    "src/stores/canvas.ts",
+    "src/stores/mark.ts",
+    "src/stores/shortcut.ts",
+    "src/types/canvas.ts"
+  ]
 }

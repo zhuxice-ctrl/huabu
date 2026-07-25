@@ -1,70 +1,68 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-canvas-experience-implementation-plan",
-  "task_type": "docs",
-  "goal": "Create one dependency-ordered, implementation-ready plan that combines the approved zeroxB viewport-normalized sizing, solid block collision/selection, and permanent canvas shell/chat HUD specifications with the earlier product requirements and current codebase patterns.",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "task_type": "code",
+  "goal": "Implement Task 1 of the approved integrated plan: deterministic viewport snapshots, size/font/content-scale normalization, 65 percent initial zoom, 10-600 percent zoom bounds and compatibility-safe document normalization.",
   "non_goals": [
-    "Do not modify runtime source code in this planning task.",
+    "Do not integrate draw, paste, drop, picker or AI creation paths; those belong to Task 2.",
+    "Do not implement collision, placement, permanent shell, chat HUD, AI index or credential work.",
     "Do not install or upgrade dependencies.",
-    "Do not change or reinterpret approved product values without identifying a hard contradiction.",
-    "Do not merge, push, package or install the application.",
-    "Do not expose or modify the configured localhost AI credential."
+    "Do not modify user data, installed applications, release artifacts or remote repositories.",
+    "Do not expose or modify configured provider secrets."
   ],
   "acceptance_criteria": [
-    "The plan starts with the required writing-plans header and names subagent-driven-development or executing-plans as the execution skill.",
-    "The plan maps exact source and test files before task definitions and follows existing project patterns.",
-    "Tasks are ordered so viewport sizing primitives precede collision, linked references and permanent shell/HUD integration.",
-    "Every task contains checkbox steps, concrete code or interfaces, exact commands, expected failures/passes and a commit boundary.",
-    "The plan covers all acceptance criteria in the three approved 2026-07-25 design specifications and earlier retained-function requirements.",
-    "The plan includes database compatibility for source-canvas chat metadata, linked-note reference metadata and no-rewrite compatibility for old canvases/chats.",
-    "The plan includes automated tests, TypeScript, production build, locked Cargo, NSIS and Windows hands-on verification gates.",
-    "The plan contains no TBD, TODO, vague test instruction, unresolved type mismatch or implementation-blocking ambiguity and is committed for execution handoff."
+    "A pure viewport-sizing module exports the exact Task 1 constants, snapshot and conversion APIs.",
+    "The snapshot captures finite viewport and container origin values, is immutable and uses documented last-valid/default fallbacks.",
+    "Size conversions use four-decimal persistence and two-decimal display normalization without negative zero.",
+    "CanvasNodeData fontSize accepts finite numbers and contentScale is optional with render-time compatibility normalization.",
+    "New/default template canvases start at zoom 0.65; the footer supports 0.10 through 6.00 at 0.05 steps.",
+    "Finite imported viewport values are preserved except out-of-range zoom clamp; invalid values use deterministic fallback without rewriting valid node geometry.",
+    "The focused viewport sizing tests and TypeScript typecheck pass with clean output.",
+    "The implementation is committed and independently reviewed for both spec compliance and code quality."
   ],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
-  "allowed_actions": [
-    "read",
-    "edit",
-    "test",
-    "shell"
-  ],
+  "allowed_actions": ["read", "edit", "test", "shell", "commit"],
   "required_outputs": [
-    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md",
-    "context_manifest.json",
-    ".adworkflow/artifacts/zeroxb-integrated-canvas-experience-implementation-plan/review_findings.json"
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/types/canvas.ts",
+    "src/lib/canvas/templates.ts",
+    "src/app/core/main/canvas/canvas-footer.tsx",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/context_preflight.json",
+    ".adworkflow/impact_report.json",
+    ".adworkflow/artifacts/zeroxb-integrated-task-01-viewport-sizing/worker_state.json",
+    ".adworkflow/artifacts/zeroxb-integrated-task-01-viewport-sizing/verification_result.json",
+    ".adworkflow/artifacts/zeroxb-integrated-task-01-viewport-sizing/review_findings.json"
   ],
   "do_not_touch": [
-    "runtime source files",
     "main branch",
     "remote repositories",
     "release artifacts",
     "installed zeroxB application",
     "zeroxB user documents",
-    "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"
+    "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets",
+    "unrelated runtime modules"
   ],
   "entrypoints": [
-    "typescript:src.app.core.main.page:ResizableWrapper:function",
-    "typescript:src.app.core.main.canvas.canvas-editor:CanvasEditorInner:function",
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:TextCanvasNode:function",
-    "typescript:src.lib.canvas.gesture-policy:normalizeDrawRect:function",
-    "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-    "typescript:src.stores.chat:useChatStore:function"
+    "typescript:src.types.canvas:normalizeCanvasDocument:function",
+    "typescript:src.lib.canvas.templates:createCanvasDocument:function"
   ],
   "context_sources": [
-    "docs/superpowers/specs/2026-07-24-huabu-product-design.md",
-    "docs/superpowers/plans/2026-07-24-huabu-implementation-roadmap.md",
-    "docs/superpowers/plans/2026-07-24-huabu-foundation.md",
+    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md Task 1",
     "docs/superpowers/specs/2026-07-25-viewport-normalized-content-scaling-design.md",
-    "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
-    "docs/superpowers/specs/2026-07-25-canvas-shell-chat-hud-design.md",
-    "Current canvas, shell, chat, note, store, database and test source files referenced by those specifications."
+    "src/types/canvas.ts",
+    "src/lib/canvas/templates.ts",
+    "src/app/core/main/canvas/canvas-footer.tsx",
+    "scripts/tests/canvas-*.test.mjs"
   ],
   "notes": [
-    "Use the fixed UTF-8 I/O baseline.",
-    "Treat the three approved specifications as one dependency chain: sizing foundation, collision and visual policy, then permanent shell, linked notes and chat HUD.",
-    "Retain original file, note, editor, TTS/STT, chat, relation, permission, undo/redo and Windows packaging features.",
-    "Use TDD, small tasks and frequent commits. Stop after the implementation plan and independent plan review."
+    "Use fixed UTF-8 I/O for every read, search, edit and test output containing non-ASCII text.",
+    "Follow strict TDD: capture the expected failing focused test before implementation and passing focused/typecheck evidence after implementation.",
+    "Do not expand into Task 2 integration even if call sites will later consume the new APIs.",
+    "CanvasFooter is a manually bounded leaf edit in read_first context; it is not an L2 entrypoint because its React callback props expand into the entire editor and unrelated dynamic dispatch."
   ],
-  "implementation_owner": "root-orchestrator"
+  "implementation_owner": "task-01-implementer"
 }

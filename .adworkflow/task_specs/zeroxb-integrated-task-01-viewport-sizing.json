@@ -1,0 +1,22 @@
+{
+  "schema": "ADworkflo.task_spec.v2",
+  "configured": true,
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
+  "task_type": "code",
+  "goal": "Implement the approved viewport sizing primitives, defaults and compatibility tests without entering Task 2 integration.",
+  "risk_level": "medium",
+  "execution_mode": "worker_plus_reviewer",
+  "source_plan": "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md#task-1-add-viewport-snapshots-and-deterministic-size-conversion",
+  "required_files": [
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/types/canvas.ts",
+    "src/lib/canvas/templates.ts",
+    "src/app/core/main/canvas/canvas-footer.tsx",
+    "scripts/tests/canvas-viewport-sizing.test.mjs"
+  ],
+  "verification": [
+    "node --experimental-strip-types --test scripts/tests/canvas-viewport-sizing.test.mjs",
+    "pnpm exec tsc --noEmit",
+    "git diff --check"
+  ]
+}

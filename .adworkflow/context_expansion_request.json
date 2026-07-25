@@ -1,13 +1,13 @@
 {
   "schema": "ADworkflo.context_expansion_request.v1",
-  "task_id": "unconfigured",
+  "task_id": "zeroxb-integrated-task-01-viewport-sizing",
   "status": "not_requested",
-  "relation": "callees",
+  "relation": "callers",
   "targets": [],
   "depth": 2,
-  "budget": 100,
-  "reason": null,
-  "requested_by": null,
-  "source_graph_revision": null,
+  "budget": 120,
+  "reason": "The first targeted expansion proved the React callback entrypoint was over-broad; the task slice now uses data/template entrypoints and keeps CanvasFooter as explicit bounded manual context.",
+  "requested_by": "root-orchestrator",
+  "source_graph_revision": "e081fcbc7669732a10d632b8",
   "applied_slice_revision": null
 }
