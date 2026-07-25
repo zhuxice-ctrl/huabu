@@ -72,11 +72,15 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 - [ ] **Step 1: Write failing conversion and normalization tests**
 
-  Cover 65% initial zoom, the 10%–600% clamp, four-decimal canvas conversion, two-decimal display conversion, `contentScale`, finite numeric font sizes and a single immutable snapshot per operation.
+  Cover 65% initial zoom, the 10%–600% clamp, four-decimal canvas conversion, two-decimal display conversion, `contentScale`, finite numeric font sizes, container-origin point conversion, invalid-container cancellation, per-field last-valid fallback and a single immutable snapshot per operation.
 
   ```js
   test('screen dimensions round-trip through one captured 65% snapshot', () => {
-    const snapshot = captureViewportSnapshot({ x: 12, y: 8, zoom: 0.65 })
+    const snapshot = captureViewportSnapshot({
+      viewport: { x: 12, y: 8, zoom: 0.65 },
+      containerRect: { left: 20, top: 30 },
+    })
+    assert.ok(snapshot)
     assert.deepEqual(screenSizeToCanvas({ width: 260, height: 130 }, snapshot), {
       width: 400,
       height: 200,
@@ -107,10 +111,20 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
     x: number
     y: number
     zoom: number
+    containerLeft: number
+    containerTop: number
     capturedAt: number
   }
 
-  export function captureViewportSnapshot(viewport: CanvasViewport): Readonly<ViewportSnapshot>
+  export function captureViewportSnapshot(input: {
+    viewport: CanvasViewport
+    containerRect: Pick<DOMRect, 'left' | 'top'> | null
+    lastValid?: ViewportSnapshot | null
+  }): Readonly<ViewportSnapshot> | null
+  export function screenPointToCanvas(
+    point: { clientX: number; clientY: number },
+    snapshot: ViewportSnapshot,
+  ): { x: number; y: number }
   export function screenSizeToCanvas(size: CanvasSize, snapshot: ViewportSnapshot): CanvasSize
   export function canvasSizeToScreen(size: CanvasSize, snapshot: ViewportSnapshot): CanvasSize
   export function screenDistanceToCanvas(value: number, snapshot: ViewportSnapshot): number
@@ -118,11 +132,11 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   export function normalizeCanvasFontSize(value: unknown, fallback?: number): number
   ```
 
-  Use `round4(screen / capturedZoom)`, `round2(canvas * zoom)`, and clamp zoom before division. Add `CanvasSize` to `src/types/canvas.ts`, change `fontSize?: 13 | 15 | 18 | 24` to `fontSize?: number`, add optional `contentScale?: number`, and normalize non-finite legacy values without rewriting otherwise valid documents. `contentScale` clamps to `0.1667–10`; a missing/invalid legacy value renders as `1` without rewriting the document.
+  Use `round4(screen / capturedZoom)`, `round2(canvas * zoom)`, and clamp zoom before division. Screen-point conversion is `(client - containerOrigin - viewportTranslation) / zoom` on each axis. A non-finite live zoom falls back to the last valid in-memory viewport, then 0.65; non-finite x/y fall back per axis to last valid then 0. Missing/non-finite container bounds cancel the screen-coordinate operation instead of guessing. Add `CanvasSize` to `src/types/canvas.ts`, change `fontSize?: 13 | 15 | 18 | 24` to `fontSize?: number`, add optional `contentScale?: number`, and normalize non-finite legacy values without rewriting otherwise valid documents. `contentScale` clamps to `0.1667–10`; a missing/invalid legacy value renders as `1` without rewriting the document.
 
 - [ ] **Step 4: Apply the new defaults without rewriting imports**
 
-  Set blank/template canvases and `DEFAULT_CANVAS_DOCUMENT.viewport.zoom` to `0.65`. Change the footer slider to `min={0.1}`, `max={6}`, and a stable step no larger than `0.05`. Preserve a full imported `CanvasDocument.viewport` and node dimensions exactly.
+  Set blank/template canvases and `DEFAULT_CANVAS_DOCUMENT.viewport.zoom` to `0.65`. Change the footer slider to `min={0.1}`, `max={6}`, and `step={0.05}`. `normalizeCanvasDocument` preserves a finite imported viewport exactly, clamps only an out-of-range finite zoom, and uses the last-valid/default fallback only for invalid fields. Preserve full-import node dimensions exactly.
 
 - [ ] **Step 5: Run the focused test and `pnpm exec tsc --noEmit`**
 
@@ -174,7 +188,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   }): CanvasSize
   ```
 
-  `resolveAiNodeSize` must ignore the camera zoom, prefer the target node, then the median size of nearby same-type nodes, then the 100%-view fallback.
+  `resolveAiNodeSize` must ignore the camera zoom, prefer the target node, then the median size of at most the three nearest same-type nodes whose centers are within 1,200 canvas units (distance, then node-ID order), then the 100%-view fallback. Resolve `contentScale` by the same target/nearby/fallback order and treat an invalid value as `1`.
 
 - [ ] **Step 3: Integrate captured snapshots in `canvas-editor.tsx`**
 
@@ -323,7 +337,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 - [ ] **Step 1: Add failing operation-session tests**
 
-  Assert that invalid draw release creates nothing, invalid resize restores original geometry, normal movement slides without tunneling, multi-select preserves relative positions, group children use individual rectangles, stale index cancellation accepts the latest authoritative document and each successful gesture pushes one checkpoint.
+  Assert that invalid draw release creates nothing, invalid resize restores original geometry, `pointercancel`/window blur/lost capture cancel draw-resize-move without history, image resize keeps its aspect ratio, normal movement slides without tunneling, multi-select preserves relative positions, group children use individual rectangles, stale index cancellation accepts the latest authoritative document and each successful gesture pushes one checkpoint.
 
 - [ ] **Step 2: Add transient editor-only session state**
 
@@ -351,6 +365,8 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   Intercept position and dimension changes before committing them to the controlled node state. Use the spatial index for broad phase and pure collision policy for exact checks. Rebuild/increment the index after load, create, move, resize, delete, undo, redo and document replacement.
 
   Draw and resize use independent x/y soft snap: enter within 8 screen pixels, stop at the 6-pixel safety boundary, and break only after the raw pointer crosses the snap point by 14 pixels. Breaking is permitted but produces the red invalid preview while overlapping. Invalid draw release creates nothing; invalid resize release restores the session-start geometry and writes no checkpoint.
+
+  Register `pointercancel`, `lostpointercapture` and window `blur` for draw, resize and move sessions. Each path removes previews/guides, releases capture when held and restores the latest authoritative legal geometry with no history entry. Image resize continues to enforce its aspect-ratio constraint before collision validation.
 
 - [ ] **Step 4: Implement stale-authority cancellation**
 
@@ -385,7 +401,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 - [ ] **Step 1: Add failing visual contract assertions**
 
-  Assert the exact colors `#F7FBFF`, `#66D9FF`, `#FF5D5D`, `#F2B84B`, text default `#F2F1ED`, text color `#202321`, border `#D8D6CF`, and a screen-compensated selection treatment at 10%, 65%, 100% and 600%.
+  Assert the exact colors `#F7FBFF`, `#66D9FF`, `#FF5D5D`, `#F2B84B`, text default `#F2F1ED`, text color `#202321`, border `#D8D6CF`, and a screen-compensated selection treatment at 10%, 65%, 100% and 600%. Right-click, left-click, right-drag marquee and programmatic evidence focus must derive the same selected visual; opening a context menu keeps it visible.
 
 - [ ] **Step 2: Implement visual priority and zoom compensation**
 
@@ -417,13 +433,17 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 - Modify: `src/app/core/main/page.tsx`
 - Modify: `src/app/core/main/editor/editor-layout.tsx`
 - Modify: `src/stores/sidebar.ts`
+- Modify: `src/stores/article.ts`
 - Modify: `src/app/core/main/left-sidebar.tsx`
+- Modify: `src/app/core/main/canvas/canvas-sidebar.tsx`
+- Modify: `src/app/core/main/canvas/canvas-startup-controller.tsx`
+- Modify: `src/app/core/main/canvas/canvas-tab.ts`
 - Test: `scripts/tests/canvas-workspace-layout.test.mjs`
 - Test: `scripts/tests/canvas-shell-contract.test.mjs`
 
 - [ ] **Step 1: Write failing shell-policy tests**
 
-  Cover left default/limits `320/280–420px`, collapsed rail `48px`, right default/min/max `420/360px/55%`, canvas remaining width, narrow-window collapse order, persistence of widths/tabs and independence of `activeCanvasId` from `activeTabId`.
+  Cover left default/limits `320/280–420px`, collapsed rail `48px`, right default/min/max `420/360px/55%`, canvas remaining width, narrow-window collapse order, persistence of widths/tabs, migration of old `canvas://project/*` tabs and independence of `activeCanvasId` from `activeTabId`.
 
 - [ ] **Step 2: Implement pure layout sizing and persisted UI preferences**
 
@@ -459,18 +479,22 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
   A canvas selection updates only `useCanvasStore.activeCanvasId`; file/record tabs remain in the right panel and may no longer create canvas editor tabs.
 
-- [ ] **Step 4: Preserve the React Flow instance across panel changes**
+- [ ] **Step 4: Migrate every canvas-tab producer and persisted tab**
+
+  Update `canvas-sidebar.tsx` create/open/restore/duplicate handlers and `canvas-startup-controller.tsx` to call `setActiveCanvasId` directly. Make `canvas-tab.ts` a legacy parser used only during migration. During article-store initialization, remove `kind: 'canvas'` and `canvas://project/*` entries from persisted `openTabs`, preserve all file/record tabs and view states, and choose the prior non-canvas active tab or the first remaining document tab. Remove every `EditorLayout` effect that nulls or derives `activeCanvasId` from `activeTabId`.
+
+- [ ] **Step 5: Preserve the React Flow instance across panel changes**
 
   Key `CanvasEditor` by canvas ID only. Width, collapse, HUD and tab changes must call container resize/fit bounds as needed without remounting the active canvas. Preserve viewport, selection, open relation editor and in-progress safe pointer state.
 
-- [ ] **Step 5: Run shell tests, canvas tests and typecheck**
+- [ ] **Step 6: Run shell tests, canvas tests and typecheck**
 
   Expected: PASS; the source contract proves `page.tsx` has one permanent canvas path and no right-side `<Chat />` panel.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
   ```powershell
-  git add src/app/core/main/canvas/canvas-workspace.tsx src/lib/canvas/workspace-layout-policy.ts src/app/core/main/page.tsx src/app/core/main/editor/editor-layout.tsx src/stores/sidebar.ts src/app/core/main/left-sidebar.tsx scripts/tests/canvas-workspace-layout.test.mjs scripts/tests/canvas-shell-contract.test.mjs
+  git add src/app/core/main/canvas/canvas-workspace.tsx src/lib/canvas/workspace-layout-policy.ts src/app/core/main/page.tsx src/app/core/main/editor/editor-layout.tsx src/stores/sidebar.ts src/stores/article.ts src/app/core/main/left-sidebar.tsx src/app/core/main/canvas/canvas-sidebar.tsx src/app/core/main/canvas/canvas-startup-controller.tsx src/app/core/main/canvas/canvas-tab.ts scripts/tests/canvas-workspace-layout.test.mjs scripts/tests/canvas-shell-contract.test.mjs
   git commit -m "feat(shell): keep the canvas permanently mounted"
   ```
 
@@ -591,7 +615,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 - [ ] **Step 1: Write failing context and migration tests**
 
-  Cover current canvas snapshot at send time, inherited AI-response context, optional evidence node IDs, old rows as `null`, renamed canvas current-title display with historical-title fallback, deleted source display, and no deletion/reordering of old chats.
+  Cover current canvas snapshot at send time, inherited AI-response context, optional evidence node IDs, old rows as `null`, renamed canvas current-title display with historical-title fallback, deleted source display, no deletion/reordering of old chats, and local-only metadata removal from every chat sync/backup payload.
 
 - [ ] **Step 2: Add one nullable JSON column with tolerant parsing**
 
@@ -610,7 +634,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   }
   ```
 
-  Add idempotent migrations for `canvasContext` and `completionState`, update every insert/update/sync query, and parse invalid JSON as “来源未记录” without throwing.
+  Add idempotent migrations for `canvasContext` and `completionState` and update local insert/update queries. `canvasContext` is explicitly local-only: add `serializeChatForSync()` that omits it, make `getAllChats()`/backup upload paths use that serializer, and make `insertChats()` ignore any remote `canvasContext` value. `completionState` may sync. Parse invalid local JSON as “来源未记录” without throwing.
 
 - [ ] **Step 3: Capture context before asynchronous retrieval/send**
 
@@ -620,11 +644,15 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
   Hide the chip when its canvas is current. For another existing canvas, clicking switches `activeCanvasId` and focuses `sourceNodeIds`. For missing/unknown sources, show a disabled status without blocking chat.
 
-- [ ] **Step 5: Run focused tests, typecheck and build**
+- [ ] **Step 5: Prove local anchor metadata never enters sync**
+
+  Add source and behavior tests around `stores/chat.ts` backup/upload/restore flows: synced rows retain ordinary chat content and `completionState`, but contain neither `sourceCanvasId`, canvas titles nor node IDs. A restore cannot overwrite locally captured context on existing local messages.
+
+- [ ] **Step 6: Run focused tests, typecheck and build**
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
   ```powershell
   git add src/lib/chat/canvas-context.ts src/db/chats.ts src/stores/chat.ts src/app/core/main/chat/chat-send.tsx src/app/core/main/chat/chat-content.tsx scripts/tests/canvas-chat-context.test.mjs scripts/tests/canvas-chat-db-contract.test.mjs
@@ -689,6 +717,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 - Create: `src/app/core/main/chat/canvas-chat-hud.tsx`
 - Create: `src/app/core/main/chat/canvas-chat-summary.tsx`
 - Create: `src/app/core/main/chat/canvas-chat-history-popover.tsx`
+- Create: `src/stores/chat-hud.ts`
 - Modify: `src/app/core/main/chat/chat-content.tsx`
 - Modify: `src/app/core/main/chat/chat-header.tsx`
 - Modify: `src/app/core/main/chat/chat-input.tsx`
@@ -698,7 +727,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 - [ ] **Step 1: Write failing HUD policy tests**
 
-  Cover collapsed latest user one-line/AI three-line deterministic clipping, expanded `min(42% visible canvas height, 560px)`, 360×420px history bounds, session-only collapsed default after restart, scroll-position preservation, `Esc`, outside click and wheel routing.
+  Cover collapsed latest user one-line/AI three-line deterministic clipping, expanded `min(42% visible canvas height, 560px)`, 360×420px history bounds, session-only collapsed default after restart, scroll-position preservation, per-conversation/per-canvas unsent drafts, `Esc`, outside click, wheel routing and bounded initial rendering for a 10,000-message history.
 
 - [ ] **Step 2: Extract reusable chat rendering props**
 
@@ -712,18 +741,24 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
   Collapsed mode renders exact recent text, not model summaries. Expanded mode restores its per-conversation scroll position. History uses current `HistoryDropdown` capabilities inside a searchable 360×420px popover and calls the generation coordinator for protected actions.
 
-- [ ] **Step 5: Verify render isolation**
+- [ ] **Step 5: Own unsent drafts and long-history windows in HUD UI state**
+
+  `useChatHudStore` is session-only and keyed by `${conversationId ?? temporarySessionId}:${canvasId}`. Before a conversation or canvas switch, `ChatInput` stores its unsent text/attachment-selection UI draft; after a switch it restores the target key. Drafts are never inserted into `chats`, never synced and are cleared only after successful send or explicit user clear.
+
+  `ChatContent` initially mounts the newest 40 messages plus any active streaming message. Scrolling to the top prepends deterministic 40-message segments while preserving scroll offset; keep no more than 120 off-screen message elements mounted unless accessibility focus is inside them. The 10,000-message contract test must observe at most 60 message wrappers immediately after initial render and prove the next segment loads without duplicating IDs.
+
+- [ ] **Step 6: Verify render isolation**
 
   Add a development/test render counter proving chat token updates do not recreate `CanvasEditor`/React Flow. Use memoized selectors so only HUD subtrees subscribe to streaming text.
 
-- [ ] **Step 6: Run HUD tests, canvas suite, typecheck and build**
+- [ ] **Step 7: Run HUD tests, canvas suite, typecheck and build**
 
   Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
   ```powershell
-  git add src/app/core/main/chat/canvas-chat-hud.tsx src/app/core/main/chat/canvas-chat-summary.tsx src/app/core/main/chat/canvas-chat-history-popover.tsx src/app/core/main/chat/chat-content.tsx src/app/core/main/chat/chat-header.tsx src/app/core/main/chat/chat-input.tsx src/app/core/main/page.tsx scripts/tests/canvas-chat-hud-policy.test.mjs scripts/tests/canvas-chat-hud-contract.test.mjs
+  git add src/app/core/main/chat/canvas-chat-hud.tsx src/app/core/main/chat/canvas-chat-summary.tsx src/app/core/main/chat/canvas-chat-history-popover.tsx src/stores/chat-hud.ts src/app/core/main/chat/chat-content.tsx src/app/core/main/chat/chat-header.tsx src/app/core/main/chat/chat-input.tsx src/app/core/main/page.tsx scripts/tests/canvas-chat-hud-policy.test.mjs scripts/tests/canvas-chat-hud-contract.test.mjs
   git commit -m "feat(chat): render history in a canvas HUD"
   ```
 
@@ -795,6 +830,8 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
   Management allows read, evidence focus and derived-overlay changes; it rejects source-node text/geometry/delete, manual relations and layout. Editing is explicit, session-scoped and expires on restart/timeout/security failure. Delete, overwrite and large movement always require confirmation.
 
+  “Large movement” is deterministic: confirmation is mandatory when one proposal moves more than 8 solid nodes, moves any node by more than 400 screen pixels measured with the proposal’s captured viewport, or changes geometry for more than 25% of the current solid nodes. Meeting any condition is sufficient; deletion and source-text overwrite require confirmation regardless of count.
+
 - [ ] **Step 2: Define validated operations and decisions**
 
   ```ts
@@ -830,23 +867,54 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   git commit -m "feat(ai): gate and rollback canvas mutations"
   ```
 
-### Task 15: Store AI tags and relations in a separate derived overlay
+### Task 15: Establish the canvas index lifecycle and separate AI overlay
 
 **Files:**
 
 - Create: `src/lib/canvas/ai-overlay.ts`
+- Create: `src/lib/canvas/canvas-index-jobs.ts`
+- Create: `src/db/canvas-index.ts`
 - Create: `src/db/canvas-ai-overlay.ts`
 - Modify: `src/db/index.ts`
+- Create: `src/stores/canvas-index.ts`
 - Create: `src/stores/canvas-ai.ts`
+- Modify: `src/stores/canvas.ts`
+- Modify: `src/db/canvases.ts`
+- Modify: `src/app/core/main/canvas/canvas-startup-controller.tsx`
 - Create: `src/app/core/main/canvas/canvas-ai-overlay.tsx`
 - Modify: `src/app/core/main/canvas/canvas-editor.tsx`
+- Test: `scripts/tests/canvas-index-lifecycle.test.mjs`
 - Test: `scripts/tests/canvas-ai-overlay.test.mjs`
 
-- [ ] **Step 1: Write failing normalization, confidence and suppression tests**
+- [ ] **Step 1: Write failing index-lifecycle and overlay tests**
 
-  Cover stable/free tags, the nine approved relation types, high-confidence auto-apply, medium candidate display, low retrieval-only state, source update → stale, user rejection → suppression and no equivalent regeneration.
+  Cover job enqueue on create/update, revision deduplication, delete/tombstone, retry with bounded backoff, startup resume, stale-anchor removal, full rebuild, and worker failure that does not roll back the saved canvas. Also cover stable/free tags, the nine approved relation types, high confidence `>= 0.85` auto-apply, medium `>= 0.60 && < 0.85` candidate display, low `< 0.60` retrieval-only state, source update → stale, user rejection → suppression and no equivalent regeneration.
 
-- [ ] **Step 2: Implement separate persisted records**
+- [ ] **Step 2: Implement the tested index job contract before overlay recall**
+
+  ```ts
+  export interface CanvasIndexJob {
+    id: string
+    canvasId: string
+    nodeId: string
+    contentRevision: string
+    operation: 'upsert' | 'delete' | 'rebuild'
+    state: 'pending' | 'running' | 'retry' | 'complete'
+    attempts: number
+    nextAttemptAt: number
+  }
+
+  export function diffCanvasIndexJobs(before: CanvasDocument, after: CanvasDocument): CanvasIndexJobDraft[]
+  export function queryCanvasIndexCandidates(input: CandidateQuery): Promise<CanvasIndexCandidate[]>
+  ```
+
+  Uniqueness is `(canvasId, nodeId, contentRevision, operation)`. Retry delays are 1s, 5s, 30s, 5m, then 30m capped; startup resets abandoned `running` jobs to `retry`. A delete removes current anchors/embeddings and then completes its tombstone. A rebuild enumerates the current authoritative document and removes anchors for absent nodes.
+
+- [ ] **Step 3: Wire the authoritative save and worker lifecycle**
+
+  Replace plain document persistence with one SQLite transaction that writes the canvas document and enqueues its computed job delta. `useCanvasStore.saveProject` acknowledges the document save even when later extraction fails. `CanvasStartupController` starts one resumable local worker after DB initialization, drains ready jobs serially per node, and stops cleanly on shutdown. Index rebuild is callable after corruption without rewriting source nodes.
+
+- [ ] **Step 4: Implement separate persisted overlay records**
 
   ```ts
   export interface AiTagRecord {
@@ -863,25 +931,25 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   }
   ```
 
-  Add an analogous `AiRelationRecord` with source/target/type/source excerpts and a suppression table keyed by normalized semantic identity. None of these records enter `CanvasDocument.edges`.
+  Add an analogous `AiRelationRecord` with source/target/type/source excerpts and a suppression table keyed by normalized semantic identity. Validate confidence as a finite number in `[0,1]`; apply the exact 0.85/0.60 thresholds from Step 1. None of these records enter `CanvasDocument.edges`.
 
-- [ ] **Step 3: Implement candidate recall and controlled LLM classification**
+- [ ] **Step 5: Implement candidate recall and controlled LLM classification**
 
-  Retrieve candidates through vector/entity/time similarity, filter with deterministic rules, then ask the model only to choose approved type/reason/confidence. Do not perform all-pairs LLM calls.
+  Call the already-tested `queryCanvasIndexCandidates` interface for vector/entity/time recall, filter with deterministic rules, then ask the model only to choose approved type/reason/confidence. If the index is unavailable, leave prior overlay records stale and queue retry; do not fall back to all-pairs LLM calls.
 
-- [ ] **Step 4: Render as a toggleable overlay**
+- [ ] **Step 6: Render as a toggleable overlay**
 
   Render AI relations/tags above the canvas graph with distinct source styling, confidence/candidate treatment and user feedback controls. Hiding/rebuilding the overlay never changes manual edges or manual history.
 
-- [ ] **Step 5: Run focused tests, typecheck and build**
+- [ ] **Step 7: Run focused tests, typecheck and build**
 
   Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
   ```powershell
-  git add src/lib/canvas/ai-overlay.ts src/db/canvas-ai-overlay.ts src/db/index.ts src/stores/canvas-ai.ts src/app/core/main/canvas/canvas-ai-overlay.tsx src/app/core/main/canvas/canvas-editor.tsx scripts/tests/canvas-ai-overlay.test.mjs
-  git commit -m "feat(ai): separate derived canvas tags and relations"
+  git add src/lib/canvas/ai-overlay.ts src/lib/canvas/canvas-index-jobs.ts src/db/canvas-index.ts src/db/canvas-ai-overlay.ts src/db/index.ts src/stores/canvas-index.ts src/stores/canvas-ai.ts src/stores/canvas.ts src/db/canvases.ts src/app/core/main/canvas/canvas-startup-controller.tsx src/app/core/main/canvas/canvas-ai-overlay.tsx src/app/core/main/canvas/canvas-editor.tsx scripts/tests/canvas-index-lifecycle.test.mjs scripts/tests/canvas-ai-overlay.test.mjs
+  git commit -m "feat(ai): index canvas changes for derived overlays"
   ```
 
 ### Task 16: Build the current-canvas knowledge index and safe retrieval boundary
@@ -891,9 +959,9 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 - Create: `src/lib/canvas/knowledge-extraction.ts`
 - Create: `src/lib/canvas/canvas-retrieval.ts`
 - Create: `src/lib/canvas/sensitive-content.ts`
-- Create: `src/db/canvas-index.ts`
+- Modify: `src/db/canvas-index.ts`
 - Modify: `src/db/index.ts`
-- Create: `src/stores/canvas-index.ts`
+- Modify: `src/stores/canvas-index.ts`
 - Modify: `src/app/core/main/chat/chat-send.tsx`
 - Modify: `src/lib/agent/tools/canvas-tools.ts`
 - Test: `scripts/tests/canvas-knowledge-extraction.test.mjs`
@@ -924,7 +992,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   }
   ```
 
-  Store extraction jobs with pending/running/retry/complete states. A failed extractor never blocks saving the original node. Indexes are rebuildable from source content.
+  Extend Task 15’s running worker with content-type extractors and transactional anchor replacement: a successful upsert replaces only the matching node revision’s anchors, removes older revisions, and marks the job complete; a failed extractor records a redacted error and schedules the defined retry without blocking the already-saved original node. Indexes are rebuildable from source content.
 
 - [ ] **Step 3: Enforce current-canvas-only retrieval by default**
 
@@ -932,7 +1000,9 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 - [ ] **Step 4: Redact before cloud requests**
 
-  Detect credentials, API keys, passwords, identity numbers and user-marked sensitive nodes locally. Cloud-bound context replaces values with stable placeholders while retaining type and anchor identity. Local model mode may use raw text only when the local endpoint policy says the request does not leave the device.
+  Detect credentials, API keys, passwords, identity numbers and user-marked sensitive nodes locally. Cloud-bound context replaces values with stable placeholders while retaining type and anchor identity.
+
+  The endpoint policy is fail-closed: raw sensitive context is eligible only when the parsed URL host is `localhost`, an address in `127.0.0.0/8`, or `[::1]`, the scheme is `http` or `https`, `proxyMode` is disabled, and no custom proxy URL is active. Private-LAN names/IPs, malformed URLs, redirects to non-loopback hosts and every proxied request are cloud-classified and receive redacted context. Test every branch, including a loopback URL with an enabled proxy.
 
 - [ ] **Step 5: Run focused tests, typecheck and offline cases**
 
@@ -998,7 +1068,44 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
 ## Phase E — Windows security, recovery and release
 
-### Task 18: Move model secrets to Windows Credential Manager
+### Task 18: Remove all Windows user-facing export surfaces
+
+**Files:**
+
+- Modify: `src/app/core/main/file/file-item.tsx`
+- Modify: `src/app/core/main/editor/markdown/footer-bar/export-button.tsx`
+- Modify: `src/app/core/setting/general/advanced-settings.tsx`
+- Modify: `src/app/core/setting/general/config-file-actions.tsx`
+- Modify: `src/app/core/setting/general/interface-settings/custom-theme.tsx`
+- Modify: `src/components/title-bar-toolbars/sync-toggle.tsx`
+- Preserve: `src/lib/canvas/static-export.ts`
+- Preserve: `src/app/core/main/editor/markdown/markdown-export.ts`
+- Test: `scripts/tests/zeroxb-no-user-export.test.mjs`
+
+- [ ] **Step 1: Write a failing user-interface export contract**
+
+  The test must fail while any Windows-rendered menu/button/action exposes Markdown/HTML/JSON/PDF file export, configuration export, theme-code export, local-backup export or canvas PNG/SVG export. It must separately assert that internal thumbnail rendering, print support used by existing viewers and recovery snapshot writers may remain callable only from non-user-facing internal paths.
+
+- [ ] **Step 2: Run `node --test scripts/tests/zeroxb-no-user-export.test.mjs`**
+
+  Expected: FAIL on at least `file-item.tsx`, `config-file-actions.tsx`, `custom-theme.tsx` and `sync-toggle.tsx`.
+
+- [ ] **Step 3: Remove visible export actions without deleting recovery primitives**
+
+  Remove the file context submenu and settings/title-bar buttons, their handler state/imports and now-unused UI translations where safe. Do not replace them with download/share aliases. Keep internal serializers/renderers if thumbnail, print or recovery code still imports them; the contract checks reachability from Windows UI components rather than banning the word `export` from implementation symbols.
+
+- [ ] **Step 4: Run the export contract, typecheck and production build**
+
+  Expected: PASS with no dead imports and no visible export route.
+
+- [ ] **Step 5: Commit**
+
+  ```powershell
+  git add src/app/core/main/file/file-item.tsx src/app/core/main/editor/markdown/footer-bar/export-button.tsx src/app/core/setting/general/advanced-settings.tsx src/app/core/setting/general/config-file-actions.tsx src/app/core/setting/general/interface-settings/custom-theme.tsx src/components/title-bar-toolbars/sync-toggle.tsx scripts/tests/zeroxb-no-user-export.test.mjs
+  git commit -m "refactor(product): remove user-facing export actions"
+  ```
+
+### Task 19: Move every model secret to Windows Credential Manager
 
 **Files:**
 
@@ -1007,25 +1114,38 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 - Modify: `src-tauri/Cargo.toml`
 - Modify: `src-tauri/Cargo.lock`
 - Create: `src/lib/security/credentials.ts`
+- Modify: `src/lib/ai/tauri-client.ts`
+- Modify: `src/lib/ai/embedding.ts`
+- Modify: `src/lib/ai/utils.ts`
 - Modify: `src/stores/setting.ts`
 - Modify: `src/lib/ai/chat.ts`
 - Modify: `src/lib/audio.ts`
+- Modify: `src/app/core/setting/config.tsx`
+- Modify: `src/app/core/setting/ai/page.tsx`
+- Modify: `src/app/core/setting/ai/model-card.tsx`
+- Modify: `src-tauri/src/ai.rs`
 - Test: `src-tauri/src/credential_store_tests.rs`
 - Test: `scripts/tests/canvas-credential-boundary.test.mjs`
 
 - [ ] **Step 1: Add failing Rust and source-boundary tests**
 
-  Assert set/get/delete by opaque model-config ID, one-way migration from the existing settings value, missing-credential behavior, redacted diagnostics and absence of secret values in exported/synced settings JSON.
+  Assert set/get/delete by opaque provider/header reference, one-way migration from legacy global `apiKey` and every `aiModelList[].apiKey`, missing-credential behavior, redacted diagnostics, and absence of secret values in settings/sync payloads and JavaScript-to-Rust request payloads. Exercise chat, embedding, rerank, OCR/VLM, model health checks, TTS and STT through the same credential-reference path.
 
 - [ ] **Step 2: Implement Tauri credential commands**
 
-  Use the Windows Credential Manager through a maintained Rust crate or Win32 credential API. Store only an opaque credential reference in app settings. Never return credentials to UI code except for immediate request construction through the narrow bridge.
+  Use the Windows Credential Manager through a maintained Rust crate or Win32 credential API. Replace JavaScript request `apiKey` with `credentialRef`; `AiConfig` stores only `credentialRef`/`hasCredential`. `src-tauri/src/ai.rs` resolves the reference, constructs `Authorization` and sends the HTTP request inside Rust. The resolved value is never returned to UI JavaScript, including “show password” behavior.
+
+  Custom header names are case-insensitively classified. `Authorization`, `Proxy-Authorization`, `x-api-key`, `api-key`, names containing `token`, `secret`, `credential` or `password`, and any header the user marks secret must store their values as separate `customHeaderRefs`. Plaintext settings may contain non-secret header names/values only. Rust resolves secret header references immediately before `build_headers`; diagnostics include header names but never values.
 
 - [ ] **Step 3: Migrate existing settings safely**
 
-  On first successful credential write, replace the settings value with its reference and persist. On failure, leave the old value untouched and show a local migration error; do not log it.
+  On first successful credential write, replace the settings value with its reference and persist. Migrate the legacy global key, every provider key and every secret custom-header value. On any provider migration failure, leave that provider’s old values untouched, do not partially clear them, show a local migration error and do not log them. The settings UI becomes write-only for secrets: it shows “已配置”, accepts replacement/clear, and never reloads the existing value into an input.
 
-- [ ] **Step 4: Run Rust tests, typecheck and secret scans**
+- [ ] **Step 4: Route every AI capability through the native resolver**
+
+  `resolveAiRequestConfig()` returns URL/proxy/model options plus opaque references only. `createTauriOpenAIClient`, chat streaming, embedding/rerank, OCR/VLM/model checks and audio speech/transcription all use native invoke functions. Add a source contract that rejects `apiKey` in `AiRequestConfig`/`AiConfigPayload` and rejects any JavaScript construction of bearer headers for model-provider requests.
+
+- [ ] **Step 5: Run Rust tests, typecheck and secret scans**
 
   ```powershell
   cargo test --locked --manifest-path src-tauri/Cargo.toml credential_store
@@ -1035,14 +1155,14 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
 
   Expected: tests PASS; review each scan match as code/config field names, never literal credentials.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
   ```powershell
-  git add src-tauri/src/credential_store.rs src-tauri/src/lib.rs src-tauri/Cargo.toml src-tauri/Cargo.lock src/lib/security/credentials.ts src/stores/setting.ts src/lib/ai/chat.ts src/lib/audio.ts src-tauri/src/credential_store_tests.rs scripts/tests/canvas-credential-boundary.test.mjs
+  git add src-tauri/src/credential_store.rs src-tauri/src/lib.rs src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/src/ai.rs src/lib/security/credentials.ts src/lib/ai/tauri-client.ts src/lib/ai/embedding.ts src/lib/ai/utils.ts src/stores/setting.ts src/lib/ai/chat.ts src/lib/audio.ts src/app/core/setting/config.tsx src/app/core/setting/ai/page.tsx src/app/core/setting/ai/model-card.tsx src-tauri/src/credential_store_tests.rs scripts/tests/canvas-credential-boundary.test.mjs
   git commit -m "feat(security): protect model secrets on Windows"
   ```
 
-### Task 19: Add crash-safe AI transactions and internal workspace recovery
+### Task 20: Add crash-safe AI transactions and internal workspace recovery
 
 **Files:**
 
@@ -1085,7 +1205,7 @@ The imported/rebranded foundation is complete and must not be repeated. Preserve
   git commit -m "feat(recovery): restore interrupted local canvas work"
   ```
 
-### Task 20: Run integrated regression, performance, security and Windows acceptance
+### Task 21: Run integrated regression, performance, security and Windows acceptance
 
 **Files:**
 
