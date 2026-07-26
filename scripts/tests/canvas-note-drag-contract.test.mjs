@@ -4,8 +4,9 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  commitNoteReferenceDrop,
   createNoteReferenceLinkData,
+  planNoteReferenceDrop,
+  planNoteReferencePlacement,
 } from '../../src/lib/canvas/note-reference.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
@@ -38,23 +39,14 @@ test('note reference drops are recognized before generic transfer content and us
   assert.match(editorSource, /refreshNoteReferences/)
 })
 
-test('drag payload failures and no-space results cannot create a history checkpoint', async () => {
+test('drag payload failures and no-space results cannot request a history checkpoint', () => {
   const mark = {
     id: 7, tagId: 1, type: 'text', content: 'source', desc: 'Source', url: '', deleted: 0, createdAt: 7,
   }
   const payload = JSON.stringify(createNoteReferenceLinkData(mark))
-  let checkpoints = 0
-  assert.equal(await commitNoteReferenceDrop({
-    payload,
-    place: async () => null,
-    commit: () => { checkpoints += 1 },
-  }), 'no-space')
-  assert.equal(await commitNoteReferenceDrop({
-    payload: 'invalid',
-    place: async () => ({ id: 'unexpected' }),
-    commit: () => { checkpoints += 1 },
-  }), 'invalid')
-  assert.equal(checkpoints, 0)
+  assert.equal(planNoteReferenceDrop(payload).status, 'ready')
+  assert.deepEqual(planNoteReferencePlacement(null), { status: 'no-space', checkpoint: false })
+  assert.deepEqual(planNoteReferenceDrop('invalid'), { status: 'invalid' })
 })
 
 test('reference nodes open record tabs, expose a missing-source state, and remove only themselves', () => {

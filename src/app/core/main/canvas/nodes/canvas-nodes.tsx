@@ -14,8 +14,15 @@ import useMarkStore from '@/stores/mark'
 import { cn, convertImageByWorkspace } from '@/lib/utils'
 import { getFilePathOptions } from '@/lib/workspace'
 import { normalizeContentScaleForRead } from '@/lib/canvas/content-ingest'
-import { createNoteReferenceLinkData, deleteNoteReference, openNoteReferenceRecord } from '@/lib/canvas/note-reference'
-import { createRecordTab } from '@/app/core/main/mark/mark-record-tab'
+import {
+  createNoteReferenceLinkData,
+  mergeNoteReferenceMarks,
+  normalizeLiveNoteReferenceMarks,
+  planNoteReferenceDeletion,
+  planNoteReferenceRecordOpen,
+} from '@/lib/canvas/note-reference'
+import { createRecordTab, getRecordTabPath } from '@/app/core/main/mark/mark-record-tab'
+import { getAllMarks } from '@/db/marks'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
 
@@ -219,44 +226,52 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
   const { updateNodeData, deleteElements } = useReactFlow<FlowCanvasNode>()
   const filePath = data.filePath || ''
   const sourceNoteId = data.sourceNoteId
-  const openNote = async () => {
-    if (sourceNoteId) {
-      const articleStore = useArticleStore.getState()
-      const markStore = useMarkStore.getState()
-      await openNoteReferenceRecord({
-        sourceNoteId,
-        marks: markStore.getReferenceMarks(),
-        referenceMarksAuthoritative: markStore.referenceMarksAuthoritative,
-        loadAuthoritativeMarks: async () => {
-          await markStore.fetchAllMarks()
-          return useMarkStore.getState().getReferenceMarks()
-        },
-        createTab: source => createRecordTab(source, data.sourceTitle || '记录'),
-        openTabs: articleStore.openTabs,
-        setActiveTabId: articleStore.setActiveTabId,
-        addTab: articleStore.addTab,
-        setActiveFilePath: articleStore.setActiveFilePath,
-        centerPanelVisible: useSidebarStore.getState().centerPanelVisible,
-        showCenterPanel: useSidebarStore.getState().showCenterPanel,
-      })
-      return
-    }
-    if (!filePath) return
-    await useSidebarStore.getState().setLeftSidebarTab('files')
-    await useArticleStore.getState().setActiveFilePath(filePath)
-  }
-  const relink = () => {
-    const nextId = globalThis.prompt('请输入要关联的记录 ID')
-    if (!nextId) return
-    const source = useMarkStore.getState().getReferenceMarks().find(mark => String(mark.id) === nextId.trim())
-    if (source) updateNodeData(id, createNoteReferenceLinkData(source))
-  }
 
   return (
     <BaseNode
       style={nodeStyle(data)}
       className={cn('size-full min-h-0 min-w-0 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
-      onDoubleClick={() => void openNote()}
+      onDoubleClick={async function () {
+        if (sourceNoteId) {
+          const articleStore = useArticleStore.getState()
+          const markStore = useMarkStore.getState()
+          const recordPath = getRecordTabPath(Number(sourceNoteId))
+          let marks = mergeNoteReferenceMarks(markStore.allMarks, markStore.marks)
+          let plan = planNoteReferenceRecordOpen({
+            sourceNoteId,
+            marks,
+            referenceMarksAuthoritative: markStore.referenceMarksAuthoritative,
+            recordPath,
+            openTabs: articleStore.openTabs,
+          })
+          if (plan.status === 'load-authority') {
+            try {
+              const authoritative = normalizeLiveNoteReferenceMarks(await getAllMarks())
+              marks = mergeNoteReferenceMarks(authoritative, markStore.marks)
+              plan = planNoteReferenceRecordOpen({
+                sourceNoteId,
+                marks,
+                referenceMarksAuthoritative: true,
+                recordPath,
+                openTabs: articleStore.openTabs,
+              })
+            } catch (error) {
+              console.error('Failed to open note reference:', error)
+              return
+            }
+          }
+          if (plan.status === 'missing' || plan.status === 'load-authority') return
+          if (plan.status === 'activate') await articleStore.setActiveTabId(plan.tabId)
+          else await articleStore.addTab(createRecordTab(plan.source, data.sourceTitle || '记录'))
+          await articleStore.setActiveFilePath('')
+          const sidebarStore = useSidebarStore.getState()
+          if (!sidebarStore.centerPanelVisible) await sidebarStore.showCenterPanel()
+          return
+        }
+        if (!filePath) return
+        await useSidebarStore.getState().setLeftSidebarTab('files')
+        await useArticleStore.getState().setActiveFilePath(filePath)
+      }}
     >
       <SolidNodeResizer selected={selected} type="note" />
       <ConnectionHandles />
@@ -269,8 +284,35 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
           data.sourceStatus === 'missing' ? (
             <div className="flex items-center gap-2 text-xs text-destructive" style={fontStyle(data, 0.8)}>
               <span>来源已不存在</span>
-              <button type="button" className="nodrag underline" onClick={relink}>重新关联</button>
-              <button type="button" className="nodrag underline" onClick={() => deleteNoteReference(id, nodeId => void deleteElements({ nodes: [{ id: nodeId }] }))}>删除引用</button>
+              <button
+                type="button"
+                className="nodrag underline"
+                onClick={async function () {
+                  const nextId = globalThis.prompt('请输入要关联的记录 ID')
+                  if (!nextId) return
+                  const markStore = useMarkStore.getState()
+                  let marks = mergeNoteReferenceMarks(markStore.allMarks, markStore.marks)
+                  let source = marks.find(mark => String(mark.id) === nextId.trim())
+                  if (!source && !markStore.referenceMarksAuthoritative) {
+                    try {
+                      const authoritative = normalizeLiveNoteReferenceMarks(await getAllMarks())
+                      marks = mergeNoteReferenceMarks(authoritative, markStore.marks)
+                      source = marks.find(mark => String(mark.id) === nextId.trim())
+                    } catch (error) {
+                      console.error('Failed to relink note reference:', error)
+                    }
+                  }
+                  if (source) updateNodeData(id, createNoteReferenceLinkData(source))
+                }}
+              >重新关联</button>
+              <button
+                type="button"
+                className="nodrag underline"
+                onClick={function () {
+                  const deletion = planNoteReferenceDeletion(id)
+                  void deleteElements({ nodes: [{ id: deletion.nodeIds[0] }] })
+                }}
+              >删除引用</button>
             </div>
           ) : <span className="line-clamp-3 text-xs text-muted-foreground" style={fontStyle(data, 0.8)}>{data.sourceExcerpt}</span>
         ) : <span className="truncate text-xs text-muted-foreground" style={fontStyle(data, 0.8)}>{filePath}</span>}

@@ -54,6 +54,19 @@ export function createNoteReferenceLinkData(mark: Mark) {
   }
 }
 
+export function normalizeLiveNoteReferenceMarks(marks: Mark[]): Mark[] {
+  return marks
+    .filter(mark => mark.deleted === 0)
+    .map(mark => ({ ...mark, content: mark.content || '' }))
+}
+
+export function mergeNoteReferenceMarks(authoritative: Mark[], partial: Mark[]): Mark[] {
+  const records = new Map<number, Mark>()
+  for (const mark of authoritative) if (mark.deleted === 0) records.set(mark.id, mark)
+  for (const mark of partial) if (mark.deleted === 0) records.set(mark.id, mark)
+  return [...records.values()]
+}
+
 export function parseNoteReferenceDrop(payload: string): NoteReferenceData | null {
   try {
     const candidate = JSON.parse(payload) as Partial<NoteReferenceData> & { referenceId?: unknown }
@@ -78,48 +91,48 @@ export function parseNoteReferenceDrop(payload: string): NoteReferenceData | nul
   }
 }
 
-export async function commitNoteReferenceDrop<T>(input: {
-  payload: string
-  place: (reference: NoteReferenceData) => Promise<T | null>
-  commit: (placed: T) => void
-}): Promise<'placed' | 'invalid' | 'no-space'> {
-  const reference = parseNoteReferenceDrop(input.payload)
-  if (!reference) return 'invalid'
-  const placed = await input.place(reference)
-  if (!placed) return 'no-space'
-  input.commit(placed)
-  return 'placed'
+export type NoteReferenceDropPlan =
+  | { status: 'invalid' }
+  | { status: 'ready'; reference: NoteReferenceData }
+
+export function planNoteReferenceDrop(payload: string): NoteReferenceDropPlan {
+  const reference = parseNoteReferenceDrop(payload)
+  return reference ? { status: 'ready', reference } : { status: 'invalid' }
 }
 
-export async function openNoteReferenceRecord<T extends { id: string; path: string }>(input: {
+export type NoteReferencePlacementPlan<T> =
+  | { status: 'no-space'; checkpoint: false }
+  | { status: 'placed'; checkpoint: true; placed: T }
+
+export function planNoteReferencePlacement<T>(placed: T | null): NoteReferencePlacementPlan<T> {
+  return placed === null
+    ? { status: 'no-space', checkpoint: false }
+    : { status: 'placed', checkpoint: true, placed }
+}
+
+export type NoteReferenceRecordOpenPlan =
+  | { status: 'load-authority' }
+  | { status: 'missing' }
+  | { status: 'activate'; source: Mark; tabId: string }
+  | { status: 'add'; source: Mark }
+
+export function planNoteReferenceRecordOpen(input: {
   sourceNoteId: string
   marks: Mark[]
-  referenceMarksAuthoritative?: boolean
-  loadAuthoritativeMarks?: () => Promise<Mark[]>
-  createTab: (mark: Mark) => T
+  referenceMarksAuthoritative: boolean
+  recordPath: string
   openTabs: Array<{ id: string; path: string }>
-  setActiveTabId: (id: string) => Promise<void> | void
-  addTab: (tab: T) => Promise<void> | void
-  setActiveFilePath: (path: string) => Promise<void> | void
-  centerPanelVisible: boolean
-  showCenterPanel: () => Promise<void> | void
-}): Promise<boolean> {
-  let source = input.marks.find(mark => String(mark.id) === input.sourceNoteId)
-  if (!source && !input.referenceMarksAuthoritative && input.loadAuthoritativeMarks) {
-    source = (await input.loadAuthoritativeMarks()).find(mark => String(mark.id) === input.sourceNoteId)
-  }
-  if (!source) return false
-  const recordTab = input.createTab(source)
-  const existingTab = input.openTabs.find(tab => tab.path === recordTab.path)
-  if (existingTab) await input.setActiveTabId(existingTab.id)
-  else await input.addTab(recordTab)
-  await input.setActiveFilePath('')
-  if (!input.centerPanelVisible) await input.showCenterPanel()
-  return true
+}): NoteReferenceRecordOpenPlan {
+  const source = input.marks.find(mark => String(mark.id) === input.sourceNoteId)
+  if (!source) return input.referenceMarksAuthoritative ? { status: 'missing' } : { status: 'load-authority' }
+  const existingTab = input.openTabs.find(tab => tab.path === input.recordPath)
+  return existingTab
+    ? { status: 'activate', source, tabId: existingTab.id }
+    : { status: 'add', source }
 }
 
-export function deleteNoteReference(referenceNodeId: string, removeNode: (nodeId: string) => void) {
-  removeNode(referenceNodeId)
+export function planNoteReferenceDeletion(referenceNodeId: string) {
+  return { nodeIds: [referenceNodeId], sourceMutation: false as const }
 }
 
 export function refreshNoteReferences(

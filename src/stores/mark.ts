@@ -95,7 +95,6 @@ interface MarkState {
   referenceMarksAuthoritative: boolean
   updateMark: (mark: Mark) => Promise<void>
   setMarks: (marks: Mark[]) => void
-  getReferenceMarks: () => Mark[]
   fetchMarks: () => Promise<void>
   fetchAllTrashMarks: () => Promise<void>
   fetchMarkPreviews: () => Promise<void>
@@ -194,12 +193,6 @@ const useMarkStore = create<MarkState>((set, get) => ({
   },
   setMarks: (marks) => {
     set({ marks })
-  },
-  getReferenceMarks: () => {
-    const records = new Map<number, Mark>()
-    for (const mark of get().allMarks) if (mark.deleted === 0) records.set(mark.id, mark)
-    for (const mark of get().marks) if (mark.deleted === 0) records.set(mark.id, mark)
-    return [...records.values()]
   },
   fetchMarks: async () => {
     const decodeRes = await fetchVisibleMarks(false)

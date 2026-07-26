@@ -1,13 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  commitNoteReferenceDrop,
   createNoteReferenceLinkData,
   NOTE_REFERENCE_MIME,
   createNoteReferenceSnapshot,
-  deleteNoteReference,
+  mergeNoteReferenceMarks,
   noteReferenceId,
-  openNoteReferenceRecord,
+  planNoteReferenceDeletion,
+  planNoteReferenceDrop,
+  planNoteReferencePlacement,
+  planNoteReferenceRecordOpen,
   refreshNoteReferences,
 } from '../../src/lib/canvas/note-reference.ts'
 
@@ -100,80 +102,68 @@ test('partial source views update matching caches but cannot orphan unloaded sou
   })
 })
 
-test('drop transactions commit once only after placement and leave failed drops unchanged', async () => {
+test('drop planners allow one checkpoint only after placement and reject failed drops', () => {
   const payload = JSON.stringify(createNoteReferenceLinkData(mark()))
-  const calls = { place: 0, commit: 0 }
-  const placed = await commitNoteReferenceDrop({
-    payload,
-    place: async reference => {
-      calls.place += 1
-      return { id: 'canvas-reference', reference }
-    },
-    commit: () => { calls.commit += 1 },
+  const ready = planNoteReferenceDrop(payload)
+  assert.equal(ready.status, 'ready')
+  assert.equal(ready.reference.sourceNoteId, '42')
+  assert.deepEqual(planNoteReferencePlacement([{ id: 'canvas-reference' }]), {
+    status: 'placed',
+    checkpoint: true,
+    placed: [{ id: 'canvas-reference' }],
   })
-  assert.equal(placed, 'placed')
-  assert.deepEqual(calls, { place: 1, commit: 1 })
-
-  const noSpace = await commitNoteReferenceDrop({
-    payload,
-    place: async () => null,
-    commit: () => { calls.commit += 1 },
-  })
-  assert.equal(noSpace, 'no-space')
-  assert.equal(calls.commit, 1)
-
-  const unreadable = await commitNoteReferenceDrop({
-    payload: '{not-json',
-    place: async () => {
-      calls.place += 1
-      return { id: 'unexpected' }
-    },
-    commit: () => { calls.commit += 1 },
-  })
-  assert.equal(unreadable, 'invalid')
-  assert.deepEqual(calls, { place: 1, commit: 1 })
+  assert.deepEqual(planNoteReferencePlacement(null), { status: 'no-space', checkpoint: false })
+  assert.deepEqual(planNoteReferenceDrop('{not-json'), { status: 'invalid' })
 })
 
-test('relinking and deleting a reference do not mutate its source, and opening reuses the record tab', async () => {
+test('relink, delete and record-tab planners isolate the source and model authority transitions', () => {
   const source = Object.freeze(mark())
   const relinked = createNoteReferenceLinkData(source)
   assert.equal(relinked.referenceId, 'record:42')
   assert.equal(source.id, 42)
 
-  const removed = []
-  deleteNoteReference('canvas-reference', id => removed.push(id))
-  assert.deepEqual(removed, ['canvas-reference'])
+  assert.deepEqual(planNoteReferenceDeletion('canvas-reference'), {
+    nodeIds: ['canvas-reference'],
+    sourceMutation: false,
+  })
   assert.equal(source.id, 42)
 
-  const calls = []
-  const opened = await openNoteReferenceRecord({
-    sourceNoteId: '42',
-    marks: [source],
-    createTab: item => ({ id: `record:${item.id}`, path: `record://mark/${item.id}` }),
-    openTabs: [{ id: 'existing', path: 'record://mark/42' }],
-    setActiveTabId: async id => { calls.push(`active:${id}`) },
-    addTab: async () => { calls.push('add') },
-    setActiveFilePath: async path => { calls.push(`file:${path}`) },
-    centerPanelVisible: false,
-    showCenterPanel: async () => { calls.push('panel') },
-  })
-  assert.equal(opened, true)
-  assert.deepEqual(calls, ['active:existing', 'file:', 'panel'])
-
-  const deferredCalls = []
-  const openedAfterAuthorityLoad = await openNoteReferenceRecord({
+  const incomplete = planNoteReferenceRecordOpen({
     sourceNoteId: '42',
     marks: [],
     referenceMarksAuthoritative: false,
-    loadAuthoritativeMarks: async () => [source],
-    createTab: item => ({ id: `record:${item.id}`, path: `record://mark/${item.id}` }),
+    recordPath: 'record://mark/42',
     openTabs: [],
-    setActiveTabId: async () => { deferredCalls.push('active') },
-    addTab: async () => { deferredCalls.push('add') },
-    setActiveFilePath: async () => { deferredCalls.push('file') },
-    centerPanelVisible: true,
-    showCenterPanel: async () => { deferredCalls.push('panel') },
   })
-  assert.equal(openedAfterAuthorityLoad, true)
-  assert.deepEqual(deferredCalls, ['add', 'file'])
+  assert.deepEqual(incomplete, { status: 'load-authority' })
+
+  const authoritativeMarks = mergeNoteReferenceMarks([source], [])
+  const existing = planNoteReferenceRecordOpen({
+    sourceNoteId: '42',
+    marks: authoritativeMarks,
+    referenceMarksAuthoritative: true,
+    recordPath: 'record://mark/42',
+    openTabs: [{ id: 'existing', path: 'record://mark/42' }],
+  })
+  assert.equal(existing.status, 'activate')
+  assert.equal(existing.tabId, 'existing')
+  assert.strictEqual(existing.source, source)
+
+  const add = planNoteReferenceRecordOpen({
+    sourceNoteId: '42',
+    marks: authoritativeMarks,
+    referenceMarksAuthoritative: true,
+    recordPath: 'record://mark/42',
+    openTabs: [],
+  })
+  assert.equal(add.status, 'add')
+  assert.strictEqual(add.source, source)
+
+  assert.deepEqual(planNoteReferenceRecordOpen({
+    sourceNoteId: '404',
+    marks: authoritativeMarks,
+    referenceMarksAuthoritative: true,
+    recordPath: 'record://mark/404',
+    openTabs: [],
+  }), { status: 'missing' })
 })
