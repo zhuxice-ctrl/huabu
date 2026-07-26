@@ -1,5 +1,6 @@
 import { Store } from '@tauri-apps/plugin-store'
 import { create } from 'zustand'
+import { normalizeDocumentPanelWidth, normalizeLeftRailWidth } from '@/lib/canvas/workspace-layout-policy'
 
 
 export interface SidebarState {
@@ -19,7 +20,7 @@ export interface SidebarState {
   leftWidth: number
   setLeftWidth: (width: number) => Promise<void>
   documentPanelWidth: number
-  setDocumentPanelWidth: (width: number) => Promise<void>
+  setDocumentPanelWidth: (width: number, windowWidth?: number) => Promise<void>
   leftSidebarTab: 'files' | 'notes' | 'canvases'
   setLeftSidebarTab: (tab: 'files' | 'notes' | 'canvases') => Promise<void>
   initSidebarState: () => Promise<void>
@@ -112,16 +113,18 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   },
   leftWidth: 320,
   setLeftWidth: async (width) => {
-    set({ leftWidth: width })
+    const normalizedWidth = normalizeLeftRailWidth(width)
+    set({ leftWidth: normalizedWidth })
     const store = await Store.load('store.json')
-    await store.set('canvasWorkspaceLeftWidth', width)
+    await store.set('canvasWorkspaceLeftWidth', normalizedWidth)
     await store.save()
   },
   documentPanelWidth: 420,
-  setDocumentPanelWidth: async (width) => {
-    set({ documentPanelWidth: width })
+  setDocumentPanelWidth: async (width, windowWidth = typeof window === 'undefined' ? 0 : window.innerWidth) => {
+    const normalizedWidth = normalizeDocumentPanelWidth(width, windowWidth)
+    set({ documentPanelWidth: normalizedWidth })
     const store = await Store.load('store.json')
-    await store.set('canvasWorkspaceDocumentPanelWidth', width)
+    await store.set('canvasWorkspaceDocumentPanelWidth', normalizedWidth)
     await store.save()
   },
   leftSidebarTab: 'files',
@@ -157,7 +160,7 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
       set({ leftSidebarTab: leftTab })
       localStorage.setItem('leftSidebarTab', leftTab)
     }
-    if (leftWidth) set({ leftWidth })
-    if (documentPanelWidth) set({ documentPanelWidth })
+    if (leftWidth) set({ leftWidth: normalizeLeftRailWidth(leftWidth) })
+    if (documentPanelWidth) set({ documentPanelWidth: normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth) })
   },
 }))

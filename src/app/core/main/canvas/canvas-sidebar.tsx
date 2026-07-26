@@ -446,7 +446,7 @@ export function CanvasSidebar() {
       } else if (result === 'pending') {
         toast.error(t('manager.sync.failed'))
       }
-      if (activeCanvasId === id) setActiveCanvasId(null)
+      if (useCanvasStore.getState().activeCanvasId === id) setActiveCanvasId(null)
     } finally {
       setProcessingCanvas(null)
     }

@@ -28,7 +28,6 @@ import emitter from '@/lib/emitter'
 import { EmitterRecordEvents } from '@/config/emitters'
 import { search, type SearchableItem } from '@/lib/search-utils'
 import useCanvasStore from '@/stores/canvas'
-import { createCanvasTab } from '@/app/core/main/canvas/canvas-tab'
 
 interface SearchDialogProps {
   open: boolean
@@ -63,13 +62,14 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const [searchValue, setSearchValue] = useState('')
   const [searchResult, setSearchResult] = useState<EnhancedSearchResult[]>([])
   const [searchFilter, setSearchFilter] = useState<SearchFilter>('all')
-  const { allArticle, loadAllArticle, addTab, setActiveFilePath, setMatchPosition, setPendingSearchKeyword, setCollapsibleList } = useArticleStore()
+  const { allArticle, loadAllArticle, setActiveFilePath, setMatchPosition, setPendingSearchKeyword, setCollapsibleList } = useArticleStore()
   const { allMarks, fetchAllMarks, setPendingScrollMarkId } = useMarkStore()
   const { tags, fetchTags, setCurrentTagId } = useTagStore()
   const { setLeftSidebarTab } = useSidebarStore()
   const canvasProjects = useCanvasStore(state => state.projects)
   const loadCanvasProjects = useCanvasStore(state => state.loadProjects)
   const openCanvasProject = useCanvasStore(state => state.openProject)
+  const setActiveCanvasId = useCanvasStore(state => state.setActiveCanvasId)
   const isMobileRoute = pathname.startsWith('/mobile')
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -288,7 +288,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       setPendingScrollMarkId(null)
       await setLeftSidebarTab('canvases')
       const project = item.canvasId ? await openCanvasProject(item.canvasId) : null
-      if (project) await addTab(createCanvasTab(project))
+      if (project) setActiveCanvasId(project.id)
       router.push('/core/main')
       return
     }

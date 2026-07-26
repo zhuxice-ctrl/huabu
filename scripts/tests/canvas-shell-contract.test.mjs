@@ -22,6 +22,9 @@ test('legacy canvas tabs are migration-only and canvas selection does not create
   const sidebar = await readSource('../../src/app/core/main/canvas/canvas-sidebar.tsx')
   const startup = await readSource('../../src/app/core/main/canvas/canvas-startup-controller.tsx')
   const articleStore = await readSource('../../src/stores/article.ts')
+  const parser = await readSource('../../src/app/core/main/canvas/canvas-tab.ts')
+  const searchDialog = await readSource('../../src/components/search-dialog.tsx')
+  const tiptapEditor = await readSource('../../src/app/core/main/editor/markdown/tiptap-editor.tsx')
 
   assert.doesNotMatch(editor, /CanvasEditor/)
   assert.doesNotMatch(editor, /setActiveCanvasId/)
@@ -31,4 +34,23 @@ test('legacy canvas tabs are migration-only and canvas selection does not create
   assert.match(articleStore, /isCanvasOpenTabPath\(tab\.path\)/)
   assert.match(articleStore, /if \(isLegacyCanvasOpenTab\(tab\)\)/)
   assert.match(articleStore, /setActiveCanvasId\(canvasId\)/)
+  assert.doesNotMatch(parser, /createCanvasTab/)
+  assert.doesNotMatch(searchDialog, /createCanvasTab/)
+  assert.doesNotMatch(tiptapEditor, /createCanvasTab/)
+  assert.match(searchDialog, /setActiveCanvasId\(project\.id\)/)
+  assert.match(tiptapEditor, /setActiveCanvasId\(project\.id\)/)
+})
+
+test('shell controls retain manual preferences and use current canvas authority after async work', async () => {
+  const workspace = await readSource('../../src/app/core/main/canvas/canvas-workspace.tsx')
+  const sidebar = await readSource('../../src/app/core/main/canvas/canvas-sidebar.tsx')
+  const sidebarStore = await readSource('../../src/stores/sidebar.ts')
+
+  assert.match(workspace, /disabled=\{layout\.autoLeftCollapsed\}/)
+  assert.match(workspace, /disabled=\{layout\.autoDocumentPanelCollapsed\}/)
+  assert.match(workspace, /setLeftWidth\(layout\.preferences\.leftWidth \+ delta\)/)
+  assert.match(workspace, /setDocumentPanelWidth\(layout\.preferences\.documentPanelWidth - delta, windowWidth\)/)
+  assert.match(sidebarStore, /const normalizedWidth = normalizeLeftRailWidth\(width\)/)
+  assert.match(sidebarStore, /const normalizedWidth = normalizeDocumentPanelWidth\(width, windowWidth\)/)
+  assert.match(sidebar, /await deleteProject\(id, syncConfigured\)[\s\S]*useCanvasStore\.getState\(\)\.activeCanvasId === id/)
 })

@@ -96,14 +96,17 @@ export function CanvasWorkspace() {
             type="button"
             aria-label="Expand navigation"
             className="h-full w-full text-xs text-muted-foreground hover:bg-muted"
-            onClick={() => void toggleLeftSidebar()}
+            disabled={layout.autoLeftCollapsed}
+            onClick={() => {
+              if (!layout.autoLeftCollapsed) void toggleLeftSidebar()
+            }}
           >
             ☰
           </button>
         ) : <LeftSidebar />}
       </aside>
       {!layout.leftCollapsed && (
-        <ResizeDivider onResize={(delta) => void setLeftWidth(leftWidth + delta)} />
+        <ResizeDivider onResize={(delta) => void setLeftWidth(layout.preferences.leftWidth + delta)} />
       )}
 
       <main className="relative min-w-0 flex-1 overflow-hidden">
@@ -119,7 +122,10 @@ export function CanvasWorkspace() {
             type="button"
             aria-label="Expand documents"
             className="absolute right-3 top-3 z-20 rounded border bg-background/90 px-2 py-1 text-xs text-muted-foreground shadow-sm hover:bg-muted"
-            onClick={() => void toggleRightSidebar()}
+            disabled={layout.autoDocumentPanelCollapsed}
+            onClick={() => {
+              if (!layout.autoDocumentPanelCollapsed) void toggleRightSidebar()
+            }}
           >
             Documents
           </button>
@@ -128,7 +134,7 @@ export function CanvasWorkspace() {
       </main>
 
       {!layout.documentPanelCollapsed && (
-        <ResizeDivider onResize={(delta) => void setDocumentPanelWidth(documentPanelWidth - delta)} />
+        <ResizeDivider onResize={(delta) => void setDocumentPanelWidth(layout.preferences.documentPanelWidth - delta, windowWidth)} />
       )}
       <aside
         className="h-full shrink-0 overflow-hidden border-l bg-background"

@@ -85,7 +85,6 @@ import { canvasDocumentToPngFile } from '@/lib/canvas/static-export'
 import { getCanvasProject } from '@/db/canvases'
 import useCanvasStore from '@/stores/canvas'
 import { useSidebarStore } from '@/stores/sidebar'
-import { createCanvasTab } from '../../canvas/canvas-tab'
 import { getResultIndexToFocus } from './search-navigation'
 import {
   DEFAULT_OUTLINE_WIDTH,
@@ -4773,7 +4772,7 @@ export function TipTapEditor({
     const titleSource = selectedText.split('\n').find(Boolean)?.slice(0, 32) || labels[type]
     const project = await useCanvasStore.getState().createProject('blank', titleSource)
     if (!project) return
-    await useArticleStore.getState().addTab(createCanvasTab(project))
+    useCanvasStore.getState().setActiveCanvasId(project.id)
     await useSidebarStore.getState().setLeftSidebarTab('canvases')
     if (!useSidebarStore.getState().rightSidebarVisible) await useSidebarStore.getState().toggleRightSidebar()
     const instruction = t(`bubbleMenu.canvasPrompts.${type}`)
