@@ -159,9 +159,8 @@ import {
   canvasFontSizeForScreenInput,
   draftsFromTransfer,
   materializeIngestDraft,
-  offsetIngestDrafts,
   screenFontSizeForCanvasFont,
-  type CanvasIngestDraft,
+  stackIngestDrafts,
   type CanvasTransferInput,
 } from '@/lib/canvas/content-ingest'
 import {
@@ -1394,13 +1393,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         )
       }
 
-      const prepared = await Promise.all(offsetIngestDrafts(drafts, screenOrigin).map(async item => {
-        const position = screenPointToCanvas({
-          clientX: item.position.x,
-          clientY: item.position.y,
-        }, capturedViewport)
-        const draft = item.draft as CanvasIngestDraft
-        const materialized = materializeIngestDraft(draft, capturedViewport)
+      const origin = screenPointToCanvas({
+        clientX: screenOrigin.x,
+        clientY: screenOrigin.y,
+      }, capturedViewport)
+      const materializedDrafts = drafts.map(draft => materializeIngestDraft(draft, capturedViewport))
+      const prepared = await Promise.all(stackIngestDrafts(materializedDrafts, capturedViewport).map(async item => {
+        const position = {
+          x: origin.x + item.position.x,
+          y: origin.y + item.position.y,
+        }
+        const draft = item.draft
+        const materialized = item.draft
         if (draft.kind === 'text') {
           return {
             id: crypto.randomUUID(),

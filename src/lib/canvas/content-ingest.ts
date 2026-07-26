@@ -119,13 +119,6 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
   return [{ kind: 'text', text: classified.value, screenSize: size }]
 }
 
-export function offsetIngestDrafts<T>(drafts: T[], origin: { x: number; y: number }) {
-  return drafts.map((draft, index) => ({
-    draft,
-    position: { x: origin.x, y: origin.y + index * 32 },
-  }))
-}
-
 export type { PositionedCanvasDraft }
 export { stackIngestDrafts }
 

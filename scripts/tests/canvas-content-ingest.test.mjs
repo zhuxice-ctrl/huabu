@@ -5,7 +5,6 @@ import {
   draftsFromTransfer,
   estimateTextBlockSize,
   materializeIngestDraft,
-  offsetIngestDrafts,
   stackIngestDrafts,
   canvasFontSizeForScreenInput,
   screenFontSizeForCanvasFont,
@@ -35,9 +34,9 @@ test('sanitized html falls back to text and empty input creates nothing', () => 
   assert.deepEqual(draftsFromTransfer({ files: [], html: '', text: '   ' }), [])
 })
 
-test('multiple drafts stack vertically with a six-screen-pixel gap', () => {
+test('multiple drafts stack vertically with a six-screen-pixel gap at non-unit zoom', () => {
   const snapshot = captureViewportSnapshot({
-    viewport: { x: 0, y: 0, zoom: 1 },
+    viewport: { x: 0, y: 0, zoom: 2 },
     containerRect: { left: 0, top: 0 },
   })
   const drafts = [
@@ -46,7 +45,7 @@ test('multiple drafts stack vertically with a six-screen-pixel gap', () => {
   ]
   assert.deepEqual(stackIngestDrafts(drafts, snapshot).map(item => item.position), [
     { x: 0, y: 0 },
-    { x: 0, y: 46 },
+    { x: 0, y: 23 },
   ])
 })
 
@@ -59,13 +58,6 @@ test('resource failures are compacted before vertical stacking', () => {
   const failed = { ...valid, canvasSize: { width: Number.NaN, height: 40 } }
   const result = stackIngestDrafts([failed, valid], snapshot)
   assert.deepEqual(result.map(item => item.position), [{ x: 0, y: 0 }])
-})
-
-test('offset compatibility wrapper uses 32-screen-pixel repeat offsets without diagonal cascade', () => {
-  assert.deepEqual(offsetIngestDrafts([{ kind: 'text' }, { kind: 'link' }], { x: 100, y: 80 }), [
-    { draft: { kind: 'text' }, position: { x: 100, y: 80 } },
-    { draft: { kind: 'link' }, position: { x: 100, y: 112 } },
-  ])
 })
 
 test('ingest drafts materialize screen intent through one captured viewport', () => {

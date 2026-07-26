@@ -42,28 +42,81 @@ function directionRank(x: number, y: number): number {
   return 4
 }
 
-function candidateOffsets(step: number, radius: number, limit: number): Array<{ x: number; y: number }> {
-  if (!finite(step) || step <= 0 || !finite(radius) || radius < 0 || limit <= 0) return []
-  const maxIndex = Math.floor(radius / step)
-  const offsets: Array<{ x: number; y: number; distance: number; rank: number }> = []
-  for (let y = -maxIndex; y <= maxIndex; y += 1) {
-    for (let x = -maxIndex; x <= maxIndex; x += 1) {
-      const distance = Math.hypot(x * step, y * step)
-      if (distance <= radius) offsets.push({ x: x * step, y: y * step, distance, rank: directionRank(x, y) })
-    }
-  }
-  offsets.sort((left, right) => left.distance - right.distance
+interface CandidateOffset {
+  xIndex: number
+  yIndex: number
+  distanceSquared: number
+  rank: number
+}
+
+function compareCandidates(left: CandidateOffset, right: CandidateOffset): number {
+  return left.distanceSquared - right.distanceSquared
     || left.rank - right.rank
-    || left.y - right.y
-    || left.x - right.x)
-  return offsets.slice(0, limit).map(({ x, y }) => ({ x, y }))
+    || left.yIndex - right.yIndex
+    || left.xIndex - right.xIndex
+}
+
+function pushCandidate(heap: CandidateOffset[], candidate: CandidateOffset) {
+  heap.push(candidate)
+  let index = heap.length - 1
+  while (index > 0) {
+    const parent = Math.floor((index - 1) / 2)
+    if (compareCandidates(heap[parent], candidate) <= 0) break
+    heap[index] = heap[parent]
+    index = parent
+  }
+  heap[index] = candidate
+}
+
+function popCandidate(heap: CandidateOffset[]): CandidateOffset | undefined {
+  const first = heap[0]
+  const last = heap.pop()
+  if (!first || heap.length === 0 || !last) return first
+  let index = 0
+  while (true) {
+    const left = index * 2 + 1
+    const right = left + 1
+    if (left >= heap.length) break
+    const child = right < heap.length && compareCandidates(heap[right], heap[left]) < 0 ? right : left
+    if (compareCandidates(last, heap[child]) <= 0) break
+    heap[index] = heap[child]
+    index = child
+  }
+  heap[index] = last
+  return first
+}
+
+function* candidateOffsets(step: number, radius: number): Generator<{ x: number; y: number }> {
+  if (!finite(step) || step <= 0 || !finite(radius) || radius < 0) return
+  const maxDistanceSquared = (radius / step) ** 2
+  const heap: CandidateOffset[] = []
+  const seen = new Set<string>()
+  const add = (xIndex: number, yIndex: number) => {
+    const key = `${xIndex}:${yIndex}`
+    if (seen.has(key)) return
+    seen.add(key)
+    const distanceSquared = xIndex ** 2 + yIndex ** 2
+    if (distanceSquared > maxDistanceSquared) return
+    pushCandidate(heap, { xIndex, yIndex, distanceSquared, rank: directionRank(xIndex, yIndex) })
+  }
+
+  add(0, 0)
+  while (heap.length > 0) {
+    const candidate = popCandidate(heap)
+    if (!candidate) return
+    yield { x: candidate.xIndex * step, y: candidate.yIndex * step }
+    add(candidate.xIndex, candidate.yIndex - 1)
+    add(candidate.xIndex + 1, candidate.yIndex)
+    add(candidate.xIndex, candidate.yIndex + 1)
+    add(candidate.xIndex - 1, candidate.yIndex)
+  }
 }
 
 function sourceMembersValid(members: Array<{ id: string; rect: CanvasRect }>, thresholds: ReturnType<typeof thresholdsForSnapshot>) {
   const normalized = members.map(member => {
     if (typeof member?.id !== 'string') return null
     const rect = normalizeAabb(member.rect)
-    return rect ? { id: member.id, rect } : null
+    return rect && rect.width > 0 && rect.height > 0 ? { id: member.id, rect } : null
   })
   if (normalized.some(member => member === null)) return null
   const sorted = normalized as Array<{ id: string; rect: CanvasRect }>
@@ -95,7 +148,7 @@ export function findNearestFreePlacement(input: {
   const obstacles = input.obstacles.map(obstacle => {
     if (typeof obstacle?.id !== 'string') return null
     const rect = normalizeAabb(obstacle.rect)
-    return rect ? { id: obstacle.id, rect } : null
+    return rect && rect.width > 0 && rect.height > 0 ? { id: obstacle.id, rect } : null
   })
   if (obstacles.some(obstacle => obstacle === null)) return { status: 'no-space', checkedCandidates: 0 }
   const sortedObstacles = (obstacles as Array<{ id: string; rect: CanvasRect }>)
@@ -107,9 +160,12 @@ export function findNearestFreePlacement(input: {
     ? Math.trunc(input.maxCandidates) : DEFAULT_MAX_CANDIDATES
   const step = screenDistanceToCanvas(REPEAT_OFFSET_SCREEN, input.snapshot)
   const radius = screenDistanceToCanvas(maxScreenRadius, input.snapshot)
-  const offsets = candidateOffsets(step, radius, maxCandidates)
+  const offsets = candidateOffsets(step, radius)
   let checkedCandidates = 0
-  for (const offset of offsets) {
+  while (checkedCandidates < maxCandidates) {
+    const next = offsets.next()
+    if (next.done) break
+    const offset = next.value
     checkedCandidates += 1
     const translation = {
       x: input.targetTranslation.x + offset.x,

@@ -55,3 +55,9 @@ test('text nodes use exact drawn dimensions without the former minimum', () => {
   assert.match(editorSource, /hasDrawableArea\(draft\.start, draft\.current\)/)
   assert.doesNotMatch(editorSource, /width: Math\.max\(120, end\.x - position\.x\)/)
 })
+
+test('runtime batch ingest materializes and stacks through its captured viewport', () => {
+  assert.match(editorSource, /stackIngestDrafts\(materializedDrafts, capturedViewport\)/)
+  assert.match(editorSource, /screenPointToCanvas\([^]*screenOrigin[^]*capturedViewport/)
+  assert.doesNotMatch(editorSource, /offsetIngestDrafts/)
+})
