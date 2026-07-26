@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-07-permanent-canvas-workspace",
+  "task_id": "zeroxb-integrated-task-08-note-references",
   "status": "accepted",
-  "graph_revision": "02a1e523f2174d01b782b3c6",
-  "slice_revision": "02a1e523f2174d01b782b3c6",
+  "graph_revision": "7a6d9f539fd8dacb183be9e0",
+  "slice_revision": "7a6d9f539fd8dacb183be9e0",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {
@@ -37,5 +37,31 @@
   "expansion_reasons": [],
   "required_actions": [],
   "critical_unresolved_edges": [],
-  "expansion_history": []
+  "expansion_history": [
+    {
+      "schema": "ADworkflo.context_expansion_request.v1",
+      "task_id": "zeroxb-integrated-task-08-note-references",
+      "status": "pending",
+      "relation": "callees",
+      "targets": [
+        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
+      ],
+      "depth": 5,
+      "budget": 800,
+      "reason": "Finish the bounded pure placement callee frontier while keeping note UI and React canvas integration as explicit manual context sources.",
+      "requested_by": "orchestrator",
+      "source_graph_revision": "7a6d9f539fd8dacb183be9e0",
+      "applied_slice_revision": null,
+      "target_resolutions": [
+        {
+          "target": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+          "status": "resolved_symbol",
+          "symbol_ids": [
+            "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
+          ]
+        }
+      ],
+      "applied": true
+    }
+  ]
 }
