@@ -36,7 +36,6 @@ export interface CanvasPoint {
   pressure: number
 }
 
-/** Persisted node payload. Geometry-session visuals and conflict state stay editor-only. */
 export interface CanvasNodeData extends Record<string, unknown> {
   label?: string
   description?: string
