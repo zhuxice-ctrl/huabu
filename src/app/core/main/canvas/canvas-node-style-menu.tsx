@@ -18,8 +18,9 @@ export interface CanvasNodeStyleMenuProps {
   onChange: (patch: Partial<CanvasNodeStyleValue>) => void
 }
 
-export const NODE_BACKGROUND_PRESETS = ['#ffffff', '#f8fafc', '#dbeafe', '#dcfce7', '#fef3c7', '#fee2e2']
-export const NODE_TEXT_PRESETS = ['#0f172a', '#334155', '#1d4ed8', '#15803d', '#b45309', '#b91c1c']
+export const NODE_BACKGROUND_PRESETS = ['#F2F1ED', '#ffffff', '#f8fafc', '#dbeafe', '#dcfce7', '#fef3c7', '#fee2e2']
+export const NODE_TEXT_PRESETS = ['#202321', '#0f172a', '#334155', '#1d4ed8', '#15803d', '#b45309', '#b91c1c']
+export const NODE_BORDER_PRESETS = ['#D8D6CF', '#0f172a', '#334155', '#1d4ed8', '#15803d', '#b45309', '#b91c1c']
 export const NODE_FONT_SIZE_PRESETS = [13, 15, 18, 24]
 
 function ColorRow({
@@ -79,7 +80,7 @@ export function CanvasNodeStyleMenu({ value, fontSizeMixed = false, onSessionSta
     <div className="w-64 space-y-3 p-2" onPointerDown={event => event.stopPropagation()}>
       <ColorRow label="区块背景" colors={NODE_BACKGROUND_PRESETS} value={value.backgroundColor} onChange={backgroundColor => onChange({ backgroundColor })} />
       <ColorRow label="字体颜色" colors={NODE_TEXT_PRESETS} value={value.textColor} onChange={textColor => onChange({ textColor })} />
-      <ColorRow label="边框颜色" colors={NODE_TEXT_PRESETS} value={value.borderColor} onChange={borderColor => onChange({ borderColor })} />
+      <ColorRow label="边框颜色" colors={NODE_BORDER_PRESETS} value={value.borderColor} onChange={borderColor => onChange({ borderColor })} />
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1 text-[11px] text-muted-foreground">
           屏幕字号

@@ -35,9 +35,14 @@ function previewClassName(state?: CanvasNodeData['previewState']) {
   )
 }
 
+const TEXT_BACKGROUND_DEFAULT = '#F2F1ED'
+const TEXT_COLOR_DEFAULT = '#202321'
+const TEXT_BORDER_DEFAULT = '#D8D6CF'
+const TEXT_SHADOW_DEFAULT = '0 6px 18px rgba(0, 0, 0, 0.14)'
+
 function transientNodeClassName(selected: boolean) {
   return cn(
-    selected && 'outline outline-[calc(1px*var(--canvas-visual-scale,1))] outline-[#F7FBFF] ring-[calc(2px*var(--canvas-visual-scale,1))] ring-[#66D9FF] shadow-[0_0_calc(12px*var(--canvas-visual-scale,1))_rgba(102,217,255,0.32)]',
+    selected && 'shadow-[inset_0_0_0_calc(1px*var(--canvas-visual-scale,1))_#F7FBFF,0_0_0_calc(2px*var(--canvas-visual-scale,1))_#66D9FF,0_0_calc(12px*var(--canvas-visual-scale,1))_rgba(102,217,255,0.32)]',
     'in-[.canvas-geometry-invalid]:!border-[calc(2px*var(--canvas-visual-scale,1))] in-[.canvas-geometry-invalid]:!border-solid in-[.canvas-geometry-invalid]:!border-[#FF5D5D] in-[.canvas-geometry-invalid]:!shadow-[0_0_calc(12px*var(--canvas-visual-scale,1))_rgba(255,93,93,0.32)]',
     'in-[.canvas-legacy-conflict]:!border-[calc(2px*var(--canvas-visual-scale,1))] in-[.canvas-legacy-conflict]:!border-dashed in-[.canvas-legacy-conflict]:!border-[#F2B84B]',
     'in-[.canvas-placement-preview]:opacity-70 in-[.canvas-placement-preview]:ring-[calc(2px*var(--canvas-visual-scale,1))] in-[.canvas-placement-preview]:ring-[#66D9FF]',
@@ -154,6 +159,7 @@ export const TerminatorNode = memo(function TerminatorNode({ id, data, selected 
 export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   const { updateNodeData } = useReactFlow<FlowCanvasNode>()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const savedStyle = nodeStyle(data)
 
   useEffect(() => {
     const focusNode = (nodeId: string) => {
@@ -167,9 +173,11 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
   return (
     <div
       style={{
-        ...nodeStyle(data),
-        backgroundColor: data.backgroundColor ?? data.fillColor ?? '#F2F1ED',
-        color: data.textColor ?? '#202321',
+        ...savedStyle,
+        backgroundColor: data.backgroundColor ?? data.fillColor ?? TEXT_BACKGROUND_DEFAULT,
+        color: data.textColor ?? TEXT_COLOR_DEFAULT,
+        borderColor: data.borderColor ?? data.color ?? TEXT_BORDER_DEFAULT,
+        boxShadow: `${savedStyle?.boxShadow ? `${savedStyle.boxShadow}, ` : ''}${TEXT_SHADOW_DEFAULT}`,
         padding: 8 * contentScale(data),
       }}
       className={cn(

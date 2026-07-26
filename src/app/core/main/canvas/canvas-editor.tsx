@@ -133,6 +133,7 @@ import {
 } from './nodes/canvas-nodes'
 import { CanvasFooter } from './canvas-footer'
 import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
+import { CanvasGeometryOverlays } from './canvas-geometry-overlays'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
@@ -3189,6 +3190,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               color="hsl(var(--muted-foreground))"
             />
           )}
+          <CanvasGeometryOverlays guides={snapGuides} />
           <MiniMap pannable zoomable />
               </ReactFlow>
               {drawDraft && (
@@ -3197,22 +3199,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                   containerBounds={containerRef.current?.getBoundingClientRect()}
                 />
               )}
-              {snapGuides.map(guide => {
-                const snapshot = geometrySessionRef.current?.viewport
-                if (!snapshot) return null
-                const bounds = containerRef.current?.getBoundingClientRect()
-                const screenPosition = guide.position * snapshot.zoom
-                  + (guide.axis === 'x' ? snapshot.x + snapshot.containerLeft : snapshot.y + snapshot.containerTop)
-                return (
-                  <div
-                    key={`${guide.axis}:${guide.position}`}
-                    className="pointer-events-none absolute z-20 bg-[#66D9FF]/70"
-                    style={guide.axis === 'x'
-                      ? { left: screenPosition - (bounds?.left || 0), top: 0, width: 1, height: '100%' }
-                      : { left: 0, top: screenPosition - (bounds?.top || 0), width: '100%', height: 1 }}
-                  />
-                )
-              })}
               {marqueePreview?.active && (() => {
                 const rect = normalizeDrawRect(marqueePreview.start, marqueePreview.current)
                 const bounds = containerRef.current?.getBoundingClientRect()
