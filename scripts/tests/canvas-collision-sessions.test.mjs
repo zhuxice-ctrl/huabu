@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { randomUUID } from 'node:crypto'
 import vm from 'node:vm'
 import ts from 'typescript'
 import {
@@ -276,7 +277,9 @@ test('group snapshot expansion and copy materialization remap child ownership ca
   const {
     expandGroupControlledNodeIds,
     materializeSnapshotCopy,
-  } = loadEditorFunctions(['expandGroupControlledNodeIds', 'materializeSnapshotCopy'])
+  } = loadEditorFunctions(['expandGroupControlledNodeIds', 'materializeSnapshotCopy'], {
+    crypto: { randomUUID },
+  })
   const sourceNodes = [
     { ...flowNode('group', 0, 0, 100, 80, 'group'), data: { childIds: ['left', 'right'] } },
     flowNode('left', 10, 10),
@@ -293,15 +296,15 @@ test('group snapshot expansion and copy materialization remap child ownership ca
       nodes: sourceNodes.filter(node => snapshotIds.has(node.id)),
       edges: sourceEdges,
     }
-    let nextId = 0
-    const copy = materializeSnapshotCopy(snapshot, () => `copy-${nextId++}`)
+    const copy = materializeSnapshotCopy(snapshot)
     assert.equal(copy.nodes.length, 3)
     const copiedGroup = copy.nodes.find(node => node.type === 'group')
     const copiedChildren = copy.nodes.filter(node => node.type !== 'group').map(node => node.id).sort()
     assert.deepEqual([...copiedGroup.data.childIds].sort(), copiedChildren)
     assert.equal(copiedGroup.data.childIds.some(id => ['left', 'right'].includes(id)), false)
-    assert.equal(copy.edges[0].source, copiedChildren[0])
-    assert.equal(copy.edges[0].target, copiedChildren[1])
+    assert.equal(copiedChildren.includes(copy.edges[0].source), true)
+    assert.equal(copiedChildren.includes(copy.edges[0].target), true)
+    assert.notEqual(copy.edges[0].source, copy.edges[0].target)
   }
 })
 
@@ -344,28 +347,16 @@ test('executable geometry outcomes restore authority on cancel and checkpoint su
       movingIds: kind === 'draw' ? ['__draw__'] : ['active'],
       kind,
     })
-    let rendered = production.applyGeometry(
-      authoritative,
-      new Map([['active', { x: 20, y: 0, width: 10, height: 10 }]]),
-    )
-    let clears = 0
-    let releases = 0
-    let checkpoints = 0
-    executeGeometrySessionOutcome({
+    const cancelled = executeGeometrySessionOutcome({
       mode: 'cancel',
       session,
       authoritativeNodes: authoritative,
-      effects: {
-        updateNodes: updater => { rendered = updater(rendered) },
-        clearUi: () => { clears += 1 },
-        releasePointerCapture: () => { releases += 1 },
-        commitCheckpoint: () => { checkpoints += 1 },
-      },
     })
-    assert.equal(clears, 1, kind)
-    assert.equal(releases, 1, kind)
-    assert.equal(checkpoints, 0, kind)
-    assert.deepEqual({ ...rendered[0].position }, kind === 'draw' ? { x: 20, y: 0 } : { x: 70, y: 0 })
+    assert.equal(cancelled.shouldCommit, false, kind)
+    assert.equal(cancelled.pointerId, session.pointerId, kind)
+    const cancelledGeometry = kind === 'draw' ? [...cancelled.geometry] : [...cancelled.geometry.entries()]
+    const expectedGeometry = kind === 'draw' ? [] : [['active', production.nodeRect(authoritative[0])]]
+    assert.equal(JSON.stringify(cancelledGeometry), JSON.stringify(expectedGeometry), kind)
   }
 
   const move = createSession({
@@ -375,21 +366,11 @@ test('executable geometry outcomes restore authority on cancel and checkpoint su
     kind: 'move',
   })
   move.lastAcceptedGeometry = new Map([['active', { x: 30, y: 0, width: 10, height: 10 }]])
-  let rendered = [flowNode('active', 0, 0), flowNode('obstacle', 100, 0)]
-  let checkpoints = 0
-  let releases = 0
-  executeGeometrySessionOutcome({
+  const committed = executeGeometrySessionOutcome({
     mode: 'commit',
     session: move,
-    authoritativeNodes: rendered,
-    effects: {
-      updateNodes: updater => { rendered = updater(rendered) },
-      clearUi: () => {},
-      releasePointerCapture: () => { releases += 1 },
-      commitCheckpoint: () => { checkpoints += 1 },
-    },
+    authoritativeNodes: [flowNode('active', 0, 0), flowNode('obstacle', 100, 0)],
   })
-  assert.equal(checkpoints, 1)
-  assert.equal(releases, 1)
-  assert.deepEqual({ ...rendered[0].position }, { x: 30, y: 0 })
+  assert.equal(committed.shouldCommit, true)
+  assert.deepEqual([...committed.geometry.entries()], [['active', { x: 30, y: 0, width: 10, height: 10 }]])
 })

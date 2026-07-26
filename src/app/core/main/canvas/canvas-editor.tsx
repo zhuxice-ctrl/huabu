@@ -366,11 +366,8 @@ function expandGroupControlledNodeIds(
   return expanded
 }
 
-function materializeSnapshotCopy(
-  snapshot: CanvasSnapshot,
-  createId: () => string = () => crypto.randomUUID(),
-): CanvasSnapshot {
-  const idMap = new Map(snapshot.nodes.map(node => [node.id, createId()]))
+function materializeSnapshotCopy(snapshot: CanvasSnapshot): CanvasSnapshot {
+  const idMap = new Map(snapshot.nodes.map(node => [node.id, crypto.randomUUID()]))
   const nodes = snapshot.nodes.map(node => {
     const copy = structuredClone(node)
     const childIds = copy.type === 'group' && Array.isArray(copy.data.childIds)
@@ -381,7 +378,7 @@ function materializeSnapshotCopy(
       : undefined
     return {
       ...copy,
-      id: idMap.get(node.id) || createId(),
+      id: idMap.get(node.id) || crypto.randomUUID(),
       data: childIds
         ? { ...copy.data, childIds }
         : copy.data,
@@ -389,7 +386,7 @@ function materializeSnapshotCopy(
   })
   const edges = snapshot.edges.map(edge => ({
     ...structuredClone(edge),
-    id: createId(),
+    id: crypto.randomUUID(),
     source: idMap.get(edge.source) || edge.source,
     target: idMap.get(edge.target) || edge.target,
   }))
@@ -533,29 +530,25 @@ function applyGeometry(nodes: FlowCanvasNode[], geometry: Map<string, CanvasRect
   })
 }
 
-interface GeometrySessionOutcomeEffects {
-  updateNodes: (updater: (nodes: FlowCanvasNode[]) => FlowCanvasNode[]) => void
-  clearUi: () => void
-  releasePointerCapture: (pointerId: number) => void
-  commitCheckpoint: (session: GeometrySessionBase) => void
+interface GeometrySessionOutcome {
+  pointerId: number
+  shouldCommit: boolean
+  geometry: Map<string, CanvasRect>
 }
 
 function executeGeometrySessionOutcome(input: {
   mode: 'cancel' | 'commit'
   session: GeometrySession
   authoritativeNodes: FlowCanvasNode[]
-  effects: GeometrySessionOutcomeEffects
-}) {
-  const { effects, session } = input
-  effects.clearUi()
-  if (input.mode === 'commit' && session.kind !== 'draw') {
-    effects.commitCheckpoint(session)
-    effects.updateNodes(current => applyGeometry(current, session.lastAcceptedGeometry))
-  } else if (session.kind !== 'draw') {
-    const authoritativeGeometry = geometryForNodes(input.authoritativeNodes, session.controlledNodeIds)
-    effects.updateNodes(current => applyGeometry(current, authoritativeGeometry))
-  }
-  effects.releasePointerCapture(session.pointerId)
+}): GeometrySessionOutcome {
+  const { session } = input
+  const shouldCommit = input.mode === 'commit' && session.kind !== 'draw'
+  const geometry = shouldCommit
+    ? session.lastAcceptedGeometry
+    : session.kind === 'draw'
+      ? new Map<string, CanvasRect>()
+      : geometryForNodes(input.authoritativeNodes, session.controlledNodeIds)
+  return { pointerId: session.pointerId, shouldCommit, geometry }
 }
 
 function geometryEqual(left: CanvasRect | undefined, right: CanvasRect | undefined): boolean {
@@ -1260,17 +1253,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const session = geometrySessionRef.current
     if (!session) return
     geometrySessionRef.current = null
-    executeGeometrySessionOutcome({
+    const outcome = executeGeometrySessionOutcome({
       mode: 'cancel',
       session,
       authoritativeNodes: authoritativeNodesRef.current,
-      effects: {
-        clearUi: () => updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() }),
-        updateNodes: updater => updateFlowNodes(updater),
-        releasePointerCapture: pointerId => releaseGeometryPointerCapture(pointerId),
-        commitCheckpoint: checkpoint => commitGeometrySessionCheckpoint(checkpoint),
-      },
     })
+    updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() })
+    if (outcome.geometry.size > 0) updateFlowNodes(current => applyGeometry(current, outcome.geometry))
+    releaseGeometryPointerCapture(outcome.pointerId)
     if (reason === 'invalid-release') toast.error('位置重叠')
   }, [commitGeometrySessionCheckpoint, releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
 
@@ -1289,17 +1279,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       return
     }
     geometrySessionRef.current = null
-    executeGeometrySessionOutcome({
+    const outcome = executeGeometrySessionOutcome({
       mode: 'commit',
       session,
       authoritativeNodes: authoritativeNodesRef.current,
-      effects: {
-        clearUi: () => updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() }),
-        updateNodes: updater => updateFlowNodes(updater),
-        releasePointerCapture: pointerId => releaseGeometryPointerCapture(pointerId),
-        commitCheckpoint: checkpoint => commitGeometrySessionCheckpoint(checkpoint),
-      },
     })
+    updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() })
+    if (outcome.shouldCommit) {
+      commitGeometrySessionCheckpoint(session)
+      updateFlowNodes(current => applyGeometry(current, outcome.geometry))
+    }
+    releaseGeometryPointerCapture(outcome.pointerId)
   }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
     releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
 
@@ -1538,17 +1528,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       return
     }
     geometrySessionRef.current = null
-    executeGeometrySessionOutcome({
+    const outcome = executeGeometrySessionOutcome({
       mode: 'commit',
       session,
       authoritativeNodes: authoritativeNodesRef.current,
-      effects: {
-        clearUi: () => updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() }),
-        updateNodes: updater => updateFlowNodes(updater),
-        releasePointerCapture: pointerId => releaseGeometryPointerCapture(pointerId),
-        commitCheckpoint: checkpoint => commitGeometrySessionCheckpoint(checkpoint),
-      },
     })
+    updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() })
+    if (outcome.shouldCommit) {
+      commitGeometrySessionCheckpoint(session)
+      updateFlowNodes(current => applyGeometry(current, outcome.geometry))
+    }
+    releaseGeometryPointerCapture(outcome.pointerId)
   }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
     releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
 
