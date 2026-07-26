@@ -56,11 +56,40 @@ function nodeStyle(data: CanvasNodeData): CSSProperties | undefined {
   }
 }
 
-const EditableLabel = memo(function EditableLabel({ id, value, className }: { id: string; value: string; className?: string }) {
+function contentScale(data: CanvasNodeData): number {
+  return typeof data.contentScale === 'number' && Number.isFinite(data.contentScale) && data.contentScale > 0
+    ? data.contentScale
+    : 1
+}
+
+function scaledContentStyle(
+  data: CanvasNodeData,
+  input: { padding?: number; gap?: number } = {},
+): CSSProperties {
+  const scale = contentScale(data)
+  return {
+    ...(input.padding !== undefined ? { padding: input.padding * scale } : {}),
+    ...(input.gap !== undefined ? { gap: input.gap * scale } : {}),
+  }
+}
+
+function scaledSquareStyle(data: CanvasNodeData, size: number): CSSProperties {
+  const scaled = size * contentScale(data)
+  return { width: scaled, height: scaled }
+}
+
+function fontStyle(data: CanvasNodeData, ratio = 1): CSSProperties | undefined {
+  return typeof data.fontSize === 'number' && Number.isFinite(data.fontSize) && data.fontSize > 0
+    ? { fontSize: data.fontSize * ratio }
+    : undefined
+}
+
+const EditableLabel = memo(function EditableLabel({ id, value, className, style }: { id: string; value: string; className?: string; style?: CSSProperties }) {
   const { updateNodeData } = useReactFlow<FlowCanvasNode>()
   return (
     <input
       className={`nodrag w-full bg-transparent text-center outline-none ${className || ''}`}
+      style={style}
       value={value}
       onFocus={() => emitter.emit('canvas-history-checkpoint')}
       onChange={event => updateNodeData(id, { label: event.target.value })}
@@ -74,8 +103,8 @@ export const ProcessNode = memo(function ProcessNode({ id, data }: NodeProps<Flo
   return (
     <BaseNode style={nodeStyle(data)} className={cn('min-w-40 max-w-72 shadow-sm', previewClassName(data.previewState))}>
       <ConnectionHandles />
-      <BaseNodeContent className="items-center text-center text-sm">
-        <EditableLabel id={id} value={data.label || '处理步骤'} />
+      <BaseNodeContent className="items-center text-center text-sm" style={scaledContentStyle(data, { padding: 12, gap: 8 })}>
+        <EditableLabel id={id} value={data.label || '处理步骤'} style={fontStyle(data)} />
       </BaseNodeContent>
     </BaseNode>
   )
@@ -85,16 +114,16 @@ export const DecisionNode = memo(function DecisionNode({ id, data }: NodeProps<F
   return (
     <div style={nodeStyle(data)} className={cn('relative flex size-36 rotate-45 items-center justify-center border bg-card text-card-foreground shadow-sm in-[.selected]:shadow-lg', previewClassName(data.previewState))}>
       <ConnectionHandles />
-      <EditableLabel id={id} value={data.label || '判断条件'} className="max-w-24 -rotate-45 text-sm" />
+      <EditableLabel id={id} value={data.label || '判断条件'} className="max-w-24 -rotate-45 text-sm" style={fontStyle(data)} />
     </div>
   )
 })
 
 export const TerminatorNode = memo(function TerminatorNode({ id, data }: NodeProps<FlowCanvasNode>) {
   return (
-    <div style={nodeStyle(data)} className={cn('relative flex min-h-14 min-w-40 items-center justify-center rounded-full border bg-card px-6 text-card-foreground shadow-sm in-[.selected]:shadow-lg', previewClassName(data.previewState))}>
+    <div style={{ ...nodeStyle(data), paddingInline: 24 * contentScale(data) }} className={cn('relative flex min-h-14 min-w-40 items-center justify-center rounded-full border bg-card text-card-foreground shadow-sm in-[.selected]:shadow-lg', previewClassName(data.previewState))}>
       <ConnectionHandles />
-      <EditableLabel id={id} value={data.label || '开始 / 结束'} className="text-sm" />
+      <EditableLabel id={id} value={data.label || '开始 / 结束'} className="text-sm" style={fontStyle(data)} />
     </div>
   )
 })
@@ -114,7 +143,7 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
 
   return (
     <div
-      style={nodeStyle(data)}
+      style={{ ...nodeStyle(data), padding: 8 * contentScale(data) }}
       className={cn(
         'relative size-full overflow-hidden rounded-xl border bg-card p-2 text-card-foreground shadow-sm in-[.selected]:ring-2 in-[.selected]:ring-ring/45',
         previewClassName(data.previewState),
@@ -156,12 +185,12 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ data }: NodeProps<F
       onDoubleClick={() => void openNote()}
     >
       <ConnectionHandles />
-      <BaseNodeContent className="gap-1">
-        <span className="flex items-center gap-2 text-sm font-medium">
-          <FileText className="size-4 shrink-0 text-muted-foreground" />
+      <BaseNodeContent className="gap-1" style={scaledContentStyle(data, { padding: 12, gap: 4 })}>
+        <span className="flex items-center text-sm font-medium" style={{ gap: 8 * contentScale(data), ...fontStyle(data) }}>
+          <FileText className="shrink-0 text-muted-foreground" style={scaledSquareStyle(data, 16)} />
           <span className="truncate">{data.label || filePath.split('/').pop() || '笔记'}</span>
         </span>
-        <span className="truncate text-xs text-muted-foreground">{filePath}</span>
+        <span className="truncate text-xs text-muted-foreground" style={fontStyle(data, 0.8)}>{filePath}</span>
       </BaseNodeContent>
     </BaseNode>
   )
@@ -175,12 +204,12 @@ export const LinkCanvasNode = memo(function LinkCanvasNode({ id, data }: NodePro
       onDoubleClick={() => data.url && void openUrl(data.url)}
     >
       <ConnectionHandles />
-      <BaseNodeContent className="gap-1">
-        <span className="flex items-center gap-2 text-sm font-medium">
-          <ExternalLink className="shrink-0 text-muted-foreground" />
-          <EditableLabel id={id} value={data.label || '网页链接'} className="text-left" />
+      <BaseNodeContent className="gap-1" style={scaledContentStyle(data, { padding: 12, gap: 4 })}>
+        <span className="flex items-center text-sm font-medium" style={{ gap: 8 * contentScale(data) }}>
+          <ExternalLink className="shrink-0 text-muted-foreground" style={scaledSquareStyle(data, 16)} />
+          <EditableLabel id={id} value={data.label || '网页链接'} className="text-left" style={fontStyle(data)} />
         </span>
-        <span className="truncate text-xs text-muted-foreground">{data.url}</span>
+        <span className="truncate text-xs text-muted-foreground" style={fontStyle(data, 0.8)}>{data.url}</span>
       </BaseNodeContent>
     </BaseNode>
   )
@@ -204,13 +233,13 @@ export const FileCanvasNode = memo(function FileCanvasNode({ data }: NodeProps<F
       onDoubleClick={() => void openStoredFile()}
     >
       <ConnectionHandles />
-      <BaseNodeContent className="flex-row items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-          <FileArchive className="size-5" />
+      <BaseNodeContent className="flex-row items-center" style={scaledContentStyle(data, { padding: 12, gap: 12 })}>
+        <div className="flex shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground" style={scaledSquareStyle(data, 40)}>
+          <FileArchive style={scaledSquareStyle(data, 20)} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{fileName}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">{extension}</div>
+          <div className="truncate text-sm font-medium" style={fontStyle(data)}>{fileName}</div>
+          <div className="text-xs text-muted-foreground" style={{ marginTop: 2 * contentScale(data), ...fontStyle(data, 0.8) }}>{extension}</div>
         </div>
       </BaseNodeContent>
     </BaseNode>
@@ -222,19 +251,20 @@ export const TodoCanvasNode = memo(function TodoCanvasNode({ id, data }: NodePro
   return (
     <BaseNode style={nodeStyle(data)} className={cn('min-w-52 max-w-80 shadow-sm', previewClassName(data.previewState))}>
       <ConnectionHandles />
-      <BaseNodeContent className="flex-row items-center gap-2">
+      <BaseNodeContent className="flex-row items-center" style={scaledContentStyle(data, { padding: 12, gap: 8 })}>
         <button
           type="button"
           className="nodrag text-muted-foreground"
           onClick={() => updateNodeData(id, { checked: !data.checked })}
           aria-label={data.checked ? 'Mark incomplete' : 'Mark complete'}
         >
-          {data.checked ? <CheckSquare2 /> : <Square />}
+          {data.checked ? <CheckSquare2 style={scaledSquareStyle(data, 20)} /> : <Square style={scaledSquareStyle(data, 20)} />}
         </button>
         <EditableLabel
           id={id}
           value={data.label || '待办事项'}
           className={cn('text-left', data.checked && 'text-muted-foreground line-through')}
+          style={fontStyle(data)}
         />
       </BaseNodeContent>
     </BaseNode>
@@ -266,13 +296,14 @@ export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data }: NodeP
           width={256}
           height={144}
           unoptimized
-          className="h-36 w-full rounded-t-lg object-cover"
+          className="w-full rounded-t-lg object-cover"
+          style={{ height: 144 * contentScale(data) }}
         />
       ) : (
-        <div className="flex h-36 items-center justify-center bg-muted text-muted-foreground"><ImageIcon /></div>
+        <div className="flex items-center justify-center bg-muted text-muted-foreground" style={{ height: 144 * contentScale(data) }}><ImageIcon style={scaledSquareStyle(data, 24)} /></div>
       )}
-      <BaseNodeContent className="py-2">
-        <EditableLabel id={id} value={data.label || '图片'} />
+      <BaseNodeContent style={scaledContentStyle(data, { padding: 8, gap: 8 })}>
+        <EditableLabel id={id} value={data.label || '图片'} style={fontStyle(data)} />
       </BaseNodeContent>
     </BaseNode>
   )

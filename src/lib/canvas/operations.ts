@@ -1,4 +1,5 @@
 import type { CanvasDocument, CanvasEdge, CanvasNodeType } from '@/types/canvas'
+import { resolveAiNodeContentScale, resolveAiNodeSize } from './content-ingest.ts'
 
 type CanvasOperationType =
   | 'add_node'
@@ -7,6 +8,10 @@ type CanvasOperationType =
   | 'add_edge'
   | 'delete_edge'
   | 'clear'
+
+const AI_CREATABLE_NODE_TYPES: CanvasNodeType[] = [
+  'process', 'decision', 'terminator', 'text', 'note', 'image', 'file', 'link', 'todo',
+]
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -40,22 +45,40 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
 
     if (type === 'add_node') {
       const requestedType = asString(operation.nodeType)
-      const nodeType: CanvasNodeType = ['process', 'decision', 'terminator', 'text'].includes(requestedType)
+      const nodeType: CanvasNodeType = AI_CREATABLE_NODE_TYPES.includes(requestedType as CanvasNodeType)
         ? requestedType as CanvasNodeType
         : 'process'
       const id = asString(operation.id) || crypto.randomUUID()
       if (nodes.some(node => node.id === id)) continue
       const index = nodes.length
+      const targetNode = nodes.find(node => node.id === asString(operation.targetNodeId))
+      const position = {
+        x: asFiniteNumber(operation.x, (index % 4) * 240),
+        y: asFiniteNumber(operation.y, Math.floor(index / 4) * 140),
+      }
+      const requestedWidth = asFiniteNumber(operation.width, Number.NaN)
+      const requestedHeight = asFiniteNumber(operation.height, Number.NaN)
+      const sizingInput = {
+        requestedType: nodeType,
+        requestedSize: Number.isFinite(requestedWidth) && requestedWidth > 0
+          && Number.isFinite(requestedHeight) && requestedHeight > 0
+          ? { width: requestedWidth, height: requestedHeight }
+          : undefined,
+        targetNode,
+        nearbySameType: nodes.filter(node => node.type === nodeType),
+        referencePoint: position,
+      }
+      const size = resolveAiNodeSize(sizingInput)
       nodes.push({
         id,
         type: nodeType,
-        position: {
-          x: asFiniteNumber(operation.x, (index % 4) * 240),
-          y: asFiniteNumber(operation.y, Math.floor(index / 4) * 140),
-        },
+        position,
+        width: size.width,
+        height: size.height,
         data: {
           label: asString(operation.label) || (nodeType === 'decision' ? '判断条件' : nodeType === 'terminator' ? '开始 / 结束' : '处理步骤'),
           description: asString(operation.description) || undefined,
+          contentScale: resolveAiNodeContentScale(sizingInput),
         },
       })
       applied += 1

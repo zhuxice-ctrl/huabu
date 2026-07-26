@@ -101,6 +101,7 @@ import type {
   CanvasEdge,
   CanvasHistorySnapshot,
   CanvasNode,
+  CanvasNodeType,
   CanvasPoint,
   CanvasTool,
   CanvasRelationData,
@@ -155,11 +156,22 @@ import {
   type ContextMenuSuppressionState,
 } from '@/lib/canvas/relation-interaction'
 import {
+  canvasFontSizeForScreenInput,
   draftsFromTransfer,
+  materializeIngestDraft,
   offsetIngestDrafts,
+  screenFontSizeForCanvasFont,
   type CanvasIngestDraft,
   type CanvasTransferInput,
 } from '@/lib/canvas/content-ingest'
+import {
+  captureViewportSnapshot,
+  contentScaleForZoom,
+  screenDistanceToCanvas,
+  screenPointToCanvas,
+  screenSizeToCanvas,
+  type ViewportSnapshot,
+} from '@/lib/canvas/viewport-sizing'
 
 const elk = new ELK()
 const DRAWING_CURSORS = {
@@ -191,12 +203,17 @@ interface CanvasSnapshot {
   edges: Edge[]
 }
 
+const TEXT_CAPABLE_NODE_TYPES = new Set<CanvasNodeType>([
+  'process', 'decision', 'terminator', 'text', 'note', 'file', 'link', 'todo',
+])
+
 const edgeTypes: EdgeTypes = { relation: CanvasRelationEdge }
 
 interface DrawDraft {
   pointerId: number
   start: { x: number; y: number }
   current: { x: number; y: number }
+  viewport: ViewportSnapshot
 }
 
 interface RelationPointerSession {
@@ -384,6 +401,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [marqueePreview, setMarqueePreview] = useState<MarqueePointerSession | null>(null)
   const [relationPreview, setRelationPreview] = useState<RelationPointerSession | null>(null)
   const [relationEditor, setRelationEditor] = useState<RelationEditorState | null>(null)
+  const [styleViewportSnapshot, setStyleViewportSnapshot] = useState<ViewportSnapshot | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<CanvasSnapshot[]>((initialHistory?.undo || []).map(restoreHistorySnapshot))
   const redoRef = useRef<CanvasSnapshot[]>((initialHistory?.redo || []).map(restoreHistorySnapshot))
@@ -407,7 +425,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const pendingDocumentRef = useRef<CanvasDocument | null>(null)
   const pendingDocumentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastStoreDocumentRef = useRef(document)
+  const styleHistoryPushedRef = useRef(false)
   const { screenToFlowPosition, getViewport, getNodesBounds, fitView, setViewport } = useReactFlow()
+  const captureCurrentViewport = useCallback(() => {
+    const bounds = containerRef.current?.getBoundingClientRect()
+    if (!bounds) return null
+    return captureViewportSnapshot({ viewport: getViewport(), containerRect: bounds })
+  }, [getViewport])
   const viewport = useViewport()
   const activeBrushColor = tool === 'highlighter' ? highlighterColor : penColor
   const activeBrushSize = tool === 'highlighter' ? highlighterSize : penSize
@@ -422,6 +446,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const selectedFreehandIds = selectedFreehandNodes.map(node => node.id).join(':')
   const selectedOnlyFreehand = selectedNodeCount > 0 && selectedFreehandNodes.length === selectedNodeCount
   const selectedStyleNode = nodes.find(node => node.selected && node.type !== 'freehand')
+  const selectedStyleNodes = nodes.filter(node => node.selected && node.type !== 'freehand')
+  const selectedTextStyleNodes = selectedStyleNodes.filter(node => TEXT_CAPABLE_NODE_TYPES.has(node.type))
+  const selectedFontSizes = selectedTextStyleNodes.map(node => (
+    typeof node.data.fontSize === 'number' && Number.isFinite(node.data.fontSize) && node.data.fontSize > 0
+      ? node.data.fontSize
+      : 15
+  ))
+  const selectedFontSizeMixed = selectedFontSizes.some(size => size !== selectedFontSizes[0])
+  const selectedScreenFontSize = styleViewportSnapshot && selectedFontSizes[0] !== undefined
+    ? screenFontSizeForCanvasFont(selectedFontSizes[0], styleViewportSnapshot)
+    : selectedFontSizes[0]
   const selectedBoxNode = nodes.find(node => node.selected && node.type !== 'freehand' && node.type !== 'text')
   const selectedBorderStyle = selectedBoxNode?.data.borderStyle || (selectedBoxNode?.type === 'group' ? 'dashed' : 'solid')
   const selectedFillColor = selectedBoxNode?.data.fillColor
@@ -735,11 +770,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
 
     const screenRect = normalizeDrawRect(draft.start, draft.current)
-    const position = screenToFlowPosition({ x: screenRect.x, y: screenRect.y })
-    const end = screenToFlowPosition({
-      x: screenRect.x + screenRect.width,
-      y: screenRect.y + screenRect.height,
-    })
+    const position = screenPointToCanvas({ clientX: screenRect.x, clientY: screenRect.y }, draft.viewport)
+    const size = screenSizeToCanvas({ width: screenRect.width, height: screenRect.height }, draft.viewport)
     const id = crypto.randomUUID()
     pushHistory()
     setNodes(current => [
@@ -748,19 +780,21 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         id,
         type: 'text',
         position,
-        width: end.x - position.x,
-        height: end.y - position.y,
+        width: size.width,
+        height: size.height,
         selected: true,
         data: {
           label: '',
           fillColor: 'var(--card)',
           color: 'var(--border)',
+          fontSize: screenDistanceToCanvas(15, draft.viewport),
+          contentScale: contentScaleForZoom(draft.viewport.zoom),
         },
       },
     ])
     setEdges(current => current.map(edge => ({ ...edge, selected: false })))
     requestAnimationFrame(() => emitter.emit('canvas-focus-node', id))
-  }, [pushHistory, screenToFlowPosition, setEdges, setNodes])
+  }, [pushHistory, setEdges, setNodes])
 
   const setRelationTargetHighlight = useCallback((targetId: string | null, targetHandle: string | null = null) => {
     const root = containerRef.current
@@ -920,10 +954,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
 
     event.preventDefault()
     event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
     const point = { x: event.clientX, y: event.clientY }
-    setDrawDraft({ pointerId: event.pointerId, start: point, current: point })
-  }, [previewSnapshot, tool, updateRelationPointerGeometry])
+    const capturedViewport = captureCurrentViewport()
+    if (!capturedViewport) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setDrawDraft({ pointerId: event.pointerId, start: point, current: point, viewport: capturedViewport })
+  }, [captureCurrentViewport, previewSnapshot, tool, updateRelationPointerGeometry])
 
   const handleBlockDrawPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -1136,8 +1172,25 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [setEdges, setNodes])
 
   const applySelectedNodeStylePatch = useCallback((patch: Record<string, unknown>) => {
-    setNodes(current => current.map(node => node.selected ? { ...node, data: { ...node.data, ...patch } } : node))
-  }, [setNodes])
+    let normalizedPatch = patch
+    let fontOnly = false
+    if (Object.prototype.hasOwnProperty.call(patch, 'fontSize')) {
+      if (!styleViewportSnapshot || typeof patch.fontSize !== 'number') return
+      const fontSize = canvasFontSizeForScreenInput(patch.fontSize, styleViewportSnapshot)
+      if (fontSize === null) return
+      normalizedPatch = { ...patch, fontSize }
+      fontOnly = true
+    }
+    if (!styleHistoryPushedRef.current) {
+      pushHistory()
+      styleHistoryPushedRef.current = true
+    }
+    setNodes(current => current.map(node => (
+      node.selected && (!fontOnly || TEXT_CAPABLE_NODE_TYPES.has(node.type))
+        ? { ...node, data: { ...node.data, ...normalizedPatch } }
+        : node
+    )))
+  }, [pushHistory, setNodes, styleViewportSnapshot])
 
   const updateCanvasBackground = useCallback((backgroundColor?: string) => {
     if (!document) return
@@ -1221,22 +1274,41 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canvasId, copySelection, deleteSelection, duplicateSelection, fitView, pasteSelection, redo, selectAll, undo])
 
   const addNoteNode = useCallback((filePath: string, name: string) => {
+    const capturedViewport = captureCurrentViewport()
+    if (!capturedViewport) return
     pushHistory()
-    const position = screenToFlowPosition({
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-    })
+    const bounds = containerRef.current!.getBoundingClientRect()
+    const position = screenPointToCanvas({
+      clientX: bounds.left + bounds.width / 2,
+      clientY: bounds.top + bounds.height / 2,
+    }, capturedViewport)
+    const size = screenSizeToCanvas({ width: 320, height: 180 }, capturedViewport)
     setNodes(current => [...current, {
       id: crypto.randomUUID(),
       type: 'note',
       position,
-      data: { label: name, filePath },
+      width: size.width,
+      height: size.height,
+      data: {
+        label: name,
+        filePath,
+        fontSize: screenDistanceToCanvas(15, capturedViewport),
+        contentScale: contentScaleForZoom(capturedViewport.zoom),
+      },
     }])
     setNotePickerOpen(false)
     toast.success(t('noteNode.added', { name }))
-  }, [pushHistory, screenToFlowPosition, setNodes, t])
+  }, [captureCurrentViewport, pushHistory, setNodes, t])
 
   const addImageNode = useCallback(async () => {
+    const capturedViewport = captureCurrentViewport()
+    if (!capturedViewport) return
+    const startBounds = containerRef.current?.getBoundingClientRect()
+    if (!startBounds) return
+    const capturedCenter = {
+      clientX: startBounds.left + startBounds.width / 2,
+      clientY: startBounds.top + startBounds.height / 2,
+    }
     const sourcePath = await open({
       multiple: false,
       filters: [{ name: t('nodes.image'), extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'] }],
@@ -1257,14 +1329,21 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     )
     await loadFileTree({ skipRemoteSync: true })
     pushHistory()
-    const position = screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
+    const position = screenPointToCanvas(capturedCenter, capturedViewport)
+    const size = screenSizeToCanvas({ width: 320, height: 220 }, capturedViewport)
     setNodes(current => [...current, {
       id: crypto.randomUUID(),
       type: 'image',
       position,
-      data: { label: sourcePath.split(/[\\/]/).pop() || t('nodes.image'), imagePath: relativePath },
+      width: size.width,
+      height: size.height,
+      data: {
+        label: sourcePath.split(/[\\/]/).pop() || t('nodes.image'),
+        imagePath: relativePath,
+        contentScale: contentScaleForZoom(capturedViewport.zoom),
+      },
     }])
-  }, [loadFileTree, pushHistory, screenToFlowPosition, setNodes, t])
+  }, [captureCurrentViewport, loadFileTree, pushHistory, setNodes, t])
 
   const persistIngestFile = useCallback(async (file: File) => {
     const rawExtension = file.name.includes('.')
@@ -1284,12 +1363,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const ingestTransfer = useCallback(async (
     input: CanvasTransferInput,
     screenOrigin: { x: number; y: number },
+    capturedViewport: ViewportSnapshot,
   ) => {
     const drafts = draftsFromTransfer(input)
     if (drafts.length === 0) return false
 
     try {
-      if (drafts.some(draft => draft.kind === 'image' || draft.kind === 'file')) {
+      if (drafts.some(draft => 'file' in draft && draft.file)) {
         const directoryOptions = await getFilePathOptions('画布资源')
         await mkdir(
           directoryOptions.path,
@@ -1300,17 +1380,27 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       }
 
       const prepared = await Promise.all(offsetIngestDrafts(drafts, screenOrigin).map(async item => {
-        const position = screenToFlowPosition(item.position)
+        const position = screenPointToCanvas({
+          clientX: item.position.x,
+          clientY: item.position.y,
+        }, capturedViewport)
         const draft = item.draft as CanvasIngestDraft
+        const materialized = materializeIngestDraft(draft, capturedViewport)
         if (draft.kind === 'text') {
           return {
             id: crypto.randomUUID(),
             type: 'text' as const,
             position,
-            width: draft.width,
-            height: draft.height,
+            width: materialized.canvasSize.width,
+            height: materialized.canvasSize.height,
             selected: true,
-            data: { label: draft.text, fillColor: 'var(--card)', color: 'var(--border)' },
+            data: {
+              label: draft.text,
+              fillColor: 'var(--card)',
+              color: 'var(--border)',
+              fontSize: materialized.fontSize,
+              contentScale: materialized.contentScale,
+            },
           }
         }
         if (draft.kind === 'link') {
@@ -1318,27 +1408,40 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             id: crypto.randomUUID(),
             type: 'link' as const,
             position,
-            width: draft.width,
-            height: draft.height,
+            width: materialized.canvasSize.width,
+            height: materialized.canvasSize.height,
             selected: true,
-            data: { label: draft.label, url: draft.url },
+            data: { label: draft.label, url: draft.url, contentScale: materialized.contentScale },
           }
         }
+        if (draft.kind === 'video' && !draft.file && draft.url) {
+          return {
+            id: crypto.randomUUID(),
+            type: 'link' as const,
+            position,
+            width: materialized.canvasSize.width,
+            height: materialized.canvasSize.height,
+            selected: true,
+            data: { label: draft.label, url: draft.url, contentScale: materialized.contentScale },
+          }
+        }
+        if (!draft.file) throw new Error('Ingest file is missing')
         const relativePath = await persistIngestFile(draft.file)
+        const nodeType = draft.kind === 'image' ? 'image' as const : 'file' as const
         return {
           id: crypto.randomUUID(),
-          type: draft.kind,
+          type: nodeType,
           position,
-          width: draft.width,
-          height: draft.height,
+          width: materialized.canvasSize.width,
+          height: materialized.canvasSize.height,
           selected: true,
           data: draft.kind === 'image'
-            ? { label: draft.label, imagePath: relativePath }
-            : { label: draft.label, filePath: relativePath },
+            ? { label: draft.label, imagePath: relativePath, contentScale: materialized.contentScale }
+            : { label: draft.label, filePath: relativePath, contentScale: materialized.contentScale },
         }
       }))
 
-      if (drafts.some(draft => draft.kind === 'image' || draft.kind === 'file')) {
+      if (drafts.some(draft => 'file' in draft && draft.file)) {
         await loadFileTree({ skipRemoteSync: true })
       }
       pushHistory()
@@ -1353,7 +1456,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       toast.error('无法把此内容加入画布')
       return false
     }
-  }, [loadFileTree, persistIngestFile, pushHistory, screenToFlowPosition, setEdges, setNodes])
+  }, [loadFileTree, persistIngestFile, pushHistory, setEdges, setNodes])
 
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
@@ -1369,13 +1472,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         text: clipboard.getData('text/plain'),
       }
       if (draftsFromTransfer(input).length === 0) return
+      const capturedViewport = captureCurrentViewport()
+      if (!capturedViewport) return
       event.preventDefault()
       const bounds = root.getBoundingClientRect()
-      void ingestTransfer(input, { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 })
+      void ingestTransfer(
+        input,
+        { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 },
+        capturedViewport,
+      )
     }
     window.addEventListener('paste', handlePaste)
     return () => window.removeEventListener('paste', handlePaste)
-  }, [canvasId, ingestTransfer])
+  }, [canvasId, captureCurrentViewport, ingestTransfer])
 
   const handleCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     if (event.dataTransfer.types.includes('Files') || event.dataTransfer.types.includes('text/plain')) {
@@ -1391,10 +1500,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       text: event.dataTransfer.getData('text/plain'),
     }
     if (draftsFromTransfer(input).length === 0) return
+    const capturedViewport = captureCurrentViewport()
+    if (!capturedViewport) return
     event.preventDefault()
     event.stopPropagation()
-    void ingestTransfer(input, { x: event.clientX, y: event.clientY })
-  }, [ingestTransfer])
+    void ingestTransfer(input, { x: event.clientX, y: event.clientY }, capturedViewport)
+  }, [captureCurrentViewport, ingestTransfer])
 
   const alignSelection = useCallback((axis: 'horizontal' | 'vertical') => {
     const selected = nodes.filter(node => node.selected)
@@ -1911,7 +2022,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           }
         }}
       >
-        <ContextMenu onOpenChange={open => { if (!open) setContextTarget('pane') }}>
+        <ContextMenu onOpenChange={open => {
+          if (open) return
+          setContextTarget('pane')
+          setStyleViewportSnapshot(null)
+          styleHistoryPushedRef.current = false
+        }}>
           <ContextMenuTrigger asChild>
             <div
               className="size-full"
@@ -1944,6 +2060,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         onConnect={onConnect}
         onNodeContextMenu={(_event, targetNode) => {
           setContextTarget('node')
+          setStyleViewportSnapshot(captureCurrentViewport())
+          styleHistoryPushedRef.current = false
           if (!targetNode.selected) {
             setNodes(current => current.map(node => ({ ...node, selected: node.id === targetNode.id })))
             setEdges(current => current.map(edge => ({ ...edge, selected: false })))
@@ -2124,11 +2242,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                 value={{
                   backgroundColor: selectedStyleNode.data.backgroundColor as string | undefined ?? selectedStyleNode.data.fillColor as string | undefined,
                   textColor: selectedStyleNode.data.textColor as string | undefined,
-                  fontSize: selectedStyleNode.data.fontSize,
+                  fontSize: selectedScreenFontSize,
                   borderColor: selectedStyleNode.data.borderColor as string | undefined ?? selectedStyleNode.data.color as string | undefined,
                   borderStyle: selectedStyleNode.data.borderStyle as 'none' | 'solid' | 'dashed' | 'dotted' | undefined,
                 }}
-                onSessionStart={pushHistory}
+                fontSizeMixed={selectedFontSizeMixed}
+                onSessionStart={() => {}}
                 onChange={applySelectedNodeStylePatch}
               />
             )}

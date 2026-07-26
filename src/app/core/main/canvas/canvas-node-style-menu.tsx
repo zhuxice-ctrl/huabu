@@ -13,12 +13,14 @@ export interface CanvasNodeStyleValue {
 
 export interface CanvasNodeStyleMenuProps {
   value: CanvasNodeStyleValue
+  fontSizeMixed?: boolean
   onSessionStart: () => void
   onChange: (patch: Partial<CanvasNodeStyleValue>) => void
 }
 
 export const NODE_BACKGROUND_PRESETS = ['#ffffff', '#f8fafc', '#dbeafe', '#dcfce7', '#fef3c7', '#fee2e2']
 export const NODE_TEXT_PRESETS = ['#0f172a', '#334155', '#1d4ed8', '#15803d', '#b45309', '#b91c1c']
+export const NODE_FONT_SIZE_PRESETS = [13, 15, 18, 24]
 
 function ColorRow({
   label,
@@ -65,7 +67,7 @@ function ColorRow({
   )
 }
 
-export function CanvasNodeStyleMenu({ value, onSessionStart, onChange }: CanvasNodeStyleMenuProps) {
+export function CanvasNodeStyleMenu({ value, fontSizeMixed = false, onSessionStart, onChange }: CanvasNodeStyleMenuProps) {
   const startedRef = useRef(false)
   useEffect(() => {
     if (startedRef.current) return
@@ -81,16 +83,31 @@ export function CanvasNodeStyleMenu({ value, onSessionStart, onChange }: CanvasN
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1 text-[11px] text-muted-foreground">
           字号
-          <select
+          <input
+            type="number"
+            min="8"
+            max="96"
+            step="0.5"
             className="h-8 w-full rounded-md border bg-background px-2 text-xs text-foreground"
-            value={value.fontSize || 15}
-            onChange={event => onChange({ fontSize: Number(event.target.value) })}
-          >
-            <option value="13">小</option>
-            <option value="15">标准</option>
-            <option value="18">大</option>
-            <option value="24">标题</option>
-          </select>
+            value={fontSizeMixed ? '' : value.fontSize ?? ''}
+            placeholder={fontSizeMixed ? '混合' : '15'}
+            onChange={event => {
+              if (event.target.value === '') return
+              onChange({ fontSize: Number(event.target.value) })
+            }}
+          />
+          <span className="grid grid-cols-4 gap-1 pt-1">
+            {NODE_FONT_SIZE_PRESETS.map(size => (
+              <button
+                key={size}
+                type="button"
+                className="h-6 rounded border bg-background text-[10px] text-foreground hover:bg-accent"
+                onClick={() => onChange({ fontSize: size })}
+              >
+                {size}
+              </button>
+            ))}
+          </span>
         </label>
         <label className="space-y-1 text-[11px] text-muted-foreground">
           边框

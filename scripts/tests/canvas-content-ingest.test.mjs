@@ -4,8 +4,12 @@ import {
   classifyTextContent,
   draftsFromTransfer,
   estimateTextBlockSize,
+  materializeIngestDraft,
   offsetIngestDrafts,
+  canvasFontSizeForScreenInput,
+  screenFontSizeForCanvasFont,
 } from '../../src/lib/canvas/content-ingest.ts'
+import { captureViewportSnapshot } from '../../src/lib/canvas/viewport-sizing.ts'
 
 test('urls become link cards and normal text becomes text blocks', () => {
   assert.equal(classifyTextContent('https://example.com').kind, 'link')
@@ -35,4 +39,32 @@ test('multiple drafts cascade by 28 pixels', () => {
     { draft: { kind: 'text' }, position: { x: 100, y: 80 } },
     { draft: { kind: 'link' }, position: { x: 128, y: 108 } },
   ])
+})
+
+test('ingest drafts materialize screen intent through one captured viewport', () => {
+  const snapshot = captureViewportSnapshot({
+    viewport: { x: 10, y: 20, zoom: 0.5 },
+    containerRect: { left: 100, top: 200 },
+  })
+  const draft = draftsFromTransfer({ files: [], html: '', text: '旅行计划' })[0]
+  const materialized = materializeIngestDraft(draft, snapshot)
+
+  assert.deepEqual(materialized.canvasSize, {
+    width: draft.screenSize.width * 2,
+    height: draft.screenSize.height * 2,
+  })
+  assert.equal(materialized.fontSize, 30)
+  assert.equal(materialized.contentScale, 2)
+})
+
+test('style font conversion observes captured zoom and rejects invalid submissions', () => {
+  const snapshot = captureViewportSnapshot({
+    viewport: { x: 0, y: 0, zoom: 0.65 },
+    containerRect: { left: 0, top: 0 },
+  })
+  assert.equal(screenFontSizeForCanvasFont(23.0769, snapshot), 15)
+  assert.equal(canvasFontSizeForScreenInput(15, snapshot), 23.0769)
+  assert.equal(canvasFontSizeForScreenInput(7.99, snapshot), null)
+  assert.equal(canvasFontSizeForScreenInput(96.01, snapshot), null)
+  assert.equal(canvasFontSizeForScreenInput(Number.NaN, snapshot), null)
 })
