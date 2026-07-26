@@ -60,10 +60,7 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
       const requestedHeight = asFiniteNumber(operation.height, Number.NaN)
       const sizingInput = {
         requestedType: nodeType,
-        requestedSize: Number.isFinite(requestedWidth) && requestedWidth > 0
-          && Number.isFinite(requestedHeight) && requestedHeight > 0
-          ? { width: requestedWidth, height: requestedHeight }
-          : undefined,
+        requestedSize: { width: requestedWidth, height: requestedHeight },
         targetNode,
         nearbySameType: nodes.filter(node => node.type === nodeType),
         referencePoint: position,

@@ -130,6 +130,21 @@ test('AI add-node operations inherit target geometry without consulting a viewpo
   assert.equal(created.data.fontSize, 15)
 })
 
+test('AI operation adapter forwards one valid requested dimension without discarding it', () => {
+  const first = baseNode('first', 'text', 0, 0, 300, 100, 1)
+  const second = baseNode('second', 'text', 100, 0, 500, 300, 1)
+  const result = applyCanvasOperations({
+    schemaVersion: 1,
+    nodes: [first, second],
+    edges: [],
+    viewport: { x: 0, y: 0, zoom: 0.1 },
+    settings: { showGrid: true, snapToGrid: false, layoutDirection: 'TB' },
+  }, [{ type: 'add_node', id: 'partial', nodeType: 'text', width: 640, x: 0, y: 0 }])
+  const created = result.document.nodes.find(node => node.id === 'partial')
+  assert.equal(created.width, 640)
+  assert.equal(created.height, 200)
+})
+
 test('direct creation sessions retain one viewport while duplicate and imports retain stored geometry', () => {
   const editor = readFileSync(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8')
   const renderer = readFileSync(new URL('../../src/app/core/main/canvas/nodes/canvas-nodes.tsx', import.meta.url), 'utf8')
