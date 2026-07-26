@@ -1,48 +1,38 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-05-collision-sessions",
+  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
   "status": "verified",
   "revision": 3,
   "done": [
-    "Implemented collision-safe draw, resize, move, rigid group and placement sessions.",
-    "Resolved independent review findings for viewport geometry, group copy ownership, async history authority and causal tests.",
-    "Removed dynamic callback seams exposed by final L2 analysis.",
-    "Passed focused, full Canvas, TypeScript, diff and L2 impact gates."
+    "Extracted the Task 6 SDD brief.",
+    "Configured the Task 6 contract.",
+    "Prepared and accepted bounded L2 visual-renderer context at graph revision db62eea35e713e30ddf7c41e.",
+    "Added screen-compensated selection, transient viewport snap guides and compatible text visual defaults.",
+    "Passed focused visual contract, full Canvas suite, TypeScript, production build, diff and L2 post-edit impact gates.",
+    "Removed the selected-text inline-shadow override and added a focused visual contract assertion."
   ],
   "changed_files": [
-    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-geometry-overlays.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/types/canvas.ts",
-    "scripts/tests/canvas-editor-collision-contract.test.mjs",
-    "scripts/tests/canvas-collision-sessions.test.mjs"
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "scripts/tests/canvas-node-visual-contract.test.mjs"
   ],
   "current_problem": null,
-  "next_action": "Begin Task 6 visual-state implementation.",
+  "next_action": "Begin Task 7 permanent canvas workspace implementation.",
   "must_keep_context": [
-    "Task 3 collision and spatial-index policies are load-bearing.",
-    "Task 4 nearest-free placement is load-bearing for materialized nodes.",
-    "Task 5 geometry-session state stays transient and every successful gesture creates at most one checkpoint."
+    "Task 5 transient node visual-state channels and collision-session behavior are load-bearing.",
+    "Selection, invalid, snap-guide and legacy-conflict state must stay outside CanvasNodeData and persistence.",
+    "Visual thickness and glow must remain stable in screen pixels across 10% to 600% zoom."
   ],
-  "discarded_context": [],
+  "discarded_context": [
+    "CanvasNodeStyleMenu callback dispatch remains an explicit manual context boundary rather than an L2 entrypoint."
+  ],
   "remaining_risks": [
-    "Large-canvas index rebuild and all-pairs legacy scoring remain a deferred performance minor.",
-    "Browser-level pointer capture and blur interaction remains part of integrated Windows acceptance."
+    "Turbopack emits existing repository configuration and legacy-build warnings during production output.",
+    "Browser-level visual inspection remains part of the later Windows acceptance pass."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": [
-    {
-      "relation": "callees",
-      "targets": [
-        "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
-        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
-      ],
-      "depth": 5,
-      "budget": 800,
-      "reason": "Finish the bounded pure collision/placement callee frontier while keeping the React editor as an explicit manual context boundary.",
-      "requested_by": "orchestrator",
-      "graph_revision": "c8eea77fe798be985cadae92",
-      "preflight_status": "accepted"
-    }
-  ]
+  "context_expansion_history": []
 }

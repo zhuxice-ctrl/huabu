@@ -1,50 +1,56 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-05-collision-sessions",
+  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
   "status": "passed",
-  "source_revision": "c9afe0a07d9c754b93034b820027a8475fa8039a",
+  "source_revision": "f40fd69b",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-editor-collision-contract.test.mjs scripts/tests/canvas-collision-sessions.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-node-visual-contract.test.mjs",
       "status": "passed",
-      "summary": "13 tests passed, 0 failed.",
+      "summary": "5 focused visual contract tests passed, 0 failed, including selected-text inline-shadow priority.",
       "exit_code": 0
     },
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "97 Canvas tests passed, 0 failed.",
+      "summary": "101 Canvas tests passed, 0 failed.",
       "exit_code": 0
     },
     {
-      "command": ".\\node_modules\\.bin\\tsc.cmd --noEmit",
+      "command": "npx tsc --noEmit",
       "status": "passed",
       "summary": "TypeScript completed without diagnostics.",
       "exit_code": 0
     },
     {
-      "command": "git diff --check -- <Task 5 files>",
+      "command": "node node_modules/next/dist/bin/next build --turbopack --experimental-build-mode compile",
+      "status": "passed",
+      "summary": "Turbopack compiled successfully, collected page data/traces and exported all 52 routes.",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
       "status": "passed",
       "summary": "No whitespace errors; repository LF-to-CRLF advisory only.",
       "exit_code": 0
     },
     {
-      "command": "codegraph_post_edit.py --no-rebuild --baseline <line-ending-normalized immutable baseline copy>",
+      "command": "codegraph_post_edit.py --baseline .codegraph/snapshots/db62eea35e713e30ddf7c41e.sqlite",
       "status": "passed",
-      "summary": "Impact passed with complete propagation, empty unexpected impact and no critical unresolved edges.",
+      "summary": "Impact passed with complete propagation, empty unexpected impact and no new critical unresolved edges.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Collision-safe draw, resize and move sessions cancel or commit atomically against newest authority.",
+      "criterion": "Exact selection, invalid, legacy-conflict, snap guide and warm-white text visual contracts are enforced.",
       "status": "passed",
-      "evidence": ["13/13 focused tests", "97/97 Canvas suite"]
+      "evidence": ["5/5 focused visual tests", "101/101 Canvas suite", "production Turbopack build"]
     },
     {
-      "criterion": "Rigid selection/group and all placement paths preserve geometry, ownership and one-checkpoint history.",
+      "criterion": "Task 5 collision/session behavior remains unchanged while visual state stays transient.",
       "status": "passed",
-      "evidence": ["causal group copy and async authority tests", "independent review fixes"]
+      "evidence": ["Canvas collision/session tests in complete Canvas suite", "static persistence boundary assertions"]
     },
     {
       "criterion": "L2 post-edit impact is bounded, complete and free of new critical edges.",
@@ -53,7 +59,7 @@
     }
   ],
   "passed": [
-    "Focused Task 5 tests",
+    "Focused Task 6 visual contract",
     "Complete Canvas suite",
     "TypeScript",
     "Diff check",
@@ -62,7 +68,7 @@
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Existing MODULE_TYPELESS_PACKAGE_JSON warnings remain repository-wide.",
-    "Browser-level pointer-capture and blur behavior remains for Task 21 Windows acceptance."
+    "Existing MODULE_TYPELESS_PACKAGE_JSON and Turbopack configuration warnings remain repository-wide.",
+    "Browser-level visual inspection remains for the later Windows acceptance pass."
   ]
 }

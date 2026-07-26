@@ -1,32 +1,26 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-05-collision-sessions",
+  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
   "status": "approved",
-  "reviewer": "independent Task 5 reviewer plus scoped controller/L2 verification",
-  "source_revision": "c9afe0a07d9c754b93034b820027a8475fa8039a",
+  "reviewer": "independent read-only Task 6 reviewer plus scoped independent re-review",
+  "source_revision": "f40fd69b",
   "review_basis": [
-    "task-5-brief.md",
-    "task-5-report.md",
-    "review-d219a68a..db8ab9b6.diff",
-    "review-db8ab9b6..c9afe0a0.diff",
+    "task-6-brief.md",
+    "task-6-report.md",
+    "review-46877401..c108ce4d.diff",
+    "task-6-independent-review.md",
+    "review-c108ce4d..f40fd69b.diff",
+    "task-6-fix-round-1-rereview.md",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json"
   ],
   "blocking_findings": [],
-  "non_blocking_findings": [
-    {
-      "id": "task5-performance-minor",
-      "severity": "non_blocking",
-      "issue": "Geometry index rebuild and all-pairs legacy scoring may run on non-geometry node identity changes.",
-      "expected_fix": "Measure during integrated performance acceptance and optimize by geometry signature or incremental index if needed.",
-      "evidence": "Independent Task 5 review Minor finding."
-    }
-  ],
+  "non_blocking_findings": [],
   "suggested_tests": [
-    "Run browser-level pointer capture, lost-capture and window blur interactions during Task 21 Windows acceptance."
+    "Confirm visual scale and selected-text glow at 10%, 65%, 100% and 600% during Task 21 Windows acceptance."
   ],
   "risk_notes": [
-    "All four independent Important findings were fixed with causal tests.",
-    "Final L2 evidence passed after documented line-ending-only baseline normalization; the immutable baseline snapshot was not modified."
+    "The independent Important finding about inline text-node shadow overriding selection was fixed in f40fd69b and independently re-reviewed as addressed.",
+    "Final L2 impact passed with no unexpected impact, no new critical unresolved edges and complete propagation."
   ]
 }
