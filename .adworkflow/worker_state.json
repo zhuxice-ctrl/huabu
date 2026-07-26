@@ -1,24 +1,31 @@
 {
   "schema": "ADworkflo.worker_state.v1",
   "task_id": "zeroxb-integrated-task-03-collision-policy",
-  "status": "in_progress",
-  "revision": 2,
+  "status": "verified",
+  "revision": 4,
   "done": [
-    "Configured the Task 3 implementation contract and extracted its SDD brief."
+    "Implemented pure viewport-normalized collision, snap, rigid sweep and legacy-conflict policies.",
+    "Implemented a deterministic non-persistent versioned spatial index.",
+    "Resolved stale snap ownership, invalid obstacle fail-open behavior and extreme-number overflow from the independent review.",
+    "Passed 19 focused tests, 72 canvas tests, TypeScript, diff and L2 impact gates.",
+    "Independent scoped re-review marked all findings addressed with no new Critical or Important breakage."
   ],
-  "changed_files": [],
+  "changed_files": [
+    "src/lib/canvas/collision-policy.ts",
+    "src/lib/canvas/spatial-index.ts",
+    "scripts/tests/canvas-collision-policy.test.mjs",
+    "scripts/tests/canvas-spatial-index.test.mjs"
+  ],
   "current_problem": null,
-  "next_action": "Prepare and accept bounded L2 context before dispatching the Task 3 implementer.",
+  "next_action": "Begin Task 4 deterministic nearest-free placement.",
   "must_keep_context": [
-    "Task 3 implements pure collision and spatial-index modules only.",
-    "Task 2 viewport sizing helpers define all screen-to-canvas threshold conversion.",
-    "Task 5 owns editor session integration.",
-    "No provider secret may be read, printed or changed."
+    "Task 3 pure policy APIs are load-bearing inputs for Tasks 4 and 5.",
+    "All collision thresholds derive from one supplied ViewportSnapshot.",
+    "Invalid movement geometry fails closed.",
+    "Task 5 owns React editor collision-session integration."
   ],
-  "discarded_context": [],
-  "remaining_risks": [
-    "Swept rigid-set motion and snap hysteresis are load-bearing for later editor integration."
-  ],
+  "discarded_context": ["The repository-wide module-type test warning is deferred as a non-blocking infrastructure concern."],
+  "remaining_risks": ["Native pointer feel remains for later Task 5 and Task 21 acceptance."],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": [
@@ -30,9 +37,7 @@
       ],
       "depth": 3,
       "budget": 240,
-      "reason": "Resolve the truncated frontier around the two pure geometry entrypoints without expanding through React canvas consumers.",
-      "requested_by": "orchestrator",
-      "graph_revision": "59b9f7d9114176daf13e170c",
+      "graph_revision": "20d3c813d8cc5c0428186083",
       "preflight_status": "accepted"
     }
   ]

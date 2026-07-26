@@ -1,12 +1,26 @@
 {
   "schema": "ADworkflo.verification_result.v1",
   "task_id": "zeroxb-integrated-task-03-collision-policy",
-  "status": "not_run",
-  "source_revision": null,
-  "commands": [],
-  "acceptance_criteria_coverage": [],
-  "passed": [],
+  "status": "passed",
+  "source_revision": "71be5a98d91f5222cd3b9646d424b4d728d018b5",
+  "commands": [
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-collision-policy.test.mjs scripts/tests/canvas-spatial-index.test.mjs", "status": "passed", "summary": "19/19 focused tests passed.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "72/72 canvas tests passed.", "exit_code": 0},
+    {"command": ".\\node_modules\\.bin\\tsc.cmd --noEmit", "status": "passed", "summary": "TypeScript passed without diagnostics.", "exit_code": 0},
+    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors; only checkout line-ending warnings.", "exit_code": 0},
+    {"command": "codegraph_post_edit.py --task-id zeroxb-integrated-task-03-collision-policy", "status": "passed", "summary": "Impact revision 28ad3d0dec66ea7eda9fd64a passed with no unexpected impact or critical unresolved edges.", "exit_code": 0}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "Viewport-normalized thresholds, solid classification, AABB normalization and conflict checks", "status": "passed", "evidence": ["canvas-collision-policy.test.mjs", "TypeScript"]},
+    {"criterion": "Independent active-edge snap state with deterministic tie-breaking and stale-owner release", "status": "passed", "evidence": ["deleted, moved and perpendicular-release regressions", "scoped re-review ADDRESSED"]},
+    {"criterion": "Swept rigid-set collision prevents tunnelling and fails closed on invalid geometry", "status": "passed", "evidence": ["one-pixel wall, four-normal, corner, tangent, rigid-gap and invalid-obstacle regressions"]},
+    {"criterion": "Legacy conflict scoring remains finite or fails closed", "status": "passed", "evidence": ["extreme finite rectangle and aggregate overflow regressions", "scoped re-review ADDRESSED"]},
+    {"criterion": "Versioned non-persistent spatial index", "status": "passed", "evidence": ["rebuild, upsert, remove, query, defensive-copy and version tests"]},
+    {"criterion": "High-risk L2 and independent review gates", "status": "passed", "evidence": ["accepted context_preflight", "passed impact_report", "task-3-fix-round-1-rereview.md"]}
+  ],
+  "passed": ["focused-tests", "canvas-suite", "typescript", "diff-check", "l2-impact", "independent-rereview"],
   "failed": [],
-  "not_run_reason": "Implementation has not started.",
-  "residual_risk": []
+  "not_run_reason": null,
+  "residual_risk": ["MODULE_TYPELESS_PACKAGE_JSON warnings remain a repository-level test-runner concern and do not affect results."],
+  "tdd_red_evidence": "Initial focused command failed with two ERR_MODULE_NOT_FOUND results before either module existed."
 }

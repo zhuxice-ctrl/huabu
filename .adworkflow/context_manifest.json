@@ -46,7 +46,7 @@
     "unrelated runtime modules"
   ],
   "open_questions": [],
-  "graph_revision": "59b9f7d9114176daf13e170c",
+  "graph_revision": "20d3c813d8cc5c0428186083",
   "context_confidence": 1.0,
   "preflight_status": "accepted",
   "semantic_slice": ".adworkflow/semantic_slice.json",
@@ -56,10 +56,12 @@
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/gesture-policy.ts",
     "src/lib/canvas/operations.ts",
     "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/spatial-index.ts",
     "src/lib/canvas/viewport-sizing.ts"
   ]
 }

@@ -1,0 +1,20 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "status": "verified",
+  "revision": 4,
+  "done": [
+    "Implemented and committed the four Task 3 source/test files.",
+    "Resolved all three Important review findings in fix round 1.",
+    "Passed focused, canvas, TypeScript, diff, L2 and independent re-review gates."
+  ],
+  "changed_files": ["src/lib/canvas/collision-policy.ts", "src/lib/canvas/spatial-index.ts", "scripts/tests/canvas-collision-policy.test.mjs", "scripts/tests/canvas-spatial-index.test.mjs"],
+  "current_problem": null,
+  "next_action": "Begin Task 4.",
+  "must_keep_context": ["Pure collision APIs and fail-closed geometry rules are load-bearing for later tasks."],
+  "discarded_context": ["Repository-level module-type warning is deferred."],
+  "remaining_risks": ["Editor integration and native feel remain for Tasks 5 and 21."],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}

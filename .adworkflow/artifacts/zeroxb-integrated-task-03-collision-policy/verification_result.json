@@ -1,0 +1,22 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "status": "passed",
+  "source_revision": "71be5a98d91f5222cd3b9646d424b4d728d018b5",
+  "commands": [
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-collision-policy.test.mjs scripts/tests/canvas-spatial-index.test.mjs", "status": "passed", "summary": "19/19 passed.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "72/72 passed.", "exit_code": 0},
+    {"command": ".\\node_modules\\.bin\\tsc.cmd --noEmit", "status": "passed", "summary": "Passed without diagnostics.", "exit_code": 0},
+    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors.", "exit_code": 0},
+    {"command": "codegraph_post_edit.py", "status": "passed", "summary": "L2 impact passed at revision 28ad3d0dec66ea7eda9fd64a.", "exit_code": 0}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "All Task 3 policy and spatial-index criteria", "status": "passed", "evidence": ["19 focused tests", "72 canvas tests", "TypeScript"]},
+    {"criterion": "Review and L2 gates", "status": "passed", "evidence": ["all findings addressed", "impact report passed"]}
+  ],
+  "passed": ["focused-tests", "canvas-suite", "typescript", "diff-check", "l2-impact", "independent-rereview"],
+  "failed": [],
+  "not_run_reason": null,
+  "residual_risk": ["Repository-level module-type warning is deferred."],
+  "tdd_red_evidence": "Initial focused tests failed because both new modules did not exist."
+}

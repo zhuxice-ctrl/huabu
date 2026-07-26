@@ -1,7 +1,7 @@
 {
   "schema": "ADworkflo.semantic_slice.v1",
   "status": "ready",
-  "graph_revision": "59b9f7d9114176daf13e170c",
+  "graph_revision": "20d3c813d8cc5c0428186083",
   "entrypoints": [
     "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
     "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
@@ -791,6 +791,7 @@
     "src/lib/audio.ts",
     "src/lib/bm25.ts",
     "src/lib/canvas/canvas-dnd.ts",
+    "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/file-format.ts",
     "src/lib/canvas/freehand.ts",
@@ -799,6 +800,7 @@
     "src/lib/canvas/relation-interaction.ts",
     "src/lib/canvas/relation-policy.ts",
     "src/lib/canvas/relation-routing.ts",
+    "src/lib/canvas/spatial-index.ts",
     "src/lib/canvas/startup-policy.ts",
     "src/lib/canvas/static-export.ts",
     "src/lib/canvas/templates.ts",
@@ -1020,71 +1022,20 @@
     "depth": 3,
     "budget": 240,
     "include_callers": false,
-    "additional_seeds": [
-      "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-      "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
-    ]
+    "additional_seeds": []
   },
-  "expansion_history": [
-    {
-      "schema": "ADworkflo.context_expansion_request.v1",
-      "task_id": "zeroxb-integrated-task-03-collision-policy",
-      "status": "pending",
-      "relation": "callees",
-      "targets": [
-        "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-        "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
-      ],
-      "depth": 3,
-      "budget": 240,
-      "reason": "Resolve the truncated frontier around the two pure geometry entrypoints without expanding through React canvas consumers.",
-      "requested_by": "orchestrator",
-      "source_graph_revision": "59b9f7d9114176daf13e170c",
-      "applied_slice_revision": null,
-      "target_resolutions": [
-        {
-          "target": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-          "status": "resolved_symbol",
-          "symbol_ids": [
-            "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function"
-          ]
-        },
-        {
-          "target": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
-          "status": "resolved_symbol",
-          "symbol_ids": [
-            "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
-          ]
-        }
-      ],
-      "applied": true
-    }
-  ],
-  "expansion_targets": [
-    {
-      "target": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-      "status": "resolved_symbol",
-      "symbol_ids": [
-        "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function"
-      ]
-    },
-    {
-      "target": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
-      "status": "resolved_symbol",
-      "symbol_ids": [
-        "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
-      ]
-    }
-  ],
+  "expansion_history": [],
   "predicted_impact_files": [
     "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/gesture-policy.ts",
     "src/lib/canvas/operations.ts",
     "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/spatial-index.ts",
     "src/lib/canvas/viewport-sizing.ts"
   ]
 }

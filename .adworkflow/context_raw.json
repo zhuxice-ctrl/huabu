@@ -48,6 +48,30 @@
       "distance": 0
     },
     {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:INITIAL_CANVAS_ZOOM:variable",
+      "qualified_name": "src.lib.canvas.viewport-sizing.INITIAL_CANVAS_ZOOM",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 3,
+      "end_line": 3,
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:MIN_CANVAS_ZOOM:variable",
+      "qualified_name": "src.lib.canvas.viewport-sizing.MIN_CANVAS_ZOOM",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 4,
+      "end_line": 4,
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:MAX_CANVAS_ZOOM:variable",
+      "qualified_name": "src.lib.canvas.viewport-sizing.MAX_CANVAS_ZOOM",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 5,
+      "end_line": 5,
+      "distance": 3
+    },
+    {
       "stable_id": "typescript:src.lib.canvas.viewport-sizing:ViewportSnapshot:interface",
       "qualified_name": "src.lib.canvas.viewport-sizing.ViewportSnapshot",
       "file": "src/lib/canvas/viewport-sizing.ts",
@@ -56,12 +80,44 @@
       "distance": 1
     },
     {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
+      "qualified_name": "src.lib.canvas.viewport-sizing.isFiniteNumber",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 20,
+      "end_line": 22,
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
+      "qualified_name": "src.lib.canvas.viewport-sizing.clamp",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 28,
+      "end_line": 30,
+      "distance": 3
+    },
+    {
       "stable_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
       "qualified_name": "src.lib.canvas.viewport-sizing.round",
       "file": "src/lib/canvas/viewport-sizing.ts",
       "start_line": 32,
       "end_line": 36,
       "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round.factor:variable",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round.factor",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 33,
+      "end_line": 33,
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round.result:variable",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round.result",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 34,
+      "end_line": 34,
+      "distance": 3
     },
     {
       "stable_id": "typescript:src.lib.canvas.viewport-sizing:round4:function",
@@ -78,6 +134,14 @@
       "start_line": 46,
       "end_line": 53,
       "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom.resolved:variable",
+      "qualified_name": "src.lib.canvas.viewport-sizing.normalizeZoom.resolved",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 47,
+      "end_line": 51,
+      "distance": 3
     },
     {
       "stable_id": "typescript:src.lib.canvas.viewport-sizing:snapshotZoom:function",
@@ -97,12 +161,37 @@
     }
   ],
   "likely_tests": [],
-  "warnings": [
-    "slice-truncated"
-  ],
-  "graph_revision": "59b9f7d9114176daf13e170c",
-  "confidence": 0.8,
+  "warnings": [],
+  "graph_revision": "20d3c813d8cc5c0428186083",
+  "confidence": 1.0,
   "unresolved_edges": [
+    {
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
+      "kind": "call",
+      "target": "Number.isFinite",
+      "line": 21,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
+      "kind": "call",
+      "target": "Math.min",
+      "line": 29,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
+      "kind": "call",
+      "target": "Math.max",
+      "line": 29,
+      "reason": "external-call",
+      "critical": 0
+    },
     {
       "file": "src/lib/canvas/viewport-sizing.ts",
       "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
@@ -122,111 +211,18 @@
       "critical": 0
     }
   ],
-  "boundary_symbols": [
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round.factor:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:round:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round.factor:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:round:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round.result:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:round:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round.result:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:round:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
-      "relation": "callee",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
-      "relation": "callee",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
-      "relation": "callee",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:INITIAL_CANVAS_ZOOM:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:INITIAL_CANVAS_ZOOM:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom.resolved:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:MIN_CANVAS_ZOOM:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:MAX_CANVAS_ZOOM:variable",
-      "relation": "reference",
-      "reason": "depth-limit",
-      "from": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function"
-    },
-    {
-      "reason": "item-budget",
-      "remaining_frontier": 0
-    }
-  ],
+  "boundary_symbols": [],
   "predicted_impact_files": [
     "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/gesture-policy.ts",
     "src/lib/canvas/operations.ts",
     "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/spatial-index.ts",
     "src/lib/canvas/viewport-sizing.ts"
   ]
 }
