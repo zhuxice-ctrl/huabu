@@ -40,7 +40,7 @@ export function LeftSidebar() {
   }))
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="h-full min-w-0 w-full flex flex-col">
       <Tabs value={leftSidebarTab} className="h-full w-full gap-0 overflow-hidden">
         <div className="flex h-12 w-full shrink-0 items-center justify-between border-b px-2">
           <ExpandableTabs

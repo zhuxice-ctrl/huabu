@@ -103,6 +103,10 @@ function isCanvasOpenTabPath(path: string): boolean {
   return path.startsWith('canvas://project/')
 }
 
+function isLegacyCanvasOpenTab(tab: OpenTabInfo): boolean {
+  return tab.kind === 'canvas' || isCanvasOpenTabPath(tab.path)
+}
+
 function isRecordOpenTab(tab?: OpenTabInfo | null): boolean {
   return !!tab && (tab.kind === 'record' || isRecordOpenTabPath(tab.path))
 }
@@ -545,13 +549,14 @@ const useArticleStore = create<NoteState>((set, get) => ({
   activeTabId: '',
   editorViewStates: {},
   setOpenTabs: async (tabs) => {
-    const keptPaths = new Set(tabs.map(tab => tab.path))
+    const documentTabs = tabs.filter(tab => !isLegacyCanvasOpenTab(tab))
+    const keptPaths = new Set(documentTabs.map(tab => tab.path))
     const nextEditorViewStates = Object.fromEntries(
       Object.entries(get().editorViewStates).filter(([path]) => keptPaths.has(path))
     )
-    set({ openTabs: tabs, editorViewStates: nextEditorViewStates })
+    set({ openTabs: documentTabs, editorViewStates: nextEditorViewStates })
     const store = await getStore();
-    await store.set('openTabs', tabs)
+    await store.set('openTabs', documentTabs)
   },
   setActiveTabId: async (id) => {
     set({ activeTabId: id })
@@ -559,6 +564,14 @@ const useArticleStore = create<NoteState>((set, get) => ({
     await store.set('activeTabId', id)
   },
   addTab: async (tab) => {
+    if (isLegacyCanvasOpenTab(tab)) {
+      const canvasId = tab.canvasId || tab.path.slice('canvas://project/'.length)
+      if (canvasId) {
+        const { default: useCanvasStore } = await import('./canvas')
+        useCanvasStore.getState().setActiveCanvasId(canvasId)
+      }
+      return
+    }
     const currentTabs = get().openTabs
     // Check if tab already exists
     const existingTab = currentTabs.find(t => t.path === tab.path)
@@ -762,8 +775,14 @@ const useArticleStore = create<NoteState>((set, get) => ({
     const store = await getStore();
     const tabs = await store.get<OpenTabInfo[]>('openTabs')
     const activeTabId = await store.get<string>('activeTabId')
-    const nextTabs = tabs || []
-    const nextActiveTabId = activeTabId || ''
+    const persistedTabs = tabs || []
+    const nextTabs = persistedTabs.filter(tab => !isLegacyCanvasOpenTab(tab))
+    const activeIndex = persistedTabs.findIndex(tab => tab.id === activeTabId)
+    const priorDocumentTab = activeIndex > 0
+      ? persistedTabs.slice(0, activeIndex).reverse().find(tab => !isLegacyCanvasOpenTab(tab))
+      : undefined
+    const persistedActiveTab = nextTabs.find(tab => tab.id === activeTabId)
+    const nextActiveTabId = persistedActiveTab?.id || priorDocumentTab?.id || nextTabs[0]?.id || ''
     const activeTab = nextTabs.find(tab => tab.id === nextActiveTabId)
     const nextActiveFilePath = getActiveFilePathForTab(activeTab)
 
@@ -775,6 +794,11 @@ const useArticleStore = create<NoteState>((set, get) => ({
     })
 
     await store.set('activeFilePath', nextActiveFilePath)
+    if (nextTabs.length !== persistedTabs.length) {
+      await store.set('openTabs', nextTabs)
+      await store.set('activeTabId', nextActiveTabId)
+      await store.save()
+    }
 
     if (nextActiveFilePath && isLikelyFilePath(nextActiveFilePath)) {
       get().readArticle(nextActiveFilePath)

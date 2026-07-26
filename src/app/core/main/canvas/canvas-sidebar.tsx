@@ -54,7 +54,6 @@ import { cn } from '@/lib/utils'
 import useCanvasStore from '@/stores/canvas'
 import type { CanvasSortMode } from '@/stores/canvas'
 import type { CanvasProject, CanvasProjectType } from '@/types/canvas'
-import useArticleStore from '@/stores/article'
 import {
   getAutoDataSyncState,
   isAutoDataSyncProviderConfigured,
@@ -62,7 +61,6 @@ import {
   type AutoDataSyncState,
 } from '@/lib/sync/auto-data-sync-queue'
 import { uploadCanvas } from '@/lib/sync/canvas-sync'
-import { createCanvasTab, getCanvasTabPath } from './canvas-tab'
 import { setCanvasDragData } from '@/lib/canvas/canvas-dnd'
 import { canvasDocumentToSvg } from '@/lib/canvas/static-export'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
@@ -153,7 +151,7 @@ export function CanvasActions() {
   const setSortMode = useCanvasStore(state => state.setSortMode)
   const trashMode = useCanvasStore(state => state.trashMode)
   const setTrashMode = useCanvasStore(state => state.setTrashMode)
-  const addTab = useArticleStore(state => state.addTab)
+  const setActiveCanvasId = useCanvasStore(state => state.setActiveCanvasId)
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
@@ -167,7 +165,7 @@ export function CanvasActions() {
 
   const handleCreate = async (canvasType: CanvasProjectType) => {
     const project = await createProject(canvasType, t(`templates.${canvasType}`))
-    if (project) await addTab(createCanvasTab(project))
+    if (project) setActiveCanvasId(project.id)
   }
 
   const changeViewMode = (mode: string) => {
@@ -200,7 +198,7 @@ export function CanvasActions() {
         : parseCanvasProjectFile(source)
       const project = await createProjectFromDocument(imported.document, imported.title, imported.canvasType)
       if (project) {
-        await addTab(createCanvasTab(project))
+        setActiveCanvasId(project.id)
         toast.success(t('import.success'))
       }
     } catch (error) {
@@ -316,10 +314,7 @@ export function CanvasSidebar() {
   const setSortMode = useCanvasStore(state => state.setSortMode)
   const trashMode = useCanvasStore(state => state.trashMode)
   const setTrashMode = useCanvasStore(state => state.setTrashMode)
-  const addTab = useArticleStore(state => state.addTab)
-  const removeTab = useArticleStore(state => state.removeTab)
-  const openTabs = useArticleStore(state => state.openTabs)
-  const setOpenTabs = useArticleStore(state => state.setOpenTabs)
+  const setActiveCanvasId = useCanvasStore(state => state.setActiveCanvasId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const [pendingDelete, setPendingDelete] = useState<CanvasProject | null>(null)
@@ -419,17 +414,17 @@ export function CanvasSidebar() {
 
   const handleOpen = async (id: string) => {
     const project = await openProject(id)
-    if (project) await addTab(createCanvasTab(project))
+    if (project) setActiveCanvasId(project.id)
   }
 
   const handleCreate = async (canvasType: CanvasProjectType = 'blank') => {
     const project = await createProject(canvasType, t(`templates.${canvasType}`))
-    if (project) await addTab(createCanvasTab(project))
+    if (project) setActiveCanvasId(project.id)
   }
 
   const handleRestore = async (id: string) => {
     const project = await restoreProject(id)
-    if (project) await addTab(createCanvasTab(project))
+    if (project) setActiveCanvasId(project.id)
   }
 
   const handleDuplicate = async (project: CanvasProject) => {
@@ -437,15 +432,13 @@ export function CanvasSidebar() {
       project.id,
       t('duplicateTitle', { title: project.title })
     )
-    if (duplicate) await addTab(createCanvasTab(duplicate))
+    if (duplicate) setActiveCanvasId(duplicate.id)
   }
 
   const handleDelete = async (id: string) => {
     if (processingCanvas) return
     const syncConfigured = await isAutoDataSyncProviderConfigured()
     if (syncConfigured) setProcessingCanvas({ id, action: 'delete' })
-    const tabId = getCanvasTabPath(id)
-    const wasActive = useArticleStore.getState().activeTabId === tabId
     try {
       const result = await deleteProject(id, syncConfigured)
       if (result === 'synced') {
@@ -453,11 +446,7 @@ export function CanvasSidebar() {
       } else if (result === 'pending') {
         toast.error(t('manager.sync.failed'))
       }
-      await removeTab(tabId)
-      if (wasActive) {
-        await useArticleStore.getState().setActiveTabId('')
-        await useArticleStore.getState().setActiveFilePath('')
-      }
+      if (activeCanvasId === id) setActiveCanvasId(null)
     } finally {
       setProcessingCanvas(null)
     }
@@ -481,11 +470,6 @@ export function CanvasSidebar() {
     if (!editingId) return
     const normalizedTitle = editingTitle.trim()
     await renameProject(editingId, normalizedTitle)
-    if (normalizedTitle) {
-      await setOpenTabs(openTabs.map(tab => (
-        tab.canvasId === editingId ? { ...tab, name: normalizedTitle } : tab
-      )))
-    }
     setEditingId(null)
   }
 

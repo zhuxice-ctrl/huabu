@@ -5,7 +5,6 @@ import { Store } from '@tauri-apps/plugin-store'
 import { chooseStartupCanvasId } from '@/lib/canvas/startup-policy'
 import useArticleStore from '@/stores/article'
 import useCanvasStore from '@/stores/canvas'
-import { createCanvasTab } from './canvas-tab'
 import { initAllDatabases } from '@/db'
 
 export function CanvasStartupController({ children }: { children: ReactNode }) {
@@ -17,10 +16,8 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         await initAllDatabases()
-        await Promise.all([
-          useArticleStore.getState().initOpenTabs(),
-          useCanvasStore.getState().loadProjects(),
-        ])
+        await useArticleStore.getState().initOpenTabs()
+        await useCanvasStore.getState().loadProjects()
 
         const store = await Store.load('store.json')
         const lastCanvasId = await store.get<string>('lastCanvasId') || null
@@ -34,7 +31,7 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
         if (project) {
           await useCanvasStore.getState().openProject(project.id)
-          await useArticleStore.getState().addTab(createCanvasTab(project))
+          useCanvasStore.getState().setActiveCanvasId(project.id)
           await store.set('lastCanvasId', project.id)
           await store.save()
         }
