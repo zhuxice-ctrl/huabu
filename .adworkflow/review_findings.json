@@ -1,24 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-03-collision-policy",
-  "status": "approved",
-  "reviewer": "independent task reviewer and scoped fix re-reviewer",
-  "source_revision": "71be5a98d91f5222cd3b9646d424b4d728d018b5",
-  "review_basis": [
-    "Task 3 brief, implementation report and full review package",
-    "Scoped fix package 6b500096..71be5a98",
-    "Accepted L2 context preflight and passed post-edit impact report",
-    "19 focused tests, 72 canvas tests, TypeScript and diff check"
-  ],
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
+  "status": "not_reviewed",
+  "reviewer": null,
+  "source_revision": null,
+  "review_basis": [],
   "blocking_findings": [],
-  "non_blocking_findings": [
-    {"id": "module-type-warning", "severity": "non_blocking", "issue": "Direct TypeScript test imports emit MODULE_TYPELESS_PACKAGE_JSON warnings.", "expected_fix": "Align the test runner or module configuration in a later authorized infrastructure task.", "evidence": "All 72 canvas tests and TypeScript checks pass; the warning predates this task pattern."}
-  ],
-  "suggested_tests": ["Exercise native pointer collision sessions after Task 5 integrates these pure policies."],
-  "risk_notes": [
-    "The initial review found three Important edge cases; fix round 1 addressed all three and added behavioral regressions.",
-    "The scoped re-review found no new Critical or Important breakage.",
-    "Runtime one-snapshot integration is intentionally outside Task 3 and is owned by Task 5.",
-    "No credential, persistence, dependency or UI file was touched."
-  ]
+  "non_blocking_findings": [],
+  "suggested_tests": [],
+  "risk_notes": []
 }

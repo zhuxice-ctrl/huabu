@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
   "status": "accepted",
-  "graph_revision": "20d3c813d8cc5c0428186083",
-  "slice_revision": "20d3c813d8cc5c0428186083",
+  "graph_revision": "28ad3d0dec66ea7eda9fd64a",
+  "slice_revision": "28ad3d0dec66ea7eda9fd64a",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

@@ -1,44 +1,16 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-03-collision-policy",
-  "status": "verified",
-  "revision": 4,
-  "done": [
-    "Implemented pure viewport-normalized collision, snap, rigid sweep and legacy-conflict policies.",
-    "Implemented a deterministic non-persistent versioned spatial index.",
-    "Resolved stale snap ownership, invalid obstacle fail-open behavior and extreme-number overflow from the independent review.",
-    "Passed 19 focused tests, 72 canvas tests, TypeScript, diff and L2 impact gates.",
-    "Independent scoped re-review marked all findings addressed with no new Critical or Important breakage."
-  ],
-  "changed_files": [
-    "src/lib/canvas/collision-policy.ts",
-    "src/lib/canvas/spatial-index.ts",
-    "scripts/tests/canvas-collision-policy.test.mjs",
-    "scripts/tests/canvas-spatial-index.test.mjs"
-  ],
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
+  "status": "in_progress",
+  "revision": 1,
+  "done": ["Configured the Task 4 contract and extracted its SDD brief."],
+  "changed_files": [],
   "current_problem": null,
-  "next_action": "Begin Task 4 deterministic nearest-free placement.",
-  "must_keep_context": [
-    "Task 3 pure policy APIs are load-bearing inputs for Tasks 4 and 5.",
-    "All collision thresholds derive from one supplied ViewportSnapshot.",
-    "Invalid movement geometry fails closed.",
-    "Task 5 owns React editor collision-session integration."
-  ],
-  "discarded_context": ["The repository-wide module-type test warning is deferred as a non-blocking infrastructure concern."],
-  "remaining_risks": ["Native pointer feel remains for later Task 5 and Task 21 acceptance."],
+  "next_action": "Prepare and accept bounded L2 context before implementation dispatch.",
+  "must_keep_context": ["Task 3 collision policies are load-bearing.", "Every placement operation uses one supplied ViewportSnapshot.", "Task 5 owns editor integration."],
+  "discarded_context": [],
+  "remaining_risks": ["Candidate ordering and search bounds must remain deterministic under dense canvases."],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": [
-    {
-      "relation": "callees",
-      "targets": [
-        "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-        "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
-      ],
-      "depth": 3,
-      "budget": 240,
-      "graph_revision": "20d3c813d8cc5c0428186083",
-      "preflight_status": "accepted"
-    }
-  ]
+  "context_expansion_history": []
 }

@@ -1,42 +1,41 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
   "context_level": "L2-semantic-codegraph",
   "read_first": [
+    "src/lib/canvas/collision-policy.ts",
+    "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/gesture-policy.ts",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-4-brief.md",
     "src/lib/canvas/viewport-sizing.ts",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-3-brief.md",
-    "src/types/canvas.ts",
-    "scripts/tests/canvas-viewport-sizing.test.mjs",
-    "scripts/tests/canvas-gesture-policy.test.mjs"
+    "src/lib/canvas/spatial-index.ts",
+    "scripts/tests/canvas-collision-policy.test.mjs",
+    "scripts/tests/canvas-content-ingest.test.mjs"
   ],
   "relevant_symbols": [
-    "src.lib.canvas.gesture-policy.CanvasRect (src/lib/canvas/gesture-policy.ts:5)",
-    "src.lib.canvas.gesture-policy.rectanglesIntersect (src/lib/canvas/gesture-policy.ts:65)",
-    "src.lib.canvas.viewport-sizing.INITIAL_CANVAS_ZOOM (src/lib/canvas/viewport-sizing.ts:3)",
-    "src.lib.canvas.viewport-sizing.MIN_CANVAS_ZOOM (src/lib/canvas/viewport-sizing.ts:4)",
-    "src.lib.canvas.viewport-sizing.MAX_CANVAS_ZOOM (src/lib/canvas/viewport-sizing.ts:5)",
-    "src.lib.canvas.viewport-sizing.ViewportSnapshot (src/lib/canvas/viewport-sizing.ts:11)",
-    "src.lib.canvas.viewport-sizing.isFiniteNumber (src/lib/canvas/viewport-sizing.ts:20)",
-    "src.lib.canvas.viewport-sizing.clamp (src/lib/canvas/viewport-sizing.ts:28)",
-    "src.lib.canvas.viewport-sizing.round (src/lib/canvas/viewport-sizing.ts:32)",
-    "src.lib.canvas.viewport-sizing.round.factor (src/lib/canvas/viewport-sizing.ts:33)",
-    "src.lib.canvas.viewport-sizing.round.result (src/lib/canvas/viewport-sizing.ts:34)",
-    "src.lib.canvas.viewport-sizing.round4 (src/lib/canvas/viewport-sizing.ts:38)",
-    "src.lib.canvas.viewport-sizing.normalizeZoom (src/lib/canvas/viewport-sizing.ts:46)",
-    "src.lib.canvas.viewport-sizing.normalizeZoom.resolved (src/lib/canvas/viewport-sizing.ts:47)",
-    "src.lib.canvas.viewport-sizing.snapshotZoom (src/lib/canvas/viewport-sizing.ts:60)",
-    "src.lib.canvas.viewport-sizing.screenDistanceToCanvas (src/lib/canvas/viewport-sizing.ts:95)"
+    "src.lib.canvas.collision-policy.CollisionThresholds (src/lib/canvas/collision-policy.ts:10)",
+    "src.lib.canvas.collision-policy.isFiniteNumber (src/lib/canvas/collision-policy.ts:97)",
+    "src.lib.canvas.collision-policy.validThresholds (src/lib/canvas/collision-policy.ts:101)",
+    "src.lib.canvas.collision-policy.normalizeAabb (src/lib/canvas/collision-policy.ts:191)",
+    "src.lib.canvas.collision-policy.normalizeAabb.x2 (src/lib/canvas/collision-policy.ts:194)",
+    "src.lib.canvas.collision-policy.normalizeAabb.y2 (src/lib/canvas/collision-policy.ts:195)",
+    "src.lib.canvas.collision-policy.conflicts (src/lib/canvas/collision-policy.ts:206)",
+    "src.lib.canvas.collision-policy.conflicts.normalizedCandidate (src/lib/canvas/collision-policy.ts:211)",
+    "src.lib.canvas.collision-policy.conflicts.normalizedObstacle (src/lib/canvas/collision-policy.ts:212)",
+    "src.lib.canvas.collision-policy.conflicts.overlapX (src/lib/canvas/collision-policy.ts:215)",
+    "src.lib.canvas.collision-policy.conflicts.overlapY (src/lib/canvas/collision-policy.ts:219)",
+    "src.lib.canvas.content-ingest.offsetIngestDrafts (src/lib/canvas/content-ingest.ts:121)",
+    "src.lib.canvas.gesture-policy.CanvasRect (src/lib/canvas/gesture-policy.ts:5)"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-    "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+    "typescript:src.lib.canvas.content-ingest:offsetIngestDrafts:function",
+    "typescript:src.lib.canvas.collision-policy:conflicts:function"
   ],
   "likely_tests": [],
   "do_not_touch": [
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/canvas/content-ingest.ts",
+    "src/lib/agent",
     "main branch",
     "remote repositories",
     "release artifacts",
@@ -46,22 +45,18 @@
     "unrelated runtime modules"
   ],
   "open_questions": [],
-  "graph_revision": "20d3c813d8cc5c0428186083",
+  "graph_revision": "28ad3d0dec66ea7eda9fd64a",
   "context_confidence": 1.0,
   "preflight_status": "accepted",
   "semantic_slice": ".adworkflow/semantic_slice.json",
   "context_preflight": ".adworkflow/context_preflight.json",
   "predicted_impact_files": [
-    "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/agent/tool-registry.ts",
     "src/lib/agent/tools/canvas-tools.ts",
     "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/content-ingest.ts",
-    "src/lib/canvas/gesture-policy.ts",
-    "src/lib/canvas/operations.ts",
-    "src/lib/canvas/relation-interaction.ts",
-    "src/lib/canvas/spatial-index.ts",
-    "src/lib/canvas/viewport-sizing.ts"
+    "src/lib/canvas/operations.ts"
   ]
 }

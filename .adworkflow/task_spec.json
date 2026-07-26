@@ -1,46 +1,45 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
   "task_type": "code",
-  "goal": "Implement Task 3 of the approved integrated plan: pure solid-entity collision, snapping, swept rigid-set movement and a non-persistent versioned spatial index.",
+  "goal": "Implement Task 4 deterministic nearest-free placement, vertical ingest stacking and rigid-copy placement using the completed viewport and collision policies.",
   "non_goals": [
-    "Do not integrate collision sessions into the React canvas editor; that belongs to Task 5.",
-    "Do not implement nearest-free placement; that belongs to Task 4.",
+    "Do not integrate live move, resize or draw collision sessions into the React editor; that belongs to Task 5.",
+    "Do not change relation routing, AI behavior, chat, credentials, persistence, packaging or release behavior.",
     "Do not add or upgrade dependencies.",
-    "Do not change chat, AI runtime, credentials, persistence, packaging or release behavior.",
     "Do not read, print or modify provider credentials."
   ],
   "acceptance_criteria": [
-    "Collision thresholds convert 6px safety gap, 8px snap entry, 14px snap break and 0.25px epsilon through one captured viewport snapshot.",
-    "Solid classification excludes freehand and group nodes while treating unknown future card types as solid.",
-    "AABB normalization rejects non-finite geometry and collision checks apply the safety expansion and epsilon contract.",
-    "Active-edge snapping supports independent x/y hysteresis with deterministic node-ID tie-breaking.",
-    "Swept rigid-set movement chooses earliest contact, prevents tunnelling through a one-pixel corridor and performs at most four deterministic axis-sliding passes.",
-    "Legacy-conflict scoring, rigid multi-select rectangles and finite-number rejection follow the approved pure-policy contract.",
-    "CanvasSpatialIndex supports rebuild, upsert, remove and query with geometryVersion records and a monotonically increasing version.",
-    "Focused collision and spatial-index tests, the canvas suite, TypeScript check and diff check pass.",
+    "Original target placement succeeds without translation when it is free.",
+    "Ingest drafts stack vertically with a six-screen-pixel gap and compact after resource failures.",
+    "Rigid-copy placement preserves relative member geometry and rejects sources that already overlap.",
+    "Repeated placement uses a 32-screen-pixel offset while all distance decisions use one supplied ViewportSnapshot.",
+    "Best-first candidate ordering is deterministic with up, right, down, left ties and node-ID tie-breaking.",
+    "Search stops at a 2400-screen-pixel radius and 4096 candidates by default and returns an explicit no-space result.",
+    "The former 28px diagonal cascade is removed or only wraps the new vertical stack behavior; no call site retains overlap placement.",
+    "Focused placement and ingest tests, the complete canvas suite, TypeScript and diff checks pass.",
     "The implementation is committed and independently reviewed for spec compliance and task quality."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/canvas/collision-policy.ts",
-    "src/lib/canvas/spatial-index.ts",
-    "scripts/tests/canvas-collision-policy.test.mjs",
-    "scripts/tests/canvas-spatial-index.test.mjs",
+    "src/lib/canvas/placement-policy.ts",
+    "src/lib/canvas/content-ingest.ts",
+    "scripts/tests/canvas-placement-policy.test.mjs",
+    "scripts/tests/canvas-content-ingest.test.mjs",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
-    ".adworkflow/artifacts/zeroxb-integrated-task-03-collision-policy/worker_state.json",
-    ".adworkflow/artifacts/zeroxb-integrated-task-03-collision-policy/verification_result.json",
-    ".adworkflow/artifacts/zeroxb-integrated-task-03-collision-policy/review_findings.json"
+    ".adworkflow/artifacts/zeroxb-integrated-task-04-nearest-free-placement/worker_state.json",
+    ".adworkflow/artifacts/zeroxb-integrated-task-04-nearest-free-placement/verification_result.json",
+    ".adworkflow/artifacts/zeroxb-integrated-task-04-nearest-free-placement/review_findings.json"
   ],
   "do_not_touch": [
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/canvas/content-ingest.ts",
+    "src/lib/agent",
     "main branch",
     "remote repositories",
     "release artifacts",
@@ -50,25 +49,26 @@
     "unrelated runtime modules"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-    "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+    "typescript:src.lib.canvas.content-ingest:offsetIngestDrafts:function",
+    "typescript:src.lib.canvas.collision-policy:conflicts:function"
   ],
   "context_sources": [
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-3-brief.md",
-    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md Task 3",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-4-brief.md",
+    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md Task 4",
     "docs/superpowers/specs/2026-07-25-solid-block-collision-design.md",
-    "src/types/canvas.ts",
     "src/lib/canvas/viewport-sizing.ts",
-    "src/lib/canvas/gesture-policy.ts",
-    "scripts/tests/canvas-viewport-sizing.test.mjs",
-    "scripts/tests/canvas-gesture-policy.test.mjs"
+    "src/lib/canvas/collision-policy.ts",
+    "src/lib/canvas/spatial-index.ts",
+    "src/lib/canvas/content-ingest.ts",
+    "scripts/tests/canvas-collision-policy.test.mjs",
+    "scripts/tests/canvas-content-ingest.test.mjs"
   ],
   "notes": [
     "Use fixed UTF-8 I/O for every non-ASCII read, search, edit and test output.",
-    "Follow strict TDD and record the expected missing-module failures before implementation.",
-    "Keep both new modules pure, deterministic and independent of React and persistent stores.",
-    "Use the Task 2 viewport sizing contract as the only screen-to-canvas threshold conversion boundary.",
+    "Follow strict TDD and record the initial focused failure before implementation.",
+    "Keep placement-policy pure and deterministic; do not add React or persistence dependencies.",
+    "Reuse Task 3 collision normalization and fail-closed rules rather than duplicating conflicting geometry semantics.",
     "Do not expose or change configured provider secrets."
   ],
-  "implementation_owner": "task-03-implementer"
+  "implementation_owner": "task-04-implementer"
 }
