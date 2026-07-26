@@ -92,7 +92,6 @@ interface MarkState {
   setTrashState: (flag: boolean, options?: { deferFetch?: boolean }) => Promise<void>
 
   marks: Mark[]
-  referenceMarksAuthoritative: boolean
   updateMark: (mark: Mark) => Promise<void>
   setMarks: (marks: Mark[]) => void
   fetchMarks: () => Promise<void>
@@ -164,7 +163,6 @@ const useMarkStore = create<MarkState>((set, get) => ({
   },
 
   marks: [],
-  referenceMarksAuthoritative: false,
   updateMark: async (mark) => {
     set((state) => {
       return {
@@ -227,7 +225,7 @@ const useMarkStore = create<MarkState>((set, get) => ({
         content: item.content || ''
       }
     }).filter((item) => item.deleted === 0)
-    set({ allMarks: decodeRes, referenceMarksAuthoritative: true })
+    set({ allMarks: decodeRes })
   },
 
   queues: [],

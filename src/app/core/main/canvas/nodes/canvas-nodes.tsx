@@ -222,7 +222,7 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
   )
 })
 
-export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
+export const NoteCanvasNode = memo(function ({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   const { updateNodeData, deleteElements } = useReactFlow<FlowCanvasNode>()
   const filePath = data.filePath || ''
   const sourceNoteId = data.sourceNoteId
@@ -240,7 +240,7 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
           let plan = planNoteReferenceRecordOpen({
             sourceNoteId,
             marks,
-            referenceMarksAuthoritative: markStore.referenceMarksAuthoritative,
+            referenceMarksAuthoritative: false,
             recordPath,
             openTabs: articleStore.openTabs,
           })
@@ -293,7 +293,7 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
                   const markStore = useMarkStore.getState()
                   let marks = mergeNoteReferenceMarks(markStore.allMarks, markStore.marks)
                   let source = marks.find(mark => String(mark.id) === nextId.trim())
-                  if (!source && !markStore.referenceMarksAuthoritative) {
+                  if (!source) {
                     try {
                       const authoritative = normalizeLiveNoteReferenceMarks(await getAllMarks())
                       marks = mergeNoteReferenceMarks(authoritative, markStore.marks)

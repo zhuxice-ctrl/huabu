@@ -15,6 +15,7 @@ const markSource = read('src/app/core/main/mark/mark-item.tsx')
 const popoverSource = read('src/app/core/main/mark/mark-preview-popover.tsx')
 const editorSource = read('src/app/core/main/canvas/canvas-editor.tsx')
 const nodesSource = read('src/app/core/main/canvas/nodes/canvas-nodes.tsx')
+const markStoreSource = read('src/stores/mark.ts')
 
 test('mark previews observe the accessible timing and drag separates opening from dropping', () => {
   assert.match(markSource, /400/)
@@ -55,4 +56,8 @@ test('reference nodes open record tabs, expose a missing-source state, and remov
   assert.match(nodesSource, /createRecordTab/)
   assert.match(nodesSource, /sourceNoteId/)
   assert.doesNotMatch(nodesSource, /delMark\(|deleteMarks\(/)
+  assert.doesNotMatch(markStoreSource, /referenceMarksAuthoritative/)
+  assert.match(editorSource, /let observedAllMarks = initialStore\.allMarks/)
+  assert.match(editorSource, /markStore\.allMarks !== observedAllMarks/)
+  assert.match(nodesSource, /memo\(function \(\{ id, data, selected \}/)
 })

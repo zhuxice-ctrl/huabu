@@ -1127,13 +1127,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   useEffect(() => {
     const initialStore = useMarkStore.getState()
     let authoritativeMarks = initialStore.allMarks
+    let observedAllMarks = initialStore.allMarks
     let partialMarks = initialStore.marks
-    let referenceMarksAuthoritative = initialStore.referenceMarksAuthoritative
+    let referenceMarksAuthoritative = false
     const initialNodes = latestNodesRef.current
     const initialRefresh = refreshNoteReferences(
       initialNodes as CanvasNode[],
       mergeNoteReferenceMarks(authoritativeMarks, partialMarks),
-      { allowMissing: referenceMarksAuthoritative },
+      { allowMissing: false },
     ) as FlowCanvasNode[]
     if (initialRefresh.some((node, index) => (
       node !== initialNodes[index] && JSON.stringify(node.data) !== JSON.stringify(initialNodes[index]?.data)
@@ -1157,7 +1158,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
 
     const unsubscribe = useMarkStore.subscribe(function (markStore) {
       partialMarks = markStore.marks
-      if (markStore.referenceMarksAuthoritative) {
+      if (markStore.allMarks !== observedAllMarks) {
+        observedAllMarks = markStore.allMarks
         authoritativeMarks = markStore.allMarks
         referenceMarksAuthoritative = true
       }
