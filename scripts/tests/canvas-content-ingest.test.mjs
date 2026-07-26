@@ -6,6 +6,7 @@ import {
   estimateTextBlockSize,
   materializeIngestDraft,
   offsetIngestDrafts,
+  stackIngestDrafts,
   canvasFontSizeForScreenInput,
   screenFontSizeForCanvasFont,
 } from '../../src/lib/canvas/content-ingest.ts'
@@ -34,10 +35,36 @@ test('sanitized html falls back to text and empty input creates nothing', () => 
   assert.deepEqual(draftsFromTransfer({ files: [], html: '', text: '   ' }), [])
 })
 
-test('multiple drafts cascade by 28 pixels', () => {
+test('multiple drafts stack vertically with a six-screen-pixel gap', () => {
+  const snapshot = captureViewportSnapshot({
+    viewport: { x: 0, y: 0, zoom: 1 },
+    containerRect: { left: 0, top: 0 },
+  })
+  const drafts = [
+    materializeIngestDraft({ kind: 'text', text: 'a', screenSize: { width: 100, height: 40 } }, snapshot),
+    materializeIngestDraft({ kind: 'link', url: 'https://example.com', label: 'x', screenSize: { width: 100, height: 20 } }, snapshot),
+  ]
+  assert.deepEqual(stackIngestDrafts(drafts, snapshot).map(item => item.position), [
+    { x: 0, y: 0 },
+    { x: 0, y: 46 },
+  ])
+})
+
+test('resource failures are compacted before vertical stacking', () => {
+  const snapshot = captureViewportSnapshot({
+    viewport: { x: 0, y: 0, zoom: 1 },
+    containerRect: { left: 0, top: 0 },
+  })
+  const valid = materializeIngestDraft({ kind: 'text', text: 'a', screenSize: { width: 100, height: 40 } }, snapshot)
+  const failed = { ...valid, canvasSize: { width: Number.NaN, height: 40 } }
+  const result = stackIngestDrafts([failed, valid], snapshot)
+  assert.deepEqual(result.map(item => item.position), [{ x: 0, y: 0 }])
+})
+
+test('offset compatibility wrapper uses 32-screen-pixel repeat offsets without diagonal cascade', () => {
   assert.deepEqual(offsetIngestDrafts([{ kind: 'text' }, { kind: 'link' }], { x: 100, y: 80 }), [
     { draft: { kind: 'text' }, position: { x: 100, y: 80 } },
-    { draft: { kind: 'link' }, position: { x: 128, y: 108 } },
+    { draft: { kind: 'link' }, position: { x: 100, y: 112 } },
   ])
 })
 

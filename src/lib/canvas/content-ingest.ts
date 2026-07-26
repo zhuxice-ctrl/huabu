@@ -6,6 +6,7 @@ import {
   screenSizeToCanvas,
   type ViewportSnapshot,
 } from './viewport-sizing.ts'
+import { stackIngestDrafts, type PositionedCanvasDraft } from './placement-policy.ts'
 
 const DEFAULT_SCREEN_FONT_SIZE = 15
 const MIN_CONTENT_SCALE = 0.1667
@@ -121,9 +122,12 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
 export function offsetIngestDrafts<T>(drafts: T[], origin: { x: number; y: number }) {
   return drafts.map((draft, index) => ({
     draft,
-    position: { x: origin.x + index * 28, y: origin.y + index * 28 },
+    position: { x: origin.x, y: origin.y + index * 32 },
   }))
 }
+
+export type { PositionedCanvasDraft }
+export { stackIngestDrafts }
 
 const AI_FALLBACK_SIZE: Record<CanvasNodeType, CanvasSize> = {
   process: { width: 220, height: 96 },
