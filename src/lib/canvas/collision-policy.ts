@@ -110,6 +110,9 @@ function validThresholds(thresholds: CollisionThresholds): boolean {
 }
 
 function round4(value: number): number {
+  if (!isFiniteNumber(value) || Math.abs(value) > Number.MAX_SAFE_INTEGER / 10_000) {
+    return Object.is(value, -0) ? 0 : value
+  }
   const rounded = Math.round((value + Number.EPSILON) * 10_000) / 10_000
   return Object.is(rounded, -0) ? 0 : rounded
 }
@@ -153,6 +156,23 @@ function intervalDistance(aMin: number, aMax: number, bMin: number, bMax: number
   if (aMax < bMin) return bMin - aMax
   if (bMax < aMin) return aMin - bMax
   return 0
+}
+
+function isPerpendicularlyEligible(
+  axis: 'x' | 'y',
+  candidate: CanvasRect,
+  obstacle: CanvasRect,
+  thresholds: CollisionThresholds,
+): boolean {
+  const perpendicularAxis = axis === 'x' ? 'y' : 'x'
+  const candidateMin = perpendicularAxis === 'x' ? candidate.x : candidate.y
+  const candidateMax = candidateMin
+    + (perpendicularAxis === 'x' ? candidate.width : candidate.height)
+  const obstacleMin = perpendicularAxis === 'x' ? obstacle.x : obstacle.y
+  const obstacleMax = obstacleMin
+    + (perpendicularAxis === 'x' ? obstacle.width : obstacle.height)
+  return intervalDistance(candidateMin, candidateMax, obstacleMin, obstacleMax)
+    <= thresholds.safetyGap + thresholds.snapEntry
 }
 
 export function thresholdsForSnapshot(snapshot: ViewportSnapshot): CollisionThresholds {
@@ -216,30 +236,29 @@ function snapForAxis(
   const rawEdge = rectEdge(candidate, activeEdge, axis)
 
   if (previous?.edge === activeEdge) {
-    const penetration = previous.direction * (rawEdge - previous.boundary)
-    if (penetration <= thresholds.snapBreak && penetration >= -thresholds.snapEntry) {
-      return previous
+    const owner = inputObstacleById(obstacles, previous.obstacleId)
+    if (owner && isPerpendicularlyEligible(axis, candidate, owner.rect, thresholds)) {
+      const obstacleMin = axis === 'x' ? owner.rect.x : owner.rect.y
+      const obstacleMax = obstacleMin + (axis === 'x' ? owner.rect.width : owner.rect.height)
+      const direction: -1 | 1 = activeEdge === 'max' ? 1 : -1
+      const boundary = activeEdge === 'max'
+        ? obstacleMin - thresholds.safetyGap
+        : obstacleMax + thresholds.safetyGap
+      const penetration = direction * (rawEdge - boundary)
+      if (previous.direction === direction
+        && previous.boundary === boundary
+        && penetration <= thresholds.snapBreak
+        && penetration >= -thresholds.snapEntry) {
+        return previous
+      }
     }
   }
-
-  const perpendicularAxis = axis === 'x' ? 'y' : 'x'
-  const candidatePerpendicularMin = perpendicularAxis === 'x' ? candidate.x : candidate.y
-  const candidatePerpendicularMax = candidatePerpendicularMin
-    + (perpendicularAxis === 'x' ? candidate.width : candidate.height)
 
   const choices: Array<EdgeSnap & { adjustment: number }> = []
   for (const obstacle of obstacles) {
     const rect = normalizeAabb(obstacle.rect)
     if (!rect) continue
-    const obstaclePerpendicularMin = perpendicularAxis === 'x' ? rect.x : rect.y
-    const obstaclePerpendicularMax = obstaclePerpendicularMin
-      + (perpendicularAxis === 'x' ? rect.width : rect.height)
-    if (intervalDistance(
-      candidatePerpendicularMin,
-      candidatePerpendicularMax,
-      obstaclePerpendicularMin,
-      obstaclePerpendicularMax,
-    ) > thresholds.safetyGap + thresholds.snapEntry) continue
+    if (!isPerpendicularlyEligible(axis, candidate, rect, thresholds)) continue
 
     const obstacleMin = axis === 'x' ? rect.x : rect.y
     const obstacleMax = obstacleMin + (axis === 'x' ? rect.width : rect.height)
@@ -263,6 +282,16 @@ function snapForAxis(
     boundary: choice.boundary,
     direction: choice.direction,
   }
+}
+
+function inputObstacleById(
+  obstacles: CollisionEntity[],
+  obstacleId: string,
+): CollisionEntity | undefined {
+  const owner = obstacles.find(obstacle => obstacle.id === obstacleId)
+  if (!owner) return undefined
+  const rect = normalizeAabb(owner.rect)
+  return rect ? { id: owner.id, rect } : undefined
 }
 
 export function resolveActiveEdgeSnap(input: ActiveEdgeSnapInput): ActiveEdgeSnapResult {
@@ -372,10 +401,15 @@ export function sweepRigidSet(input: SweepRigidSetInput): SweepRigidSetResult {
   }
   const normalizedMembers = members as CollisionEntity[]
   const memberIds = new Set(normalizedMembers.map(member => member.id))
-  const obstacles = input.obstacles.flatMap(obstacle => {
+  const normalizedObstacles = input.obstacles.map(obstacle => {
     const rect = normalizeAabb(obstacle.rect)
-    return rect && !memberIds.has(obstacle.id) ? [{ id: obstacle.id, rect }] : []
+    return rect ? { id: obstacle.id, rect } : null
   })
+  if (normalizedObstacles.some(obstacle => obstacle === null)) {
+    return { members: [], delta: { x: 0, y: 0 }, contacts: [], passes: 0, valid: false }
+  }
+  const obstacles = (normalizedObstacles as CollisionEntity[])
+    .filter(obstacle => !memberIds.has(obstacle.id))
   const maxPasses = Math.min(4, Math.max(0, Math.trunc(input.maxPasses ?? 4)))
   let remaining = { ...input.delta }
   const accepted = { x: 0, y: 0 }
@@ -433,48 +467,82 @@ export function sweepRigidSet(input: SweepRigidSetInput): SweepRigidSetResult {
   }
 }
 
-function pairMtd(left: CanvasRect, right: CanvasRect, safetyGap: number): number {
-  const leftCenterX = left.x + left.width / 2
-  const leftCenterY = left.y + left.height / 2
-  const rightCenterX = right.x + right.width / 2
-  const rightCenterY = right.y + right.height / 2
-  const x = (left.width + right.width) / 2 + safetyGap - Math.abs(leftCenterX - rightCenterX)
-  const y = (left.height + right.height) / 2 + safetyGap - Math.abs(leftCenterY - rightCenterY)
-  return Math.min(x, y)
+function pairMtd(left: CanvasRect, right: CanvasRect, safetyGap: number): number | null {
+  const leftHalfWidth = left.width / 2
+  const leftHalfHeight = left.height / 2
+  const rightHalfWidth = right.width / 2
+  const rightHalfHeight = right.height / 2
+  const leftCenterX = left.x + leftHalfWidth
+  const leftCenterY = left.y + leftHalfHeight
+  const rightCenterX = right.x + rightHalfWidth
+  const rightCenterY = right.y + rightHalfHeight
+  const combinedHalfWidth = leftHalfWidth + rightHalfWidth
+  const combinedHalfHeight = leftHalfHeight + rightHalfHeight
+  const centerDeltaX = leftCenterX - rightCenterX
+  const centerDeltaY = leftCenterY - rightCenterY
+  if (![leftHalfWidth, leftHalfHeight, rightHalfWidth, rightHalfHeight,
+    leftCenterX, leftCenterY, rightCenterX, rightCenterY,
+    combinedHalfWidth, combinedHalfHeight, centerDeltaX, centerDeltaY].every(isFiniteNumber)) {
+    return null
+  }
+
+  const expandedHalfWidth = combinedHalfWidth + safetyGap
+  const expandedHalfHeight = combinedHalfHeight + safetyGap
+  const x = expandedHalfWidth - Math.abs(centerDeltaX)
+  const y = expandedHalfHeight - Math.abs(centerDeltaY)
+  const result = Math.min(x, y)
+  return [expandedHalfWidth, expandedHalfHeight, x, y, result].every(isFiniteNumber)
+    ? result
+    : null
+}
+
+function invalidLegacyConflictScore(): LegacyConflictScore {
+  return { valid: false, pairCount: 0, totalMtd: 0, pairs: [] }
 }
 
 export function scoreLegacyConflicts(input: LegacyConflictInput): LegacyConflictScore {
   if (!validThresholds(input.thresholds)) {
-    return { valid: false, pairCount: 0, totalMtd: 0, pairs: [] }
+    return invalidLegacyConflictScore()
   }
   const entities = input.entities.map(entity => {
     const rect = normalizeAabb(entity.rect)
     return rect ? { id: entity.id, rect } : null
   })
   if (entities.some(entity => entity === null)) {
-    return { valid: false, pairCount: 0, totalMtd: 0, pairs: [] }
+    return invalidLegacyConflictScore()
   }
 
   const normalizedEntities = (entities as CollisionEntity[])
     .sort((left, right) => compareIds(left.id, right.id))
   const movingIds = input.movingIds ? new Set(input.movingIds) : null
   const pairs: LegacyConflictPair[] = []
+  let totalMtd = 0
   for (let leftIndex = 0; leftIndex < normalizedEntities.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < normalizedEntities.length; rightIndex += 1) {
       const left = normalizedEntities[leftIndex]
       const right = normalizedEntities[rightIndex]
       if (movingIds && !movingIds.has(left.id) && !movingIds.has(right.id)) continue
       if (!conflicts(left.rect, right.rect, input.thresholds)) continue
+      const pairValue = pairMtd(left.rect, right.rect, input.thresholds.safetyGap)
+      if (pairValue === null) return invalidLegacyConflictScore()
+      const mtd = round4(pairValue)
+      const nextTotalMtd = totalMtd + mtd
+      if (!isFiniteNumber(mtd) || !isFiniteNumber(nextTotalMtd)) {
+        return invalidLegacyConflictScore()
+      }
       pairs.push({
         ids: [left.id, right.id],
-        mtd: round4(pairMtd(left.rect, right.rect, input.thresholds.safetyGap)),
+        mtd,
       })
+      totalMtd = nextTotalMtd
     }
   }
+  const roundedTotalMtd = round4(totalMtd)
+  if (!isFiniteNumber(roundedTotalMtd)) return invalidLegacyConflictScore()
   return {
     valid: true,
     pairCount: pairs.length,
-    totalMtd: round4(pairs.reduce((sum, pair) => sum + pair.mtd, 0)),
+    totalMtd: roundedTotalMtd,
     pairs,
   }
 }

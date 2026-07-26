@@ -89,7 +89,7 @@ test('active edges snap independently with hysteresis and deterministic ID ties'
   assert.equal(entered.snap.y?.obstacleId, 'a')
 
   const held = resolveActiveEdgeSnap({
-    candidate: { x: 0, y: 0, width: 46, height: 20 },
+    candidate: { x: 0, y: 20, width: 46, height: 20 },
     activeEdges: { x: 'max' },
     obstacles,
     thresholds,
@@ -100,7 +100,7 @@ test('active edges snap independently with hysteresis and deterministic ID ties'
   assert.equal(held.snap.y, undefined)
 
   const brokenTowardObstacle = resolveActiveEdgeSnap({
-    candidate: { x: 0, y: 0, width: 49, height: 20 },
+    candidate: { x: 0, y: 20, width: 49, height: 20 },
     activeEdges: { x: 'max' },
     obstacles,
     thresholds,
@@ -110,7 +110,7 @@ test('active edges snap independently with hysteresis and deterministic ID ties'
   assert.equal(brokenTowardObstacle.snap.x, undefined)
 
   const retreated = resolveActiveEdgeSnap({
-    candidate: { x: 0, y: 0, width: 25, height: 20 },
+    candidate: { x: 0, y: 20, width: 25, height: 20 },
     activeEdges: { x: 'max' },
     obstacles,
     thresholds,
@@ -118,6 +118,41 @@ test('active edges snap independently with hysteresis and deterministic ID ties'
   })
   assert.equal(retreated.rect.width, 25)
   assert.equal(retreated.snap.x, undefined)
+})
+
+test('active edge hysteresis releases stale or perpendicularly irrelevant obstacle ownership', () => {
+  const obstacle = { id: 'owner', rect: { x: 40, y: 40, width: 10, height: 10 } }
+  const entered = resolveActiveEdgeSnap({
+    candidate: { x: 0, y: 40, width: 27, height: 10 },
+    activeEdges: { x: 'max' },
+    obstacles: [obstacle],
+    thresholds,
+  })
+  assert.equal(entered.snap.x?.obstacleId, 'owner')
+
+  for (const scenario of [
+    { label: 'deleted', obstacles: [], candidate: { x: 0, y: 40, width: 40, height: 10 } },
+    {
+      label: 'moved',
+      obstacles: [{ id: 'owner', rect: { x: 80, y: 40, width: 10, height: 10 } }],
+      candidate: { x: 0, y: 40, width: 40, height: 10 },
+    },
+    {
+      label: 'perpendicular release',
+      obstacles: [obstacle],
+      candidate: { x: 0, y: 100, width: 40, height: 10 },
+    },
+  ]) {
+    const released = resolveActiveEdgeSnap({
+      candidate: scenario.candidate,
+      activeEdges: { x: 'max' },
+      obstacles: scenario.obstacles,
+      thresholds,
+      snap: entered.snap,
+    })
+    assert.equal(released.rect.width, 40, scenario.label)
+    assert.equal(released.snap.x, undefined, scenario.label)
+  }
 })
 
 test('swept rigid movement selects earliest contact and cannot tunnel through a one-pixel wall', () => {
@@ -225,6 +260,18 @@ test('rigid-set sweep rejects non-finite input without returning non-finite geom
   assert.deepEqual(result.delta, { x: 0, y: 0 })
 })
 
+test('rigid-set sweep fails closed when any obstacle has non-finite geometry', () => {
+  const result = sweepRigidSet({
+    members: [{ id: 'moving', rect: { x: 0, y: 0, width: 10, height: 10 } }],
+    obstacles: [{ id: 'bad-obstacle', rect: { x: 40, y: 0, width: Number.NaN, height: 10 } }],
+    delta: { x: 100, y: 0 },
+    thresholds,
+  })
+  assert.equal(result.valid, false)
+  assert.deepEqual(result.members, [])
+  assert.deepEqual(result.delta, { x: 0, y: 0 })
+})
+
 test('legacy conflict score is stable, scoped, and uses pair count then summed MTD', () => {
   const score = scoreLegacyConflicts({
     entities: [
@@ -240,5 +287,37 @@ test('legacy conflict score is stable, scoped, and uses pair count then summed M
     pairCount: 1,
     totalMtd: 4,
     pairs: [{ ids: ['a', 'b'], mtd: 4 }],
+  })
+})
+
+test('legacy conflict scoring stays finite for extreme finite rectangles and fails closed on total overflow', () => {
+  const extremeRect = { x: -1e308, y: -1e308, width: 1e308, height: 1e308 }
+  const finite = scoreLegacyConflicts({
+    entities: [
+      { id: 'a', rect: extremeRect },
+      { id: 'b', rect: extremeRect },
+    ],
+    thresholds,
+  })
+  assert.equal(finite.valid, true)
+  assert.equal(finite.pairCount, 1)
+  assert.equal(Number.isFinite(finite.pairs[0]?.mtd), true)
+  assert.equal(Number.isFinite(finite.totalMtd), true)
+  assert.equal(finite.pairs[0]?.mtd, 1e308)
+  assert.equal(finite.totalMtd, 1e308)
+
+  const overflow = scoreLegacyConflicts({
+    entities: [
+      { id: 'a', rect: extremeRect },
+      { id: 'b', rect: extremeRect },
+      { id: 'c', rect: extremeRect },
+    ],
+    thresholds,
+  })
+  assert.deepEqual(overflow, {
+    valid: false,
+    pairCount: 0,
+    totalMtd: 0,
+    pairs: [],
   })
 })
