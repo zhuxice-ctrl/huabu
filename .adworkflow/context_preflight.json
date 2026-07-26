@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
+  "task_id": "zeroxb-integrated-task-07-permanent-canvas-workspace",
   "status": "accepted",
-  "graph_revision": "db62eea35e713e30ddf7c41e",
-  "slice_revision": "db62eea35e713e30ddf7c41e",
+  "graph_revision": "02a1e523f2174d01b782b3c6",
+  "slice_revision": "02a1e523f2174d01b782b3c6",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

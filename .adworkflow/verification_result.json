@@ -1,74 +1,122 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
+  "task_id": "zeroxb-integrated-task-07-permanent-canvas-workspace",
   "status": "passed",
-  "source_revision": "f40fd69b",
+  "source_revision": "1073bff5aab5f38d2ce934362f99beea308992e7",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-node-visual-contract.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-workspace-layout.test.mjs scripts/tests/canvas-shell-contract.test.mjs scripts/tests/canvas-black-screen-recovery.test.mjs",
       "status": "passed",
-      "summary": "5 focused visual contract tests passed, 0 failed, including selected-text inline-shadow priority.",
-      "exit_code": 0
-    },
-    {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
-      "status": "passed",
-      "summary": "101 Canvas tests passed, 0 failed.",
+      "summary": "Focused Task 7 and startup recovery tests passed 10/10 after the L2 causal fix.",
       "exit_code": 0
     },
     {
       "command": "npx tsc --noEmit",
       "status": "passed",
-      "summary": "TypeScript completed without diagnostics.",
+      "summary": "TypeScript typecheck completed without diagnostics.",
       "exit_code": 0
     },
     {
-      "command": "node node_modules/next/dist/bin/next build --turbopack --experimental-build-mode compile",
+      "command": "npm run test:canvas",
       "status": "passed",
-      "summary": "Turbopack compiled successfully, collected page data/traces and exported all 52 routes.",
+      "summary": "Complete Canvas suite passed 109/109 after the final product fix.",
       "exit_code": 0
     },
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors; repository LF-to-CRLF advisory only.",
+      "summary": "No whitespace errors were found in the final Task 7 product and workflow diff.",
       "exit_code": 0
     },
     {
-      "command": "codegraph_post_edit.py --baseline .codegraph/snapshots/db62eea35e713e30ddf7c41e.sqlite",
+      "command": "codegraph_post_edit.py --project F:/huabu-worktrees/foundation --task-id zeroxb-integrated-task-07-permanent-canvas-workspace --baseline F:/huabu-worktrees/foundation/.codegraph/snapshots/02a1e523f2174d01b782b3c6.sqlite --declared-file <15 Task 7 files> --predicted-file <old observed impact plus Task 7 files>",
       "status": "passed",
-      "summary": "Impact passed with complete propagation, empty unexpected impact and no new critical unresolved edges.",
+      "summary": "Real rebuilt L2 impact passed at revision 7a6d9f539fd8dacb183be9e0: unexpected impact 0, new production critical edges 0, new test critical edges 0, propagation not truncated.",
+      "exit_code": 0
+    },
+    {
+      "command": "py -3 F:/CodexHome/skills/adworkflo/scripts/validate_adworkflow.py --project F:/huabu-worktrees/foundation",
+      "status": "passed",
+      "summary": "Project ADworkflo validator accepted the final task, preflight, impact, worker, verification, and review artifacts.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Exact selection, invalid, legacy-conflict, snap guide and warm-white text visual contracts are enforced.",
+      "criterion": "Pure layout policy enforces the exact left/right sizes, bounds, narrow-window collapse order and persisted preferences from the Task 7 brief.",
       "status": "passed",
-      "evidence": ["5/5 focused visual tests", "101/101 Canvas suite", "production Turbopack build"]
+      "evidence": [
+        "scripts/tests/canvas-workspace-layout.test.mjs",
+        "Focused Task 7 tests passed 10/10."
+      ]
     },
     {
-      "criterion": "Task 5 collision/session behavior remains unchanged while visual state stays transient.",
+      "criterion": "page.tsx has one permanent canvas path and no conditional immersive canvas root or right-side Chat panel.",
       "status": "passed",
-      "evidence": ["Canvas collision/session tests in complete Canvas suite", "static persistence boundary assertions"]
+      "evidence": [
+        "scripts/tests/canvas-shell-contract.test.mjs",
+        "src/app/core/main/page.tsx",
+        "src/app/core/main/canvas/canvas-workspace.tsx"
+      ]
     },
     {
-      "criterion": "L2 post-edit impact is bounded, complete and free of new critical edges.",
+      "criterion": "Canvas selection updates activeCanvasId independently from activeTabId; files and records remain document-panel tabs.",
       "status": "passed",
-      "evidence": ["impact_report status passed", "propagation.truncated false", "unexpected_impact empty"]
+      "evidence": [
+        "scripts/tests/canvas-shell-contract.test.mjs",
+        "src/app/core/main/canvas/canvas-sidebar.tsx",
+        "src/stores/article.ts"
+      ]
+    },
+    {
+      "criterion": "Legacy canvas tabs are removed during article-store initialization without losing document tabs or view state.",
+      "status": "passed",
+      "evidence": [
+        "scripts/tests/canvas-shell-contract.test.mjs",
+        "src/stores/article.ts",
+        "src/app/core/main/canvas/canvas-tab.ts"
+      ]
+    },
+    {
+      "criterion": "Panel, tab and HUD changes do not remount the CanvasEditor for the active canvas.",
+      "status": "passed",
+      "evidence": [
+        "scripts/tests/canvas-shell-contract.test.mjs",
+        "CanvasEditor remains keyed only by activeCanvasId in canvas-workspace.tsx."
+      ]
+    },
+    {
+      "criterion": "Focused shell tests, relevant Canvas tests, TypeScript and diff checks pass.",
+      "status": "passed",
+      "evidence": [
+        "Focused tests 10/10.",
+        "Complete Canvas suite 109/109.",
+        "npx tsc --noEmit passed.",
+        "git diff --check passed."
+      ]
+    },
+    {
+      "criterion": "Implementation is committed and independently reviewed.",
+      "status": "passed",
+      "evidence": [
+        "Product commits 91b9bcfa, dde9c474, de192e92 and 1073bff5.",
+        ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-independent-review.md",
+        ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-fix-round-1-rereview.md",
+        ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-fix-round-2-rereview.md"
+      ]
     }
   ],
   "passed": [
-    "Focused Task 6 visual contract",
-    "Complete Canvas suite",
-    "TypeScript",
-    "Diff check",
-    "L2 post-edit impact"
+    "Accepted L2 context preflight at baseline revision 02a1e523f2174d01b782b3c6.",
+    "Passed L2 post-edit impact at active revision 7a6d9f539fd8dacb183be9e0.",
+    "Focused Task 7 and startup recovery tests passed 10/10.",
+    "Complete Canvas suite passed 109/109.",
+    "TypeScript and diff checks passed.",
+    "Independent structural regression review approved the final source revision."
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Existing MODULE_TYPELESS_PACKAGE_JSON and Turbopack configuration warnings remain repository-wide.",
-    "Browser-level visual inspection remains for the later Windows acceptance pass."
+    "Node emits existing MODULE_TYPELESS_PACKAGE_JSON warnings while running TypeScript test modules; the warnings do not affect results."
   ]
 }

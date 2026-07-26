@@ -1,153 +1,176 @@
 {
   "schema": "ADworkflo.semantic_slice.v1",
   "status": "ready",
-  "graph_revision": "db62eea35e713e30ddf7c41e",
+  "graph_revision": "02a1e523f2174d01b782b3c6",
   "entrypoints": [
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function"
+    "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
+    "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
+    "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function"
   ],
   "entrypoint_resolutions": [
     {
       "status": "resolved",
-      "query": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
+      "query": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
       "symbol": {
-        "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
-        "symbol_group_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
+        "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
+        "symbol_group_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
         "declaration_index": 0,
         "runtime_effective": 1,
-        "name": "transientNodeClassName",
-        "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.transientNodeClassName",
+        "name": "getCanvasIdFromTabPath",
+        "qualified_name": "src.app.core.main.canvas.canvas-tab.getCanvasIdFromTabPath",
         "kind": "function",
-        "start_line": 38,
-        "end_line": 45,
-        "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-        "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-        "location": "src/app/core/main/canvas/nodes/canvas-nodes.tsx:38"
+        "start_line": 18,
+        "end_line": 24,
+        "file": "src/app/core/main/canvas/canvas-tab.ts",
+        "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+        "location": "src/app/core/main/canvas/canvas-tab.ts:18"
       },
       "candidates": [
         {
-          "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
-          "symbol_group_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
+          "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
+          "symbol_group_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
           "declaration_index": 0,
           "runtime_effective": 1,
-          "name": "transientNodeClassName",
-          "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.transientNodeClassName",
+          "name": "getCanvasIdFromTabPath",
+          "qualified_name": "src.app.core.main.canvas.canvas-tab.getCanvasIdFromTabPath",
           "kind": "function",
-          "start_line": 38,
-          "end_line": 45,
-          "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-          "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-          "location": "src/app/core/main/canvas/nodes/canvas-nodes.tsx:38"
+          "start_line": 18,
+          "end_line": 24,
+          "file": "src/app/core/main/canvas/canvas-tab.ts",
+          "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+          "location": "src/app/core/main/canvas/canvas-tab.ts:18"
         }
       ]
     },
     {
       "status": "resolved",
-      "query": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function",
+      "query": "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
       "symbol": {
-        "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function",
-        "symbol_group_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function",
+        "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
+        "symbol_group_id": "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
         "declaration_index": 0,
         "runtime_effective": 1,
-        "name": "nodeStyle",
-        "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle",
+        "name": "isCanvasTabPath",
+        "qualified_name": "src.app.core.main.canvas.canvas-tab.isCanvasTabPath",
         "kind": "function",
-        "start_line": 59,
-        "end_line": 79,
-        "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-        "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-        "location": "src/app/core/main/canvas/nodes/canvas-nodes.tsx:59"
+        "start_line": 26,
+        "end_line": 28,
+        "file": "src/app/core/main/canvas/canvas-tab.ts",
+        "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+        "location": "src/app/core/main/canvas/canvas-tab.ts:26"
       },
       "candidates": [
         {
-          "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function",
-          "symbol_group_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function",
+          "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
+          "symbol_group_id": "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
           "declaration_index": 0,
           "runtime_effective": 1,
-          "name": "nodeStyle",
-          "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle",
+          "name": "isCanvasTabPath",
+          "qualified_name": "src.app.core.main.canvas.canvas-tab.isCanvasTabPath",
           "kind": "function",
-          "start_line": 59,
-          "end_line": 79,
-          "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-          "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-          "location": "src/app/core/main/canvas/nodes/canvas-nodes.tsx:59"
+          "start_line": 26,
+          "end_line": 28,
+          "file": "src/app/core/main/canvas/canvas-tab.ts",
+          "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+          "location": "src/app/core/main/canvas/canvas-tab.ts:26"
+        }
+      ]
+    },
+    {
+      "status": "resolved",
+      "query": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+      "symbol": {
+        "stable_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+        "symbol_group_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+        "declaration_index": 0,
+        "runtime_effective": 1,
+        "name": "chooseStartupCanvasId",
+        "qualified_name": "src.lib.canvas.startup-policy.chooseStartupCanvasId",
+        "kind": "function",
+        "start_line": 1,
+        "end_line": 10,
+        "file": "src/lib/canvas/startup-policy.ts",
+        "sha256": "cf57f1e5f68a06da5e0c1249b6bd596e5ac8390a37c89be7e996e695f35108ff",
+        "location": "src/lib/canvas/startup-policy.ts:1"
+      },
+      "candidates": [
+        {
+          "stable_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+          "symbol_group_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+          "declaration_index": 0,
+          "runtime_effective": 1,
+          "name": "chooseStartupCanvasId",
+          "qualified_name": "src.lib.canvas.startup-policy.chooseStartupCanvasId",
+          "kind": "function",
+          "start_line": 1,
+          "end_line": 10,
+          "file": "src/lib/canvas/startup-policy.ts",
+          "sha256": "cf57f1e5f68a06da5e0c1249b6bd596e5ac8390a37c89be7e996e695f35108ff",
+          "location": "src/lib/canvas/startup-policy.ts:1"
         }
       ]
     }
   ],
   "included_symbols": [
     {
-      "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
-      "name": "transientNodeClassName",
-      "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.transientNodeClassName",
+      "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:CANVAS_TAB_PREFIX:variable",
+      "name": "CANVAS_TAB_PREFIX",
+      "qualified_name": "src.app.core.main.canvas.canvas-tab.CANVAS_TAB_PREFIX",
+      "kind": "variable",
+      "file": "src/app/core/main/canvas/canvas-tab.ts",
+      "start_line": 3,
+      "end_line": 3,
+      "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
+      "name": "getCanvasIdFromTabPath",
+      "qualified_name": "src.app.core.main.canvas.canvas-tab.getCanvasIdFromTabPath",
       "kind": "function",
-      "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-      "start_line": 38,
-      "end_line": 45,
-      "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
+      "file": "src/app/core/main/canvas/canvas-tab.ts",
+      "start_line": 18,
+      "end_line": 24,
+      "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
       "distance": 0
     },
     {
-      "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function",
-      "name": "nodeStyle",
-      "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle",
+      "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath.id:variable",
+      "name": "id",
+      "qualified_name": "src.app.core.main.canvas.canvas-tab.getCanvasIdFromTabPath.id",
+      "kind": "variable",
+      "file": "src/app/core/main/canvas/canvas-tab.ts",
+      "start_line": 22,
+      "end_line": 22,
+      "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
+      "name": "isCanvasTabPath",
+      "qualified_name": "src.app.core.main.canvas.canvas-tab.isCanvasTabPath",
       "kind": "function",
-      "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-      "start_line": 59,
-      "end_line": 79,
-      "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
+      "file": "src/app/core/main/canvas/canvas-tab.ts",
+      "start_line": 26,
+      "end_line": 28,
+      "sha256": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
       "distance": 0
     },
     {
-      "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle.backgroundColor:variable",
-      "name": "backgroundColor",
-      "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle.backgroundColor",
-      "kind": "variable",
-      "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-      "start_line": 61,
-      "end_line": 61,
-      "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle.borderColor:variable",
-      "name": "borderColor",
-      "qualified_name": "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle.borderColor",
-      "kind": "variable",
-      "file": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-      "start_line": 62,
-      "end_line": 62,
-      "sha256": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.utils:cn:function",
-      "name": "cn",
-      "qualified_name": "src.lib.utils.cn",
+      "stable_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+      "name": "chooseStartupCanvasId",
+      "qualified_name": "src.lib.canvas.startup-policy.chooseStartupCanvasId",
       "kind": "function",
-      "file": "src/lib/utils.ts",
-      "start_line": 13,
-      "end_line": 15,
-      "sha256": "61e7ffab30088f06951822539bbe8ec3e893f7e6285cb561750ed1d81a3024cb",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.types.canvas:CanvasNodeData:interface",
-      "name": "CanvasNodeData",
-      "qualified_name": "src.types.canvas.CanvasNodeData",
-      "kind": "interface",
-      "file": "src/types/canvas.ts",
-      "start_line": 39,
-      "end_line": 66,
-      "sha256": "2c044c3b210984522765f7a714a14a6539c772dc099bb17d7f69549092475fe3",
-      "distance": 1
+      "file": "src/lib/canvas/startup-policy.ts",
+      "start_line": 1,
+      "end_line": 10,
+      "sha256": "cf57f1e5f68a06da5e0c1249b6bd596e5ac8390a37c89be7e996e695f35108ff",
+      "distance": 0
     }
   ],
   "included_files": [
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/utils.ts",
-    "src/types/canvas.ts"
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/lib/canvas/startup-policy.ts"
   ],
   "boundary_symbols": [],
   "excluded": [
@@ -156,11 +179,12 @@
     "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/canvas-footer.tsx",
+    "src/app/core/main/canvas/canvas-geometry-overlays.tsx",
     "src/app/core/main/canvas/canvas-node-style-menu.tsx",
     "src/app/core/main/canvas/canvas-relation-editor.tsx",
     "src/app/core/main/canvas/canvas-sidebar.tsx",
     "src/app/core/main/canvas/canvas-startup-controller.tsx",
-    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "src/app/core/main/chat/agent-approval-actions.ts",
     "src/app/core/main/chat/agent-approval-panel.tsx",
     "src/app/core/main/chat/agent-context-tray.tsx",
@@ -693,7 +717,6 @@
     "src/lib/canvas/relation-policy.ts",
     "src/lib/canvas/relation-routing.ts",
     "src/lib/canvas/spatial-index.ts",
-    "src/lib/canvas/startup-policy.ts",
     "src/lib/canvas/static-export.ts",
     "src/lib/canvas/templates.ts",
     "src/lib/canvas/thumbnail.ts",
@@ -796,6 +819,7 @@
     "src/lib/template-range-utils.ts",
     "src/lib/theme-utils.ts",
     "src/lib/toolbar-shortcuts.ts",
+    "src/lib/utils.ts",
     "src/lib/vector-document-key.js",
     "src/lib/version.ts",
     "src/lib/workspace-name.ts",
@@ -827,25 +851,44 @@
     "src/stores/tag.ts",
     "src/stores/update.ts",
     "src/stores/vector.ts",
+    "src/types/canvas.ts",
     "src/types/sync.ts",
     "src/types/theme.ts"
   ],
   "unresolved_edges": [
     {
-      "file": "src/lib/utils.ts",
-      "source_symbol_id": "typescript:src.lib.utils:cn:function",
+      "file": "src/app/core/main/canvas/canvas-tab.ts",
+      "source_symbol_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
       "kind": "call",
-      "target": "twMerge",
-      "line": 14,
+      "target": "path.startsWith",
+      "line": 19,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/utils.ts",
-      "source_symbol_id": "typescript:src.lib.utils:cn:function",
+      "file": "src/app/core/main/canvas/canvas-tab.ts",
+      "source_symbol_id": "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
       "kind": "call",
-      "target": "clsx",
-      "line": 14,
+      "target": "path.slice",
+      "line": 22,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/startup-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+      "kind": "call",
+      "target": "projects.some",
+      "line": 5,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/startup-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function",
+      "kind": "call",
+      "target": "[...projects].sort",
+      "line": 9,
       "reason": "external-call",
       "critical": 0
     }
@@ -860,9 +903,8 @@
   "confidence": 1.0,
   "truncated": false,
   "source_hashes": {
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx": "0c6cc62b2e913bd4be7ad48836f71d6ff4c631099bd616360d3c9c238eefc4c7",
-    "src/lib/utils.ts": "61e7ffab30088f06951822539bbe8ec3e893f7e6285cb561750ed1d81a3024cb",
-    "src/types/canvas.ts": "2c044c3b210984522765f7a714a14a6539c772dc099bb17d7f69549092475fe3"
+    "src/app/core/main/canvas/canvas-tab.ts": "fb269ef637f1f4d9fe0ad8e64710bd2960e7cc97805471254b0f351ac5909732",
+    "src/lib/canvas/startup-policy.ts": "cf57f1e5f68a06da5e0c1249b6bd596e5ac8390a37c89be7e996e695f35108ff"
   },
   "provenance": [
     {
@@ -891,7 +933,24 @@
   },
   "expansion_history": [],
   "predicted_impact_files": [
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx"
+    "src/app/core/layout.tsx",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/app/core/main/chat/chat-input.tsx",
+    "src/app/core/main/chat/index.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/app/core/main/editor/markdown/md-editor-wrapper.tsx",
+    "src/app/core/main/editor/markdown/tiptap-editor.tsx",
+    "src/app/core/main/editor/tab-bar.tsx",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/mark/mark-detail-panel.tsx",
+    "src/app/core/main/page.tsx",
+    "src/app/mobile/chat/components/mobile-chat-header.tsx",
+    "src/app/mobile/chat/page.tsx",
+    "src/app/mobile/writing/mobile-editor.tsx",
+    "src/app/mobile/writing/writing-screen.tsx",
+    "src/components/search-dialog.tsx",
+    "src/lib/canvas/startup-policy.ts"
   ]
 }

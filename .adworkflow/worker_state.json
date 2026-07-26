@@ -1,38 +1,56 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
+  "task_id": "zeroxb-integrated-task-07-permanent-canvas-workspace",
   "status": "verified",
-  "revision": 3,
+  "revision": 4,
   "done": [
-    "Extracted the Task 6 SDD brief.",
-    "Configured the Task 6 contract.",
-    "Prepared and accepted bounded L2 visual-renderer context at graph revision db62eea35e713e30ddf7c41e.",
-    "Added screen-compensated selection, transient viewport snap guides and compatible text visual defaults.",
-    "Passed focused visual contract, full Canvas suite, TypeScript, production build, diff and L2 post-edit impact gates.",
-    "Removed the selected-text inline-shadow override and added a focused visual contract assertion."
+    "Implemented the permanent canvas workspace and legacy canvas-tab migration.",
+    "Addressed all six findings from the first independent review.",
+    "Removed the post-edit graph critical edges by keeping dynamic state dispatch inside the existing controller and Zustand action boundaries.",
+    "Generated and independently reviewed the dde9c474..1073bff5 structural regression package.",
+    "Passed focused tests, the complete Canvas suite, TypeScript, diff checks, and the L2 post-edit impact gate."
   ],
   "changed_files": [
-    "src/app/core/main/canvas/canvas-geometry-overlays.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "scripts/tests/canvas-node-visual-contract.test.mjs"
+    "scripts/tests/canvas-black-screen-recovery.test.mjs",
+    "scripts/tests/canvas-shell-contract.test.mjs",
+    "scripts/tests/canvas-workspace-layout.test.mjs",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/app/core/main/editor/markdown/tiptap-editor.tsx",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/page.tsx",
+    "src/components/search-dialog.tsx",
+    "src/lib/canvas/workspace-layout-policy.ts",
+    "src/stores/article.ts",
+    "src/stores/sidebar.ts"
   ],
   "current_problem": null,
-  "next_action": "Begin Task 7 permanent canvas workspace implementation.",
+  "next_action": null,
   "must_keep_context": [
-    "Task 5 transient node visual-state channels and collision-session behavior are load-bearing.",
-    "Selection, invalid, snap-guide and legacy-conflict state must stay outside CanvasNodeData and persistence.",
-    "Visual thickness and glow must remain stable in screen pixels across 10% to 600% zoom."
+    ".adworkflow/context_preflight.json",
+    ".adworkflow/impact_report.json",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-fix-round-2-rereview.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-l2-finalizer.md"
   ],
   "discarded_context": [
-    "CanvasNodeStyleMenu callback dispatch remains an explicit manual context boundary rather than an L2 entrypoint."
+    "The earlier failed impact revision a47bc2841faff7ba10f548f2 was superseded by the real passed post-edit revision 7a6d9f539fd8dacb183be9e0."
   ],
   "remaining_risks": [
-    "Turbopack emits existing repository configuration and legacy-build warnings during production output.",
-    "Browser-level visual inspection remains part of the later Windows acceptance pass."
+    "Node's test runner still emits the existing MODULE_TYPELESS_PACKAGE_JSON warning for TypeScript modules; all tests pass."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": []
+  "context_expansion_history": [],
+  "source_revision": "1073bff5aab5f38d2ce934362f99beea308992e7",
+  "context_preflight": {
+    "status": "accepted",
+    "graph_revision": "02a1e523f2174d01b782b3c6"
+  },
+  "post_edit_impact": {
+    "status": "passed",
+    "graph_revision": "7a6d9f539fd8dacb183be9e0"
+  }
 }

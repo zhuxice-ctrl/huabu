@@ -1,0 +1,82 @@
+{
+  "schema": "ADworkflo.task_spec.v2",
+  "configured": true,
+  "task_id": "zeroxb-integrated-task-07-permanent-canvas-workspace",
+  "task_type": "code",
+  "goal": "Keep the active canvas permanently mounted as the center workspace while preserving collapsible side rails, document tabs and legacy canvas-tab migration.",
+  "non_goals": [
+    "Do not implement note drag references, rich-media ingestion, AI HUD internals, retrieval, credentials, recovery or packaging.",
+    "Do not change canvas geometry, collision, relation or persistence semantics.",
+    "Do not read, print or modify provider credentials."
+  ],
+  "acceptance_criteria": [
+    "Pure layout policy enforces the exact left/right sizes, bounds, narrow-window collapse order and persisted preferences from the Task 7 brief.",
+    "page.tsx has one permanent canvas path and no conditional immersive canvas root or right-side Chat panel.",
+    "Canvas selection updates activeCanvasId independently from activeTabId; files and records remain document-panel tabs.",
+    "Legacy canvas tabs are removed during article-store initialization without losing document tabs or view state.",
+    "Panel, tab and HUD changes do not remount the CanvasEditor for the active canvas.",
+    "Focused shell tests, relevant Canvas tests, TypeScript and diff checks pass.",
+    "Implementation is committed and independently reviewed."
+  ],
+  "risk_level": "medium",
+  "execution_mode": "worker_plus_reviewer",
+  "allowed_actions": ["read", "edit", "test", "shell"],
+  "required_outputs": [
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/lib/canvas/workspace-layout-policy.ts",
+    "src/app/core/main/page.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/stores/sidebar.ts",
+    "src/stores/article.ts",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "scripts/tests/canvas-workspace-layout.test.mjs",
+    "scripts/tests/canvas-shell-contract.test.mjs",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/context_preflight.json",
+    ".adworkflow/impact_report.json",
+    ".adworkflow/verification_result.json",
+    ".adworkflow/review_findings.json"
+  ],
+  "do_not_touch": [
+    "src/lib/agent",
+    "src/app/core/main/chat",
+    "src/app/mobile/chat",
+    "src-tauri",
+    "main branch",
+    "remote repositories",
+    "release artifacts",
+    "installed zeroxB application",
+    "zeroxB user documents",
+    "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets",
+    "unrelated runtime modules"
+  ],
+  "entrypoints": [
+    "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
+    "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
+    "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function"
+  ],
+  "context_sources": [
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-brief.md",
+    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md Task 7",
+    "src/app/core/main/page.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/stores/sidebar.ts",
+    "src/stores/article.ts",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-tab.ts"
+  ],
+  "notes": [
+    "Read the Task 7 brief first and use test-first implementation.",
+    "CanvasEditor identity must depend on canvas ID only.",
+    "The React shell and store callback surfaces are explicit manual context boundaries because their dynamic dispatch edges are pre-existing and broad.",
+    "Preserve the existing left-sidebar content and right document editor behavior.",
+    "Use fixed UTF-8 I/O for non-ASCII reads and edits.",
+    "Do not expose or change configured provider secrets."
+  ],
+  "implementation_owner": "task-07-implementer"
+}

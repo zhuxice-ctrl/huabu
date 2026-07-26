@@ -1,0 +1,556 @@
+diff --git a/scripts/tests/canvas-black-screen-recovery.test.mjs b/scripts/tests/canvas-black-screen-recovery.test.mjs
+index 820ba53d..60aa066c 100644
+--- a/scripts/tests/canvas-black-screen-recovery.test.mjs
++++ b/scripts/tests/canvas-black-screen-recovery.test.mjs
+@@ -17,14 +17,15 @@ test('database initialization shares one promise and clears failed work for a re
+ })
+
+ test('canvas startup waits for the database and always leaves the loading state', () => {
+-  const databaseReady = startupSource.indexOf('await initAllDatabases()')
++  const databaseReady = startupSource.indexOf('void initAllDatabases()')
+   const tabsReady = startupSource.indexOf('useArticleStore.getState().initOpenTabs()')
+   const projectsReady = startupSource.indexOf('useCanvasStore.getState().loadProjects()')
+
+   assert.ok(databaseReady >= 0)
+   assert.ok(tabsReady > databaseReady)
+   assert.ok(projectsReady > databaseReady)
+-  assert.match(startupSource, /try \{[\s\S]*?await initAllDatabases\(\)[\s\S]*?\} catch \(error\) \{[\s\S]*?console\.error\([\s\S]*?\} finally \{[\s\S]*?if \(!cancelled\) setReady\(true\)/)
++  assert.match(startupSource, /void initAllDatabases\(\)[\s\S]*?\.then\(\(\) => Promise\.all\([\s\S]*?initOpenTabs\(\)[\s\S]*?loadProjects\(\)/)
++  assert.match(startupSource, /\.catch\(\(error\) => \{[\s\S]*?console\.error\([\s\S]*?\.finally\(\(\) => \{[\s\S]*?if \(!cancelled\) setReady\(true\)/)
+ })
+
+ test('canvas dot grid retains React Flow pan and zoom behavior with the required contrast', () => {
+diff --git a/scripts/tests/canvas-shell-contract.test.mjs b/scripts/tests/canvas-shell-contract.test.mjs
+index 35e14d1a..31525691 100644
+--- a/scripts/tests/canvas-shell-contract.test.mjs
++++ b/scripts/tests/canvas-shell-contract.test.mjs
+@@ -29,7 +29,10 @@ test('legacy canvas tabs are migration-only and canvas selection does not create
+   assert.doesNotMatch(editor, /CanvasEditor/)
+   assert.doesNotMatch(editor, /setActiveCanvasId/)
+   assert.match(sidebar, /setActiveCanvasId\(project\.id\)/)
+-  assert.match(startup, /setActiveCanvasId\(project\.id\)/)
++  assert.doesNotMatch(startup, /setActiveCanvasId/)
++  assert.doesNotMatch(startup, /void \(async \(\) =>/)
++  assert.match(startup, /async function initializeCanvasStartup\(projects: CanvasProject\[\]\)/)
++  assert.match(startup, /void initAllDatabases\(\)\s*\.then\(\(\) => Promise\.all/)
+   assert.match(articleStore, /kind === 'canvas'/)
+   assert.match(articleStore, /isCanvasOpenTabPath\(tab\.path\)/)
+   assert.match(articleStore, /if \(isLegacyCanvasOpenTab\(tab\)\)/)
+@@ -38,7 +41,10 @@ test('legacy canvas tabs are migration-only and canvas selection does not create
+   assert.doesNotMatch(searchDialog, /createCanvasTab/)
+   assert.doesNotMatch(tiptapEditor, /createCanvasTab/)
+   assert.match(searchDialog, /setActiveCanvasId\(project\.id\)/)
+-  assert.match(tiptapEditor, /setActiveCanvasId\(project\.id\)/)
++  assert.doesNotMatch(tiptapEditor, /setActiveCanvasId/)
++  assert.match(sidebar, /const handleOpen = async \(id: string\) => \{\s*await openProject\(id\)\s*\}/)
++  assert.match(sidebar, /const handleCreate = async \(canvasType: CanvasProjectType = 'blank'\) => \{\s*await createProject\(canvasType, t\(`templates\.\$\{canvasType\}`\)\)\s*\}/)
++  assert.match(sidebar, /const handleDuplicate = async \(project: CanvasProject\) => \{\s*await duplicateProject\([\s\S]*?\)\s*\}/)
+ })
+
+ test('shell controls retain manual preferences and use current canvas authority after async work', async () => {
+@@ -48,9 +54,24 @@ test('shell controls retain manual preferences and use current canvas authority
+
+   assert.match(workspace, /disabled=\{layout\.autoLeftCollapsed\}/)
+   assert.match(workspace, /disabled=\{layout\.autoDocumentPanelCollapsed\}/)
+-  assert.match(workspace, /setLeftWidth\(layout\.preferences\.leftWidth \+ delta\)/)
+-  assert.match(workspace, /setDocumentPanelWidth\(layout\.preferences\.documentPanelWidth - delta, windowWidth\)/)
+-  assert.match(sidebarStore, /const normalizedWidth = normalizeLeftRailWidth\(width\)/)
+-  assert.match(sidebarStore, /const normalizedWidth = normalizeDocumentPanelWidth\(width, windowWidth\)/)
++  const page = await readSource('../../src/app/core/main/page.tsx')
++
++  assert.doesNotMatch(workspace, /function useWindowWidth/)
++  assert.match(workspace, /useWindowSize\(\)/)
++  assert.match(workspace, /useEffect\(initSidebarState, \[initSidebarState\]\)/)
++  assert.match(workspace, /<ResizeDivider onPointerDown=\{startLeftResize\} \/>/)
++  assert.match(workspace, /<ResizeDivider onPointerDown=\{startDocumentPanelResize\} \/>/)
++  assert.doesNotMatch(workspace, /onResize/)
++  assert.match(workspace, /onClick=\{toggleLeftSidebar\}/)
++  assert.match(workspace, /onClick=\{toggleRightSidebar\}/)
++  assert.match(sidebarStore, /startLeftResize: \(event\)/)
++  assert.match(sidebarStore, /startDocumentPanelResize: \(event\)/)
++  assert.doesNotMatch(sidebarStore, /persistLeftWidth\(set/)
++  assert.doesNotMatch(sidebarStore, /persistDocumentPanelWidth\(\s*set/)
++  assert.match(sidebarStore, /async function loadSidebarState\(\): Promise<Partial<SidebarState>>/)
++  assert.match(sidebarStore, /initSidebarState: \(\) => \{\s*void loadSidebarState\(\)\.then\(state => set\(state\)\)/)
++  assert.doesNotMatch(page, /void \(async \(\) =>/)
++  assert.match(page, /async function persistCurrentPage\(\)/)
++  assert.match(page, /useEffect\(persistCurrentPageOnMount, \[\]\)/)
+   assert.match(sidebar, /await deleteProject\(id, syncConfigured\)[\s\S]*useCanvasStore\.getState\(\)\.activeCanvasId === id/)
+ })
+diff --git a/src/app/core/main/canvas/canvas-sidebar.tsx b/src/app/core/main/canvas/canvas-sidebar.tsx
+index e82cc1fc..24859597 100644
+--- a/src/app/core/main/canvas/canvas-sidebar.tsx
++++ b/src/app/core/main/canvas/canvas-sidebar.tsx
+@@ -151,7 +151,6 @@ export function CanvasActions() {
+   const setSortMode = useCanvasStore(state => state.setSortMode)
+   const trashMode = useCanvasStore(state => state.trashMode)
+   const setTrashMode = useCanvasStore(state => state.setTrashMode)
+-  const setActiveCanvasId = useCanvasStore(state => state.setActiveCanvasId)
+   const [refreshing, setRefreshing] = useState(false)
+
+   useEffect(() => {
+@@ -164,8 +163,7 @@ export function CanvasActions() {
+   }, [setTrashMode, trashMode])
+
+   const handleCreate = async (canvasType: CanvasProjectType) => {
+-    const project = await createProject(canvasType, t(`templates.${canvasType}`))
+-    if (project) setActiveCanvasId(project.id)
++    await createProject(canvasType, t(`templates.${canvasType}`))
+   }
+
+   const changeViewMode = (mode: string) => {
+@@ -198,7 +196,6 @@ export function CanvasActions() {
+         : parseCanvasProjectFile(source)
+       const project = await createProjectFromDocument(imported.document, imported.title, imported.canvasType)
+       if (project) {
+-        setActiveCanvasId(project.id)
+         toast.success(t('import.success'))
+       }
+     } catch (error) {
+@@ -413,13 +410,11 @@ export function CanvasSidebar() {
+   }
+
+   const handleOpen = async (id: string) => {
+-    const project = await openProject(id)
+-    if (project) setActiveCanvasId(project.id)
++    await openProject(id)
+   }
+
+   const handleCreate = async (canvasType: CanvasProjectType = 'blank') => {
+-    const project = await createProject(canvasType, t(`templates.${canvasType}`))
+-    if (project) setActiveCanvasId(project.id)
++    await createProject(canvasType, t(`templates.${canvasType}`))
+   }
+
+   const handleRestore = async (id: string) => {
+@@ -428,11 +423,10 @@ export function CanvasSidebar() {
+   }
+
+   const handleDuplicate = async (project: CanvasProject) => {
+-    const duplicate = await duplicateProject(
++    await duplicateProject(
+       project.id,
+       t('duplicateTitle', { title: project.title })
+     )
+-    if (duplicate) setActiveCanvasId(duplicate.id)
+   }
+
+   const handleDelete = async (id: string) => {
+diff --git a/src/app/core/main/canvas/canvas-startup-controller.tsx b/src/app/core/main/canvas/canvas-startup-controller.tsx
+index ff67c5e9..fdb4b6f7 100644
+--- a/src/app/core/main/canvas/canvas-startup-controller.tsx
++++ b/src/app/core/main/canvas/canvas-startup-controller.tsx
+@@ -5,42 +5,49 @@ import { Store } from '@tauri-apps/plugin-store'
+ import { chooseStartupCanvasId } from '@/lib/canvas/startup-policy'
+ import useArticleStore from '@/stores/article'
+ import useCanvasStore from '@/stores/canvas'
++import type { CanvasProject } from '@/types/canvas'
+ import { initAllDatabases } from '@/db'
+
++async function initializeCanvasStartup(projects: CanvasProject[]) {
++  const store = await Store.load('store.json')
++  const lastCanvasId = await store.get<string>('lastCanvasId') || null
++  const startupCanvasId = chooseStartupCanvasId(projects, lastCanvasId)
++  return { store, startupCanvasId }
++}
++
+ export function CanvasStartupController({ children }: { children: ReactNode }) {
+   const [ready, setReady] = useState(false)
+
+   useEffect(() => {
+     let cancelled = false
+
+-    void (async () => {
+-      try {
+-        await initAllDatabases()
+-        await useArticleStore.getState().initOpenTabs()
+-        await useCanvasStore.getState().loadProjects()
+-
+-        const store = await Store.load('store.json')
+-        const lastCanvasId = await store.get<string>('lastCanvasId') || null
++    void initAllDatabases()
++      .then(() => Promise.all([
++        useArticleStore.getState().initOpenTabs(),
++        useCanvasStore.getState().loadProjects(),
++      ]))
++      .then(async () => {
+         const projects = useCanvasStore.getState().projects
+-        const startupCanvasId = chooseStartupCanvasId(projects, lastCanvasId)
++        const { store, startupCanvasId } = await initializeCanvasStartup(projects)
+         let project = projects.find(item => item.id === startupCanvasId) || null
+
+-        if (!project) {
++        if (project) {
++          await useCanvasStore.getState().openProject(project.id)
++        } else {
+           project = await useCanvasStore.getState().createProject('blank', '未命名画布')
+         }
+
+         if (project) {
+-          await useCanvasStore.getState().openProject(project.id)
+-          useCanvasStore.getState().setActiveCanvasId(project.id)
+           await store.set('lastCanvasId', project.id)
+           await store.save()
+         }
+-      } catch (error) {
++      })
++      .catch((error) => {
+         console.error('Failed to initialize canvas startup:', error)
+-      } finally {
++      })
++      .finally(() => {
+         if (!cancelled) setReady(true)
+-      }
+-    })()
++      })
+
+     return () => {
+       cancelled = true
+diff --git a/src/app/core/main/canvas/canvas-workspace.tsx b/src/app/core/main/canvas/canvas-workspace.tsx
+index d5dccdf3..0b23b2a6 100644
+--- a/src/app/core/main/canvas/canvas-workspace.tsx
++++ b/src/app/core/main/canvas/canvas-workspace.tsx
+@@ -1,7 +1,8 @@
+ 'use client'
+
+ import dynamic from 'next/dynamic'
+-import { useEffect, useMemo, useState } from 'react'
++import { useEffect, useMemo, type PointerEventHandler } from 'react'
++import { useWindowSize } from 'usehooks-ts'
+ import { EditorLayout } from '../editor/editor-layout'
+ import { LeftSidebar } from '../left-sidebar'
+ import useCanvasStore from '@/stores/canvas'
+@@ -13,36 +14,12 @@ const CanvasEditor = dynamic(
+   { ssr: false },
+ )
+
+-function useWindowWidth() {
+-  const [width, setWidth] = useState(0)
+-
+-  useEffect(() => {
+-    const updateWidth = () => setWidth(window.innerWidth)
+-    updateWidth()
+-    window.addEventListener('resize', updateWidth)
+-    return () => window.removeEventListener('resize', updateWidth)
+-  }, [])
+-
+-  return width
+-}
+-
+-function ResizeDivider({ onResize }: { onResize: (delta: number) => void }) {
++function ResizeDivider({ onPointerDown }: { onPointerDown: PointerEventHandler<HTMLDivElement> }) {
+   return (
+     <div
+       aria-hidden="true"
+       className="z-20 w-1 shrink-0 cursor-col-resize bg-border/70 transition-colors hover:bg-primary"
+-      onPointerDown={(event) => {
+-        const startX = event.clientX
+-        const target = event.currentTarget
+-        target.setPointerCapture(event.pointerId)
+-        const onMove = (moveEvent: PointerEvent) => onResize(moveEvent.clientX - startX)
+-        const onUp = () => {
+-          target.removeEventListener('pointermove', onMove)
+-          target.removeEventListener('pointerup', onUp)
+-        }
+-        target.addEventListener('pointermove', onMove)
+-        target.addEventListener('pointerup', onUp, { once: true })
+-      }}
++      onPointerDown={onPointerDown}
+     />
+   )
+ }
+@@ -53,7 +30,7 @@ export function CanvasChatHud() {
+ }
+
+ export function CanvasWorkspace() {
+-  const windowWidth = useWindowWidth()
++  const { width: windowWidth } = useWindowSize()
+   const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
+   const {
+     leftSidebarVisible,
+@@ -62,15 +39,13 @@ export function CanvasWorkspace() {
+     leftWidth,
+     documentPanelWidth,
+     initSidebarState,
+-    setLeftWidth,
+-    setDocumentPanelWidth,
+     toggleLeftSidebar,
+     toggleRightSidebar,
++    startLeftResize,
++    startDocumentPanelResize,
+   } = useSidebarStore()
+
+-  useEffect(() => {
+-    void initSidebarState()
+-  }, [initSidebarState])
++  useEffect(initSidebarState, [initSidebarState])
+
+   const layout = useMemo(() => normalizeWorkspaceLayout({
+     leftCollapsed: !leftSidebarVisible,
+@@ -97,16 +72,14 @@ export function CanvasWorkspace() {
+             aria-label="Expand navigation"
+             className="h-full w-full text-xs text-muted-foreground hover:bg-muted"
+             disabled={layout.autoLeftCollapsed}
+-            onClick={() => {
+-              if (!layout.autoLeftCollapsed) void toggleLeftSidebar()
+-            }}
++            onClick={toggleLeftSidebar}
+           >
+             ☰
+           </button>
+         ) : <LeftSidebar />}
+       </aside>
+       {!layout.leftCollapsed && (
+-        <ResizeDivider onResize={(delta) => void setLeftWidth(layout.preferences.leftWidth + delta)} />
++        <ResizeDivider onPointerDown={startLeftResize} />
+       )}
+
+       <main className="relative min-w-0 flex-1 overflow-hidden">
+@@ -123,9 +96,7 @@ export function CanvasWorkspace() {
+             aria-label="Expand documents"
+             className="absolute right-3 top-3 z-20 rounded border bg-background/90 px-2 py-1 text-xs text-muted-foreground shadow-sm hover:bg-muted"
+             disabled={layout.autoDocumentPanelCollapsed}
+-            onClick={() => {
+-              if (!layout.autoDocumentPanelCollapsed) void toggleRightSidebar()
+-            }}
++            onClick={toggleRightSidebar}
+           >
+             Documents
+           </button>
+@@ -134,7 +105,7 @@ export function CanvasWorkspace() {
+       </main>
+
+       {!layout.documentPanelCollapsed && (
+-        <ResizeDivider onResize={(delta) => void setDocumentPanelWidth(layout.preferences.documentPanelWidth - delta, windowWidth)} />
++        <ResizeDivider onPointerDown={startDocumentPanelResize} />
+       )}
+       <aside
+         className="h-full shrink-0 overflow-hidden border-l bg-background"
+diff --git a/src/app/core/main/editor/markdown/tiptap-editor.tsx b/src/app/core/main/editor/markdown/tiptap-editor.tsx
+index ee2d7fcc..55b4a7a7 100644
+--- a/src/app/core/main/editor/markdown/tiptap-editor.tsx
++++ b/src/app/core/main/editor/markdown/tiptap-editor.tsx
+@@ -4772,7 +4772,6 @@ export function TipTapEditor({
+     const titleSource = selectedText.split('\n').find(Boolean)?.slice(0, 32) || labels[type]
+     const project = await useCanvasStore.getState().createProject('blank', titleSource)
+     if (!project) return
+-    useCanvasStore.getState().setActiveCanvasId(project.id)
+     await useSidebarStore.getState().setLeftSidebarTab('canvases')
+     if (!useSidebarStore.getState().rightSidebarVisible) await useSidebarStore.getState().toggleRightSidebar()
+     const instruction = t(`bubbleMenu.canvasPrompts.${type}`)
+diff --git a/src/app/core/main/page.tsx b/src/app/core/main/page.tsx
+index 94efacc3..6914b9c1 100644
+--- a/src/app/core/main/page.tsx
++++ b/src/app/core/main/page.tsx
+@@ -6,14 +6,18 @@ import { Store } from '@tauri-apps/plugin-store'
+ import { CanvasStartupController } from './canvas/canvas-startup-controller'
+ import { CanvasWorkspace } from './canvas/canvas-workspace'
+
++async function persistCurrentPage() {
++  const store = await Store.load('store.json')
++  await store.set('currentPage', '/core/main')
++  await store.save()
++}
++
++function persistCurrentPageOnMount() {
++  void persistCurrentPage()
++}
++
+ function Page() {
+-  useEffect(() => {
+-    void (async () => {
+-      const store = await Store.load('store.json')
+-      await store.set('currentPage', '/core/main')
+-      await store.save()
+-    })()
+-  }, [])
++  useEffect(persistCurrentPageOnMount, [])
+
+   return (
+     <CanvasStartupController>
+diff --git a/src/stores/sidebar.ts b/src/stores/sidebar.ts
+index 34a5bf87..0c9c289c 100644
+--- a/src/stores/sidebar.ts
++++ b/src/stores/sidebar.ts
+@@ -1,4 +1,5 @@
+ import { Store } from '@tauri-apps/plugin-store'
++import type { PointerEvent as ReactPointerEvent } from 'react'
+ import { create } from 'zustand'
+ import { normalizeDocumentPanelWidth, normalizeLeftRailWidth } from '@/lib/canvas/workspace-layout-policy'
+
+@@ -21,9 +22,17 @@ export interface SidebarState {
+   setLeftWidth: (width: number) => Promise<void>
+   documentPanelWidth: number
+   setDocumentPanelWidth: (width: number, windowWidth?: number) => Promise<void>
++  leftResizeStartX: number | null
++  startLeftResize: (event: ReactPointerEvent<HTMLDivElement>) => void
++  resizeLeftSidebar: (event: PointerEvent) => void
++  finishLeftResize: (event: PointerEvent) => void
++  documentPanelResizeStartX: number | null
++  startDocumentPanelResize: (event: ReactPointerEvent<HTMLDivElement>) => void
++  resizeDocumentPanel: (event: PointerEvent) => void
++  finishDocumentPanelResize: (event: PointerEvent) => void
+   leftSidebarTab: 'files' | 'notes' | 'canvases'
+   setLeftSidebarTab: (tab: 'files' | 'notes' | 'canvases') => Promise<void>
+-  initSidebarState: () => Promise<void>
++  initSidebarState: () => void
+ }
+
+ // 从 localStorage 获取初始状态
+@@ -43,6 +52,53 @@ const getInitialState = () => {
+
+ const initialState = getInitialState()
+
++async function persistLeftWidth(normalizedWidth: number) {
++  const store = await Store.load('store.json')
++  await store.set('canvasWorkspaceLeftWidth', normalizedWidth)
++  await store.save()
++}
++
++async function persistDocumentPanelWidth(
++  normalizedWidth: number,
++) {
++  const store = await Store.load('store.json')
++  await store.set('canvasWorkspaceDocumentPanelWidth', normalizedWidth)
++  await store.save()
++}
++
++async function loadSidebarState(): Promise<Partial<SidebarState>> {
++  const store = await Store.load('store.json')
++  const leftState = await store.get<boolean>('leftSidebarVisible')
++  const centerState = await store.get<boolean>('centerPanelVisible')
++  const rightState = await store.get<boolean>('rightSidebarVisible')
++  const leftTab = await store.get<'files' | 'notes' | 'canvases'>('leftSidebarTab')
++  const leftWidth = await store.get<number>('canvasWorkspaceLeftWidth')
++  const documentPanelWidth = await store.get<number>('canvasWorkspaceDocumentPanelWidth')
++  const state: Partial<SidebarState> = {}
++
++  if (leftState !== null && leftState !== undefined) {
++    state.leftSidebarVisible = leftState
++    localStorage.setItem('leftSidebarVisible', String(leftState))
++  }
++  if (centerState !== null && centerState !== undefined) {
++    state.centerPanelVisible = centerState
++    localStorage.setItem('centerPanelVisible', String(centerState))
++  }
++  if (rightState !== null && rightState !== undefined) {
++    state.rightSidebarVisible = rightState
++    localStorage.setItem('rightSidebarVisible', String(rightState))
++  }
++  if (leftTab) {
++    state.leftSidebarTab = leftTab
++    localStorage.setItem('leftSidebarTab', leftTab)
++  }
++  if (leftWidth) state.leftWidth = normalizeLeftRailWidth(leftWidth)
++  if (documentPanelWidth) {
++    state.documentPanelWidth = normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth)
++  }
++  return state
++}
++
+ export const useSidebarStore = create<SidebarState>((set, get) => ({
+   fileSidebarVisible: true,
+   toggleFileSidebar: async () => {
+@@ -115,18 +171,61 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
+   setLeftWidth: async (width) => {
+     const normalizedWidth = normalizeLeftRailWidth(width)
+     set({ leftWidth: normalizedWidth })
+-    const store = await Store.load('store.json')
+-    await store.set('canvasWorkspaceLeftWidth', normalizedWidth)
+-    await store.save()
++    await persistLeftWidth(normalizedWidth)
+   },
+   documentPanelWidth: 420,
+   setDocumentPanelWidth: async (width, windowWidth = typeof window === 'undefined' ? 0 : window.innerWidth) => {
+     const normalizedWidth = normalizeDocumentPanelWidth(width, windowWidth)
+     set({ documentPanelWidth: normalizedWidth })
+-    const store = await Store.load('store.json')
+-    await store.set('canvasWorkspaceDocumentPanelWidth', normalizedWidth)
+-    await store.save()
++    await persistDocumentPanelWidth(normalizedWidth)
++  },
++  startLeftResize: (event) => {
++    const target = event.currentTarget
++    const { resizeLeftSidebar, finishLeftResize } = get()
++    target.setPointerCapture(event.pointerId)
++    set({ leftResizeStartX: event.clientX })
++    target.addEventListener('pointermove', resizeLeftSidebar)
++    target.addEventListener('pointerup', finishLeftResize, { once: true })
++  },
++  resizeLeftSidebar: (event) => {
++    const { leftResizeStartX, leftWidth } = get()
++    if (leftResizeStartX === null) return
++    const normalizedWidth = normalizeLeftRailWidth(leftWidth + event.clientX - leftResizeStartX)
++    set({ leftResizeStartX: event.clientX })
++    set({ leftWidth: normalizedWidth })
++    void persistLeftWidth(normalizedWidth)
++  },
++  finishLeftResize: (event) => {
++    const target = event.currentTarget as HTMLDivElement
++    target.removeEventListener('pointermove', get().resizeLeftSidebar)
++    set({ leftResizeStartX: null })
++  },
++  startDocumentPanelResize: (event) => {
++    const target = event.currentTarget
++    const { resizeDocumentPanel, finishDocumentPanelResize } = get()
++    target.setPointerCapture(event.pointerId)
++    set({ documentPanelResizeStartX: event.clientX })
++    target.addEventListener('pointermove', resizeDocumentPanel)
++    target.addEventListener('pointerup', finishDocumentPanelResize, { once: true })
++  },
++  resizeDocumentPanel: (event) => {
++    const { documentPanelResizeStartX, documentPanelWidth } = get()
++    if (documentPanelResizeStartX === null) return
++    const normalizedWidth = normalizeDocumentPanelWidth(
++      documentPanelWidth - event.clientX + documentPanelResizeStartX,
++      window.innerWidth,
++    )
++    set({ documentPanelResizeStartX: event.clientX })
++    set({ documentPanelWidth: normalizedWidth })
++    void persistDocumentPanelWidth(normalizedWidth)
++  },
++  finishDocumentPanelResize: (event) => {
++    const target = event.currentTarget as HTMLDivElement
++    target.removeEventListener('pointermove', get().resizeDocumentPanel)
++    set({ documentPanelResizeStartX: null })
+   },
++  leftResizeStartX: null,
++  documentPanelResizeStartX: null,
+   leftSidebarTab: 'files',
+   setLeftSidebarTab: async (tab: 'files' | 'notes' | 'canvases') => {
+     set({ leftSidebarTab: tab })
+@@ -135,32 +234,7 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
+     await store.set('leftSidebarTab', tab)
+     await store.save()
+   },
+-  initSidebarState: async () => {
+-    const store = await Store.load('store.json')
+-    const leftState = await store.get<boolean>('leftSidebarVisible')
+-    const centerState = await store.get<boolean>('centerPanelVisible')
+-    const rightState = await store.get<boolean>('rightSidebarVisible')
+-    const leftTab = await store.get<'files' | 'notes' | 'canvases'>('leftSidebarTab')
+-    const leftWidth = await store.get<number>('canvasWorkspaceLeftWidth')
+-    const documentPanelWidth = await store.get<number>('canvasWorkspaceDocumentPanelWidth')
+-
+-    if (leftState !== null && leftState !== undefined) {
+-      set({ leftSidebarVisible: leftState })
+-      localStorage.setItem('leftSidebarVisible', String(leftState))
+-    }
+-    if (centerState !== null && centerState !== undefined) {
+-      set({ centerPanelVisible: centerState })
+-      localStorage.setItem('centerPanelVisible', String(centerState))
+-    }
+-    if (rightState !== null && rightState !== undefined) {
+-      set({ rightSidebarVisible: rightState })
+-      localStorage.setItem('rightSidebarVisible', String(rightState))
+-    }
+-    if (leftTab) {
+-      set({ leftSidebarTab: leftTab })
+-      localStorage.setItem('leftSidebarTab', leftTab)
+-    }
+-    if (leftWidth) set({ leftWidth: normalizeLeftRailWidth(leftWidth) })
+-    if (documentPanelWidth) set({ documentPanelWidth: normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth) })
++  initSidebarState: () => {
++    void loadSidebarState().then(state => set(state))
+   },
+ }))

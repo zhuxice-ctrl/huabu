@@ -1,29 +1,30 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "zeroxb-integrated-task-06-canvas-visual-states",
+  "task_id": "zeroxb-integrated-task-07-permanent-canvas-workspace",
   "context_level": "L2-semantic-codegraph",
   "read_first": [
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/utils.ts",
-    "src/types/canvas.ts",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-6-brief.md",
-    "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
-    "scripts/tests/canvas-collision-sessions.test.mjs",
-    "scripts/tests/canvas-editor-contract.test.mjs"
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/lib/canvas/startup-policy.ts",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-7-brief.md",
+    "src/app/core/main/page.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/stores/sidebar.ts",
+    "src/stores/article.ts",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx"
   ],
   "relevant_symbols": [
-    "src.app.core.main.canvas.nodes.canvas-nodes.transientNodeClassName (src/app/core/main/canvas/nodes/canvas-nodes.tsx:38)",
-    "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle (src/app/core/main/canvas/nodes/canvas-nodes.tsx:59)",
-    "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle.backgroundColor (src/app/core/main/canvas/nodes/canvas-nodes.tsx:61)",
-    "src.app.core.main.canvas.nodes.canvas-nodes.nodeStyle.borderColor (src/app/core/main/canvas/nodes/canvas-nodes.tsx:62)",
-    "src.lib.utils.cn (src/lib/utils.ts:13)",
-    "src.types.canvas.CanvasNodeData (src/types/canvas.ts:39)"
+    "src.app.core.main.canvas.canvas-tab.CANVAS_TAB_PREFIX (src/app/core/main/canvas/canvas-tab.ts:3)",
+    "src.app.core.main.canvas.canvas-tab.getCanvasIdFromTabPath (src/app/core/main/canvas/canvas-tab.ts:18)",
+    "src.app.core.main.canvas.canvas-tab.getCanvasIdFromTabPath.id (src/app/core/main/canvas/canvas-tab.ts:22)",
+    "src.app.core.main.canvas.canvas-tab.isCanvasTabPath (src/app/core/main/canvas/canvas-tab.ts:26)",
+    "src.lib.canvas.startup-policy.chooseStartupCanvasId (src/lib/canvas/startup-policy.ts:1)"
   ],
   "entrypoints": [
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:transientNodeClassName:function",
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes:nodeStyle:function"
+    "typescript:src.app.core.main.canvas.canvas-tab:getCanvasIdFromTabPath:function",
+    "typescript:src.app.core.main.canvas.canvas-tab:isCanvasTabPath:function",
+    "typescript:src.lib.canvas.startup-policy:chooseStartupCanvasId:function"
   ],
   "likely_tests": [],
   "do_not_touch": [
@@ -40,13 +41,30 @@
     "unrelated runtime modules"
   ],
   "open_questions": [],
-  "graph_revision": "db62eea35e713e30ddf7c41e",
+  "graph_revision": "02a1e523f2174d01b782b3c6",
   "context_confidence": 1.0,
   "preflight_status": "accepted",
   "semantic_slice": ".adworkflow/semantic_slice.json",
   "context_preflight": ".adworkflow/context_preflight.json",
   "predicted_impact_files": [
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx"
+    "src/app/core/layout.tsx",
+    "src/app/core/main/canvas/canvas-sidebar.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-tab.ts",
+    "src/app/core/main/chat/chat-input.tsx",
+    "src/app/core/main/chat/index.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/app/core/main/editor/markdown/md-editor-wrapper.tsx",
+    "src/app/core/main/editor/markdown/tiptap-editor.tsx",
+    "src/app/core/main/editor/tab-bar.tsx",
+    "src/app/core/main/left-sidebar.tsx",
+    "src/app/core/main/mark/mark-detail-panel.tsx",
+    "src/app/core/main/page.tsx",
+    "src/app/mobile/chat/components/mobile-chat-header.tsx",
+    "src/app/mobile/chat/page.tsx",
+    "src/app/mobile/writing/mobile-editor.tsx",
+    "src/app/mobile/writing/writing-screen.tsx",
+    "src/components/search-dialog.tsx",
+    "src/lib/canvas/startup-policy.ts"
   ]
 }
