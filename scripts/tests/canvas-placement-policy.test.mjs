@@ -2,7 +2,6 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   candidateOffsets,
-  findFirstFreeCandidateOffset,
   findNearestFreePlacement,
   orderPlacementNodesById,
 } from '../../src/lib/canvas/placement-policy.ts'
@@ -137,28 +136,35 @@ test('search honors radius and candidate caps', () => {
 })
 
 test('actual candidate traversal never pulls beyond configured or default caps', () => {
-  function* failIfPulledPast(maxPulls) {
+  const generatorPrototype = candidateOffsets.prototype
+  const originalNext = generatorPrototype.next
+  const originalNextDescriptor = Object.getOwnPropertyDescriptor(generatorPrototype, 'next')
+
+  const assertBoundedSearch = (maxPulls, input) => {
     let pulls = 0
-    for (const offset of candidateOffsets(32, 2400)) {
+    generatorPrototype.next = function (...args) {
       pulls += 1
       if (pulls > maxPulls) throw new Error(`candidate ${pulls} exceeded the ${maxPulls}-candidate cap`)
-      yield offset
+      return originalNext.call(this, ...args)
+    }
+
+    try {
+      const result = findNearestFreePlacement(input)
+      assert.equal(result.status, 'no-space')
+      assert.equal(result.checkedCandidates, maxPulls)
+    } finally {
+      if (originalNextDescriptor) Object.defineProperty(generatorPrototype, 'next', originalNextDescriptor)
+      else delete generatorPrototype.next
     }
   }
 
-  assert.deepEqual(findFirstFreeCandidateOffset(failIfPulledPast(3), () => false, 3), {
-    checkedCandidates: 3,
-  })
-  assert.deepEqual(findFirstFreeCandidateOffset(failIfPulledPast(4096), () => false), {
-    checkedCandidates: 4096,
-  })
-
-  const result = findNearestFreePlacement({
+  const blockedSearch = {
     members: [{ id: 'source', rect: rect(0, 0) }],
     obstacles: [{ id: 'block', rect: rect(-10000, -10000, 20000, 20000) }],
     targetTranslation: { x: 0, y: 0 },
     snapshot: snapshot(1),
-  })
-  assert.equal(result.status, 'no-space')
-  assert.equal(result.checkedCandidates, 4096)
+  }
+
+  assertBoundedSearch(3, { ...blockedSearch, maxCandidates: 3 })
+  assertBoundedSearch(4096, blockedSearch)
 })

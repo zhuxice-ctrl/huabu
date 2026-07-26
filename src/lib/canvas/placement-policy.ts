@@ -19,11 +19,6 @@ export interface PlacementOffset {
   y: number
 }
 
-export interface CandidateTraversalResult {
-  offset?: PlacementOffset
-  checkedCandidates: number
-}
-
 const REPEAT_OFFSET_SCREEN = 32
 const DEFAULT_MAX_SCREEN_RADIUS = 2400
 const DEFAULT_MAX_CANDIDATES = 4096
@@ -126,24 +121,6 @@ export function* candidateOffsets(step: number, radius: number): Generator<Place
   }
 }
 
-export function findFirstFreeCandidateOffset(
-  offsets: Iterable<PlacementOffset>,
-  isFree: (offset: PlacementOffset) => boolean,
-  maxCandidates: number = DEFAULT_MAX_CANDIDATES,
-): CandidateTraversalResult {
-  const limit = finite(maxCandidates) && maxCandidates >= 1
-    ? Math.trunc(maxCandidates) : DEFAULT_MAX_CANDIDATES
-  const iterator = offsets[Symbol.iterator]()
-  let checkedCandidates = 0
-  while (checkedCandidates < limit) {
-    const next = iterator.next()
-    if (next.done) break
-    checkedCandidates += 1
-    if (isFree(next.value)) return { offset: next.value, checkedCandidates }
-  }
-  return { checkedCandidates }
-}
-
 function sourceMembersValid(members: Array<{ id: string; rect: CanvasRect }>, thresholds: ReturnType<typeof thresholdsForSnapshot>) {
   const normalized = members.map(member => {
     if (typeof member?.id !== 'string') return null
@@ -191,27 +168,21 @@ export function findNearestFreePlacement(input: {
   const step = screenDistanceToCanvas(REPEAT_OFFSET_SCREEN, input.snapshot)
   const radius = screenDistanceToCanvas(maxScreenRadius, input.snapshot)
   const offsets = candidateOffsets(step, radius)
-  const candidate = findFirstFreeCandidateOffset(offsets, offset => {
+  let checkedCandidates = 0
+  while (checkedCandidates < maxCandidates) {
+    const candidate = offsets.next()
+    if (candidate.done) break
+    checkedCandidates += 1
     const translation = {
-      x: input.targetTranslation.x + offset.x,
-      y: input.targetTranslation.y + offset.y,
+      x: input.targetTranslation.x + candidate.value.x,
+      y: input.targetTranslation.y + candidate.value.y,
     }
     const free = members.every(member => sortedObstacles.every(obstacle => (
       !conflicts(translated(member.rect, translation), obstacle.rect, thresholds)
     )))
-    return free
-  }, maxCandidates)
-  if (candidate.offset) {
-    return {
-      status: 'placed',
-      translation: {
-        x: input.targetTranslation.x + candidate.offset.x,
-        y: input.targetTranslation.y + candidate.offset.y,
-      },
-      checkedCandidates: candidate.checkedCandidates,
-    }
+    if (free) return { status: 'placed', translation, checkedCandidates }
   }
-  return { status: 'no-space', checkedCandidates: candidate.checkedCandidates }
+  return { status: 'no-space', checkedCandidates }
 }
 
 function validDraft(draft: MaterializedCanvasDraft): boolean {
