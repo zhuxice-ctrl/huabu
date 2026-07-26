@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from 'react'
 import {
   addEdge,
   Background,
@@ -24,7 +24,7 @@ import {
 import ELK from 'elkjs/lib/elk.bundled.js'
 import type { ElkNode } from 'elkjs/lib/elk-api'
 import { open } from '@tauri-apps/plugin-dialog'
-import { mkdir, readFile, readTextFile, writeFile } from '@tauri-apps/plugin-fs'
+import { mkdir, readFile, readTextFile, remove, writeFile } from '@tauri-apps/plugin-fs'
 import {
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -145,6 +145,7 @@ import {
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
   RELATION_LONG_PRESS_MS,
+  type CanvasRect,
 } from '@/lib/canvas/gesture-policy'
 import {
   armContextMenuSuppression,
@@ -171,8 +172,22 @@ import {
   screenSizeToCanvas,
   type ViewportSnapshot,
 } from '@/lib/canvas/viewport-sizing'
+import {
+  conflicts,
+  isSolidCanvasNode,
+  resolveActiveEdgeSnap,
+  scoreLegacyConflicts,
+  sweepRigidSet,
+  thresholdsForSnapshot,
+  type ActiveEdgeSnapState,
+  type CollisionEntity,
+  type LegacyConflictScore,
+} from '@/lib/canvas/collision-policy'
+import { CanvasSpatialIndex } from '@/lib/canvas/spatial-index'
+import { findNearestFreePlacement } from '@/lib/canvas/placement-policy'
 
 const elk = new ELK()
+const PLACEMENT_PREVIEW_MS = 120
 const DRAWING_CURSORS = {
   pen: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M4 20l3.5-1 11-11-2.5-2.5-11 11L4 20z' fill='%23fff' stroke='%2318181b' stroke-width='1.5'/><path d='M14.8 6.7l2.5 2.5' stroke='%2318181b' stroke-width='1.5'/></svg>") 4 20, crosshair`,
   highlighter: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M4 19l4 1L20 8l-4-4L4 16z' fill='%23facc15' stroke='%2318181b' stroke-width='1.5'/><path d='M4 19h7' stroke='%2318181b' stroke-width='2'/></svg>") 4 19, crosshair`,
@@ -208,11 +223,69 @@ const TEXT_CAPABLE_NODE_TYPES = new Set<CanvasNodeType>([
 
 const edgeTypes: EdgeTypes = { relation: CanvasRelationEdge }
 
-interface DrawDraft {
+interface GeometrySessionBase {
   pointerId: number
+  viewport: ViewportSnapshot
+  indexVersion: number
+  baselineDocumentRevision: number
+  originalGeometry: Map<string, CanvasRect>
+  lastAcceptedGeometry: Map<string, CanvasRect>
+  baselineConflictPairs: Set<string>
+  retainedPairMtd: Map<string, number>
+  baselineScore: Pick<LegacyConflictScore, 'pairCount' | 'totalMtd'>
+  controlledNodeIds: Set<string>
+  collisionMemberIds: Set<string>
+  historySnapshot: CanvasSnapshot
+  invalid: boolean
+}
+
+type CanvasNodeVisualState = 'invalid' | 'legacy-conflict' | 'placement-preview'
+
+interface CanvasSnapGuide {
+  axis: 'x' | 'y'
+  position: number
+}
+
+interface DrawGeometrySession extends GeometrySessionBase {
+  kind: 'draw'
   start: { x: number; y: number }
   current: { x: number; y: number }
+  candidate: CanvasRect | null
+  snap: ActiveEdgeSnapState
+}
+
+interface DrawDraft extends DrawGeometrySession {
   viewport: ViewportSnapshot
+}
+
+interface ResizeGeometrySession extends GeometrySessionBase {
+  kind: 'resize'
+  nodeId: string
+  snap: ActiveEdgeSnapState
+}
+
+interface MoveGeometrySession extends GeometrySessionBase {
+  kind: 'move'
+  activeNodeId: string
+}
+
+type GeometrySession =
+  | DrawGeometrySession
+  | ResizeGeometrySession
+  | MoveGeometrySession
+
+interface PlacementPreview {
+  nodes: FlowCanvasNode[]
+  snapshot: ViewportSnapshot
+  translation: { x: number; y: number }
+}
+
+interface GeometryUiState {
+  drawDraft: DrawGeometrySession | null
+  snapGuides: CanvasSnapGuide[]
+  legacyConflictIds: Set<string>
+  nodeVisualStates: Map<string, CanvasNodeVisualState>
+  placementPreview: PlacementPreview | null
 }
 
 interface RelationPointerSession {
@@ -358,6 +431,224 @@ function havePersistentEdgesChanged(previous: Edge[], current: Edge[]) {
   })
 }
 
+function nodeRect(node: FlowCanvasNode): CanvasRect | null {
+  const width = node.width ?? node.measured?.width ?? (
+    node.type === 'decision' ? 144
+      : node.type === 'text' ? 120
+        : node.type === 'image' ? 256
+          : node.type === 'file' ? 320
+            : node.type === 'note' || node.type === 'link' || node.type === 'todo' ? 208 : 160
+  )
+  const height = node.height ?? node.measured?.height ?? (
+    node.type === 'decision' ? 144 : node.type === 'text' ? 40 : node.type === 'image' ? 192 : 56
+  )
+  if (![node.position.x, node.position.y, width, height].every(value => Number.isFinite(value))) return null
+  if (width <= 0 || height <= 0) return null
+  return { x: node.position.x, y: node.position.y, width, height }
+}
+
+function geometryForNodes(nodes: FlowCanvasNode[], ids?: Set<string>): Map<string, CanvasRect> {
+  return new Map(nodes.flatMap(node => {
+    if (ids && !ids.has(node.id)) return []
+    const rect = nodeRect(node)
+    return rect ? [[node.id, rect] as const] : []
+  }))
+}
+
+function collisionEntities(nodes: FlowCanvasNode[]): CollisionEntity[] {
+  return nodes.flatMap(node => {
+    if (!isSolidCanvasNode(node as CanvasNode)) return []
+    const rect = nodeRect(node)
+    return rect ? [{ id: node.id, rect }] : []
+  })
+}
+
+function applyGeometry(nodes: FlowCanvasNode[], geometry: Map<string, CanvasRect>): FlowCanvasNode[] {
+  return nodes.map(node => {
+    const rect = geometry.get(node.id)
+    if (!rect) return node
+    return {
+      ...node,
+      position: { x: rect.x, y: rect.y },
+      width: rect.width,
+      height: rect.height,
+      style: { ...node.style, width: rect.width, height: rect.height },
+    }
+  })
+}
+
+function geometryEqual(left: CanvasRect | undefined, right: CanvasRect | undefined): boolean {
+  return Boolean(left && right)
+    && left!.x === right!.x
+    && left!.y === right!.y
+    && left!.width === right!.width
+    && left!.height === right!.height
+}
+
+function pairIdentity(ids: [string, string]): string {
+  return ids[0] < ids[1] ? `${ids[0]}\u0000${ids[1]}` : `${ids[1]}\u0000${ids[0]}`
+}
+
+function conflictProfile(
+  entities: CollisionEntity[],
+  movingIds: Set<string>,
+  thresholds: ReturnType<typeof thresholdsForSnapshot>,
+  ignoreInternal: boolean,
+) {
+  const score = scoreLegacyConflicts({ entities, movingIds: [...movingIds], thresholds })
+  if (!score.valid) return null
+  const pairs = score.pairs.filter(pair => !ignoreInternal
+    || !(movingIds.has(pair.ids[0]) && movingIds.has(pair.ids[1])))
+  const totalMtd = Math.round((pairs.reduce((sum, pair) => sum + pair.mtd, 0) + Number.EPSILON) * 10_000) / 10_000
+  return {
+    pairCount: pairs.length,
+    totalMtd,
+    pairs: new Map(pairs.map(pair => [pairIdentity(pair.ids), pair.mtd])),
+  }
+}
+
+function candidateConflictAccepted(
+  session: GeometrySessionBase,
+  entities: CollisionEntity[],
+  ignoreInternal: boolean,
+  final: boolean,
+) {
+  const thresholds = thresholdsForSnapshot(session.viewport)
+  const profile = conflictProfile(entities, session.collisionMemberIds, thresholds, ignoreInternal)
+  if (!profile) return false
+  for (const [identity, mtd] of profile.pairs) {
+    if (!session.baselineConflictPairs.has(identity)) return false
+    const previous = session.retainedPairMtd.get(identity)
+    if (previous !== undefined && mtd > previous + thresholds.epsilon) return false
+  }
+  if (!final) {
+    session.retainedPairMtd = new Map([...session.baselineConflictPairs].map(identity => (
+      [identity, profile.pairs.get(identity) ?? 0]
+    )))
+    return true
+  }
+  if (session.baselineScore.pairCount === 0) return profile.pairCount === 0
+  return profile.pairCount === 0
+    || profile.pairCount < session.baselineScore.pairCount
+    || (profile.pairCount === session.baselineScore.pairCount
+      && profile.totalMtd < session.baselineScore.totalMtd - thresholds.epsilon)
+}
+
+function geometryEntities(
+  authoritativeNodes: FlowCanvasNode[],
+  candidate: Map<string, CanvasRect>,
+): CollisionEntity[] {
+  return collisionEntities(authoritativeNodes).map(entity => ({
+    id: entity.id,
+    rect: candidate.get(entity.id) || entity.rect,
+  }))
+}
+
+function hasAuthoritativeGeometryChanged(
+  session: GeometrySessionBase,
+  authoritativeNodes: FlowCanvasNode[],
+): boolean {
+  const latest = geometryForNodes(authoritativeNodes, session.controlledNodeIds)
+  for (const [id, original] of session.originalGeometry) {
+    if (!geometryEqual(original, latest.get(id))) return true
+  }
+  return false
+}
+
+function revalidateGeometrySession(
+  session: GeometrySession,
+  authoritativeNodes: FlowCanvasNode[],
+): boolean {
+  if (session.kind !== 'draw' && hasAuthoritativeGeometryChanged(session, authoritativeNodes)) return false
+  const candidate = session.kind === 'draw'
+    ? session.candidate ? new Map([['__draw__', session.candidate]]) : new Map<string, CanvasRect>()
+    : session.lastAcceptedGeometry
+  if (candidate.size === 0 || session.invalid) return false
+  const entities = session.kind === 'draw'
+    ? [...collisionEntities(authoritativeNodes), { id: '__draw__', rect: session.candidate! }]
+    : geometryEntities(authoritativeNodes, candidate)
+  return candidateConflictAccepted(session, entities, session.kind === 'move', true)
+}
+
+function constrainImageResize(original: CanvasRect, candidate: CanvasRect): CanvasRect {
+  const ratio = original.width / original.height
+  if (!Number.isFinite(ratio) || ratio <= 0) return candidate
+  const widthScale = candidate.width / original.width
+  const heightScale = candidate.height / original.height
+  const useWidth = Math.abs(widthScale - 1) >= Math.abs(heightScale - 1)
+  const width = useWidth ? candidate.width : candidate.height * ratio
+  const height = useWidth ? candidate.width / ratio : candidate.height
+  const movedLeft = candidate.x !== original.x
+  const movedTop = candidate.y !== original.y
+  return {
+    x: movedLeft ? original.x + original.width - width : original.x,
+    y: movedTop ? original.y + original.height - height : original.y,
+    width,
+    height,
+  }
+}
+
+function unionRect(rects: CanvasRect[]): CanvasRect | null {
+  if (rects.length === 0) return null
+  const minX = Math.min(...rects.map(rect => rect.x))
+  const minY = Math.min(...rects.map(rect => rect.y))
+  const maxX = Math.max(...rects.map(rect => rect.x + rect.width))
+  const maxY = Math.max(...rects.map(rect => rect.y + rect.height))
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+function expandRect(rect: CanvasRect, amount: number): CanvasRect {
+  return {
+    x: rect.x - amount,
+    y: rect.y - amount,
+    width: rect.width + amount * 2,
+    height: rect.height + amount * 2,
+  }
+}
+
+function screenRectFromCanvas(rect: CanvasRect, snapshot: ViewportSnapshot): CanvasRect {
+  return {
+    x: rect.x * snapshot.zoom + snapshot.x + snapshot.containerLeft,
+    y: rect.y * snapshot.zoom + snapshot.y + snapshot.containerTop,
+    width: rect.width * snapshot.zoom,
+    height: rect.height * snapshot.zoom,
+  }
+}
+
+function DrawGeometryPreview({
+  draft,
+  containerBounds,
+}: {
+  draft: DrawGeometrySession
+  containerBounds: DOMRect | undefined
+}) {
+  const rect = draft.candidate
+    ? screenRectFromCanvas(draft.candidate, draft.viewport)
+    : normalizeDrawRect(draft.start, draft.current)
+  return (
+    <div
+      className={cn(
+        'pointer-events-none absolute rounded-xl border-2 bg-primary/10',
+        draft.invalid
+          ? 'border-[#FF5D5D] shadow-[0_0_12px_rgba(255,93,93,0.32)]'
+          : 'border-primary/70 shadow-[0_0_0_1px_rgba(255,255,255,0.5)_inset]',
+      )}
+      style={{
+        left: rect.x - (containerBounds?.left || 0),
+        top: rect.y - (containerBounds?.top || 0),
+        width: rect.width,
+        height: rect.height,
+      }}
+    >
+      {draft.invalid && (
+        <span className="absolute left-2 top-2 rounded bg-[#FF5D5D] px-1.5 py-0.5 text-xs text-white">
+          位置重叠
+        </span>
+      )}
+    </div>
+  )
+}
+
 function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const t = useTranslations('canvas')
   const document = useCanvasStore(state => state.documents[canvasId])
@@ -396,7 +687,20 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [importContentOpen, setImportContentOpen] = useState(false)
   const [importContentDraft, setImportContentDraft] = useState('')
   const [contextTarget, setContextTarget] = useState<'pane' | 'node' | 'edge'>('pane')
-  const [drawDraft, setDrawDraft] = useState<DrawDraft | null>(null)
+  const [geometryUi, setDrawDraft] = useState<GeometryUiState>({
+    drawDraft: null,
+    snapGuides: [],
+    legacyConflictIds: new Set(),
+    nodeVisualStates: new Map(),
+    placementPreview: null,
+  })
+  const { drawDraft, snapGuides, legacyConflictIds, nodeVisualStates, placementPreview } = geometryUi
+  const updateGeometryUi = useCallback((patch: Partial<GeometryUiState>) => {
+    setDrawDraft(current => ({ ...current, ...patch }))
+  }, [])
+  const updateFlowNodes = useCallback((updater: Parameters<typeof setNodes>[0]) => {
+    setNodes(updater)
+  }, [setNodes])
   const [marqueePreview, setMarqueePreview] = useState<MarqueePointerSession | null>(null)
   const [relationPreview, setRelationPreview] = useState<RelationPointerSession | null>(null)
   const [relationEditor, setRelationEditor] = useState<RelationEditorState | null>(null)
@@ -408,13 +712,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const erasingIdsRef = useRef(new Set<string>())
   const clipboardRef = useRef<CanvasSnapshot | null>(null)
   const pasteOffsetRef = useRef(0)
-  const resizingRef = useRef(false)
+  const geometrySessionRef = useRef<GeometrySession | null>(null)
+  const decorativeResizingRef = useRef(false)
+  const spatialIndexRef = useRef(new CanvasSpatialIndex())
+  const authoritativeNodesRef = useRef(nodes)
+  const documentRevisionRef = useRef(0)
+  const lastPointerIdRef = useRef(-1)
+  const placementTokenRef = useRef(0)
   const freehandWidthHistoryRef = useRef(false)
-  const groupDragRef = useRef<{
-    groupId: string
-    start: { x: number; y: number }
-    children: Map<string, { x: number; y: number }>
-  } | null>(null)
   const relationSessionRef = useRef<RelationPointerSession | null>(null)
   const marqueeSessionRef = useRef<MarqueePointerSession | null>(null)
   const relationTargetRef = useRef<string | null>(null)
@@ -438,6 +743,39 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     if (snapshot) lastViewportSnapshotRef.current = snapshot
     return snapshot
   }, [getViewport])
+  const rebuildSpatialIndex = useCallback((nextNodes: FlowCanvasNode[]) => {
+    documentRevisionRef.current += 1
+    const geometryVersion = documentRevisionRef.current
+    const entities = collisionEntities(nextNodes)
+    spatialIndexRef.current.rebuild(entities.map(entity => ({ ...entity, geometryVersion })))
+    authoritativeNodesRef.current = nextNodes
+    const score = scoreLegacyConflicts({
+      entities,
+      thresholds: thresholdsForSnapshot(lastViewportSnapshotRef.current || {
+        x: 0,
+        y: 0,
+        zoom: document?.viewport.zoom || 0.65,
+        containerLeft: 0,
+        containerTop: 0,
+        capturedAt: Date.now(),
+      }),
+    })
+    updateGeometryUi({
+      legacyConflictIds: new Set(score.valid ? score.pairs.flatMap(pair => pair.ids) : []),
+    })
+  }, [document?.viewport.zoom, updateGeometryUi])
+  const releaseGeometryPointerCapture = useCallback((pointerId: number) => {
+    if (pointerId < 0) return
+    const owners = [
+      ...globalThis.document.querySelectorAll(`[data-canvas-geometry-pointer="${pointerId}"]`),
+      containerRef.current,
+    ]
+    for (const owner of owners) {
+      if (owner instanceof Element && owner.hasPointerCapture(pointerId)) {
+        try { owner.releasePointerCapture(pointerId) } catch { /* capture may already be gone */ }
+      }
+    }
+  }, [])
   const viewport = useViewport()
   useEffect(() => {
     if (!Number.isFinite(viewport.x) || !Number.isFinite(viewport.y) || !Number.isFinite(viewport.zoom)) return
@@ -553,7 +891,24 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     return { nodes: previewNodes, edges: previewEdges }
   }, [agentPreviewOperations, document, edges, nodes])
-  const displayNodes = previewSnapshot?.nodes || nodes
+  const displayNodes = useMemo(() => {
+    const base = placementPreview
+      ? [...nodes.map(node => ({ ...node, selected: false })), ...placementPreview.nodes]
+      : previewSnapshot?.nodes || nodes
+    const placementIds = new Set(placementPreview?.nodes.map(node => node.id) || [])
+    return base.map(node => {
+      const visual = nodeVisualStates.get(node.id)
+      return {
+        ...node,
+        className: cn(
+          node.className,
+          visual === 'invalid' && 'canvas-geometry-invalid',
+          visual !== 'invalid' && legacyConflictIds.has(node.id) && 'canvas-legacy-conflict',
+          placementIds.has(node.id) && 'canvas-placement-preview',
+        ),
+      }
+    })
+  }, [legacyConflictIds, nodeVisualStates, nodes, placementPreview, previewSnapshot])
   const displayEdges = useMemo(() => (previewSnapshot?.edges || edges).map(edge => {
     const relation = edge.data as CanvasRelationData | undefined
     if (!relation) return edge
@@ -597,14 +952,32 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const nextEdges = document.edges as Edge[]
     persistedNodesRef.current = nextNodes
     persistedEdgesRef.current = nextEdges
+    rebuildSpatialIndex(nextNodes)
     const savedHistory = useCanvasStore.getState().projects.find(project => project.id === canvasId)?.history
     historyRef.current = (savedHistory?.undo || []).map(restoreHistorySnapshot)
     redoRef.current = (savedHistory?.redo || []).map(restoreHistorySnapshot)
     setCanUndo(historyRef.current.length > 0)
     setCanRedo(redoRef.current.length > 0)
-    setNodes(nextNodes)
+    const geometrySession = geometrySessionRef.current
+    if (geometrySession && geometrySession.kind !== 'draw'
+      && hasAuthoritativeGeometryChanged(geometrySession, nextNodes)) {
+      geometrySessionRef.current = null
+      updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() })
+      releaseGeometryPointerCapture(geometrySession.pointerId)
+      updateFlowNodes(nextNodes)
+    } else if (geometrySession) {
+      updateFlowNodes(current => {
+        const currentById = new Map(current.map(node => [node.id, node]))
+        return nextNodes.map(node => geometrySession.controlledNodeIds.has(node.id)
+          ? currentById.get(node.id) || node
+          : node)
+      })
+    } else {
+      updateFlowNodes(nextNodes)
+    }
     setEdges(nextEdges)
-  }, [document, setEdges, setNodes])
+  }, [document, rebuildSpatialIndex, releaseGeometryPointerCapture, setEdges,
+    updateFlowNodes, updateGeometryUi])
 
   useEffect(() => {
     const showPreview = ({ operations }: { operations: unknown[] }) => setAgentPreviewOperations(operations)
@@ -632,14 +1005,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [fileTree.length, loadFileTree, notePickerOpen])
 
   useEffect(() => {
+    if (!geometrySessionRef.current) rebuildSpatialIndex(nodes)
+  }, [nodes, rebuildSpatialIndex])
+
+  useEffect(() => {
     if (!document) return
+    if (geometrySessionRef.current || placementPreview) return
     if (!havePersistentNodesChanged(persistedNodesRef.current, nodes)
       && !havePersistentEdgesChanged(persistedEdgesRef.current, edges)) return
     persistedNodesRef.current = nodes
     persistedEdgesRef.current = edges
     const nextDocument: CanvasDocument = {
       ...document,
-      nodes: serializeNodes(nodes),
+      nodes: serializeNodes(geometrySessionRef.current ? authoritativeNodesRef.current : nodes),
       edges: serializeEdges(edges),
       viewport: getViewport(),
     }
@@ -653,7 +1031,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       lastStoreDocumentRef.current = pendingDocument
       updateDocument(canvasId, pendingDocument)
     }, 180)
-  }, [canvasId, document, edges, getViewport, nodes, updateDocument])
+  }, [canvasId, document, edges, getViewport, nodes, placementPreview, updateDocument])
 
   const persistHistory = useCallback(() => {
     updateHistory(canvasId, {
@@ -662,9 +1040,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     })
   }, [canvasId, updateHistory])
 
-  const pushHistory = useCallback(() => {
-    const historyLimit = nodes.length > 500 ? 10 : nodes.length > 250 ? 20 : 50
-    historyRef.current = [...historyRef.current.slice(-(historyLimit - 1)), cloneSnapshot(nodes, edges)]
+  const pushHistory = useCallback((snapshot?: CanvasSnapshot) => {
+    const checkpoint = snapshot || cloneSnapshot(nodes, edges)
+    const historyLimit = checkpoint.nodes.length > 500 ? 10 : checkpoint.nodes.length > 250 ? 20 : 50
+    historyRef.current = [...historyRef.current.slice(-(historyLimit - 1)), checkpoint]
     redoRef.current = []
     persistHistory()
     setCanUndo(true)
@@ -749,17 +1128,331 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     emitter.emit('canvas-undo-redo-changed', { canvasId, undo: canUndo, redo: canRedo })
   }, [canRedo, canUndo, canvasId])
 
-  const onNodesChange = useCallback((changes: NodeChange<FlowCanvasNode>[]) => {
-    const startsResize = changes.some(change => change.type === 'dimensions' && change.resizing === true)
-    if (changes.some(change => change.type === 'remove') || (startsResize && !resizingRef.current)) {
-      pushHistory()
+  const commitGeometrySessionCheckpoint = useCallback((session: GeometrySessionBase) => {
+    const authoritativeSnapshot = cloneSnapshot(authoritativeNodesRef.current, edges)
+    pushHistory(authoritativeSnapshot)
+    void session
+  }, [edges, pushHistory])
+
+  const createGeometrySessionBase = useCallback((input: {
+    pointerId: number
+    viewport: ViewportSnapshot
+    controlledNodeIds: Set<string>
+    collisionMemberIds: Set<string>
+    ignoreInternal: boolean
+  }): GeometrySessionBase => {
+    const originalGeometry = geometryForNodes(authoritativeNodesRef.current, input.controlledNodeIds)
+    const entities = collisionEntities(authoritativeNodesRef.current)
+    const profile = conflictProfile(
+      entities,
+      input.collisionMemberIds,
+      thresholdsForSnapshot(input.viewport),
+      input.ignoreInternal,
+    )
+    return {
+      pointerId: input.pointerId,
+      viewport: input.viewport,
+      indexVersion: spatialIndexRef.current.version,
+      baselineDocumentRevision: documentRevisionRef.current,
+      originalGeometry,
+      lastAcceptedGeometry: new Map(originalGeometry),
+      baselineConflictPairs: new Set(profile?.pairs.keys() || []),
+      retainedPairMtd: new Map(profile?.pairs || []),
+      baselineScore: {
+        pairCount: profile?.pairCount || 0,
+        totalMtd: profile?.totalMtd || 0,
+      },
+      controlledNodeIds: input.controlledNodeIds,
+      collisionMemberIds: input.collisionMemberIds,
+      historySnapshot: cloneSnapshot(authoritativeNodesRef.current, edges),
+      invalid: false,
     }
-    if (startsResize) resizingRef.current = true
+  }, [edges])
+
+  const cancelGeometrySession = useCallback((
+    reason: 'invalid-release' | 'pointercancel' | 'lost-capture' | 'window-blur' | 'stale-authority' | 'no-change',
+  ) => {
+    const session = geometrySessionRef.current
+    if (!session) return
+    geometrySessionRef.current = null
+    updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() })
+    updateFlowNodes(current => session.kind === 'draw'
+      ? current
+      : applyGeometry(current, geometryForNodes(authoritativeNodesRef.current, session.controlledNodeIds)))
+    releaseGeometryPointerCapture(session.pointerId)
+    if (reason === 'invalid-release') toast.error('位置重叠')
+  }, [releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
+
+  const finalizeResizeGeometrySession = useCallback(() => {
+    const session = geometrySessionRef.current
+    if (!session || session.kind !== 'resize') return
+    if (session.invalid || !revalidateGeometrySession(session, authoritativeNodesRef.current)) {
+      cancelGeometrySession('invalid-release')
+      return
+    }
+    const changed = [...session.lastAcceptedGeometry].some(([id, rect]) => (
+      !geometryEqual(rect, session.originalGeometry.get(id))
+    ))
+    if (!changed) {
+      cancelGeometrySession('no-change')
+      return
+    }
+    geometrySessionRef.current = null
+    updateGeometryUi({ snapGuides: [], nodeVisualStates: new Map() })
+    commitGeometrySessionCheckpoint(session)
+    updateFlowNodes(current => applyGeometry(current, session.lastAcceptedGeometry))
+    releaseGeometryPointerCapture(session.pointerId)
+  }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
+    releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
+
+  const evaluateResizeGeometrySession = useCallback((
+    session: ResizeGeometrySession,
+    changes: NodeChange<FlowCanvasNode>[],
+  ) => {
+    const original = session.originalGeometry.get(session.nodeId)
+    if (!original) return
+    const dimensionChange = changes.find(change => change.type === 'dimensions' && change.id === session.nodeId)
+    const positionChange = changes.find(change => change.type === 'position' && change.id === session.nodeId)
+    const dimensions = dimensionChange?.type === 'dimensions' ? dimensionChange.dimensions : undefined
+    const position = positionChange?.type === 'position' ? positionChange.position : undefined
+    const previous = session.lastAcceptedGeometry.get(session.nodeId) || original
+    let rawCandidate: CanvasRect = {
+      x: position?.x ?? previous.x,
+      y: position?.y ?? previous.y,
+      width: dimensions?.width ?? previous.width,
+      height: dimensions?.height ?? previous.height,
+    }
+    const targetNode = authoritativeNodesRef.current.find(node => node.id === session.nodeId)
+    if (targetNode?.type === 'image') rawCandidate = constrainImageResize(original, rawCandidate)
+    const activeEdges = {
+      x: rawCandidate.width !== original.width
+        ? (rawCandidate.x !== original.x ? 'min' as const : 'max' as const)
+        : undefined,
+      y: rawCandidate.height !== original.height
+        ? (rawCandidate.y !== original.y ? 'min' as const : 'max' as const)
+        : undefined,
+    }
+    const thresholds = thresholdsForSnapshot(session.viewport)
+    const query = expandRect(rawCandidate, thresholds.snapBreak + thresholds.safetyGap)
+    const obstacles = spatialIndexRef.current.query(query)
+      .filter(record => record.id !== session.nodeId)
+      .map(record => ({ id: record.id, rect: record.rect }))
+    const snapped = resolveActiveEdgeSnap({
+      candidate: rawCandidate,
+      activeEdges,
+      obstacles,
+      thresholds,
+      snap: session.snap,
+    })
+    session.snap = snapped.snap
+    const candidate = new Map(session.lastAcceptedGeometry)
+    candidate.set(session.nodeId, snapped.rect)
+    const accepted = snapped.valid && candidateConflictAccepted(
+      session,
+      geometryEntities(authoritativeNodesRef.current, candidate),
+      false,
+      false,
+    )
+    session.invalid = !accepted
+    if (accepted) session.lastAcceptedGeometry = candidate
+    updateGeometryUi({
+      snapGuides: [
+        ...(snapped.snap.x ? [{ axis: 'x' as const, position: snapped.snap.x.boundary }] : []),
+        ...(snapped.snap.y ? [{ axis: 'y' as const, position: snapped.snap.y.boundary }] : []),
+      ],
+      nodeVisualStates: accepted
+        ? new Map()
+        : new Map([[session.nodeId, 'invalid' as CanvasNodeVisualState]]),
+    })
+    updateFlowNodes(current => applyGeometry(current, candidate))
+  }, [updateFlowNodes, updateGeometryUi])
+
+  const applyGeometryNodeChanges = useCallback((changes: NodeChange<FlowCanvasNode>[]) => {
+    const nodeById = new Map(nodes.map(node => [node.id, node]))
+    const startsSolidResize = changes.find(change => {
+      if (change.type !== 'dimensions' || change.resizing !== true) return false
+      const node = nodeById.get(change.id)
+      return Boolean(node && isSolidCanvasNode(node as CanvasNode))
+    })
+    let session = geometrySessionRef.current
+    if (!session && startsSolidResize?.type === 'dimensions') {
+      const viewport = captureCurrentViewport()
+      if (viewport) {
+        const controlledNodeIds = new Set([startsSolidResize.id])
+        session = {
+          ...createGeometrySessionBase({
+            pointerId: lastPointerIdRef.current,
+            viewport,
+            controlledNodeIds,
+            collisionMemberIds: new Set(controlledNodeIds),
+            ignoreInternal: false,
+          }),
+          kind: 'resize',
+          nodeId: startsSolidResize.id,
+          snap: {},
+        }
+        geometrySessionRef.current = session
+      }
+    }
+
+    if (session?.kind === 'resize') evaluateResizeGeometrySession(session, changes)
+
+    const startsDecorativeResize = changes.some(change => {
+      if (change.type !== 'dimensions' || change.resizing !== true) return false
+      const node = nodeById.get(change.id)
+      return Boolean(node && !isSolidCanvasNode(node as CanvasNode))
+    })
+    if (startsDecorativeResize && !decorativeResizingRef.current) pushHistory()
+    if (startsDecorativeResize) decorativeResizingRef.current = true
     if (changes.some(change => change.type === 'dimensions' && change.resizing === false)) {
-      resizingRef.current = false
+      decorativeResizingRef.current = false
     }
-    onNodesChangeBase(changes)
-  }, [onNodesChangeBase, pushHistory])
+    if (changes.some(change => change.type === 'remove') && !session) pushHistory()
+
+    const passThroughChanges = changes.filter(change => {
+      if (change.type !== 'position' && change.type !== 'dimensions') return true
+      const node = nodeById.get(change.id)
+      if (!node || !isSolidCanvasNode(node as CanvasNode)) return true
+      return change.type === 'dimensions'
+        && change.resizing === undefined
+        && geometrySessionRef.current?.kind !== 'resize'
+    })
+    onNodesChangeBase(passThroughChanges)
+
+    if (session?.kind === 'resize'
+      && changes.some(change => change.type === 'dimensions'
+        && change.id === session.nodeId && change.resizing === false)) {
+      finalizeResizeGeometrySession()
+    }
+  }, [captureCurrentViewport, createGeometrySessionBase, evaluateResizeGeometrySession,
+    finalizeResizeGeometrySession, nodes, onNodesChangeBase, pushHistory])
+
+  const onNodesChange = useCallback((changes: NodeChange<FlowCanvasNode>[]) => {
+    applyGeometryNodeChanges(changes)
+  }, [applyGeometryNodeChanges])
+
+  const startMoveGeometrySession = useCallback((event: unknown, activeNode: FlowCanvasNode) => {
+    const viewport = captureCurrentViewport()
+    if (!viewport) return
+    const sourceNodes = authoritativeNodesRef.current
+    const selectedIds = new Set(activeNode.selected
+      ? nodes.filter(node => node.selected).map(node => node.id)
+      : [activeNode.id])
+    const selected = sourceNodes.filter(node => selectedIds.has(node.id))
+    const controlledNodeIds = new Set(selected.map(node => node.id))
+    for (const group of selected.filter(node => node.type === 'group')) {
+      if (!Array.isArray(group.data.childIds)) continue
+      for (const childId of group.data.childIds) {
+        if (typeof childId === 'string' && sourceNodes.some(node => node.id === childId)) {
+          controlledNodeIds.add(childId)
+        }
+      }
+    }
+    const collisionMemberIds = new Set(sourceNodes
+      .filter(node => controlledNodeIds.has(node.id) && isSolidCanvasNode(node as CanvasNode))
+      .map(node => node.id))
+    const eventShape = event as { pointerId?: number; nativeEvent?: { pointerId?: number }; currentTarget?: EventTarget | null }
+    const pointerId = eventShape.pointerId ?? eventShape.nativeEvent?.pointerId ?? lastPointerIdRef.current
+    if (eventShape.currentTarget instanceof HTMLElement) {
+      eventShape.currentTarget.dataset.canvasGeometryPointer = String(pointerId)
+    }
+    const session: MoveGeometrySession = {
+      ...createGeometrySessionBase({
+        pointerId,
+        viewport,
+        controlledNodeIds,
+        collisionMemberIds,
+        ignoreInternal: true,
+      }),
+      kind: 'move',
+      activeNodeId: activeNode.id,
+    }
+    geometrySessionRef.current = session
+  }, [captureCurrentViewport, createGeometrySessionBase, nodes])
+
+  const evaluateMoveGeometrySession = useCallback((activeNode: FlowCanvasNode) => {
+    const session = geometrySessionRef.current
+    if (!session || session.kind !== 'move' || session.activeNodeId !== activeNode.id) return
+    const originalActive = session.originalGeometry.get(activeNode.id)
+    const acceptedActive = session.lastAcceptedGeometry.get(activeNode.id)
+    if (!originalActive || !acceptedActive) return
+    const desiredDelta = {
+      x: activeNode.position.x - originalActive.x,
+      y: activeNode.position.y - originalActive.y,
+    }
+    const acceptedDelta = {
+      x: acceptedActive.x - originalActive.x,
+      y: acceptedActive.y - originalActive.y,
+    }
+    const frameDelta = {
+      x: desiredDelta.x - acceptedDelta.x,
+      y: desiredDelta.y - acceptedDelta.y,
+    }
+    const members = [...session.collisionMemberIds].flatMap(id => {
+      const rect = session.lastAcceptedGeometry.get(id)
+      return rect ? [{ id, rect }] : []
+    })
+    const thresholds = thresholdsForSnapshot(session.viewport)
+    let acceptedFrameDelta = frameDelta
+    if (members.length > 0) {
+      const targetRects = members.map(member => ({
+        ...member.rect,
+        x: member.rect.x + frameDelta.x,
+        y: member.rect.y + frameDelta.y,
+      }))
+      const broadPhase = unionRect([...members.map(member => member.rect), ...targetRects])
+      if (!broadPhase) return
+      const obstacles = spatialIndexRef.current.query(expandRect(broadPhase, thresholds.safetyGap))
+        .filter(record => !session.controlledNodeIds.has(record.id))
+        .map(record => ({ id: record.id, rect: record.rect }))
+      const swept = sweepRigidSet({ members, obstacles, delta: frameDelta, thresholds, maxPasses: 4 })
+      if (!swept.valid) return
+      acceptedFrameDelta = swept.delta
+    }
+    const candidate = new Map(session.lastAcceptedGeometry)
+    for (const id of session.controlledNodeIds) {
+      const rect = session.lastAcceptedGeometry.get(id)
+      if (!rect) continue
+      candidate.set(id, {
+        ...rect,
+        x: rect.x + acceptedFrameDelta.x,
+        y: rect.y + acceptedFrameDelta.y,
+      })
+    }
+    const accepted = candidateConflictAccepted(
+      session,
+      geometryEntities(authoritativeNodesRef.current, candidate),
+      true,
+      false,
+    )
+    if (!accepted) return
+    session.lastAcceptedGeometry = candidate
+    session.invalid = false
+    updateFlowNodes(current => applyGeometry(current, candidate))
+  }, [updateFlowNodes])
+
+  const finalizeMoveGeometrySession = useCallback(() => {
+    const session = geometrySessionRef.current
+    if (!session || session.kind !== 'move') return
+    const changed = [...session.lastAcceptedGeometry].some(([id, rect]) => (
+      !geometryEqual(rect, session.originalGeometry.get(id))
+    ))
+    if (!changed) {
+      cancelGeometrySession('no-change')
+      return
+    }
+    if (!revalidateGeometrySession(session, authoritativeNodesRef.current)) {
+      cancelGeometrySession(hasAuthoritativeGeometryChanged(session, authoritativeNodesRef.current)
+        ? 'stale-authority'
+        : 'invalid-release')
+      return
+    }
+    geometrySessionRef.current = null
+    commitGeometrySessionCheckpoint(session)
+    updateFlowNodes(current => applyGeometry(current, session.lastAcceptedGeometry))
+    releaseGeometryPointerCapture(session.pointerId)
+  }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
+    releaseGeometryPointerCapture, updateFlowNodes])
 
   const onEdgesChangeTracked = useCallback((changes: EdgeChange<Edge>[]) => {
     if (changes.some(change => change.type === 'remove')) pushHistory()
@@ -775,39 +1468,99 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }, current))
   }, [pushHistory, setEdges])
 
-  const finishBlockDraw = useCallback((draft: DrawDraft) => {
-    if (!hasDrawableArea(draft.start, draft.current)) {
-      setNodes(current => current.map(node => ({ ...node, selected: false })))
-      setEdges(current => current.map(edge => ({ ...edge, selected: false })))
+  const evaluateDrawGeometrySession = useCallback((
+    draft: DrawGeometrySession,
+    current: { x: number; y: number },
+  ) => {
+    draft.current = current
+    if (!hasDrawableArea(draft.start, current)) {
+      draft.candidate = null
+      draft.invalid = false
+      draft.snap = {}
+      updateGeometryUi({ snapGuides: [], drawDraft: { ...draft } })
       return
     }
+    const rawScreenRect = normalizeDrawRect(draft.start, current)
+    const position = screenPointToCanvas({ clientX: rawScreenRect.x, clientY: rawScreenRect.y }, draft.viewport)
+    const size = screenSizeToCanvas({ width: rawScreenRect.width, height: rawScreenRect.height }, draft.viewport)
+    const rawCandidate = { ...position, ...size }
+    const thresholds = thresholdsForSnapshot(draft.viewport)
+    const obstacles = spatialIndexRef.current
+      .query(expandRect(rawCandidate, thresholds.snapBreak + thresholds.safetyGap))
+      .map(record => ({ id: record.id, rect: record.rect }))
+    const snapped = resolveActiveEdgeSnap({
+      candidate: rawCandidate,
+      activeEdges: {
+        x: current.x >= draft.start.x ? 'max' : 'min',
+        y: current.y >= draft.start.y ? 'max' : 'min',
+      },
+      obstacles,
+      thresholds,
+      snap: draft.snap,
+    })
+    draft.snap = snapped.snap
+    draft.candidate = snapped.rect
+    const accepted = snapped.valid && candidateConflictAccepted(
+      draft,
+      [...collisionEntities(authoritativeNodesRef.current), { id: '__draw__', rect: snapped.rect }],
+      false,
+      false,
+    )
+    draft.invalid = !accepted
+    updateGeometryUi({
+      snapGuides: [
+        ...(snapped.snap.x ? [{ axis: 'x' as const, position: snapped.snap.x.boundary }] : []),
+        ...(snapped.snap.y ? [{ axis: 'y' as const, position: snapped.snap.y.boundary }] : []),
+      ],
+      drawDraft: { ...draft },
+    })
+  }, [updateGeometryUi])
 
-    const screenRect = normalizeDrawRect(draft.start, draft.current)
-    const position = screenPointToCanvas({ clientX: screenRect.x, clientY: screenRect.y }, draft.viewport)
-    const size = screenSizeToCanvas({ width: screenRect.width, height: screenRect.height }, draft.viewport)
+  const finalizeDrawGeometrySession = useCallback((draft: DrawGeometrySession) => {
+    evaluateDrawGeometrySession(draft, draft.current)
+    const session = geometrySessionRef.current
+    if (!session || session.kind !== 'draw') return
+    if (!hasDrawableArea(draft.start, draft.current)) {
+      geometrySessionRef.current = null
+      updateGeometryUi({ drawDraft: null, snapGuides: [] })
+      setNodes(current => current.map(node => ({ ...node, selected: false })))
+      setEdges(current => current.map(edge => ({ ...edge, selected: false })))
+      releaseGeometryPointerCapture(session.pointerId)
+      return
+    }
+    if (session.invalid || !revalidateGeometrySession(session, authoritativeNodesRef.current)) {
+      cancelGeometrySession('invalid-release')
+      return
+    }
+    const rect = session.candidate!
     const id = crypto.randomUUID()
+    geometrySessionRef.current = null
+    updateGeometryUi({ drawDraft: null, snapGuides: [] })
     pushHistory()
     setNodes(current => [
       ...current.map(node => ({ ...node, selected: false })),
       {
         id,
         type: 'text',
-        position,
-        width: size.width,
-        height: size.height,
+        position: { x: rect.x, y: rect.y },
+        width: rect.width,
+        height: rect.height,
         selected: true,
         data: {
           label: '',
-          fillColor: 'var(--card)',
-          color: 'var(--border)',
-          fontSize: screenDistanceToCanvas(15, draft.viewport),
-          contentScale: contentScaleForZoom(draft.viewport.zoom),
+          backgroundColor: '#F2F1ED',
+          textColor: '#202321',
+          borderColor: '#D8D6CF',
+          fontSize: screenDistanceToCanvas(15, session.viewport),
+          contentScale: contentScaleForZoom(session.viewport.zoom),
         },
       },
     ])
     setEdges(current => current.map(edge => ({ ...edge, selected: false })))
+    releaseGeometryPointerCapture(session.pointerId)
     requestAnimationFrame(() => emitter.emit('canvas-focus-node', id))
-  }, [pushHistory, setEdges, setNodes])
+  }, [cancelGeometrySession, evaluateDrawGeometrySession, pushHistory,
+    releaseGeometryPointerCapture, setEdges, setNodes, updateGeometryUi])
 
   const setRelationTargetHighlight = useCallback((targetId: string | null, targetHandle: string | null = null) => {
     const root = containerRef.current
@@ -860,7 +1613,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     setRelationTargetHighlight(relation.targetId, relation.targetHandle)
   }, [setRelationTargetHighlight])
 
-  const cancelPointerSessions = useCallback((pointerId?: number) => {
+  const cancelPointerSessions = useCallback((
+    pointerId?: number,
+    geometryReason: 'pointercancel' | 'lost-capture' | 'window-blur' = 'lost-capture',
+  ) => {
     let cancelledRightButtonSession = false
     const relation = relationSessionRef.current
     if (relation && (pointerId === undefined || relation.pointerId === pointerId)) {
@@ -882,19 +1638,21 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       }
       setMarqueePreview(null)
     }
-    setDrawDraft(current => (
-      current && (pointerId === undefined || current.pointerId === pointerId) ? null : current
-    ))
+    const geometry = geometrySessionRef.current
+    if (geometry && (pointerId === undefined || geometry.pointerId === pointerId || geometry.pointerId < 0)) {
+      cancelGeometrySession(geometryReason)
+    }
     if (cancelledRightButtonSession) suppressContextMenuRef.current = null
-  }, [setRelationTargetHighlight])
+  }, [cancelGeometrySession, setRelationTargetHighlight])
 
   useEffect(() => {
-    const cancelAll = () => cancelPointerSessions()
+    const cancelAll = () => cancelPointerSessions(undefined, 'window-blur')
     const cancelUncapturedPointer = (event: PointerEvent) => {
       if (
         relationSessionRef.current?.pointerId === event.pointerId
         || marqueeSessionRef.current?.pointerId === event.pointerId
-      ) cancelPointerSessions(event.pointerId)
+        || (event.type === 'pointercancel' && geometrySessionRef.current?.pointerId === event.pointerId)
+      ) cancelPointerSessions(event.pointerId, 'pointercancel')
     }
     window.addEventListener('blur', cancelAll)
     window.addEventListener('pointerup', cancelUncapturedPointer)
@@ -971,8 +1729,25 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const capturedViewport = captureCurrentViewport()
     if (!capturedViewport) return
     event.currentTarget.setPointerCapture(event.pointerId)
-    setDrawDraft({ pointerId: event.pointerId, start: point, current: point, viewport: capturedViewport })
-  }, [captureCurrentViewport, previewSnapshot, tool, updateRelationPointerGeometry])
+    event.currentTarget.dataset.canvasGeometryPointer = String(event.pointerId)
+    const session: DrawGeometrySession = {
+      ...createGeometrySessionBase({
+        pointerId: event.pointerId,
+        viewport: capturedViewport,
+        controlledNodeIds: new Set(),
+        collisionMemberIds: new Set(['__draw__']),
+        ignoreInternal: false,
+      }),
+      kind: 'draw',
+      start: point,
+      current: point,
+      candidate: null,
+      snap: {},
+    }
+    geometrySessionRef.current = session
+    updateGeometryUi({ drawDraft: session })
+  }, [captureCurrentViewport, createGeometrySessionBase, previewSnapshot,
+    tool, updateGeometryUi, updateRelationPointerGeometry])
 
   const handleBlockDrawPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -1004,12 +1779,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       }
       return
     }
-    setDrawDraft(current => (
-      current?.pointerId === event.pointerId
-        ? { ...current, current: { x: event.clientX, y: event.clientY } }
-        : current
-    ))
-  }, [updateRelationPointerGeometry])
+    const geometrySession = geometrySessionRef.current
+    if (geometrySession?.kind === 'draw' && geometrySession.pointerId === event.pointerId) {
+      evaluateDrawGeometrySession(geometrySession, { x: event.clientX, y: event.clientY })
+    }
+  }, [evaluateDrawGeometrySession, updateRelationPointerGeometry])
 
   const handleBlockDrawPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
@@ -1084,15 +1858,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       ...drawDraft,
       current: { x: event.clientX, y: event.clientY },
     }
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-    setDrawDraft(null)
-    finishBlockDraw(completed)
-  }, [drawDraft, finishBlockDraw, nodes, screenToFlowPosition, setEdges, setNodes, setRelationTargetHighlight, updateRelationPointerGeometry])
+    finalizeDrawGeometrySession(completed)
+  }, [drawDraft, finalizeDrawGeometrySession, nodes, screenToFlowPosition, setEdges, setNodes, setRelationTargetHighlight, updateRelationPointerGeometry])
 
   const handleBlockDrawPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    cancelPointerSessions(event.pointerId)
+    cancelPointerSessions(event.pointerId, 'pointercancel')
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
@@ -1114,6 +1884,90 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     setRelationEditor(null)
   }, [])
 
+  const cleanupPersistedResources = useCallback(async (paths: string[]) => {
+    await Promise.all(paths.map(async path => {
+      try {
+        const options = await getFilePathOptions(path)
+        await remove(options.path, options.baseDir ? { baseDir: options.baseDir } : undefined)
+      } catch (error) {
+        console.error('Failed to clean up rejected canvas resource:', error)
+      }
+    }))
+  }, [])
+
+  const revalidatePlacement = useCallback((preview: PlacementPreview) => {
+    const thresholds = thresholdsForSnapshot(preview.snapshot)
+    const members = preview.nodes.flatMap(node => {
+      if (!isSolidCanvasNode(node as CanvasNode)) return []
+      const rect = nodeRect(node)
+      return rect ? [{ id: node.id, rect }] : []
+    })
+    const solidCount = preview.nodes.filter(node => isSolidCanvasNode(node as CanvasNode)).length
+    if (members.length !== solidCount) return false
+    for (let left = 0; left < members.length; left += 1) {
+      for (let right = left + 1; right < members.length; right += 1) {
+        if (conflicts(members[left].rect, members[right].rect, thresholds)) return false
+      }
+    }
+    const memberIds = new Set(members.map(member => member.id))
+    const obstacles = collisionEntities(authoritativeNodesRef.current)
+      .filter(obstacle => !memberIds.has(obstacle.id))
+    return members.every(member => obstacles.every(obstacle => (
+      !conflicts(member.rect, obstacle.rect, thresholds)
+    )))
+  }, [])
+
+  const previewNearestFreePlacement = useCallback(async (input: {
+    nodes: FlowCanvasNode[]
+    targetTranslation: { x: number; y: number }
+    snapshot: ViewportSnapshot
+    resourcePaths?: string[]
+  }): Promise<FlowCanvasNode[] | null> => {
+    const members = input.nodes.flatMap(node => {
+      if (!isSolidCanvasNode(node as CanvasNode)) return []
+      const rect = nodeRect(node)
+      return rect ? [{ id: node.id, rect }] : []
+    })
+    const result = members.length === 0
+      ? { status: 'placed' as const, translation: input.targetTranslation, checkedCandidates: 1 }
+      : findNearestFreePlacement({
+        members,
+        obstacles: collisionEntities(authoritativeNodesRef.current),
+        targetTranslation: input.targetTranslation,
+        snapshot: input.snapshot,
+      })
+    if (result.status !== 'placed' || !result.translation) {
+      await cleanupPersistedResources(input.resourcePaths || [])
+      toast.error(result.status === 'invalid-source'
+        ? '请先解决所选区块的重叠'
+        : '附近没有足够空间')
+      return null
+    }
+    const placedNodes = input.nodes.map(node => ({
+      ...node,
+      position: {
+        x: node.position.x + result.translation!.x,
+        y: node.position.y + result.translation!.y,
+      },
+    }))
+    const preview: PlacementPreview = {
+      nodes: placedNodes,
+      snapshot: input.snapshot,
+      translation: result.translation,
+    }
+    const token = ++placementTokenRef.current
+    updateGeometryUi({ placementPreview: preview })
+    await new Promise(resolve => window.setTimeout(resolve, PLACEMENT_PREVIEW_MS))
+    if (token !== placementTokenRef.current || !revalidatePlacement(preview)) {
+      if (token === placementTokenRef.current) updateGeometryUi({ placementPreview: null })
+      await cleanupPersistedResources(input.resourcePaths || [])
+      toast.error('附近没有足够空间')
+      return null
+    }
+    updateGeometryUi({ placementPreview: null })
+    return placedNodes
+  }, [cleanupPersistedResources, revalidatePlacement, updateGeometryUi])
+
   const getSelectedSnapshot = useCallback((): CanvasSnapshot | null => {
     const selectedNodes = nodes.filter(node => node.selected)
     if (selectedNodes.length === 0) return null
@@ -1132,15 +1986,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     setHasClipboard(true)
   }, [getSelectedSnapshot])
 
-  const insertSnapshot = useCallback((snapshot: CanvasSnapshot) => {
-    pushHistory()
-    pasteOffsetRef.current += 32
+  const insertSnapshot = useCallback(async (snapshot: CanvasSnapshot) => {
+    const capturedViewport = captureCurrentViewport()
+    if (!capturedViewport) return
     const idMap = new Map(snapshot.nodes.map(node => [node.id, crypto.randomUUID()]))
-    const offset = pasteOffsetRef.current
     const pastedNodes = snapshot.nodes.map(node => ({
       ...structuredClone(node),
       id: idMap.get(node.id) || crypto.randomUUID(),
-      position: { x: node.position.x + offset, y: node.position.y + offset },
       selected: true,
     }))
     const pastedEdges = snapshot.edges.map(edge => ({
@@ -1150,20 +2002,29 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       target: idMap.get(edge.target) || edge.target,
       selected: true,
     }))
-    setNodes(current => [...current.map(node => ({ ...node, selected: false })), ...pastedNodes])
+    const repeatOffset = screenDistanceToCanvas(32 * (pasteOffsetRef.current + 1), capturedViewport)
+    const placedNodes = await previewNearestFreePlacement({
+      nodes: pastedNodes,
+      targetTranslation: { x: repeatOffset, y: repeatOffset },
+      snapshot: capturedViewport,
+    })
+    if (!placedNodes) return
+    pushHistory()
+    pasteOffsetRef.current += 1
+    setNodes(current => [...current.map(node => ({ ...node, selected: false })), ...placedNodes])
     setEdges(current => [...current.map(edge => ({ ...edge, selected: false })), ...pastedEdges])
-  }, [pushHistory, setEdges, setNodes])
+  }, [captureCurrentViewport, previewNearestFreePlacement, pushHistory, setEdges, setNodes])
 
   const pasteSelection = useCallback(() => {
     if (!clipboardRef.current) return
-    insertSnapshot(clipboardRef.current)
+    void insertSnapshot(clipboardRef.current)
   }, [insertSnapshot])
 
   const duplicateSelection = useCallback(() => {
     const snapshot = getSelectedSnapshot()
     if (!snapshot) return
     pasteOffsetRef.current = 0
-    insertSnapshot(snapshot)
+    void insertSnapshot(snapshot)
   }, [getSelectedSnapshot, insertSnapshot])
 
   const deleteSelection = useCallback(() => {
@@ -1286,20 +2147,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
   }, [canvasId, copySelection, deleteSelection, duplicateSelection, fitView, pasteSelection, redo, selectAll, undo])
 
-  const addNoteNode = useCallback((filePath: string, name: string) => {
+  const addNoteNode = useCallback(async (filePath: string, name: string) => {
     const capturedViewport = captureCurrentViewport()
     if (!capturedViewport) return
-    pushHistory()
     const bounds = containerRef.current!.getBoundingClientRect()
-    const position = screenPointToCanvas({
+    const target = screenPointToCanvas({
       clientX: bounds.left + bounds.width / 2,
       clientY: bounds.top + bounds.height / 2,
     }, capturedViewport)
     const size = screenSizeToCanvas({ width: 320, height: 180 }, capturedViewport)
-    setNodes(current => [...current, {
+    const node: FlowCanvasNode = {
       id: crypto.randomUUID(),
       type: 'note',
-      position,
+      position: { x: 0, y: 0 },
       width: size.width,
       height: size.height,
       data: {
@@ -1308,10 +2168,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         fontSize: screenDistanceToCanvas(15, capturedViewport),
         contentScale: contentScaleForZoom(capturedViewport.zoom),
       },
-    }])
+    }
+    const placed = await previewNearestFreePlacement({
+      nodes: [node],
+      targetTranslation: target,
+      snapshot: capturedViewport,
+    })
+    if (!placed) return
+    pushHistory()
+    setNodes(current => [...current, ...placed])
     setNotePickerOpen(false)
     toast.success(t('noteNode.added', { name }))
-  }, [captureCurrentViewport, pushHistory, setNodes, t])
+  }, [captureCurrentViewport, previewNearestFreePlacement, pushHistory, setNodes, t])
 
   const addImageNode = useCallback(async () => {
     const capturedViewport = captureCurrentViewport()
@@ -1340,14 +2208,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       await readFile(sourcePath),
       targetOptions.baseDir ? { baseDir: targetOptions.baseDir } : undefined
     )
-    await loadFileTree({ skipRemoteSync: true })
-    pushHistory()
-    const position = screenPointToCanvas(capturedCenter, capturedViewport)
+    const target = screenPointToCanvas(capturedCenter, capturedViewport)
     const size = screenSizeToCanvas({ width: 320, height: 220 }, capturedViewport)
-    setNodes(current => [...current, {
+    const node: FlowCanvasNode = {
       id: crypto.randomUUID(),
       type: 'image',
-      position,
+      position: { x: 0, y: 0 },
       width: size.width,
       height: size.height,
       data: {
@@ -1356,8 +2222,26 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         fontSize: screenDistanceToCanvas(15, capturedViewport),
         contentScale: contentScaleForZoom(capturedViewport.zoom),
       },
-    }])
-  }, [captureCurrentViewport, loadFileTree, pushHistory, setNodes, t])
+    }
+    const placed = await previewNearestFreePlacement({
+      nodes: [node],
+      targetTranslation: target,
+      snapshot: capturedViewport,
+      resourcePaths: [relativePath],
+    })
+    if (!placed) return
+    try {
+      await loadFileTree({ skipRemoteSync: true })
+    } catch (error) {
+      await cleanupPersistedResources([relativePath])
+      console.error('Failed to register placed canvas image:', error)
+      toast.error('无法把此内容加入画布')
+      return
+    }
+    pushHistory()
+    setNodes(current => [...current, ...placed])
+  }, [captureCurrentViewport, cleanupPersistedResources, loadFileTree,
+    previewNearestFreePlacement, pushHistory, setNodes, t])
 
   const persistIngestFile = useCallback(async (file: File) => {
     const rawExtension = file.name.includes('.')
@@ -1381,6 +2265,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   ) => {
     const drafts = draftsFromTransfer(input)
     if (drafts.length === 0) return false
+    const resourcePaths: string[] = []
 
     try {
       if (drafts.some(draft => 'file' in draft && draft.file)) {
@@ -1399,10 +2284,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       }, capturedViewport)
       const materializedDrafts = drafts.map(draft => materializeIngestDraft(draft, capturedViewport))
       const prepared = await Promise.all(stackIngestDrafts(materializedDrafts, capturedViewport).map(async item => {
-        const position = {
-          x: origin.x + item.position.x,
-          y: origin.y + item.position.y,
-        }
+        const position = item.position
         const draft = item.draft
         const materialized = item.draft
         if (draft.kind === 'text') {
@@ -1415,8 +2297,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             selected: true,
             data: {
               label: draft.text,
-              fillColor: 'var(--card)',
-              color: 'var(--border)',
+              backgroundColor: '#F2F1ED',
+              textColor: '#202321',
+              borderColor: '#D8D6CF',
               fontSize: materialized.fontSize,
               contentScale: materialized.contentScale,
             },
@@ -1456,6 +2339,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         }
         if (!draft.file) throw new Error('Ingest file is missing')
         const relativePath = await persistIngestFile(draft.file)
+        resourcePaths.push(relativePath)
         const nodeType = draft.kind === 'image' ? 'image' as const : 'file' as const
         return {
           id: crypto.randomUUID(),
@@ -1473,19 +2357,28 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       if (drafts.some(draft => 'file' in draft && draft.file)) {
         await loadFileTree({ skipRemoteSync: true })
       }
+      const placed = await previewNearestFreePlacement({
+        nodes: prepared,
+        targetTranslation: origin,
+        snapshot: capturedViewport,
+        resourcePaths,
+      })
+      if (!placed) return false
       pushHistory()
       setNodes(current => [
         ...current.map(node => ({ ...node, selected: false })),
-        ...prepared,
+        ...placed,
       ])
       setEdges(current => current.map(edge => ({ ...edge, selected: false })))
       return true
     } catch (error) {
+      await cleanupPersistedResources(resourcePaths)
       console.error('Failed to ingest canvas content:', error)
       toast.error('无法把此内容加入画布')
       return false
     }
-  }, [loadFileTree, persistIngestFile, pushHistory, setEdges, setNodes])
+  }, [cleanupPersistedResources, loadFileTree, persistIngestFile,
+    previewNearestFreePlacement, pushHistory, setEdges, setNodes])
 
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
@@ -1536,29 +2429,61 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     void ingestTransfer(input, { x: event.clientX, y: event.clientY }, capturedViewport)
   }, [captureCurrentViewport, ingestTransfer])
 
+  const commitValidatedGeometryMutation = useCallback((
+    candidateNodes: FlowCanvasNode[],
+    controlledNodeIds: Set<string>,
+    recordHistory = true,
+  ) => {
+    const capturedViewport = captureCurrentViewport()
+    if (!capturedViewport) return false
+    const collisionMemberIds = new Set(candidateNodes
+      .filter(node => controlledNodeIds.has(node.id) && isSolidCanvasNode(node as CanvasNode))
+      .map(node => node.id))
+    const session = createGeometrySessionBase({
+      pointerId: -1,
+      viewport: capturedViewport,
+      controlledNodeIds,
+      collisionMemberIds,
+      ignoreInternal: false,
+    })
+    session.lastAcceptedGeometry = geometryForNodes(candidateNodes, controlledNodeIds)
+    const accepted = candidateConflictAccepted(
+      session,
+      collisionEntities(candidateNodes),
+      false,
+      true,
+    )
+    if (!accepted) {
+      toast.error('位置重叠')
+      return false
+    }
+    if (recordHistory) pushHistory()
+    setNodes(candidateNodes)
+    return true
+  }, [captureCurrentViewport, createGeometrySessionBase, pushHistory, setNodes])
+
   const alignSelection = useCallback((axis: 'horizontal' | 'vertical') => {
     const selected = nodes.filter(node => node.selected)
     if (selected.length < 2) return
-    pushHistory()
+    const selectedIds = new Set(selected.map(node => node.id))
     if (axis === 'horizontal') {
       const centerY = selected.reduce((sum, node) => sum + node.position.y + (node.measured?.height || node.height || 56) / 2, 0) / selected.length
-      setNodes(current => current.map(node => node.selected ? {
+      commitValidatedGeometryMutation(nodes.map(node => node.selected ? {
         ...node,
         position: { ...node.position, y: centerY - (node.measured?.height || node.height || 56) / 2 },
-      } : node))
+      } : node), selectedIds)
     } else {
       const centerX = selected.reduce((sum, node) => sum + node.position.x + (node.measured?.width || node.width || 180) / 2, 0) / selected.length
-      setNodes(current => current.map(node => node.selected ? {
+      commitValidatedGeometryMutation(nodes.map(node => node.selected ? {
         ...node,
         position: { ...node.position, x: centerX - (node.measured?.width || node.width || 180) / 2 },
-      } : node))
+      } : node), selectedIds)
     }
-  }, [nodes, pushHistory, setNodes])
+  }, [commitValidatedGeometryMutation, nodes])
 
   const distributeSelection = useCallback((axis: 'horizontal' | 'vertical') => {
     const selected = nodes.filter(node => node.selected)
     if (selected.length < 3) return
-    pushHistory()
     const sorted = [...selected].sort((left, right) => axis === 'horizontal'
       ? left.position.x - right.position.x
       : left.position.y - right.position.y)
@@ -1570,8 +2495,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const positions = new Map(sorted.map((node, index) => [node.id, axis === 'horizontal'
       ? { ...node.position, x: first.position.x + distance * index }
       : { ...node.position, y: first.position.y + distance * index }]))
-    setNodes(current => current.map(node => positions.has(node.id) ? { ...node, position: positions.get(node.id)! } : node))
-  }, [nodes, pushHistory, setNodes])
+    commitValidatedGeometryMutation(
+      nodes.map(node => positions.has(node.id) ? { ...node, position: positions.get(node.id)! } : node),
+      new Set(selected.map(node => node.id)),
+    )
+  }, [commitValidatedGeometryMutation, nodes])
 
   const groupSelection = useCallback(() => {
     const selected = nodes.filter(node => node.selected && node.type !== 'group')
@@ -1726,7 +2654,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
 
   const layoutNodes = useCallback(async (recordHistory = true) => {
     if (nodes.length === 0) return
-    if (recordHistory) pushHistory()
     const layoutDirection = document?.settings.layoutDirection === 'LR' ? 'RIGHT' : 'DOWN'
     const layoutOptions = {
       'elk.algorithm': 'layered',
@@ -1860,9 +2787,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         position: { x: position.x || 0, y: position.y || 0 },
       })
     }
-    setNodes(current => current.map(node => arrangedById.get(node.id) || node))
-    requestAnimationFrame(() => void fitView({ padding: 0.2, duration: 300 }))
-  }, [document?.settings.layoutDirection, edges, fitView, nodes, pushHistory, setNodes])
+    const arranged = nodes.map(node => arrangedById.get(node.id) || node)
+    if (commitValidatedGeometryMutation(arranged, new Set(arranged.map(node => node.id)), recordHistory)) {
+      requestAnimationFrame(() => void fitView({ padding: 0.2, duration: 300 }))
+    }
+  }, [commitValidatedGeometryMutation, document?.settings.layoutDirection, edges, fitView, nodes])
 
   useEffect(() => {
     const autoLayout = ({ recordHistory = true }: { recordHistory?: boolean }) => {
@@ -1878,7 +2807,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     if (!document) return
     const nextDocument: CanvasDocument = {
       ...document,
-      nodes: serializeNodes(nodes),
+      nodes: serializeNodes(geometrySessionRef.current ? authoritativeNodesRef.current : nodes),
       edges: serializeEdges(edges),
       viewport: getViewport(),
       settings: { ...document.settings, ...settings },
@@ -2015,7 +2944,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     pendingDocumentTimerRef.current = null
     const nextDocument: CanvasDocument = {
       ...(pendingDocumentRef.current || document),
-      nodes: serializeNodes(nodes),
+      nodes: serializeNodes(geometrySessionRef.current ? authoritativeNodesRef.current : nodes),
       edges: serializeEdges(edges),
       viewport,
     }
@@ -2046,6 +2975,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       <div
         className="relative min-h-0 flex-1 overflow-hidden"
         onPointerDownCapture={event => {
+          lastPointerIdRef.current = event.pointerId
+          event.currentTarget.dataset.canvasGeometryPointer = String(event.pointerId)
+          if (event.target instanceof HTMLElement) {
+            event.target.dataset.canvasGeometryPointer = String(event.pointerId)
+          }
           if (!isInteractiveCanvasTarget(event.target)) {
             containerRef.current?.focus({ preventScroll: true })
           }
@@ -2076,6 +3010,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               onLostPointerCapture={event => cancelPointerSessions(event.pointerId)}
             >
               <ReactFlow
+        style={{ '--canvas-visual-scale': 1 / Math.max(0.1, viewport.zoom) } as CSSProperties}
         className={cn(
           tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary/50 [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background [&_.react-flow__handle.relation-handle-target-active]:!size-3.5 [&_.react-flow__handle.relation-handle-target-active]:!border-2 [&_.react-flow__handle.relation-handle-target-active]:!border-background [&_.react-flow__handle.relation-handle-target-active]:!bg-primary [&_.react-flow__handle.relation-handle-target-active]:!shadow-[0_0_0_5px_hsl(var(--primary)/0.28)]',
           tool === 'hand' && '[&_.react-flow__node]:!cursor-grab [&_.react-flow__node:active]:!cursor-grabbing [&_.react-flow__pane]:!cursor-grab [&_.react-flow__pane.dragging]:!cursor-grabbing'
@@ -2148,26 +3083,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         }}
         onPaneContextMenu={() => setContextTarget('pane')}
         onMoveEnd={(_event, viewport) => persistViewport(viewport)}
-        onNodeDragStart={(_event, node) => {
-          pushHistory()
-          if (node.type !== 'group' || !Array.isArray(node.data.childIds)) return
-          const childIds = new Set(node.data.childIds.filter((id): id is string => typeof id === 'string'))
-          groupDragRef.current = {
-            groupId: node.id,
-            start: { ...node.position },
-            children: new Map(nodes.filter(item => childIds.has(item.id)).map(item => [item.id, { ...item.position }])),
-          }
-        }}
-        onNodeDrag={(_event, node) => {
-          const drag = groupDragRef.current
-          if (!drag || drag.groupId !== node.id) return
-          const delta = { x: node.position.x - drag.start.x, y: node.position.y - drag.start.y }
-          setNodes(current => current.map(item => {
-            const start = drag.children.get(item.id)
-            return start ? { ...item, position: { x: start.x + delta.x, y: start.y + delta.y } } : item
-          }))
-        }}
-        onNodeDragStop={() => { groupDragRef.current = null }}
+        onNodeDragStart={(event, node) => startMoveGeometrySession(event, node)}
+        onNodeDrag={(_event, node) => evaluateMoveGeometrySession(node)}
+        onNodeDragStop={finalizeMoveGeometrySession}
         deleteKeyCode={null}
         nodesDraggable={!previewSnapshot && tool === 'select'}
         nodesConnectable={!previewSnapshot && (tool === 'select' || tool === 'connector')}
@@ -2191,21 +3109,28 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           )}
           <MiniMap pannable zoomable />
               </ReactFlow>
-              {drawDraft && (() => {
-                const rect = normalizeDrawRect(drawDraft.start, drawDraft.current)
+              {drawDraft && (
+                <DrawGeometryPreview
+                  draft={drawDraft}
+                  containerBounds={containerRef.current?.getBoundingClientRect()}
+                />
+              )}
+              {snapGuides.map(guide => {
+                const snapshot = geometrySessionRef.current?.viewport
+                if (!snapshot) return null
                 const bounds = containerRef.current?.getBoundingClientRect()
+                const screenPosition = guide.position * snapshot.zoom
+                  + (guide.axis === 'x' ? snapshot.x + snapshot.containerLeft : snapshot.y + snapshot.containerTop)
                 return (
                   <div
-                    className="pointer-events-none absolute rounded-xl border-2 border-primary/70 bg-primary/10 shadow-[0_0_0_1px_rgba(255,255,255,0.5)_inset]"
-                    style={{
-                      left: rect.x - (bounds?.left || 0),
-                      top: rect.y - (bounds?.top || 0),
-                      width: rect.width,
-                      height: rect.height,
-                    }}
+                    key={`${guide.axis}:${guide.position}`}
+                    className="pointer-events-none absolute z-20 bg-[#66D9FF]/70"
+                    style={guide.axis === 'x'
+                      ? { left: screenPosition - (bounds?.left || 0), top: 0, width: 1, height: '100%' }
+                      : { left: 0, top: screenPosition - (bounds?.top || 0), width: '100%', height: 1 }}
                   />
                 )
-              })()}
+              })}
               {marqueePreview?.active && (() => {
                 const rect = normalizeDrawRect(marqueePreview.start, marqueePreview.current)
                 const bounds = containerRef.current?.getBoundingClientRect()
