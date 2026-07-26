@@ -1,12 +1,68 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
-  "status": "not_run",
-  "source_revision": null,
-  "commands": [],
-  "acceptance_criteria_coverage": [],
-  "passed": [],
+  "task_id": "zeroxb-integrated-task-05-collision-sessions",
+  "status": "passed",
+  "source_revision": "c9afe0a07d9c754b93034b820027a8475fa8039a",
+  "commands": [
+    {
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-editor-collision-contract.test.mjs scripts/tests/canvas-collision-sessions.test.mjs",
+      "status": "passed",
+      "summary": "13 tests passed, 0 failed.",
+      "exit_code": 0
+    },
+    {
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
+      "status": "passed",
+      "summary": "97 Canvas tests passed, 0 failed.",
+      "exit_code": 0
+    },
+    {
+      "command": ".\\node_modules\\.bin\\tsc.cmd --noEmit",
+      "status": "passed",
+      "summary": "TypeScript completed without diagnostics.",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check -- <Task 5 files>",
+      "status": "passed",
+      "summary": "No whitespace errors; repository LF-to-CRLF advisory only.",
+      "exit_code": 0
+    },
+    {
+      "command": "codegraph_post_edit.py --no-rebuild --baseline <line-ending-normalized immutable baseline copy>",
+      "status": "passed",
+      "summary": "Impact passed with complete propagation, empty unexpected impact and no critical unresolved edges.",
+      "exit_code": 0
+    }
+  ],
+  "acceptance_criteria_coverage": [
+    {
+      "criterion": "Collision-safe draw, resize and move sessions cancel or commit atomically against newest authority.",
+      "status": "passed",
+      "evidence": ["13/13 focused tests", "97/97 Canvas suite"]
+    },
+    {
+      "criterion": "Rigid selection/group and all placement paths preserve geometry, ownership and one-checkpoint history.",
+      "status": "passed",
+      "evidence": ["causal group copy and async authority tests", "independent review fixes"]
+    },
+    {
+      "criterion": "L2 post-edit impact is bounded, complete and free of new critical edges.",
+      "status": "passed",
+      "evidence": ["impact_report status passed", "propagation.truncated false", "unexpected_impact empty"]
+    }
+  ],
+  "passed": [
+    "Focused Task 5 tests",
+    "Complete Canvas suite",
+    "TypeScript",
+    "Diff check",
+    "L2 post-edit impact"
+  ],
   "failed": [],
-  "not_run_reason": "Implementation has not started.",
-  "residual_risk": []
+  "not_run_reason": null,
+  "residual_risk": [
+    "Existing MODULE_TYPELESS_PACKAGE_JSON warnings remain repository-wide.",
+    "Browser-level pointer-capture and blur behavior remains for Task 21 Windows acceptance."
+  ]
 }

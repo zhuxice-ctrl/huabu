@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
+  "task_id": "zeroxb-integrated-task-05-collision-sessions",
   "status": "accepted",
   "graph_revision": "c8eea77fe798be985cadae92",
   "slice_revision": "c8eea77fe798be985cadae92",
@@ -40,65 +40,32 @@
   "expansion_history": [
     {
       "schema": "ADworkflo.context_expansion_request.v1",
-      "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
+      "task_id": "zeroxb-integrated-task-05-collision-sessions",
       "status": "pending",
       "relation": "callees",
       "targets": [
-        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
-        "typescript:src.lib.canvas.collision-policy:conflicts:function"
-      ],
-      "depth": 3,
-      "budget": 240,
-      "reason": "Resolve only the truncated pure placement/collision callee frontier without expanding through React consumers.",
-      "requested_by": "orchestrator",
-      "source_graph_revision": "c8eea77fe798be985cadae92",
-      "applied_slice_revision": null,
-      "target_resolutions": [
-        {
-          "target": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
-          "status": "resolved_symbol",
-          "symbol_ids": [
-            "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
-          ]
-        },
-        {
-          "target": "typescript:src.lib.canvas.collision-policy:conflicts:function",
-          "status": "resolved_symbol",
-          "symbol_ids": [
-            "typescript:src.lib.canvas.collision-policy:conflicts:function"
-          ]
-        }
-      ],
-      "applied": true
-    },
-    {
-      "schema": "ADworkflo.context_expansion_request.v1",
-      "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
-      "status": "pending",
-      "relation": "callees",
-      "targets": [
-        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
-        "typescript:src.lib.canvas.collision-policy:conflicts:function"
+        "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
       ],
       "depth": 5,
       "budget": 800,
-      "reason": "Finish the remaining pure placement/collision callee frontier without expanding through React consumers.",
+      "reason": "Finish the bounded pure collision/placement callee frontier while keeping the React editor as an explicit manual context boundary.",
       "requested_by": "orchestrator",
       "source_graph_revision": "c8eea77fe798be985cadae92",
       "applied_slice_revision": null,
       "target_resolutions": [
         {
+          "target": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+          "status": "resolved_symbol",
+          "symbol_ids": [
+            "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function"
+          ]
+        },
+        {
           "target": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
           "status": "resolved_symbol",
           "symbol_ids": [
             "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
-          ]
-        },
-        {
-          "target": "typescript:src.lib.canvas.collision-policy:conflicts:function",
-          "status": "resolved_symbol",
-          "symbol_ids": [
-            "typescript:src.lib.canvas.collision-policy:conflicts:function"
           ]
         }
       ],

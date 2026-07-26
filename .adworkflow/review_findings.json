@@ -1,12 +1,32 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
-  "status": "not_reviewed",
-  "reviewer": null,
-  "source_revision": null,
-  "review_basis": [],
+  "task_id": "zeroxb-integrated-task-05-collision-sessions",
+  "status": "approved",
+  "reviewer": "independent Task 5 reviewer plus scoped controller/L2 verification",
+  "source_revision": "c9afe0a07d9c754b93034b820027a8475fa8039a",
+  "review_basis": [
+    "task-5-brief.md",
+    "task-5-report.md",
+    "review-d219a68a..db8ab9b6.diff",
+    "review-db8ab9b6..c9afe0a0.diff",
+    ".adworkflow/context_preflight.json",
+    ".adworkflow/impact_report.json"
+  ],
   "blocking_findings": [],
-  "non_blocking_findings": [],
-  "suggested_tests": [],
-  "risk_notes": []
+  "non_blocking_findings": [
+    {
+      "id": "task5-performance-minor",
+      "severity": "non_blocking",
+      "issue": "Geometry index rebuild and all-pairs legacy scoring may run on non-geometry node identity changes.",
+      "expected_fix": "Measure during integrated performance acceptance and optimize by geometry signature or incremental index if needed.",
+      "evidence": "Independent Task 5 review Minor finding."
+    }
+  ],
+  "suggested_tests": [
+    "Run browser-level pointer capture, lost-capture and window blur interactions during Task 21 Windows acceptance."
+  ],
+  "risk_notes": [
+    "All four independent Important findings were fixed with causal tests.",
+    "Final L2 evidence passed after documented line-ending-only baseline normalization; the immutable baseline snapshot was not modified."
+  ]
 }

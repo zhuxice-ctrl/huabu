@@ -1,6 +1,6 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
+  "task_id": "zeroxb-integrated-task-05-collision-sessions",
   "source": "semantic-codegraph-l2",
   "matched_files": [
     {
@@ -24,7 +24,7 @@
       "reason": "semantic-slice"
     },
     {
-      "path": ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-4-brief.md",
+      "path": ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-5-brief.md",
       "reason": "task_spec.context_sources"
     },
     {
@@ -32,11 +32,19 @@
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/lib/canvas/spatial-index.ts",
+      "path": "src/app/core/main/canvas/canvas-editor.tsx",
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/lib/canvas/content-ingest.ts",
+      "path": "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/types/canvas.ts",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/lib/canvas/spatial-index.ts",
       "reason": "task_spec.context_sources"
     },
     {
@@ -44,7 +52,11 @@
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "scripts/tests/canvas-content-ingest.test.mjs",
+      "path": "scripts/tests/canvas-placement-policy.test.mjs",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "scripts/tests/canvas-editor-contract.test.mjs",
       "reason": "task_spec.context_sources"
     }
   ],
@@ -87,6 +99,38 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 10,
       "end_line": 15,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:CollisionEntity:interface",
+      "qualified_name": "src.lib.canvas.collision-policy.CollisionEntity",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 17,
+      "end_line": 20,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:SweepRigidSetInput:interface",
+      "qualified_name": "src.lib.canvas.collision-policy.SweepRigidSetInput",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 53,
+      "end_line": 59,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:SweepContact:interface",
+      "qualified_name": "src.lib.canvas.collision-policy.SweepContact",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 61,
+      "end_line": 67,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:SweepRigidSetResult:interface",
+      "qualified_name": "src.lib.canvas.collision-policy.SweepRigidSetResult",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 69,
+      "end_line": 75,
       "distance": 1
     },
     {
@@ -95,7 +139,7 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 97,
       "end_line": 99,
-      "distance": 2
+      "distance": 1
     },
     {
       "stable_id": "typescript:src.lib.canvas.collision-policy:validThresholds:function",
@@ -103,6 +147,38 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 101,
       "end_line": 110,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:round4:function",
+      "qualified_name": "src.lib.canvas.collision-policy.round4",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 112,
+      "end_line": 118,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:round4.rounded:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.round4.rounded",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 116,
+      "end_line": 116,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:compareIds:function",
+      "qualified_name": "src.lib.canvas.collision-policy.compareIds",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 120,
+      "end_line": 122,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:translateRect:function",
+      "qualified_name": "src.lib.canvas.collision-policy.translateRect",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 124,
+      "end_line": 131,
       "distance": 1
     },
     {
@@ -143,7 +219,7 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 206,
       "end_line": 225,
-      "distance": 0
+      "distance": 1
     },
     {
       "stable_id": "typescript:src.lib.canvas.collision-policy:conflicts.normalizedCandidate:variable",
@@ -151,7 +227,7 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 211,
       "end_line": 211,
-      "distance": 1
+      "distance": 2
     },
     {
       "stable_id": "typescript:src.lib.canvas.collision-policy:conflicts.normalizedObstacle:variable",
@@ -159,7 +235,7 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 212,
       "end_line": 212,
-      "distance": 1
+      "distance": 2
     },
     {
       "stable_id": "typescript:src.lib.canvas.collision-policy:conflicts.overlapX:variable",
@@ -167,7 +243,7 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 215,
       "end_line": 218,
-      "distance": 1
+      "distance": 2
     },
     {
       "stable_id": "typescript:src.lib.canvas.collision-policy:conflicts.overlapY:variable",
@@ -175,6 +251,230 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 219,
       "end_line": 222,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:axisTimes:function",
+      "qualified_name": "src.lib.canvas.collision-policy.axisTimes",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 324,
+      "end_line": 347,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair:function",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 349,
+      "end_line": 387,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.allowedPenetration:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.allowedPenetration",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 355,
+      "end_line": 355,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.margin:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.margin",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 356,
+      "end_line": 356,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.x:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.x",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 359,
+      "end_line": 365,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.y:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.y",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 366,
+      "end_line": 372,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.entry:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.entry",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 375,
+      "end_line": 375,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.exit:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.exit",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 376,
+      "end_line": 376,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepPair.axis:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepPair.axis",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 384,
+      "end_line": 384,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 389,
+      "end_line": 468,
+      "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.deltaIsValid:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.deltaIsValid",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 390,
+      "end_line": 390,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.members:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.members",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 395,
+      "end_line": 398,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.members.rect:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.members.rect",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 396,
+      "end_line": 396,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.normalizedObstacles:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.normalizedObstacles",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 404,
+      "end_line": 407,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.normalizedObstacles.rect:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.normalizedObstacles.rect",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 405,
+      "end_line": 405,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.obstacles:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.obstacles",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 411,
+      "end_line": 412,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.maxPasses:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.maxPasses",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 413,
+      "end_line": 413,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.remaining:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.remaining",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 414,
+      "end_line": 414,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.accepted:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.accepted",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 415,
+      "end_line": 415,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.passes:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.passes",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 417,
+      "end_line": 417,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.currentMembers:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.currentMembers",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 420,
+      "end_line": 423,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.hits:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.hits",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 424,
+      "end_line": 424,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.member:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.member",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 425,
+      "end_line": 425,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.obstacle:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.obstacle",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 426,
+      "end_line": 426,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.earliest:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.earliest",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 442,
+      "end_line": 442,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.simultaneous:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.simultaneous",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 443,
+      "end_line": 443,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.scale:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.scale",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 446,
+      "end_line": 446,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet.resultMembers:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.sweepRigidSet.resultMembers",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 454,
+      "end_line": 457,
       "distance": 1
     },
     {
@@ -516,6 +816,42 @@
     },
     {
       "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:round4:function",
+      "kind": "call",
+      "target": "Math.abs",
+      "line": 113,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:round4:function",
+      "kind": "call",
+      "target": "Object.is",
+      "line": 114,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:round4:function",
+      "kind": "call",
+      "target": "Math.round",
+      "line": 116,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:round4:function",
+      "kind": "call",
+      "target": "Object.is",
+      "line": 117,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
       "source_symbol_id": "typescript:src.lib.canvas.collision-policy:normalizeAabb:function",
       "kind": "call",
       "target": "[rect.x, rect.y, rect.width, rect.height].every",
@@ -592,6 +928,258 @@
       "kind": "call",
       "target": "Math.max",
       "line": 222,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepPair:function",
+      "kind": "call",
+      "target": "Math.min",
+      "line": 355,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepPair:function",
+      "kind": "call",
+      "target": "Math.max",
+      "line": 375,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepPair:function",
+      "kind": "call",
+      "target": "Math.min",
+      "line": 376,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepPair:function",
+      "kind": "call",
+      "target": "Math.abs",
+      "line": 378,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "input.members.map",
+      "line": 395,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "members.some",
+      "line": 399,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "Set",
+      "line": 403,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "normalizedMembers.map",
+      "line": 403,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "input.obstacles.map",
+      "line": 404,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "normalizedObstacles.some",
+      "line": 408,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "(normalizedObstacles as CollisionEntity[])\n    .filter",
+      "line": 411,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "memberIds.has",
+      "line": 412,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "Math.min",
+      "line": 413,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "Math.max",
+      "line": 413,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "Math.trunc",
+      "line": 413,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "normalizedMembers.map",
+      "line": 420,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "hits.push",
+      "line": 427,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "hits.sort",
+      "line": 438,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "left.axis.localeCompare",
+      "line": 439,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "hits.filter",
+      "line": 443,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "Math.abs",
+      "line": 443,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "simultaneous.some",
+      "line": 448,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "simultaneous.some",
+      "line": 449,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "contacts.push",
+      "line": 450,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "normalizedMembers.map",
+      "line": 454,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "[accepted.x, accepted.y, ...resultMembers.flatMap(member => Object.values(member.rect))].every",
+      "line": 458,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "resultMembers.flatMap",
+      "line": 458,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/collision-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.collision-policy:sweepRigidSet:function",
+      "kind": "call",
+      "target": "Object.values",
+      "line": 458,
       "reason": "external-call",
       "critical": 0
     },
@@ -723,6 +1311,12 @@
     }
   ],
   "boundary_symbols": [
+    {
+      "symbol_id": "typescript:src.lib.canvas.collision-policy:AxisTimes:interface",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.collision-policy:axisTimes:function"
+    },
     {
       "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
       "relation": "callee",
