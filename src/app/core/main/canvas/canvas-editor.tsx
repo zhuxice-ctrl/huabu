@@ -426,13 +426,27 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const pendingDocumentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastStoreDocumentRef = useRef(document)
   const styleHistoryPushedRef = useRef(false)
+  const lastViewportSnapshotRef = useRef<ViewportSnapshot | null>(null)
   const { screenToFlowPosition, getViewport, getNodesBounds, fitView, setViewport } = useReactFlow()
   const captureCurrentViewport = useCallback(() => {
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return null
-    return captureViewportSnapshot({ viewport: getViewport(), containerRect: bounds })
+    const snapshot = captureViewportSnapshot({
+      viewport: getViewport(),
+      containerRect: bounds,
+      lastValid: lastViewportSnapshotRef.current,
+    })
+    if (snapshot) lastViewportSnapshotRef.current = snapshot
+    return snapshot
   }, [getViewport])
   const viewport = useViewport()
+  useEffect(() => {
+    if (!Number.isFinite(viewport.x) || !Number.isFinite(viewport.y) || !Number.isFinite(viewport.zoom)) return
+    const bounds = containerRef.current?.getBoundingClientRect()
+    if (!bounds) return
+    const snapshot = captureViewportSnapshot({ viewport, containerRect: bounds })
+    if (snapshot) lastViewportSnapshotRef.current = snapshot
+  }, [viewport])
   const activeBrushColor = tool === 'highlighter' ? highlighterColor : penColor
   const activeBrushSize = tool === 'highlighter' ? highlighterSize : penSize
   const activeBrushStyle = useMemo(() => ({
@@ -1340,6 +1354,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       data: {
         label: sourcePath.split(/[\\/]/).pop() || t('nodes.image'),
         imagePath: relativePath,
+        fontSize: screenDistanceToCanvas(15, capturedViewport),
         contentScale: contentScaleForZoom(capturedViewport.zoom),
       },
     }])
@@ -1411,7 +1426,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             width: materialized.canvasSize.width,
             height: materialized.canvasSize.height,
             selected: true,
-            data: { label: draft.label, url: draft.url, contentScale: materialized.contentScale },
+            data: {
+              label: draft.label,
+              url: draft.url,
+              fontSize: materialized.fontSize,
+              contentScale: materialized.contentScale,
+            },
           }
         }
         if (draft.kind === 'video' && !draft.file && draft.url) {
@@ -1422,7 +1442,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             width: materialized.canvasSize.width,
             height: materialized.canvasSize.height,
             selected: true,
-            data: { label: draft.label, url: draft.url, contentScale: materialized.contentScale },
+            data: {
+              label: draft.label,
+              url: draft.url,
+              fontSize: materialized.fontSize,
+              contentScale: materialized.contentScale,
+            },
           }
         }
         if (!draft.file) throw new Error('Ingest file is missing')
@@ -1436,8 +1461,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           height: materialized.canvasSize.height,
           selected: true,
           data: draft.kind === 'image'
-            ? { label: draft.label, imagePath: relativePath, contentScale: materialized.contentScale }
-            : { label: draft.label, filePath: relativePath, contentScale: materialized.contentScale },
+            ? { label: draft.label, imagePath: relativePath, fontSize: materialized.fontSize, contentScale: materialized.contentScale }
+            : { label: draft.label, filePath: relativePath, fontSize: materialized.fontSize, contentScale: materialized.contentScale },
         }
       }))
 

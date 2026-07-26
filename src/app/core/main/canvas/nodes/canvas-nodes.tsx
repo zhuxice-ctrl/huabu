@@ -12,6 +12,7 @@ import useArticleStore from '@/stores/article'
 import { useSidebarStore } from '@/stores/sidebar'
 import { cn, convertImageByWorkspace } from '@/lib/utils'
 import { getFilePathOptions } from '@/lib/workspace'
+import { normalizeContentScaleForRead } from '@/lib/canvas/content-ingest'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
 
@@ -57,9 +58,7 @@ function nodeStyle(data: CanvasNodeData): CSSProperties | undefined {
 }
 
 function contentScale(data: CanvasNodeData): number {
-  return typeof data.contentScale === 'number' && Number.isFinite(data.contentScale) && data.contentScale > 0
-    ? data.contentScale
-    : 1
+  return normalizeContentScaleForRead(data.contentScale)
 }
 
 function scaledContentStyle(

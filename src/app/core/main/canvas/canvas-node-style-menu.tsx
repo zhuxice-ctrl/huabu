@@ -82,7 +82,7 @@ export function CanvasNodeStyleMenu({ value, fontSizeMixed = false, onSessionSta
       <ColorRow label="边框颜色" colors={NODE_TEXT_PRESETS} value={value.borderColor} onChange={borderColor => onChange({ borderColor })} />
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1 text-[11px] text-muted-foreground">
-          字号
+          屏幕字号
           <input
             type="number"
             min="8"

@@ -8,6 +8,8 @@ import {
 } from './viewport-sizing.ts'
 
 const DEFAULT_SCREEN_FONT_SIZE = 15
+const MIN_CONTENT_SCALE = 0.1667
+const MAX_CONTENT_SCALE = 10
 
 export function classifyTextContent(text: string) {
   const value = text.trim()
@@ -145,30 +147,38 @@ interface AiNodeSizingInput {
   referencePoint?: { x: number; y: number }
 }
 
-function isValidSize(size: CanvasSize | undefined): size is CanvasSize {
-  return Boolean(size
-    && Number.isFinite(size.width) && size.width > 0
-    && Number.isFinite(size.height) && size.height > 0)
+function isValidDimension(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
 }
 
-function nodeSize(node: CanvasNode | undefined): CanvasSize | null {
-  const size = node && { width: node.width ?? Number.NaN, height: node.height ?? Number.NaN }
-  return isValidSize(size) ? size : null
+function round4(value: number): number {
+  const result = Math.round((value + Number.EPSILON) * 10_000) / 10_000
+  return Object.is(result, -0) ? 0 : result
+}
+
+export function normalizeContentScaleForRead(value: unknown): number {
+  return typeof value === 'number'
+    && Number.isFinite(value)
+    && value >= MIN_CONTENT_SCALE
+    && value <= MAX_CONTENT_SCALE
+    ? value
+    : 1
 }
 
 function sizingCandidates(input: AiNodeSizingInput): CanvasNode[] {
-  const origin = input.targetNode
+  const matchingTarget = input.targetNode?.type === input.requestedType ? input.targetNode : undefined
+  const origin = matchingTarget
     ? {
-        x: input.targetNode.position.x + (input.targetNode.width ?? 0) / 2,
-        y: input.targetNode.position.y + (input.targetNode.height ?? 0) / 2,
+        x: matchingTarget.position.x + (isValidDimension(matchingTarget.width) ? matchingTarget.width / 2 : 0),
+        y: matchingTarget.position.y + (isValidDimension(matchingTarget.height) ? matchingTarget.height / 2 : 0),
       }
     : input.referencePoint ?? { x: 0, y: 0 }
   return input.nearbySameType
-    .filter(node => node.type === input.requestedType && nodeSize(node))
+    .filter(node => node.type === input.requestedType)
     .map(node => {
       const center = {
-        x: node.position.x + (node.width ?? 0) / 2,
-        y: node.position.y + (node.height ?? 0) / 2,
+        x: node.position.x + (isValidDimension(node.width) ? node.width / 2 : 0),
+        y: node.position.y + (isValidDimension(node.height) ? node.height / 2 : 0),
       }
       return { node, distance: Math.hypot(center.x - origin.x, center.y - origin.y) }
     })
@@ -187,26 +197,37 @@ function median(values: number[]): number {
 }
 
 export function resolveAiNodeSize(input: AiNodeSizingInput): CanvasSize {
-  if (isValidSize(input.requestedSize)) return { ...input.requestedSize }
-  const targetSize = nodeSize(input.targetNode)
-  if (targetSize) return targetSize
+  const matchingTarget = input.targetNode?.type === input.requestedType ? input.targetNode : undefined
   const candidates = sizingCandidates(input)
-  if (candidates.length > 0) {
-    return {
-      width: median(candidates.map(node => node.width!)),
-      height: median(candidates.map(node => node.height!)),
-    }
+  const resolveField = (field: 'width' | 'height'): number => {
+    const requested = input.requestedSize?.[field]
+    if (isValidDimension(requested)) return round4(requested)
+    const targetValue = matchingTarget?.[field]
+    if (isValidDimension(targetValue)) return round4(targetValue)
+    const candidateValues = candidates
+      .map(node => node[field])
+      .filter(isValidDimension)
+    return candidateValues.length > 0
+      ? round4(median(candidateValues))
+      : AI_FALLBACK_SIZE[input.requestedType][field]
   }
-  return { ...AI_FALLBACK_SIZE[input.requestedType] }
+  return { width: resolveField('width'), height: resolveField('height') }
 }
 
 export function resolveAiNodeContentScale(input: AiNodeSizingInput): number {
-  const normalizeScale = (value: unknown) => (
-    typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 1
-  )
-  if (input.targetNode) return normalizeScale(input.targetNode.data.contentScale)
+  const matchingTarget = input.targetNode?.type === input.requestedType ? input.targetNode : undefined
+  if (matchingTarget) return normalizeContentScaleForRead(matchingTarget.data.contentScale)
   const candidates = sizingCandidates(input)
   return candidates.length > 0
-    ? median(candidates.map(node => normalizeScale(node.data.contentScale)))
+    ? round4(median(candidates.map(node => normalizeContentScaleForRead(node.data.contentScale))))
     : 1
+}
+
+export function resolveAiNodeFontSize(input: AiNodeSizingInput): number {
+  const matchingTarget = input.targetNode?.type === input.requestedType ? input.targetNode : undefined
+  if (isValidDimension(matchingTarget?.data.fontSize)) return round4(matchingTarget.data.fontSize)
+  const candidateValues = sizingCandidates(input)
+    .map(node => node.data.fontSize)
+    .filter(isValidDimension)
+  return candidateValues.length > 0 ? round4(median(candidateValues)) : DEFAULT_SCREEN_FONT_SIZE
 }

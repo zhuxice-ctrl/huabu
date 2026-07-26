@@ -1,5 +1,5 @@
 import type { CanvasDocument, CanvasEdge, CanvasNodeType } from '@/types/canvas'
-import { resolveAiNodeContentScale, resolveAiNodeSize } from './content-ingest.ts'
+import { resolveAiNodeContentScale, resolveAiNodeFontSize, resolveAiNodeSize } from './content-ingest.ts'
 
 type CanvasOperationType =
   | 'add_node'
@@ -79,6 +79,7 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
           label: asString(operation.label) || (nodeType === 'decision' ? '判断条件' : nodeType === 'terminator' ? '开始 / 结束' : '处理步骤'),
           description: asString(operation.description) || undefined,
           contentScale: resolveAiNodeContentScale(sizingInput),
+          fontSize: resolveAiNodeFontSize(sizingInput),
         },
       })
       applied += 1

@@ -2,7 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
+  normalizeContentScaleForRead,
   resolveAiNodeContentScale,
+  resolveAiNodeFontSize,
   resolveAiNodeSize,
 } from '../../src/lib/canvas/content-ingest.ts'
 import { applyCanvasOperations } from '../../src/lib/canvas/operations.ts'
@@ -31,6 +33,7 @@ test('AI sizing prefers target and otherwise uses deterministic nearby same-type
     height: 177,
   })
   assert.equal(resolveAiNodeContentScale({ requestedType: 'text', targetNode: target, nearbySameType: nearby }), 1.25)
+  assert.equal(resolveAiNodeFontSize({ requestedType: 'text', targetNode: target, nearbySameType: nearby }), 15)
   assert.deepEqual(resolveAiNodeSize({ requestedType: 'text', nearbySameType: nearby }), {
     width: 400,
     height: 200,
@@ -49,6 +52,66 @@ test('AI requested size ignores camera zoom and invalid scale falls back to one'
     targetNode: baseNode('bad', 'text', 0, 0, 100, 100, Number.NaN),
     nearbySameType: [],
   }), 1)
+  assert.equal(normalizeContentScaleForRead(0.1667), 0.1667)
+  assert.equal(normalizeContentScaleForRead(10), 10)
+  assert.equal(normalizeContentScaleForRead(0.1666), 1)
+  assert.equal(normalizeContentScaleForRead(10.0001), 1)
+})
+
+test('AI sizing ignores cross-type targets and resolves width and height independently', () => {
+  const crossTypeTarget = baseNode('image-target', 'image', 0, 0, 900, 700, 9)
+  const partialTarget = {
+    ...baseNode('text-target', 'text', 0, 0, 360, 180, 1.5),
+    height: Number.NaN,
+  }
+  const nearby = [
+    baseNode('a', 'text', 100, 0, 300, 120, 1.2),
+    { ...baseNode('b', 'text', 200, 0, 500, 240, 1.4), width: Number.NaN },
+    baseNode('c', 'text', 300, 0, 700, 360, 1.6),
+  ]
+
+  assert.deepEqual(resolveAiNodeSize({
+    requestedType: 'text',
+    targetNode: crossTypeTarget,
+    nearbySameType: nearby,
+    referencePoint: { x: 0, y: 0 },
+  }), { width: 500, height: 240 })
+  assert.equal(resolveAiNodeContentScale({
+    requestedType: 'text',
+    targetNode: crossTypeTarget,
+    nearbySameType: nearby,
+    referencePoint: { x: 0, y: 0 },
+  }), 1.4)
+
+  assert.deepEqual(resolveAiNodeSize({
+    requestedType: 'text',
+    targetNode: partialTarget,
+    nearbySameType: nearby,
+  }), { width: 360, height: 240 })
+})
+
+test('AI sizing resolves requested dimensions independently and rounds even medians', () => {
+  const nearby = [
+    baseNode('a', 'text', 10, 0, 301.11111, 101.11111, 1),
+    baseNode('b', 'text', 20, 0, 501.11111, 301.11111, 1),
+  ]
+  assert.deepEqual(resolveAiNodeSize({
+    requestedType: 'text',
+    requestedSize: { width: 640, height: Number.NaN },
+    nearbySameType: nearby,
+    referencePoint: { x: 0, y: 0 },
+  }), { width: 640, height: 201.1111 })
+})
+
+test('AI font sizing uses same-type target then nearby per-field fallback', () => {
+  const target = { ...baseNode('target', 'text', 0, 0, 300, 100, 1), data: { fontSize: 23.0769 } }
+  const crossType = { ...baseNode('image', 'image', 0, 0, 300, 100, 1), data: { fontSize: 99 } }
+  const nearby = [
+    { ...baseNode('a', 'text', 100, 0, 300, 100, 1), data: { fontSize: 10 } },
+    { ...baseNode('b', 'text', 200, 0, 300, 100, 1), data: { fontSize: 20 } },
+  ]
+  assert.equal(resolveAiNodeFontSize({ requestedType: 'text', targetNode: target, nearbySameType: nearby }), 23.0769)
+  assert.equal(resolveAiNodeFontSize({ requestedType: 'text', targetNode: crossType, nearbySameType: nearby }), 15)
 })
 
 test('AI add-node operations inherit target geometry without consulting a viewport', () => {
@@ -64,6 +127,7 @@ test('AI add-node operations inherit target geometry without consulting a viewpo
   assert.equal(created.width, 360)
   assert.equal(created.height, 180)
   assert.equal(created.data.contentScale, 1.4)
+  assert.equal(created.data.fontSize, 15)
 })
 
 test('direct creation sessions retain one viewport while duplicate and imports retain stored geometry', () => {
