@@ -52,27 +52,21 @@ const getInitialState = () => {
 
 const initialState = getInitialState()
 
-async function persistLeftWidth(set: (state: Partial<SidebarState>) => void, width: number) {
-  const normalizedWidth = normalizeLeftRailWidth(width)
-  set({ leftWidth: normalizedWidth })
+async function persistLeftWidth(normalizedWidth: number) {
   const store = await Store.load('store.json')
   await store.set('canvasWorkspaceLeftWidth', normalizedWidth)
   await store.save()
 }
 
 async function persistDocumentPanelWidth(
-  set: (state: Partial<SidebarState>) => void,
-  width: number,
-  windowWidth = typeof window === 'undefined' ? 0 : window.innerWidth,
+  normalizedWidth: number,
 ) {
-  const normalizedWidth = normalizeDocumentPanelWidth(width, windowWidth)
-  set({ documentPanelWidth: normalizedWidth })
   const store = await Store.load('store.json')
   await store.set('canvasWorkspaceDocumentPanelWidth', normalizedWidth)
   await store.save()
 }
 
-async function loadSidebarState(set: (state: Partial<SidebarState>) => void) {
+async function loadSidebarState(): Promise<Partial<SidebarState>> {
   const store = await Store.load('store.json')
   const leftState = await store.get<boolean>('leftSidebarVisible')
   const centerState = await store.get<boolean>('centerPanelVisible')
@@ -80,25 +74,29 @@ async function loadSidebarState(set: (state: Partial<SidebarState>) => void) {
   const leftTab = await store.get<'files' | 'notes' | 'canvases'>('leftSidebarTab')
   const leftWidth = await store.get<number>('canvasWorkspaceLeftWidth')
   const documentPanelWidth = await store.get<number>('canvasWorkspaceDocumentPanelWidth')
+  const state: Partial<SidebarState> = {}
 
   if (leftState !== null && leftState !== undefined) {
-    set({ leftSidebarVisible: leftState })
+    state.leftSidebarVisible = leftState
     localStorage.setItem('leftSidebarVisible', String(leftState))
   }
   if (centerState !== null && centerState !== undefined) {
-    set({ centerPanelVisible: centerState })
+    state.centerPanelVisible = centerState
     localStorage.setItem('centerPanelVisible', String(centerState))
   }
   if (rightState !== null && rightState !== undefined) {
-    set({ rightSidebarVisible: rightState })
+    state.rightSidebarVisible = rightState
     localStorage.setItem('rightSidebarVisible', String(rightState))
   }
   if (leftTab) {
-    set({ leftSidebarTab: leftTab })
+    state.leftSidebarTab = leftTab
     localStorage.setItem('leftSidebarTab', leftTab)
   }
-  if (leftWidth) set({ leftWidth: normalizeLeftRailWidth(leftWidth) })
-  if (documentPanelWidth) set({ documentPanelWidth: normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth) })
+  if (leftWidth) state.leftWidth = normalizeLeftRailWidth(leftWidth)
+  if (documentPanelWidth) {
+    state.documentPanelWidth = normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth)
+  }
+  return state
 }
 
 export const useSidebarStore = create<SidebarState>((set, get) => ({
@@ -170,9 +168,17 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
     await store.save()
   },
   leftWidth: 320,
-  setLeftWidth: (width) => persistLeftWidth(set, width),
+  setLeftWidth: async (width) => {
+    const normalizedWidth = normalizeLeftRailWidth(width)
+    set({ leftWidth: normalizedWidth })
+    await persistLeftWidth(normalizedWidth)
+  },
   documentPanelWidth: 420,
-  setDocumentPanelWidth: (width, windowWidth) => persistDocumentPanelWidth(set, width, windowWidth),
+  setDocumentPanelWidth: async (width, windowWidth = typeof window === 'undefined' ? 0 : window.innerWidth) => {
+    const normalizedWidth = normalizeDocumentPanelWidth(width, windowWidth)
+    set({ documentPanelWidth: normalizedWidth })
+    await persistDocumentPanelWidth(normalizedWidth)
+  },
   startLeftResize: (event) => {
     const target = event.currentTarget
     const { resizeLeftSidebar, finishLeftResize } = get()
@@ -184,8 +190,10 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   resizeLeftSidebar: (event) => {
     const { leftResizeStartX, leftWidth } = get()
     if (leftResizeStartX === null) return
+    const normalizedWidth = normalizeLeftRailWidth(leftWidth + event.clientX - leftResizeStartX)
     set({ leftResizeStartX: event.clientX })
-    void persistLeftWidth(set, leftWidth + event.clientX - leftResizeStartX)
+    set({ leftWidth: normalizedWidth })
+    void persistLeftWidth(normalizedWidth)
   },
   finishLeftResize: (event) => {
     const target = event.currentTarget as HTMLDivElement
@@ -203,8 +211,13 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   resizeDocumentPanel: (event) => {
     const { documentPanelResizeStartX, documentPanelWidth } = get()
     if (documentPanelResizeStartX === null) return
+    const normalizedWidth = normalizeDocumentPanelWidth(
+      documentPanelWidth - event.clientX + documentPanelResizeStartX,
+      window.innerWidth,
+    )
     set({ documentPanelResizeStartX: event.clientX })
-    void persistDocumentPanelWidth(set, documentPanelWidth - event.clientX + documentPanelResizeStartX)
+    set({ documentPanelWidth: normalizedWidth })
+    void persistDocumentPanelWidth(normalizedWidth)
   },
   finishDocumentPanelResize: (event) => {
     const target = event.currentTarget as HTMLDivElement
@@ -222,6 +235,6 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
     await store.save()
   },
   initSidebarState: () => {
-    void loadSidebarState(set)
+    void loadSidebarState().then(state => set(state))
   },
 }))

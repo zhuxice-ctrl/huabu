@@ -17,15 +17,15 @@ test('database initialization shares one promise and clears failed work for a re
 })
 
 test('canvas startup waits for the database and always leaves the loading state', () => {
-  const databaseReady = startupSource.indexOf('await initAllDatabases()')
+  const databaseReady = startupSource.indexOf('void initAllDatabases()')
   const tabsReady = startupSource.indexOf('useArticleStore.getState().initOpenTabs()')
   const projectsReady = startupSource.indexOf('useCanvasStore.getState().loadProjects()')
 
   assert.ok(databaseReady >= 0)
   assert.ok(tabsReady > databaseReady)
   assert.ok(projectsReady > databaseReady)
-  assert.match(startupSource, /async function initializeCanvasStartup\(\) \{[\s\S]*?await initAllDatabases\(\)/)
-  assert.match(startupSource, /try \{[\s\S]*?await initializeCanvasStartup\(\)[\s\S]*?\} catch \(error\) \{[\s\S]*?console\.error\([\s\S]*?\} finally \{[\s\S]*?if \(!cancelled\) setReady\(true\)/)
+  assert.match(startupSource, /void initAllDatabases\(\)[\s\S]*?\.then\(\(\) => Promise\.all\([\s\S]*?initOpenTabs\(\)[\s\S]*?loadProjects\(\)/)
+  assert.match(startupSource, /\.catch\(\(error\) => \{[\s\S]*?console\.error\([\s\S]*?\.finally\(\(\) => \{[\s\S]*?if \(!cancelled\) setReady\(true\)/)
 })
 
 test('canvas dot grid retains React Flow pan and zoom behavior with the required contrast', () => {

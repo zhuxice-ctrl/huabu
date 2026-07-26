@@ -5,29 +5,14 @@ import { Store } from '@tauri-apps/plugin-store'
 import { chooseStartupCanvasId } from '@/lib/canvas/startup-policy'
 import useArticleStore from '@/stores/article'
 import useCanvasStore from '@/stores/canvas'
+import type { CanvasProject } from '@/types/canvas'
 import { initAllDatabases } from '@/db'
 
-async function initializeCanvasStartup() {
-  await initAllDatabases()
-  await useArticleStore.getState().initOpenTabs()
-  await useCanvasStore.getState().loadProjects()
-
+async function initializeCanvasStartup(projects: CanvasProject[]) {
   const store = await Store.load('store.json')
   const lastCanvasId = await store.get<string>('lastCanvasId') || null
-  const projects = useCanvasStore.getState().projects
   const startupCanvasId = chooseStartupCanvasId(projects, lastCanvasId)
-  let project = projects.find(item => item.id === startupCanvasId) || null
-
-  if (project) {
-    await useCanvasStore.getState().openProject(project.id)
-  } else {
-    project = await useCanvasStore.getState().createProject('blank', '未命名画布')
-  }
-
-  if (project) {
-    await store.set('lastCanvasId', project.id)
-    await store.save()
-  }
+  return { store, startupCanvasId }
 }
 
 export function CanvasStartupController({ children }: { children: ReactNode }) {
@@ -36,17 +21,33 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
-    async function startCanvasWorkspace() {
-      try {
-        await initializeCanvasStartup()
-      } catch (error) {
-        console.error('Failed to initialize canvas startup:', error)
-      } finally {
-        if (!cancelled) setReady(true)
-      }
-    }
+    void initAllDatabases()
+      .then(() => Promise.all([
+        useArticleStore.getState().initOpenTabs(),
+        useCanvasStore.getState().loadProjects(),
+      ]))
+      .then(async () => {
+        const projects = useCanvasStore.getState().projects
+        const { store, startupCanvasId } = await initializeCanvasStartup(projects)
+        let project = projects.find(item => item.id === startupCanvasId) || null
 
-    void startCanvasWorkspace()
+        if (project) {
+          await useCanvasStore.getState().openProject(project.id)
+        } else {
+          project = await useCanvasStore.getState().createProject('blank', '未命名画布')
+        }
+
+        if (project) {
+          await store.set('lastCanvasId', project.id)
+          await store.save()
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to initialize canvas startup:', error)
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true)
+      })
 
     return () => {
       cancelled = true
