@@ -1,703 +1,262 @@
 {
   "schema": "ADworkflo.semantic_slice.v1",
   "status": "ready",
-  "graph_revision": "19e79f4c121f5673bdd233a4",
+  "graph_revision": "59b9f7d9114176daf13e170c",
   "entrypoints": [
-    "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-    "typescript:src.lib.canvas.operations:applyCanvasOperations:function"
+    "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+    "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
   ],
   "entrypoint_resolutions": [
     {
       "status": "resolved",
-      "query": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "query": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
       "symbol": {
-        "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-        "symbol_group_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+        "stable_id": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+        "symbol_group_id": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
         "declaration_index": 0,
         "runtime_effective": 1,
-        "name": "estimateTextBlockSize",
-        "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize",
+        "name": "screenDistanceToCanvas",
+        "qualified_name": "src.lib.canvas.viewport-sizing.screenDistanceToCanvas",
         "kind": "function",
-        "start_line": 21,
-        "end_line": 34,
-        "file": "src/lib/canvas/content-ingest.ts",
-        "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-        "location": "src/lib/canvas/content-ingest.ts:21"
+        "start_line": 95,
+        "end_line": 97,
+        "file": "src/lib/canvas/viewport-sizing.ts",
+        "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+        "location": "src/lib/canvas/viewport-sizing.ts:95"
       },
       "candidates": [
         {
-          "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-          "symbol_group_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+          "stable_id": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+          "symbol_group_id": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
           "declaration_index": 0,
           "runtime_effective": 1,
-          "name": "estimateTextBlockSize",
-          "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize",
+          "name": "screenDistanceToCanvas",
+          "qualified_name": "src.lib.canvas.viewport-sizing.screenDistanceToCanvas",
           "kind": "function",
-          "start_line": 21,
-          "end_line": 34,
-          "file": "src/lib/canvas/content-ingest.ts",
-          "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-          "location": "src/lib/canvas/content-ingest.ts:21"
+          "start_line": 95,
+          "end_line": 97,
+          "file": "src/lib/canvas/viewport-sizing.ts",
+          "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+          "location": "src/lib/canvas/viewport-sizing.ts:95"
         }
       ]
     },
     {
       "status": "resolved",
-      "query": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
+      "query": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
       "symbol": {
-        "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-        "symbol_group_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
+        "stable_id": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
+        "symbol_group_id": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
         "declaration_index": 0,
         "runtime_effective": 1,
-        "name": "applyCanvasOperations",
-        "qualified_name": "src.lib.canvas.operations.applyCanvasOperations",
+        "name": "rectanglesIntersect",
+        "qualified_name": "src.lib.canvas.gesture-policy.rectanglesIntersect",
         "kind": "function",
-        "start_line": 30,
-        "end_line": 149,
-        "file": "src/lib/canvas/operations.ts",
-        "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-        "location": "src/lib/canvas/operations.ts:30"
+        "start_line": 65,
+        "end_line": 70,
+        "file": "src/lib/canvas/gesture-policy.ts",
+        "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
+        "location": "src/lib/canvas/gesture-policy.ts:65"
       },
       "candidates": [
         {
-          "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-          "symbol_group_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
+          "stable_id": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
+          "symbol_group_id": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
           "declaration_index": 0,
           "runtime_effective": 1,
-          "name": "applyCanvasOperations",
-          "qualified_name": "src.lib.canvas.operations.applyCanvasOperations",
+          "name": "rectanglesIntersect",
+          "qualified_name": "src.lib.canvas.gesture-policy.rectanglesIntersect",
           "kind": "function",
-          "start_line": 30,
-          "end_line": 149,
-          "file": "src/lib/canvas/operations.ts",
-          "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-          "location": "src/lib/canvas/operations.ts:30"
+          "start_line": 65,
+          "end_line": 70,
+          "file": "src/lib/canvas/gesture-policy.ts",
+          "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
+          "location": "src/lib/canvas/gesture-policy.ts:65"
         }
       ]
     }
   ],
   "included_symbols": [
     {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:DEFAULT_SCREEN_FONT_SIZE:variable",
-      "name": "DEFAULT_SCREEN_FONT_SIZE",
-      "qualified_name": "src.lib.canvas.content-ingest.DEFAULT_SCREEN_FONT_SIZE",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 10,
-      "end_line": 10,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:MIN_CONTENT_SCALE:variable",
-      "name": "MIN_CONTENT_SCALE",
-      "qualified_name": "src.lib.canvas.content-ingest.MIN_CONTENT_SCALE",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 11,
-      "end_line": 11,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:MAX_CONTENT_SCALE:variable",
-      "name": "MAX_CONTENT_SCALE",
-      "qualified_name": "src.lib.canvas.content-ingest.MAX_CONTENT_SCALE",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 12,
-      "end_line": 12,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "name": "estimateTextBlockSize",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 21,
-      "end_line": 34,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 0
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.longestLine:variable",
-      "name": "longestLine",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.longestLine",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 22,
-      "end_line": 25,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.width:variable",
-      "name": "width",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.width",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 26,
-      "end_line": 26,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.charactersPerLine:variable",
-      "name": "charactersPerLine",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.charactersPerLine",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 27,
-      "end_line": 27,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.estimatedLines:variable",
-      "name": "estimatedLines",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.estimatedLines",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 28,
-      "end_line": 31,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:AI_FALLBACK_SIZE:variable",
-      "name": "AI_FALLBACK_SIZE",
-      "qualified_name": "src.lib.canvas.content-ingest.AI_FALLBACK_SIZE",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 128,
-      "end_line": 140,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:AiNodeSizingInput:interface",
-      "name": "AiNodeSizingInput",
-      "qualified_name": "src.lib.canvas.content-ingest.AiNodeSizingInput",
+      "stable_id": "typescript:src.lib.canvas.gesture-policy:CanvasRect:interface",
+      "name": "CanvasRect",
+      "qualified_name": "src.lib.canvas.gesture-policy.CanvasRect",
       "kind": "interface",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 142,
-      "end_line": 148,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:isValidDimension:function",
-      "name": "isValidDimension",
-      "qualified_name": "src.lib.canvas.content-ingest.isValidDimension",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 150,
-      "end_line": 152,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:round4:function",
-      "name": "round4",
-      "qualified_name": "src.lib.canvas.content-ingest.round4",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 154,
-      "end_line": 157,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:round4.result:variable",
-      "name": "result",
-      "qualified_name": "src.lib.canvas.content-ingest.round4.result",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 155,
-      "end_line": 155,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:normalizeContentScaleForRead:function",
-      "name": "normalizeContentScaleForRead",
-      "qualified_name": "src.lib.canvas.content-ingest.normalizeContentScaleForRead",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 159,
-      "end_line": 166,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "name": "sizingCandidates",
-      "qualified_name": "src.lib.canvas.content-ingest.sizingCandidates",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 168,
-      "end_line": 189,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates.matchingTarget:variable",
-      "name": "matchingTarget",
-      "qualified_name": "src.lib.canvas.content-ingest.sizingCandidates.matchingTarget",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 169,
-      "end_line": 169,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:median:function",
-      "name": "median",
-      "qualified_name": "src.lib.canvas.content-ingest.median",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 191,
-      "end_line": 197,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:median.sorted:variable",
-      "name": "sorted",
-      "qualified_name": "src.lib.canvas.content-ingest.median.sorted",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 192,
-      "end_line": 192,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:median.middle:variable",
-      "name": "middle",
-      "qualified_name": "src.lib.canvas.content-ingest.median.middle",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 193,
-      "end_line": 193,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize:function",
-      "name": "resolveAiNodeSize",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeSize",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 199,
-      "end_line": 215,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.matchingTarget:variable",
-      "name": "matchingTarget",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeSize.matchingTarget",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 200,
-      "end_line": 200,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.resolveField:variable",
-      "name": "resolveField",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeSize.resolveField",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 202,
-      "end_line": 213,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.resolveField.requested:variable",
-      "name": "requested",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeSize.resolveField.requested",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 203,
-      "end_line": 203,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.resolveField.targetValue:variable",
-      "name": "targetValue",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeSize.resolveField.targetValue",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 205,
-      "end_line": 205,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.resolveField.candidateValues:variable",
-      "name": "candidateValues",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeSize.resolveField.candidateValues",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 207,
-      "end_line": 209,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 3
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeContentScale:function",
-      "name": "resolveAiNodeContentScale",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeContentScale",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 217,
-      "end_line": 224,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeContentScale.matchingTarget:variable",
-      "name": "matchingTarget",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeContentScale.matchingTarget",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 218,
-      "end_line": 218,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeFontSize:function",
-      "name": "resolveAiNodeFontSize",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeFontSize",
-      "kind": "function",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 226,
-      "end_line": 233,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeFontSize.candidateValues:variable",
-      "name": "candidateValues",
-      "qualified_name": "src.lib.canvas.content-ingest.resolveAiNodeFontSize.candidateValues",
-      "kind": "variable",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 229,
-      "end_line": 231,
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:CanvasOperationType:type",
-      "name": "CanvasOperationType",
-      "qualified_name": "src.lib.canvas.operations.CanvasOperationType",
-      "kind": "type",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 4,
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "start_line": 5,
       "end_line": 10,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
+      "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.lib.canvas.operations:asRecord:function",
-      "name": "asRecord",
-      "qualified_name": "src.lib.canvas.operations.asRecord",
+      "stable_id": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
+      "name": "rectanglesIntersect",
+      "qualified_name": "src.lib.canvas.gesture-policy.rectanglesIntersect",
       "kind": "function",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 16,
-      "end_line": 20,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:asString:function",
-      "name": "asString",
-      "qualified_name": "src.lib.canvas.operations.asString",
-      "kind": "function",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 22,
-      "end_line": 24,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:asFiniteNumber:function",
-      "name": "asFiniteNumber",
-      "qualified_name": "src.lib.canvas.operations.asFiniteNumber",
-      "kind": "function",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 26,
-      "end_line": 28,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "name": "applyCanvasOperations",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations",
-      "kind": "function",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 30,
-      "end_line": 149,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
+      "file": "src/lib/canvas/gesture-policy.ts",
+      "start_line": 65,
+      "end_line": 70,
+      "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
       "distance": 0
     },
     {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.nodes:variable",
-      "name": "nodes",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.nodes",
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:INITIAL_CANVAS_ZOOM:variable",
+      "name": "INITIAL_CANVAS_ZOOM",
+      "qualified_name": "src.lib.canvas.viewport-sizing.INITIAL_CANVAS_ZOOM",
       "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 31,
-      "end_line": 31,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 3,
+      "end_line": 3,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:MIN_CANVAS_ZOOM:variable",
+      "name": "MIN_CANVAS_ZOOM",
+      "qualified_name": "src.lib.canvas.viewport-sizing.MIN_CANVAS_ZOOM",
+      "kind": "variable",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 4,
+      "end_line": 4,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:MAX_CANVAS_ZOOM:variable",
+      "name": "MAX_CANVAS_ZOOM",
+      "qualified_name": "src.lib.canvas.viewport-sizing.MAX_CANVAS_ZOOM",
+      "kind": "variable",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 5,
+      "end_line": 5,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:ViewportSnapshot:interface",
+      "name": "ViewportSnapshot",
+      "qualified_name": "src.lib.canvas.viewport-sizing.ViewportSnapshot",
+      "kind": "interface",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 11,
+      "end_line": 18,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.edges:variable",
-      "name": "edges",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.edges",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
+      "name": "isFiniteNumber",
+      "qualified_name": "src.lib.canvas.viewport-sizing.isFiniteNumber",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 20,
+      "end_line": 22,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
+      "name": "clamp",
+      "qualified_name": "src.lib.canvas.viewport-sizing.clamp",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 28,
+      "end_line": 30,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
+      "name": "round",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
       "start_line": 32,
-      "end_line": 32,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
+      "end_line": 36,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 2
     },
     {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.applied:variable",
-      "name": "applied",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.applied",
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round.factor:variable",
+      "name": "factor",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round.factor",
       "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
+      "file": "src/lib/canvas/viewport-sizing.ts",
       "start_line": 33,
       "end_line": 33,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.rawOperation:variable",
-      "name": "rawOperation",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.rawOperation",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 35,
-      "end_line": 35,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.type:variable",
-      "name": "type",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.type",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 37,
-      "end_line": 37,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.requestedType:variable",
-      "name": "requestedType",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.requestedType",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 47,
-      "end_line": 47,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.nodeType:variable",
-      "name": "nodeType",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.nodeType",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 48,
-      "end_line": 50,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.id:variable",
-      "name": "id",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.id",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 51,
-      "end_line": 51,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.index:variable",
-      "name": "index",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.index",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 53,
-      "end_line": 53,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.position:variable",
-      "name": "position",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.position",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 55,
-      "end_line": 58,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.requestedWidth:variable",
-      "name": "requestedWidth",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.requestedWidth",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 59,
-      "end_line": 59,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.requestedHeight:variable",
-      "name": "requestedHeight",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.requestedHeight",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 60,
-      "end_line": 60,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.sizingInput:variable",
-      "name": "sizingInput",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.sizingInput",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 61,
-      "end_line": 70,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.current:variable",
-      "name": "current",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.current",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 93,
-      "end_line": 93,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.source:variable",
-      "name": "source",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.source",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 120,
-      "end_line": 120,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.target:variable",
-      "name": "target",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.target",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 121,
-      "end_line": 121,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.operations:applyCanvasOperations.edge:variable",
-      "name": "edge",
-      "qualified_name": "src.lib.canvas.operations.applyCanvasOperations.edge",
-      "kind": "variable",
-      "file": "src/lib/canvas/operations.ts",
-      "start_line": 125,
-      "end_line": 131,
-      "sha256": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.types.canvas:CanvasNodeType:type",
-      "name": "CanvasNodeType",
-      "qualified_name": "src.types.canvas.CanvasNodeType",
-      "kind": "type",
-      "file": "src/types/canvas.ts",
-      "start_line": 20,
-      "end_line": 31,
-      "sha256": "a1d2748663034b13a6c9c6ad3f63c390bc779274e01fd606a726a33b09da8fd9",
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.types.canvas:CanvasNode:interface",
-      "name": "CanvasNode",
-      "qualified_name": "src.types.canvas.CanvasNode",
-      "kind": "interface",
-      "file": "src/types/canvas.ts",
-      "start_line": 68,
-      "end_line": 79,
-      "sha256": "a1d2748663034b13a6c9c6ad3f63c390bc779274e01fd606a726a33b09da8fd9",
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
       "distance": 3
     },
     {
-      "stable_id": "typescript:src.types.canvas:CanvasEdge:interface",
-      "name": "CanvasEdge",
-      "qualified_name": "src.types.canvas.CanvasEdge",
-      "kind": "interface",
-      "file": "src/types/canvas.ts",
-      "start_line": 99,
-      "end_line": 108,
-      "sha256": "a1d2748663034b13a6c9c6ad3f63c390bc779274e01fd606a726a33b09da8fd9",
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round.result:variable",
+      "name": "result",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round.result",
+      "kind": "variable",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 34,
+      "end_line": 34,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round4:function",
+      "name": "round4",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round4",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 38,
+      "end_line": 40,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.types.canvas:CanvasSize:interface",
-      "name": "CanvasSize",
-      "qualified_name": "src.types.canvas.CanvasSize",
-      "kind": "interface",
-      "file": "src/types/canvas.ts",
-      "start_line": 116,
-      "end_line": 119,
-      "sha256": "a1d2748663034b13a6c9c6ad3f63c390bc779274e01fd606a726a33b09da8fd9",
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function",
+      "name": "normalizeZoom",
+      "qualified_name": "src.lib.canvas.viewport-sizing.normalizeZoom",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 46,
+      "end_line": 53,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
       "distance": 2
     },
     {
-      "stable_id": "typescript:src.types.canvas:CanvasDocument:interface",
-      "name": "CanvasDocument",
-      "qualified_name": "src.types.canvas.CanvasDocument",
-      "kind": "interface",
-      "file": "src/types/canvas.ts",
-      "start_line": 121,
-      "end_line": 132,
-      "sha256": "a1d2748663034b13a6c9c6ad3f63c390bc779274e01fd606a726a33b09da8fd9",
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom.resolved:variable",
+      "name": "resolved",
+      "qualified_name": "src.lib.canvas.viewport-sizing.normalizeZoom.resolved",
+      "kind": "variable",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 47,
+      "end_line": 51,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 3
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:snapshotZoom:function",
+      "name": "snapshotZoom",
+      "qualified_name": "src.lib.canvas.viewport-sizing.snapshotZoom",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 60,
+      "end_line": 62,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
       "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+      "name": "screenDistanceToCanvas",
+      "qualified_name": "src.lib.canvas.viewport-sizing.screenDistanceToCanvas",
+      "kind": "function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 95,
+      "end_line": 97,
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
+      "distance": 0
     }
   ],
   "included_files": [
-    "src/lib/canvas/content-ingest.ts",
-    "src/lib/canvas/operations.ts",
-    "src/types/canvas.ts"
+    "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/viewport-sizing.ts"
   ],
   "boundary_symbols": [],
   "excluded": [
@@ -1232,10 +791,11 @@
     "src/lib/audio.ts",
     "src/lib/bm25.ts",
     "src/lib/canvas/canvas-dnd.ts",
+    "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/file-format.ts",
     "src/lib/canvas/freehand.ts",
-    "src/lib/canvas/gesture-policy.ts",
     "src/lib/canvas/mermaid.ts",
+    "src/lib/canvas/operations.ts",
     "src/lib/canvas/relation-interaction.ts",
     "src/lib/canvas/relation-policy.ts",
     "src/lib/canvas/relation-routing.ts",
@@ -1243,7 +803,6 @@
     "src/lib/canvas/static-export.ts",
     "src/lib/canvas/templates.ts",
     "src/lib/canvas/thumbnail.ts",
-    "src/lib/canvas/viewport-sizing.ts",
     "src/lib/chat-attachments.ts",
     "src/lib/check.ts",
     "src/lib/context/loader.ts",
@@ -1374,103 +933,32 @@
     "src/stores/tag.ts",
     "src/stores/update.ts",
     "src/stores/vector.ts",
+    "src/types/canvas.ts",
     "src/types/sync.ts",
     "src/types/theme.ts"
   ],
   "unresolved_edges": [
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:isFiniteNumber:function",
       "kind": "call",
-      "target": "Math.max",
-      "line": 22,
+      "target": "Number.isFinite",
+      "line": 21,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "text.split(/\\r?\\n/).map",
-      "line": 24,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "text.split",
-      "line": 24,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Array.from",
-      "line": 24,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 26,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
       "kind": "call",
       "target": "Math.min",
-      "line": 26,
+      "line": 29,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 27,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.floor",
-      "line": 27,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "text.split(/\\r?\\n/).reduce",
-      "line": 28,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "text.split",
-      "line": 28,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:clamp:function",
       "kind": "call",
       "target": "Math.max",
       "line": 29,
@@ -1478,443 +966,20 @@
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.ceil",
-      "line": 29,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Array.from",
-      "line": 29,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 33,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:isValidDimension:function",
-      "kind": "call",
-      "target": "Number.isFinite",
-      "line": 151,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:round4:function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
       "kind": "call",
       "target": "Math.round",
-      "line": 155,
+      "line": 34,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:round4:function",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
       "kind": "call",
       "target": "Object.is",
-      "line": 156,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:normalizeContentScaleForRead:function",
-      "kind": "call",
-      "target": "Number.isFinite",
-      "line": 161,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "input.nearbySameType\n    .filter(node => node.type === input.requestedType)\n    .map(node => {\n      const center = {\n        x: node.position.x + (isValidDimension(node.width) ? node.width / 2 : 0),\n        y: node.position.y + (isValidDimension(node.height) ? node.height / 2 : 0),\n      }\n      return { node, distance: Math.hypot(center.x - origin.x, center.y - origin.y) }\n    })\n    .filter(candidate => candidate.distance <= 1200)\n    .sort((left, right) => left.distance - right.distance || left.node.id.localeCompare(right.node.id))\n    .slice(0, 3)\n    .map",
-      "line": 176,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "input.nearbySameType\n    .filter(node => node.type === input.requestedType)\n    .map(node => {\n      const center = {\n        x: node.position.x + (isValidDimension(node.width) ? node.width / 2 : 0),\n        y: node.position.y + (isValidDimension(node.height) ? node.height / 2 : 0),\n      }\n      return { node, distance: Math.hypot(center.x - origin.x, center.y - origin.y) }\n    })\n    .filter(candidate => candidate.distance <= 1200)\n    .sort((left, right) => left.distance - right.distance || left.node.id.localeCompare(right.node.id))\n    .slice",
-      "line": 176,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "input.nearbySameType\n    .filter(node => node.type === input.requestedType)\n    .map(node => {\n      const center = {\n        x: node.position.x + (isValidDimension(node.width) ? node.width / 2 : 0),\n        y: node.position.y + (isValidDimension(node.height) ? node.height / 2 : 0),\n      }\n      return { node, distance: Math.hypot(center.x - origin.x, center.y - origin.y) }\n    })\n    .filter(candidate => candidate.distance <= 1200)\n    .sort",
-      "line": 176,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "input.nearbySameType\n    .filter(node => node.type === input.requestedType)\n    .map(node => {\n      const center = {\n        x: node.position.x + (isValidDimension(node.width) ? node.width / 2 : 0),\n        y: node.position.y + (isValidDimension(node.height) ? node.height / 2 : 0),\n      }\n      return { node, distance: Math.hypot(center.x - origin.x, center.y - origin.y) }\n    })\n    .filter",
-      "line": 176,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "input.nearbySameType\n    .filter(node => node.type === input.requestedType)\n    .map",
-      "line": 176,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "input.nearbySameType\n    .filter",
-      "line": 176,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "Math.hypot",
-      "line": 183,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:sizingCandidates:function",
-      "kind": "call",
-      "target": "left.node.id.localeCompare",
-      "line": 186,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:median:function",
-      "kind": "call",
-      "target": "[...values].sort",
-      "line": 192,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:median:function",
-      "kind": "call",
-      "target": "Math.floor",
-      "line": 193,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.resolveField:variable",
-      "kind": "call",
-      "target": "candidates\n      .map(node => node[field])\n      .filter",
-      "line": 207,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeSize.resolveField:variable",
-      "kind": "call",
-      "target": "candidates\n      .map",
-      "line": 207,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeContentScale:function",
-      "kind": "call",
-      "target": "candidates.map",
-      "line": 222,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeFontSize:function",
-      "kind": "call",
-      "target": "sizingCandidates(input)\n    .map(node => node.data.fontSize)\n    .filter",
-      "line": 229,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:resolveAiNodeFontSize:function",
-      "kind": "call",
-      "target": "sizingCandidates(input)\n    .map",
-      "line": 229,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:asRecord:function",
-      "kind": "call",
-      "target": "Array.isArray",
-      "line": 17,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:asString:function",
-      "kind": "call",
-      "target": "value.trim",
-      "line": 23,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:asFiniteNumber:function",
-      "kind": "call",
-      "target": "Number.isFinite",
-      "line": 27,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "structuredClone",
-      "line": 31,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "structuredClone",
-      "line": 32,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "AI_CREATABLE_NODE_TYPES.includes",
-      "line": 48,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "crypto.randomUUID",
-      "line": 51,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.some",
-      "line": 52,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.find",
-      "line": 54,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "Math.floor",
-      "line": 57,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "Number.isFinite",
-      "line": 63,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "Number.isFinite",
-      "line": 64,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.filter",
-      "line": 68,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.push",
-      "line": 72,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.findIndex",
-      "line": 91,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "operation.label.trim",
-      "line": 102,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "operation.description.trim",
-      "line": 103,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.some",
-      "line": 112,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.filter",
-      "line": 113,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "edges.filter",
-      "line": 114,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.some",
-      "line": 122,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "nodes.some",
-      "line": 122,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "crypto.randomUUID",
-      "line": 123,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "edges.some",
-      "line": 124,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "edges.push",
-      "line": 132,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "edges.some",
-      "line": 139,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/operations.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-      "kind": "call",
-      "target": "edges.filter",
-      "line": 140,
+      "line": 35,
       "reason": "external-call",
       "critical": 0
     }
@@ -1922,16 +987,15 @@
   "likely_tests": [],
   "coverage": {
     "resolved_call_ratio": 1.0,
-    "resolved_reference_ratio": 0.936,
-    "resolved_edge_ratio": 0.951,
+    "resolved_reference_ratio": 1.0,
+    "resolved_edge_ratio": 1.0,
     "resolved_entrypoint_ratio": 1.0
   },
-  "confidence": 0.951,
+  "confidence": 1.0,
   "truncated": false,
   "source_hashes": {
-    "src/lib/canvas/content-ingest.ts": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
-    "src/lib/canvas/operations.ts": "77e9a532e00ebf9b12850f084ea224df8d3b868a23214b559a3f638214da458c",
-    "src/types/canvas.ts": "a1d2748663034b13a6c9c6ad3f63c390bc779274e01fd606a726a33b09da8fd9"
+    "src/lib/canvas/gesture-policy.ts": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
+    "src/lib/canvas/viewport-sizing.ts": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1"
   },
   "provenance": [
     {
@@ -1954,19 +1018,73 @@
   ],
   "parameters": {
     "depth": 3,
-    "budget": 700,
+    "budget": 240,
     "include_callers": false,
-    "additional_seeds": []
+    "additional_seeds": [
+      "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+      "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+    ]
   },
-  "expansion_history": [],
+  "expansion_history": [
+    {
+      "schema": "ADworkflo.context_expansion_request.v1",
+      "task_id": "zeroxb-integrated-task-03-collision-policy",
+      "status": "pending",
+      "relation": "callees",
+      "targets": [
+        "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+        "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+      ],
+      "depth": 3,
+      "budget": 240,
+      "reason": "Resolve the truncated frontier around the two pure geometry entrypoints without expanding through React canvas consumers.",
+      "requested_by": "orchestrator",
+      "source_graph_revision": "59b9f7d9114176daf13e170c",
+      "applied_slice_revision": null,
+      "target_resolutions": [
+        {
+          "target": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+          "status": "resolved_symbol",
+          "symbol_ids": [
+            "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function"
+          ]
+        },
+        {
+          "target": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
+          "status": "resolved_symbol",
+          "symbol_ids": [
+            "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+          ]
+        }
+      ],
+      "applied": true
+    }
+  ],
+  "expansion_targets": [
+    {
+      "target": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+      "status": "resolved_symbol",
+      "symbol_ids": [
+        "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function"
+      ]
+    },
+    {
+      "target": "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function",
+      "status": "resolved_symbol",
+      "symbol_ids": [
+        "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+      ]
+    }
+  ],
   "predicted_impact_files": [
+    "src/app/core/main/canvas/canvas-edge.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/agent/runtime.ts",
-    "src/lib/agent/tool-registry.ts",
     "src/lib/agent/tools/canvas-tools.ts",
-    "src/lib/agent/tools/index.ts",
     "src/lib/canvas/content-ingest.ts",
-    "src/lib/canvas/operations.ts"
+    "src/lib/canvas/gesture-policy.ts",
+    "src/lib/canvas/operations.ts",
+    "src/lib/canvas/relation-interaction.ts",
+    "src/lib/canvas/viewport-sizing.ts"
   ]
 }

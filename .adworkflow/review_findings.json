@@ -1,33 +1,12 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
-  "status": "approved",
-  "reviewer": "independent task reviewer and scoped re-reviewer",
-  "source_revision": "7d6e58716c06066b26545b2b2464d8a519af8756",
-  "review_basis": [
-    "Task 2 implementation brief and report",
-    "Full Task 2 review package plus two scoped fix packages",
-    "Accepted L2 context preflight at graph revision 19e79f4c121f5673bdd233a4",
-    "Post-edit impact report at graph revision 59b9f7d9114176daf13e170c",
-    "15 focused tests, 53 canvas tests, TypeScript and diff check"
-  ],
+  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "status": "not_reviewed",
+  "reviewer": null,
+  "source_revision": null,
+  "review_basis": [],
   "blocking_findings": [],
-  "non_blocking_findings": [
-    {
-      "id": "pnpm-noninteractive-repair",
-      "severity": "non_blocking",
-      "issue": "pnpm wrapper commands request an interactive node_modules repair.",
-      "expected_fix": "Repeat the wrappers in a TTY-capable or CI environment without changing dependencies during this task.",
-      "evidence": "The equivalent locked Node test command and local TypeScript executable both pass."
-    }
-  ],
-  "suggested_tests": [
-    "Run the pnpm wrappers during release-wide Windows acceptance when dependency repair is explicitly in scope."
-  ],
-  "risk_notes": [
-    "The initial reviewer reported four Important issues; target typing, field-by-field fallback, contentScale validation, behavioral coverage and partial width/height forwarding were all corrected.",
-    "The final scoped re-review marked spec compliance and task quality PASS with no new Critical or Important finding.",
-    "Conservative chat/page propagation and React dynamic-dispatch edges were independently reviewed and accepted as existing import-chain and framework-callback behavior.",
-    "No provider credential was read, printed or modified."
-  ]
+  "non_blocking_findings": [],
+  "suggested_tests": [],
+  "risk_notes": []
 }

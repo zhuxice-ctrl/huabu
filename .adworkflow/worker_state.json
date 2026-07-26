@@ -1,41 +1,39 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
-  "status": "verified",
-  "revision": 3,
+  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "status": "in_progress",
+  "revision": 2,
   "done": [
-    "Configured and completed the Task 2 implementation contract.",
-    "Routed direct creation paths through one immutable captured viewport while preserving duplicate and import geometry.",
-    "Implemented deterministic AI sizing, validated style font conversion and persisted contentScale rendering.",
-    "Resolved every independent-review Important finding through two scoped fix rounds.",
-    "Passed focused, full canvas, TypeScript, diff and L2 impact gates."
+    "Configured the Task 3 implementation contract and extracted its SDD brief."
   ],
-  "changed_files": [
-    "src/lib/canvas/content-ingest.ts",
-    "src/lib/canvas/operations.ts",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "scripts/tests/canvas-content-ingest.test.mjs",
-    "scripts/tests/canvas-creation-sizing.test.mjs"
-  ],
+  "changed_files": [],
   "current_problem": null,
-  "next_action": "Begin Task 3 solid-entity collision and snapping policies.",
+  "next_action": "Prepare and accept bounded L2 context before dispatching the Task 3 implementer.",
   "must_keep_context": [
-    "Every direct creation operation captures one viewport at operation start.",
-    "Internal paste, duplicate and full-document imports preserve stored geometry.",
-    "Persisted contentScale is bounded to 0.1667-10 for runtime reads.",
+    "Task 3 implements pure collision and spatial-index modules only.",
+    "Task 2 viewport sizing helpers define all screen-to-canvas threshold conversion.",
+    "Task 5 owns editor session integration.",
     "No provider secret may be read, printed or changed."
   ],
-  "discarded_context": [
-    "Conservative chat and page propagation from the existing agent import chain was independently adjudicated as expected.",
-    "React Flow getter, React state setter and component callback dynamic edges were independently adjudicated as resolved framework dispatch."
-  ],
+  "discarded_context": [],
   "remaining_risks": [
-    "pnpm wrapper commands still require a TTY-capable node_modules repair; locked direct executables passed and no repair was performed."
+    "Swept rigid-set motion and snap hysteresis are load-bearing for later editor integration."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": []
+  "context_expansion_history": [
+    {
+      "relation": "callees",
+      "targets": [
+        "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+        "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+      ],
+      "depth": 3,
+      "budget": 240,
+      "reason": "Resolve the truncated frontier around the two pure geometry entrypoints without expanding through React canvas consumers.",
+      "requested_by": "orchestrator",
+      "graph_revision": "59b9f7d9114176daf13e170c",
+      "preflight_status": "accepted"
+    }
+  ]
 }
