@@ -45,17 +45,11 @@ function transientNodeClassName(selected: boolean) {
 }
 
 function SolidNodeResizer({ selected, type }: { selected: boolean; type: CanvasNodeType }) {
-  const minWidth = type === 'text' ? 1
-    : type === 'image' ? 80
-      : type === 'decision' ? 144
-        : type === 'file' ? 320
-          : type === 'note' || type === 'link' || type === 'todo' ? 208 : 160
-  const minHeight = type === 'text' ? 1 : type === 'image' ? 80 : type === 'decision' ? 144 : 56
   return (
     <NodeResizer
       isVisible={selected}
-      minWidth={minWidth}
-      minHeight={minHeight}
+      minWidth={1}
+      minHeight={1}
       keepAspectRatio={type === 'image'}
       color="#66D9FF"
     />
@@ -127,7 +121,7 @@ const EditableLabel = memo(function EditableLabel({ id, value, className, style 
 
 export const ProcessNode = memo(function ProcessNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   return (
-    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-14 min-w-40 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
+    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-0 min-w-0 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="process" />
       <ConnectionHandles />
       <BaseNodeContent className="items-center text-center text-sm" style={scaledContentStyle(data, { padding: 12, gap: 8 })}>
@@ -139,7 +133,7 @@ export const ProcessNode = memo(function ProcessNode({ id, data, selected }: Nod
 
 export const DecisionNode = memo(function DecisionNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   return (
-    <div style={nodeStyle(data)} className={cn('relative flex size-full min-h-36 min-w-36 rotate-45 items-center justify-center border bg-card text-card-foreground shadow-sm in-[.selected]:shadow-lg', transientNodeClassName(selected), previewClassName(data.previewState))}>
+    <div style={nodeStyle(data)} className={cn('relative flex size-full min-h-0 min-w-0 rotate-45 items-center justify-center border bg-card text-card-foreground shadow-sm in-[.selected]:shadow-lg', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="decision" />
       <ConnectionHandles />
       <EditableLabel id={id} value={data.label || '判断条件'} className="max-w-24 -rotate-45 text-sm" style={fontStyle(data)} />
@@ -149,7 +143,7 @@ export const DecisionNode = memo(function DecisionNode({ id, data, selected }: N
 
 export const TerminatorNode = memo(function TerminatorNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   return (
-    <div style={{ ...nodeStyle(data), paddingInline: 24 * contentScale(data) }} className={cn('relative flex size-full min-h-14 min-w-40 items-center justify-center rounded-full border bg-card text-card-foreground shadow-sm in-[.selected]:shadow-lg', transientNodeClassName(selected), previewClassName(data.previewState))}>
+    <div style={{ ...nodeStyle(data), paddingInline: 24 * contentScale(data) }} className={cn('relative flex size-full min-h-0 min-w-0 items-center justify-center rounded-full border bg-card text-card-foreground shadow-sm in-[.selected]:shadow-lg', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="terminator" />
       <ConnectionHandles />
       <EditableLabel id={id} value={data.label || '开始 / 结束'} className="text-sm" style={fontStyle(data)} />
@@ -179,7 +173,7 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
         padding: 8 * contentScale(data),
       }}
       className={cn(
-        'relative size-full overflow-hidden rounded-xl border bg-card p-2 text-card-foreground shadow-sm',
+        'relative size-full min-h-0 min-w-0 overflow-hidden rounded-xl border bg-card p-2 text-card-foreground shadow-sm',
         transientNodeClassName(selected),
         previewClassName(data.previewState),
       )}
@@ -217,7 +211,7 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ data, selected }: N
   return (
     <BaseNode
       style={nodeStyle(data)}
-      className={cn('size-full min-h-14 min-w-52 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
+      className={cn('size-full min-h-0 min-w-0 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
       onDoubleClick={() => void openNote()}
     >
       <SolidNodeResizer selected={selected} type="note" />
@@ -237,7 +231,7 @@ export const LinkCanvasNode = memo(function LinkCanvasNode({ id, data, selected 
   return (
     <BaseNode
       style={nodeStyle(data)}
-      className={cn('size-full min-h-14 min-w-52 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
+      className={cn('size-full min-h-0 min-w-0 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
       onDoubleClick={() => data.url && void openUrl(data.url)}
     >
       <SolidNodeResizer selected={selected} type="link" />
@@ -267,7 +261,7 @@ export const FileCanvasNode = memo(function FileCanvasNode({ data, selected }: N
   return (
     <BaseNode
       style={nodeStyle(data)}
-      className={cn('size-full min-h-14 min-w-80 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
+      className={cn('size-full min-h-0 min-w-0 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}
       onDoubleClick={() => void openStoredFile()}
     >
       <SolidNodeResizer selected={selected} type="file" />
@@ -288,7 +282,7 @@ export const FileCanvasNode = memo(function FileCanvasNode({ data, selected }: N
 export const TodoCanvasNode = memo(function TodoCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   const { updateNodeData } = useReactFlow<FlowCanvasNode>()
   return (
-    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-14 min-w-52 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
+    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-0 min-w-0 shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="todo" />
       <ConnectionHandles />
       <BaseNodeContent className="flex-row items-center" style={scaledContentStyle(data, { padding: 12, gap: 8 })}>
@@ -327,7 +321,7 @@ export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data, selecte
   }, [data.imagePath])
 
   return (
-    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-20 min-w-20 overflow-hidden shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
+    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-0 min-w-0 overflow-hidden shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="image" />
       <ConnectionHandles />
       {imageUrl ? (

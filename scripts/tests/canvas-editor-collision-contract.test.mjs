@@ -104,6 +104,29 @@ test('production serialization drops transient renderer fields and collision ent
   assert.deepEqual({ ...serialized[0].data }, { label: 'group', childIds: ['left', 'right'] })
 })
 
+test('solid renderers and resizers do not enlarge persisted collision rectangles at non-unit zoom', () => {
+  const note = {
+    id: 'note',
+    type: 'note',
+    position: { x: 0, y: 0 },
+    width: 160,
+    height: 90,
+    data: {},
+  }
+  assert.deepEqual({ ...production.nodeRect(note) }, {
+    x: 0,
+    y: 0,
+    width: 160,
+    height: 90,
+  })
+
+  const solidResizer = nodesSource.match(/function SolidNodeResizer[^]*?\n\}/)?.[0] || ''
+  assert.match(solidResizer, /minWidth=\{1\}/)
+  assert.match(solidResizer, /minHeight=\{1\}/)
+  assert.doesNotMatch(nodesSource, /\bmin-w-(?:20|36|40|52|80)\b/)
+  assert.doesNotMatch(nodesSource, /\bmin-h-(?:14|20|36)\b/)
+})
+
 test('collision visuals are transient renderer state and selection uses the specified glow', () => {
   assert.match(editorSource, /canvas-geometry-invalid/)
   assert.match(editorSource, /canvas-legacy-conflict/)

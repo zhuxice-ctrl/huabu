@@ -60,7 +60,7 @@ const loadEditorFunctions = (names, globals = {}) => {
     },
   ).outputText
   const module = { exports: {} }
-  vm.runInNewContext(compiled, { module, exports: module.exports, ...globals })
+  vm.runInNewContext(compiled, { module, exports: module.exports, structuredClone, ...globals })
   return module.exports
 }
 
@@ -170,7 +170,8 @@ test('draw, resize and move cancellation releases capture and writes no checkpoi
   assert.match(editorSource, /releaseGeometryPointerCapture/)
   assert.match(editorSource, /snapGuides: \[\]/)
   const cancellation = section('const cancelGeometrySession', 'const finalizeResizeGeometrySession')
-  assert.doesNotMatch(cancellation, /pushHistory|commitGeometrySessionCheckpoint/)
+  assert.match(cancellation, /mode:\s*'cancel'/)
+  assert.doesNotMatch(cancellation, /pushHistory\(/)
 })
 
 test('move sessions sweep rigid members, preserve group children and checkpoint once', () => {
@@ -269,4 +270,126 @@ test('all materialized placement paths preview for 120ms and revalidate before c
   })
   assert.equal(result.status, 'placed')
   assert.notDeepEqual(result.translation, { x: 0, y: 0 })
+})
+
+test('group snapshot expansion and copy materialization remap child ownership causally', () => {
+  const {
+    expandGroupControlledNodeIds,
+    materializeSnapshotCopy,
+  } = loadEditorFunctions(['expandGroupControlledNodeIds', 'materializeSnapshotCopy'])
+  const sourceNodes = [
+    { ...flowNode('group', 0, 0, 100, 80, 'group'), data: { childIds: ['left', 'right'] } },
+    flowNode('left', 10, 10),
+    flowNode('right', 40, 10),
+    flowNode('outside', 200, 0),
+  ]
+  const sourceEdges = [{ id: 'inside', source: 'left', target: 'right' }]
+  const expanded = expandGroupControlledNodeIds(sourceNodes, new Set(['group']))
+  assert.deepEqual([...expanded].sort(), ['group', 'left', 'right'])
+
+  for (const selectedIds of [new Set(['group']), new Set(['group', 'left', 'right'])]) {
+    const snapshotIds = expandGroupControlledNodeIds(sourceNodes, selectedIds)
+    const snapshot = {
+      nodes: sourceNodes.filter(node => snapshotIds.has(node.id)),
+      edges: sourceEdges,
+    }
+    let nextId = 0
+    const copy = materializeSnapshotCopy(snapshot, () => `copy-${nextId++}`)
+    assert.equal(copy.nodes.length, 3)
+    const copiedGroup = copy.nodes.find(node => node.type === 'group')
+    const copiedChildren = copy.nodes.filter(node => node.type !== 'group').map(node => node.id).sort()
+    assert.deepEqual([...copiedGroup.data.childIds].sort(), copiedChildren)
+    assert.equal(copiedGroup.data.childIds.some(id => ['left', 'right'].includes(id)), false)
+    assert.equal(copy.edges[0].source, copiedChildren[0])
+    assert.equal(copy.edges[0].target, copiedChildren[1])
+  }
+})
+
+test('async placement history reads latest refs so undo preserves preview-time authority updates', () => {
+  const { latestHistorySnapshot } = loadEditorFunctions(['cloneSnapshot', 'latestHistorySnapshot'])
+  const initial = flowNode('initial', 0, 0)
+  const external = flowNode('external-during-preview', 40, 0)
+  const placed = flowNode('placed-after-preview', 80, 0)
+  const latestNodesRef = { current: [initial] }
+  const latestEdgesRef = { current: [] }
+  const pushAfterAwait = () => latestHistorySnapshot(latestNodesRef, latestEdgesRef)
+
+  latestNodesRef.current = [initial, external]
+  const undoCheckpoint = pushAfterAwait()
+  const committed = [...latestNodesRef.current, placed]
+  assert.deepEqual(committed.map(node => node.id), [
+    'initial',
+    'external-during-preview',
+    'placed-after-preview',
+  ])
+  assert.deepEqual(undoCheckpoint.nodes.map(node => node.id), [
+    'initial',
+    'external-during-preview',
+  ])
+})
+
+test('executable geometry outcomes restore authority on cancel and checkpoint successful sessions once', () => {
+  const { executeGeometrySessionOutcome } = loadEditorFunctions([
+    'nodeRect',
+    'geometryForNodes',
+    'applyGeometry',
+    'executeGeometrySessionOutcome',
+  ])
+  const authoritative = [flowNode('active', 70, 0), flowNode('obstacle', 100, 0)]
+
+  for (const kind of ['draw', 'resize', 'move']) {
+    const session = createSession({
+      nodes: [flowNode('active', 0, 0), flowNode('obstacle', 100, 0)],
+      controlledIds: kind === 'draw' ? [] : ['active'],
+      movingIds: kind === 'draw' ? ['__draw__'] : ['active'],
+      kind,
+    })
+    let rendered = production.applyGeometry(
+      authoritative,
+      new Map([['active', { x: 20, y: 0, width: 10, height: 10 }]]),
+    )
+    let clears = 0
+    let releases = 0
+    let checkpoints = 0
+    executeGeometrySessionOutcome({
+      mode: 'cancel',
+      session,
+      authoritativeNodes: authoritative,
+      effects: {
+        updateNodes: updater => { rendered = updater(rendered) },
+        clearUi: () => { clears += 1 },
+        releasePointerCapture: () => { releases += 1 },
+        commitCheckpoint: () => { checkpoints += 1 },
+      },
+    })
+    assert.equal(clears, 1, kind)
+    assert.equal(releases, 1, kind)
+    assert.equal(checkpoints, 0, kind)
+    assert.deepEqual({ ...rendered[0].position }, kind === 'draw' ? { x: 20, y: 0 } : { x: 70, y: 0 })
+  }
+
+  const move = createSession({
+    nodes: [flowNode('active', 0, 0), flowNode('obstacle', 100, 0)],
+    controlledIds: ['active'],
+    movingIds: ['active'],
+    kind: 'move',
+  })
+  move.lastAcceptedGeometry = new Map([['active', { x: 30, y: 0, width: 10, height: 10 }]])
+  let rendered = [flowNode('active', 0, 0), flowNode('obstacle', 100, 0)]
+  let checkpoints = 0
+  let releases = 0
+  executeGeometrySessionOutcome({
+    mode: 'commit',
+    session: move,
+    authoritativeNodes: rendered,
+    effects: {
+      updateNodes: updater => { rendered = updater(rendered) },
+      clearUi: () => {},
+      releasePointerCapture: () => { releases += 1 },
+      commitCheckpoint: () => { checkpoints += 1 },
+    },
+  })
+  assert.equal(checkpoints, 1)
+  assert.equal(releases, 1)
+  assert.deepEqual({ ...rendered[0].position }, { x: 30, y: 0 })
 })

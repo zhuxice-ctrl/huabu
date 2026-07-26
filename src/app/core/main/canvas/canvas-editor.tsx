@@ -347,6 +347,62 @@ function cloneSnapshot(nodes: FlowCanvasNode[], edges: Edge[]): CanvasSnapshot {
   return structuredClone({ nodes, edges })
 }
 
+function expandGroupControlledNodeIds(
+  nodes: FlowCanvasNode[],
+  initialIds: Set<string>,
+): Set<string> {
+  const byId = new Map(nodes.map(node => [node.id, node]))
+  const expanded = new Set<string>(initialIds)
+  const queue = [...initialIds]
+  while (queue.length > 0) {
+    const node = byId.get(queue.shift()!)
+    if (!node || node.type !== 'group' || !Array.isArray(node.data.childIds)) continue
+    for (const childId of node.data.childIds) {
+      if (typeof childId !== 'string' || !byId.has(childId) || expanded.has(childId)) continue
+      expanded.add(childId)
+      queue.push(childId)
+    }
+  }
+  return expanded
+}
+
+function materializeSnapshotCopy(
+  snapshot: CanvasSnapshot,
+  createId: () => string = () => crypto.randomUUID(),
+): CanvasSnapshot {
+  const idMap = new Map(snapshot.nodes.map(node => [node.id, createId()]))
+  const nodes = snapshot.nodes.map(node => {
+    const copy = structuredClone(node)
+    const childIds = copy.type === 'group' && Array.isArray(copy.data.childIds)
+      ? copy.data.childIds.flatMap(childId => {
+        const mapped = idMap.get(childId)
+        return mapped ? [mapped] : []
+      })
+      : undefined
+    return {
+      ...copy,
+      id: idMap.get(node.id) || createId(),
+      data: childIds
+        ? { ...copy.data, childIds }
+        : copy.data,
+    }
+  })
+  const edges = snapshot.edges.map(edge => ({
+    ...structuredClone(edge),
+    id: createId(),
+    source: idMap.get(edge.source) || edge.source,
+    target: idMap.get(edge.target) || edge.target,
+  }))
+  return { nodes, edges }
+}
+
+function latestHistorySnapshot(
+  nodesRef: { current: FlowCanvasNode[] },
+  edgesRef: { current: Edge[] },
+): CanvasSnapshot {
+  return cloneSnapshot(nodesRef.current, edgesRef.current)
+}
+
 function serializeHistorySnapshot(snapshot: CanvasSnapshot): CanvasHistorySnapshot {
   return {
     nodes: serializeNodes(snapshot.nodes),
@@ -475,6 +531,31 @@ function applyGeometry(nodes: FlowCanvasNode[], geometry: Map<string, CanvasRect
       style: { ...node.style, width: rect.width, height: rect.height },
     }
   })
+}
+
+interface GeometrySessionOutcomeEffects {
+  updateNodes: (updater: (nodes: FlowCanvasNode[]) => FlowCanvasNode[]) => void
+  clearUi: () => void
+  releasePointerCapture: (pointerId: number) => void
+  commitCheckpoint: (session: GeometrySessionBase) => void
+}
+
+function executeGeometrySessionOutcome(input: {
+  mode: 'cancel' | 'commit'
+  session: GeometrySession
+  authoritativeNodes: FlowCanvasNode[]
+  effects: GeometrySessionOutcomeEffects
+}) {
+  const { effects, session } = input
+  effects.clearUi()
+  if (input.mode === 'commit' && session.kind !== 'draw') {
+    effects.commitCheckpoint(session)
+    effects.updateNodes(current => applyGeometry(current, session.lastAcceptedGeometry))
+  } else if (session.kind !== 'draw') {
+    const authoritativeGeometry = geometryForNodes(input.authoritativeNodes, session.controlledNodeIds)
+    effects.updateNodes(current => applyGeometry(current, authoritativeGeometry))
+  }
+  effects.releasePointerCapture(session.pointerId)
 }
 
 function geometryEqual(left: CanvasRect | undefined, right: CanvasRect | undefined): boolean {
@@ -716,6 +797,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const decorativeResizingRef = useRef(false)
   const spatialIndexRef = useRef(new CanvasSpatialIndex())
   const authoritativeNodesRef = useRef(nodes)
+  const latestNodesRef = useRef(nodes)
+  const latestEdgesRef = useRef(edges)
+  latestNodesRef.current = nodes
+  latestEdgesRef.current = edges
   const documentRevisionRef = useRef(0)
   const lastPointerIdRef = useRef(-1)
   const placementTokenRef = useRef(0)
@@ -1041,14 +1126,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canvasId, updateHistory])
 
   const pushHistory = useCallback((snapshot?: CanvasSnapshot) => {
-    const checkpoint = snapshot || cloneSnapshot(nodes, edges)
+    const checkpoint = snapshot || latestHistorySnapshot(latestNodesRef, latestEdgesRef)
     const historyLimit = checkpoint.nodes.length > 500 ? 10 : checkpoint.nodes.length > 250 ? 20 : 50
     historyRef.current = [...historyRef.current.slice(-(historyLimit - 1)), checkpoint]
     redoRef.current = []
     persistHistory()
     setCanUndo(true)
     setCanRedo(false)
-  }, [edges, nodes, persistHistory])
+  }, [persistHistory])
 
   useEffect(() => {
     const checkpoint = () => {
@@ -1129,10 +1214,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canRedo, canUndo, canvasId])
 
   const commitGeometrySessionCheckpoint = useCallback((session: GeometrySessionBase) => {
-    const authoritativeSnapshot = cloneSnapshot(authoritativeNodesRef.current, edges)
+    const authoritativeSnapshot = cloneSnapshot(authoritativeNodesRef.current, latestEdgesRef.current)
     pushHistory(authoritativeSnapshot)
     void session
-  }, [edges, pushHistory])
+  }, [pushHistory])
 
   const createGeometrySessionBase = useCallback((input: {
     pointerId: number
@@ -1164,10 +1249,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       },
       controlledNodeIds: input.controlledNodeIds,
       collisionMemberIds: input.collisionMemberIds,
-      historySnapshot: cloneSnapshot(authoritativeNodesRef.current, edges),
+      historySnapshot: cloneSnapshot(authoritativeNodesRef.current, latestEdgesRef.current),
       invalid: false,
     }
-  }, [edges])
+  }, [])
 
   const cancelGeometrySession = useCallback((
     reason: 'invalid-release' | 'pointercancel' | 'lost-capture' | 'window-blur' | 'stale-authority' | 'no-change',
@@ -1175,13 +1260,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const session = geometrySessionRef.current
     if (!session) return
     geometrySessionRef.current = null
-    updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() })
-    updateFlowNodes(current => session.kind === 'draw'
-      ? current
-      : applyGeometry(current, geometryForNodes(authoritativeNodesRef.current, session.controlledNodeIds)))
-    releaseGeometryPointerCapture(session.pointerId)
+    executeGeometrySessionOutcome({
+      mode: 'cancel',
+      session,
+      authoritativeNodes: authoritativeNodesRef.current,
+      effects: {
+        clearUi: () => updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() }),
+        updateNodes: updater => updateFlowNodes(updater),
+        releasePointerCapture: pointerId => releaseGeometryPointerCapture(pointerId),
+        commitCheckpoint: checkpoint => commitGeometrySessionCheckpoint(checkpoint),
+      },
+    })
     if (reason === 'invalid-release') toast.error('位置重叠')
-  }, [releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
+  }, [commitGeometrySessionCheckpoint, releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
 
   const finalizeResizeGeometrySession = useCallback(() => {
     const session = geometrySessionRef.current
@@ -1198,10 +1289,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       return
     }
     geometrySessionRef.current = null
-    updateGeometryUi({ snapGuides: [], nodeVisualStates: new Map() })
-    commitGeometrySessionCheckpoint(session)
-    updateFlowNodes(current => applyGeometry(current, session.lastAcceptedGeometry))
-    releaseGeometryPointerCapture(session.pointerId)
+    executeGeometrySessionOutcome({
+      mode: 'commit',
+      session,
+      authoritativeNodes: authoritativeNodesRef.current,
+      effects: {
+        clearUi: () => updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() }),
+        updateNodes: updater => updateFlowNodes(updater),
+        releasePointerCapture: pointerId => releaseGeometryPointerCapture(pointerId),
+        commitCheckpoint: checkpoint => commitGeometrySessionCheckpoint(checkpoint),
+      },
+    })
   }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
     releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
 
@@ -1339,15 +1437,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       ? nodes.filter(node => node.selected).map(node => node.id)
       : [activeNode.id])
     const selected = sourceNodes.filter(node => selectedIds.has(node.id))
-    const controlledNodeIds = new Set(selected.map(node => node.id))
-    for (const group of selected.filter(node => node.type === 'group')) {
-      if (!Array.isArray(group.data.childIds)) continue
-      for (const childId of group.data.childIds) {
-        if (typeof childId === 'string' && sourceNodes.some(node => node.id === childId)) {
-          controlledNodeIds.add(childId)
-        }
-      }
-    }
+    const controlledNodeIds = expandGroupControlledNodeIds(sourceNodes, new Set(selected.map(node => node.id)))
     const collisionMemberIds = new Set(sourceNodes
       .filter(node => controlledNodeIds.has(node.id) && isSolidCanvasNode(node as CanvasNode))
       .map(node => node.id))
@@ -1448,11 +1538,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       return
     }
     geometrySessionRef.current = null
-    commitGeometrySessionCheckpoint(session)
-    updateFlowNodes(current => applyGeometry(current, session.lastAcceptedGeometry))
-    releaseGeometryPointerCapture(session.pointerId)
+    executeGeometrySessionOutcome({
+      mode: 'commit',
+      session,
+      authoritativeNodes: authoritativeNodesRef.current,
+      effects: {
+        clearUi: () => updateGeometryUi({ drawDraft: null, snapGuides: [], nodeVisualStates: new Map() }),
+        updateNodes: updater => updateFlowNodes(updater),
+        releasePointerCapture: pointerId => releaseGeometryPointerCapture(pointerId),
+        commitCheckpoint: checkpoint => commitGeometrySessionCheckpoint(checkpoint),
+      },
+    })
   }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
-    releaseGeometryPointerCapture, updateFlowNodes])
+    releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
 
   const onEdgesChangeTracked = useCallback((changes: EdgeChange<Edge>[]) => {
     if (changes.some(change => change.type === 'remove')) pushHistory()
@@ -1971,9 +2069,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const getSelectedSnapshot = useCallback((): CanvasSnapshot | null => {
     const selectedNodes = nodes.filter(node => node.selected)
     if (selectedNodes.length === 0) return null
-    const selectedIds = new Set(selectedNodes.map(node => node.id))
+    const selectedIds = expandGroupControlledNodeIds(nodes, new Set(selectedNodes.map(node => node.id)))
     return cloneSnapshot(
-      selectedNodes,
+      nodes.filter(node => selectedIds.has(node.id)),
       edges.filter(edge => selectedIds.has(edge.source) && selectedIds.has(edge.target))
     )
   }, [edges, nodes])
@@ -1989,19 +2087,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const insertSnapshot = useCallback(async (snapshot: CanvasSnapshot) => {
     const capturedViewport = captureCurrentViewport()
     if (!capturedViewport) return
-    const idMap = new Map(snapshot.nodes.map(node => [node.id, crypto.randomUUID()]))
-    const pastedNodes = snapshot.nodes.map(node => ({
+    const materialized = materializeSnapshotCopy(snapshot)
+    const pastedNodes = snapshot.nodes.map((node, index) => ({
       ...structuredClone(node),
-      id: idMap.get(node.id) || crypto.randomUUID(),
+      ...materialized.nodes[index],
       selected: true,
     }))
-    const pastedEdges = snapshot.edges.map(edge => ({
-      ...structuredClone(edge),
-      id: crypto.randomUUID(),
-      source: idMap.get(edge.source) || edge.source,
-      target: idMap.get(edge.target) || edge.target,
-      selected: true,
-    }))
+    const pastedEdges = materialized.edges.map(edge => ({ ...edge, selected: true }))
     const repeatOffset = screenDistanceToCanvas(32 * (pasteOffsetRef.current + 1), capturedViewport)
     const placedNodes = await previewNearestFreePlacement({
       nodes: pastedNodes,
