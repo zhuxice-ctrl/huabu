@@ -63,6 +63,13 @@ export interface CanvasNodeData extends Record<string, unknown> {
   checked?: boolean
   childIds?: string[]
   previewState?: 'add' | 'update' | 'delete'
+  referenceId?: string
+  sourceNoteId?: string
+  sourceTitle?: string
+  sourceExcerpt?: string
+  sourceUpdatedAt?: number
+  sourceStatus?: 'available' | 'missing'
+  sourceSyncStatus?: 'current' | 'stale'
 }
 
 export interface CanvasNode {

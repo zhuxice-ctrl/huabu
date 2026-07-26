@@ -92,8 +92,10 @@ interface MarkState {
   setTrashState: (flag: boolean, options?: { deferFetch?: boolean }) => Promise<void>
 
   marks: Mark[]
+  referenceMarksLoaded: boolean
   updateMark: (mark: Mark) => Promise<void>
   setMarks: (marks: Mark[]) => void
+  getReferenceMarks: () => Mark[]
   fetchMarks: () => Promise<void>
   fetchAllTrashMarks: () => Promise<void>
   fetchMarkPreviews: () => Promise<void>
@@ -159,10 +161,11 @@ const useMarkStore = create<MarkState>((set, get) => ({
       return
     }
     const marks = await fetchVisibleMarks(flag)
-    set({ marks })
+    set({ marks, referenceMarksLoaded: true })
   },
 
   marks: [],
+  referenceMarksLoaded: false,
   updateMark: async (mark) => {
     set((state) => {
       return {
@@ -190,30 +193,36 @@ const useMarkStore = create<MarkState>((set, get) => ({
     await updateMark(mark)
   },
   setMarks: (marks) => {
-    set({ marks })
+    set({ marks, referenceMarksLoaded: true })
+  },
+  getReferenceMarks: () => {
+    const records = new Map<number, Mark>()
+    for (const mark of get().allMarks) if (mark.deleted === 0) records.set(mark.id, mark)
+    for (const mark of get().marks) if (mark.deleted === 0) records.set(mark.id, mark)
+    return [...records.values()]
   },
   fetchMarks: async () => {
     const decodeRes = await fetchVisibleMarks(false)
-    set({ marks: decodeRes })
+    set({ marks: decodeRes, referenceMarksLoaded: true })
   },
   fetchAllTrashMarks: async () => {
     const decodeRes = await fetchVisibleMarks(true)
-    set({ marks: decodeRes })
+    set({ marks: decodeRes, referenceMarksLoaded: true })
   },
   fetchMarkPreviews: async () => {
     const store = await Store.load('store.json')
     const currentTagId = await store.get<number>('currentTagId')
     if (!currentTagId) {
-      set({ marks: [] })
+      set({ marks: [], referenceMarksLoaded: true })
       return
     }
 
     const previews = await getMarkPreviews(currentTagId)
-    set({ marks: previews.map((item) => ({ ...item, content: item.content || '' })) })
+    set({ marks: previews.map((item) => ({ ...item, content: item.content || '' })), referenceMarksLoaded: true })
   },
   fetchTrashMarkPreviews: async () => {
     const previews = await getTrashMarkPreviews()
-    set({ marks: previews.map((item) => ({ ...item, content: item.content || '' })) })
+    set({ marks: previews.map((item) => ({ ...item, content: item.content || '' })), referenceMarksLoaded: true })
   },
 
   allMarks: [],
@@ -225,7 +234,7 @@ const useMarkStore = create<MarkState>((set, get) => ({
         content: item.content || ''
       }
     }).filter((item) => item.deleted === 0)
-    set({ allMarks: decodeRes })
+    set({ allMarks: decodeRes, referenceMarksLoaded: true })
   },
 
   queues: [],

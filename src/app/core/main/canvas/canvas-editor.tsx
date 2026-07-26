@@ -96,6 +96,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import useCanvasStore from '@/stores/canvas'
 import useArticleStore from '@/stores/article'
+import useMarkStore from '@/stores/mark'
 import type {
   CanvasDocument,
   CanvasEdge,
@@ -186,6 +187,7 @@ import {
 } from '@/lib/canvas/collision-policy'
 import { CanvasSpatialIndex } from '@/lib/canvas/spatial-index'
 import { findNearestFreePlacement } from '@/lib/canvas/placement-policy'
+import { NOTE_REFERENCE_MIME, noteReferenceId, refreshNoteReferences, type NoteReferenceData } from '@/lib/canvas/note-reference'
 
 const elk = new ELK()
 const PLACEMENT_PREVIEW_MS = 120
@@ -807,6 +809,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const persistedEdgesRef = useRef(edges)
   const pendingDocumentRef = useRef<CanvasDocument | null>(null)
   const pendingDocumentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const noteReferenceRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastStoreDocumentRef = useRef(document)
   const styleHistoryPushedRef = useRef(false)
   const lastViewportSnapshotRef = useRef<ViewportSnapshot | null>(null)
@@ -1111,6 +1114,28 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       updateDocument(canvasId, pendingDocument)
     }, 180)
   }, [canvasId, document, edges, getViewport, nodes, placementPreview, updateDocument])
+
+  useEffect(() => {
+    const refresh = () => {
+      const current = latestNodesRef.current
+      const markStore = useMarkStore.getState()
+      if (!markStore.referenceMarksLoaded) return
+      const refreshed = refreshNoteReferences(current as CanvasNode[], markStore.getReferenceMarks()) as FlowCanvasNode[]
+      const changed = refreshed.some((node, index) => (
+        node !== current[index] && JSON.stringify(node.data) !== JSON.stringify(current[index]?.data)
+      ))
+      if (changed) setNodes(refreshed)
+    }
+    refresh()
+    const unsubscribe = useMarkStore.subscribe(() => {
+      if (noteReferenceRefreshTimerRef.current) clearTimeout(noteReferenceRefreshTimerRef.current)
+      noteReferenceRefreshTimerRef.current = setTimeout(refresh, 120)
+    })
+    return () => {
+      if (noteReferenceRefreshTimerRef.current) clearTimeout(noteReferenceRefreshTimerRef.current)
+      unsubscribe()
+    }
+  }, [setNodes])
 
   const persistHistory = useCallback(() => {
     updateHistory(canvasId, {
@@ -2492,13 +2517,79 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canvasId, captureCurrentViewport, ingestTransfer])
 
   const handleCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    if (event.dataTransfer.types.includes('Files') || event.dataTransfer.types.includes('text/plain')) {
+    if (event.dataTransfer.types.includes(NOTE_REFERENCE_MIME)
+      || event.dataTransfer.types.includes('Files')
+      || event.dataTransfer.types.includes('text/plain')) {
       event.preventDefault()
       event.dataTransfer.dropEffect = 'copy'
     }
   }, [])
 
+  const placeNoteReference = useCallback(async (
+    payload: string,
+    screenOrigin: { x: number; y: number },
+    capturedViewport: ViewportSnapshot,
+  ) => {
+    let reference: NoteReferenceData
+    try {
+      const candidate = JSON.parse(payload) as Partial<NoteReferenceData> & { referenceId?: unknown }
+      const sourceUpdatedAt = candidate.sourceUpdatedAt
+      if (typeof candidate.sourceNoteId !== 'string'
+        || !/^\d+$/.test(candidate.sourceNoteId)
+        || typeof candidate.sourceTitle !== 'string'
+        || typeof candidate.sourceExcerpt !== 'string'
+        || typeof sourceUpdatedAt !== 'number'
+        || !Number.isFinite(sourceUpdatedAt)
+        || candidate.referenceId !== noteReferenceId(Number(candidate.sourceNoteId))) return false
+      reference = {
+        sourceNoteId: candidate.sourceNoteId,
+        sourceTitle: candidate.sourceTitle,
+        sourceExcerpt: candidate.sourceExcerpt,
+        sourceUpdatedAt,
+        sourceStatus: 'available',
+        sourceSyncStatus: 'current',
+      }
+    } catch {
+      return false
+    }
+
+    const target = screenPointToCanvas({ clientX: screenOrigin.x, clientY: screenOrigin.y }, capturedViewport)
+    const size = screenSizeToCanvas({ width: 320, height: 156 }, capturedViewport)
+    const node: FlowCanvasNode = {
+      id: crypto.randomUUID(),
+      type: 'note',
+      position: { x: 0, y: 0 },
+      width: size.width,
+      height: size.height,
+      selected: true,
+      data: {
+        referenceId: noteReferenceId(Number(reference.sourceNoteId)),
+        ...reference,
+        fontSize: screenDistanceToCanvas(15, capturedViewport),
+        contentScale: contentScaleForZoom(capturedViewport.zoom),
+      },
+    }
+    const placed = await previewNearestFreePlacement({
+      nodes: [node],
+      targetTranslation: target,
+      snapshot: capturedViewport,
+    })
+    if (!placed) return false
+    pushHistory()
+    setNodes(current => [...current.map(existing => ({ ...existing, selected: false })), ...placed])
+    return true
+  }, [previewNearestFreePlacement, pushHistory, setNodes])
+
   const handleCanvasDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    if (event.dataTransfer.types.includes(NOTE_REFERENCE_MIME)) {
+      const capturedViewport = captureCurrentViewport()
+      if (!capturedViewport) return
+      const payload = event.dataTransfer.getData(NOTE_REFERENCE_MIME)
+      event.preventDefault()
+      event.stopPropagation()
+      void placeNoteReference(payload, { x: event.clientX, y: event.clientY }, capturedViewport)
+      return
+    }
     const input: CanvasTransferInput = {
       files: [...event.dataTransfer.files],
       html: event.dataTransfer.getData('text/html'),
@@ -2510,7 +2601,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     event.preventDefault()
     event.stopPropagation()
     void ingestTransfer(input, { x: event.clientX, y: event.clientY }, capturedViewport)
-  }, [captureCurrentViewport, ingestTransfer])
+  }, [captureCurrentViewport, ingestTransfer, placeNoteReference])
 
   const commitValidatedGeometryMutation = useCallback((
     candidateNodes: FlowCanvasNode[],

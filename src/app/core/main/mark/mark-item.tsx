@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/enhanced-context-menu"
 import dayjs from "dayjs";
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useMarkStore from "@/stores/mark";
 import useTagStore from "@/stores/tag";
 import { fetchAiDesc } from "@/lib/ai/description";
@@ -46,6 +46,8 @@ import useArticleStore from "@/stores/article";
 import { createRecordTab } from "./mark-record-tab";
 import { getImageRecordDisplayText, getImageRecordStatus, type ImageRecordStatusLabels, isImageRecord } from "./image-record-status";
 import { useSettingsDialogStore } from "@/stores/settings-dialog";
+import { NOTE_REFERENCE_MIME, createNoteReferenceSnapshot, noteReferenceId } from "@/lib/canvas/note-reference";
+import { MarkPreviewPopover } from "./mark-preview-popover";
 
 dayjs.extend(relativeTime)
 
@@ -741,9 +743,54 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
     clearSelection,
     highlightedMarkId,
     activeMarkId,
+    setActiveMarkId,
     clearActiveMark,
   } = useMarkStore()
   const { tags, currentTagId, fetchTags, getCurrentTag } = useTagStore()
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const previewLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const draggingRef = useRef(false)
+
+  const clearPreviewTimers = useCallback(() => {
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current)
+    if (previewLeaveTimerRef.current) clearTimeout(previewLeaveTimerRef.current)
+    previewTimerRef.current = null
+    previewLeaveTimerRef.current = null
+  }, [])
+
+  const openPreviewAfterDelay = useCallback(() => {
+    if (!interactive || isMobile || draggingRef.current) return
+    if (previewLeaveTimerRef.current) clearTimeout(previewLeaveTimerRef.current)
+    if (previewOpen || previewTimerRef.current) return
+    previewTimerRef.current = setTimeout(() => {
+      previewTimerRef.current = null
+      if (!draggingRef.current) setPreviewOpen(true)
+    }, 400)
+  }, [interactive, isMobile, previewOpen])
+
+  const closePreviewAfterDelay = useCallback(() => {
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current)
+    previewTimerRef.current = null
+    if (previewLeaveTimerRef.current) clearTimeout(previewLeaveTimerRef.current)
+    previewLeaveTimerRef.current = setTimeout(() => {
+      previewLeaveTimerRef.current = null
+      setPreviewOpen(false)
+    }, 160)
+  }, [])
+
+  useEffect(() => () => clearPreviewTimers(), [clearPreviewTimers])
+
+  const openRecord = useCallback(async () => {
+    if (isMultiSelectMode) return
+    setActiveMarkId(mark.id)
+    const recordTab = createRecordTab(mark, t(`record.mark.type.${mark.type}`))
+    const existingTab = useArticleStore.getState().openTabs.find(tab => tab.path === recordTab.path)
+    if (existingTab) await useArticleStore.getState().setActiveTabId(existingTab.id)
+    else await useArticleStore.getState().addTab(recordTab)
+    await useArticleStore.getState().setActiveFilePath('')
+    if (!useSidebarStore.getState().centerPanelVisible) await useSidebarStore.getState().showCenterPanel()
+  }, [isMultiSelectMode, mark, setActiveMarkId, t])
 
   const shouldClearActiveMark = useCallback(() => {
     if (!activeMarkId) {
@@ -760,6 +807,13 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
     }
 
     const markdownContent = markToMarkdown(mark);
+    draggingRef.current = true
+    clearPreviewTimers()
+    setPreviewOpen(false)
+    e.dataTransfer.setData(NOTE_REFERENCE_MIME, JSON.stringify({
+      referenceId: noteReferenceId(mark.id),
+      ...createNoteReferenceSnapshot(mark),
+    }))
     e.dataTransfer.setData('text/plain', markdownContent);
     e.dataTransfer.setData('application/json', JSON.stringify(mark));
     e.dataTransfer.effectAllowed = 'copy';
@@ -768,12 +822,13 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '0.5'
     }
-  }, [interactive, isMultiSelectMode, mark]);
+  }, [clearPreviewTimers, interactive, isMultiSelectMode, mark]);
 
   const handleDragEnd = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '1'
     }
+    window.setTimeout(() => { draggingRef.current = false }, 0)
   }, []);
 
   const handleDelMark = useCallback(async (e?: React.MouseEvent) => {
@@ -946,8 +1001,36 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
       draggable={interactive && !isMultiSelectMode && !isMobile}
       onDragStart={interactive ? handleDragStart : undefined}
       onDragEnd={interactive ? handleDragEnd : undefined}
+      onMouseEnter={openPreviewAfterDelay}
+      onMouseLeave={closePreviewAfterDelay}
+      onFocus={openPreviewAfterDelay}
+      onBlur={closePreviewAfterDelay}
+      onKeyDown={event => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          void openRecord()
+        }
+      }}
+      onClickCapture={event => {
+        if (!draggingRef.current) return
+        event.preventDefault()
+        event.stopPropagation()
+        draggingRef.current = false
+      }}
+      tabIndex={interactive && !isMobile ? 0 : undefined}
     >
       <MarkWrapper mark={mark} variant={variant} interactive={interactive} />
+      <MarkPreviewPopover
+        mark={mark}
+        open={previewOpen}
+        onPointerEnter={openPreviewAfterDelay}
+        onPointerLeave={closePreviewAfterDelay}
+        onOpen={() => {
+          clearPreviewTimers()
+          setPreviewOpen(false)
+          void openRecord()
+        }}
+      />
       {interactive ? (
         <div className="absolute top-2 right-2">
           <MarkMobileActions
