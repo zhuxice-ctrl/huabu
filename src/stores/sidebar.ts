@@ -1,4 +1,5 @@
 import { Store } from '@tauri-apps/plugin-store'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { create } from 'zustand'
 import { normalizeDocumentPanelWidth, normalizeLeftRailWidth } from '@/lib/canvas/workspace-layout-policy'
 
@@ -21,9 +22,17 @@ export interface SidebarState {
   setLeftWidth: (width: number) => Promise<void>
   documentPanelWidth: number
   setDocumentPanelWidth: (width: number, windowWidth?: number) => Promise<void>
+  leftResizeStartX: number | null
+  startLeftResize: (event: ReactPointerEvent<HTMLDivElement>) => void
+  resizeLeftSidebar: (event: PointerEvent) => void
+  finishLeftResize: (event: PointerEvent) => void
+  documentPanelResizeStartX: number | null
+  startDocumentPanelResize: (event: ReactPointerEvent<HTMLDivElement>) => void
+  resizeDocumentPanel: (event: PointerEvent) => void
+  finishDocumentPanelResize: (event: PointerEvent) => void
   leftSidebarTab: 'files' | 'notes' | 'canvases'
   setLeftSidebarTab: (tab: 'files' | 'notes' | 'canvases') => Promise<void>
-  initSidebarState: () => Promise<void>
+  initSidebarState: () => void
 }
 
 // 从 localStorage 获取初始状态
@@ -42,6 +51,55 @@ const getInitialState = () => {
 }
 
 const initialState = getInitialState()
+
+async function persistLeftWidth(set: (state: Partial<SidebarState>) => void, width: number) {
+  const normalizedWidth = normalizeLeftRailWidth(width)
+  set({ leftWidth: normalizedWidth })
+  const store = await Store.load('store.json')
+  await store.set('canvasWorkspaceLeftWidth', normalizedWidth)
+  await store.save()
+}
+
+async function persistDocumentPanelWidth(
+  set: (state: Partial<SidebarState>) => void,
+  width: number,
+  windowWidth = typeof window === 'undefined' ? 0 : window.innerWidth,
+) {
+  const normalizedWidth = normalizeDocumentPanelWidth(width, windowWidth)
+  set({ documentPanelWidth: normalizedWidth })
+  const store = await Store.load('store.json')
+  await store.set('canvasWorkspaceDocumentPanelWidth', normalizedWidth)
+  await store.save()
+}
+
+async function loadSidebarState(set: (state: Partial<SidebarState>) => void) {
+  const store = await Store.load('store.json')
+  const leftState = await store.get<boolean>('leftSidebarVisible')
+  const centerState = await store.get<boolean>('centerPanelVisible')
+  const rightState = await store.get<boolean>('rightSidebarVisible')
+  const leftTab = await store.get<'files' | 'notes' | 'canvases'>('leftSidebarTab')
+  const leftWidth = await store.get<number>('canvasWorkspaceLeftWidth')
+  const documentPanelWidth = await store.get<number>('canvasWorkspaceDocumentPanelWidth')
+
+  if (leftState !== null && leftState !== undefined) {
+    set({ leftSidebarVisible: leftState })
+    localStorage.setItem('leftSidebarVisible', String(leftState))
+  }
+  if (centerState !== null && centerState !== undefined) {
+    set({ centerPanelVisible: centerState })
+    localStorage.setItem('centerPanelVisible', String(centerState))
+  }
+  if (rightState !== null && rightState !== undefined) {
+    set({ rightSidebarVisible: rightState })
+    localStorage.setItem('rightSidebarVisible', String(rightState))
+  }
+  if (leftTab) {
+    set({ leftSidebarTab: leftTab })
+    localStorage.setItem('leftSidebarTab', leftTab)
+  }
+  if (leftWidth) set({ leftWidth: normalizeLeftRailWidth(leftWidth) })
+  if (documentPanelWidth) set({ documentPanelWidth: normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth) })
+}
 
 export const useSidebarStore = create<SidebarState>((set, get) => ({
   fileSidebarVisible: true,
@@ -112,21 +170,49 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
     await store.save()
   },
   leftWidth: 320,
-  setLeftWidth: async (width) => {
-    const normalizedWidth = normalizeLeftRailWidth(width)
-    set({ leftWidth: normalizedWidth })
-    const store = await Store.load('store.json')
-    await store.set('canvasWorkspaceLeftWidth', normalizedWidth)
-    await store.save()
-  },
+  setLeftWidth: (width) => persistLeftWidth(set, width),
   documentPanelWidth: 420,
-  setDocumentPanelWidth: async (width, windowWidth = typeof window === 'undefined' ? 0 : window.innerWidth) => {
-    const normalizedWidth = normalizeDocumentPanelWidth(width, windowWidth)
-    set({ documentPanelWidth: normalizedWidth })
-    const store = await Store.load('store.json')
-    await store.set('canvasWorkspaceDocumentPanelWidth', normalizedWidth)
-    await store.save()
+  setDocumentPanelWidth: (width, windowWidth) => persistDocumentPanelWidth(set, width, windowWidth),
+  startLeftResize: (event) => {
+    const target = event.currentTarget
+    const { resizeLeftSidebar, finishLeftResize } = get()
+    target.setPointerCapture(event.pointerId)
+    set({ leftResizeStartX: event.clientX })
+    target.addEventListener('pointermove', resizeLeftSidebar)
+    target.addEventListener('pointerup', finishLeftResize, { once: true })
   },
+  resizeLeftSidebar: (event) => {
+    const { leftResizeStartX, leftWidth } = get()
+    if (leftResizeStartX === null) return
+    set({ leftResizeStartX: event.clientX })
+    void persistLeftWidth(set, leftWidth + event.clientX - leftResizeStartX)
+  },
+  finishLeftResize: (event) => {
+    const target = event.currentTarget as HTMLDivElement
+    target.removeEventListener('pointermove', get().resizeLeftSidebar)
+    set({ leftResizeStartX: null })
+  },
+  startDocumentPanelResize: (event) => {
+    const target = event.currentTarget
+    const { resizeDocumentPanel, finishDocumentPanelResize } = get()
+    target.setPointerCapture(event.pointerId)
+    set({ documentPanelResizeStartX: event.clientX })
+    target.addEventListener('pointermove', resizeDocumentPanel)
+    target.addEventListener('pointerup', finishDocumentPanelResize, { once: true })
+  },
+  resizeDocumentPanel: (event) => {
+    const { documentPanelResizeStartX, documentPanelWidth } = get()
+    if (documentPanelResizeStartX === null) return
+    set({ documentPanelResizeStartX: event.clientX })
+    void persistDocumentPanelWidth(set, documentPanelWidth - event.clientX + documentPanelResizeStartX)
+  },
+  finishDocumentPanelResize: (event) => {
+    const target = event.currentTarget as HTMLDivElement
+    target.removeEventListener('pointermove', get().resizeDocumentPanel)
+    set({ documentPanelResizeStartX: null })
+  },
+  leftResizeStartX: null,
+  documentPanelResizeStartX: null,
   leftSidebarTab: 'files',
   setLeftSidebarTab: async (tab: 'files' | 'notes' | 'canvases') => {
     set({ leftSidebarTab: tab })
@@ -135,32 +221,7 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
     await store.set('leftSidebarTab', tab)
     await store.save()
   },
-  initSidebarState: async () => {
-    const store = await Store.load('store.json')
-    const leftState = await store.get<boolean>('leftSidebarVisible')
-    const centerState = await store.get<boolean>('centerPanelVisible')
-    const rightState = await store.get<boolean>('rightSidebarVisible')
-    const leftTab = await store.get<'files' | 'notes' | 'canvases'>('leftSidebarTab')
-    const leftWidth = await store.get<number>('canvasWorkspaceLeftWidth')
-    const documentPanelWidth = await store.get<number>('canvasWorkspaceDocumentPanelWidth')
-    
-    if (leftState !== null && leftState !== undefined) {
-      set({ leftSidebarVisible: leftState })
-      localStorage.setItem('leftSidebarVisible', String(leftState))
-    }
-    if (centerState !== null && centerState !== undefined) {
-      set({ centerPanelVisible: centerState })
-      localStorage.setItem('centerPanelVisible', String(centerState))
-    }
-    if (rightState !== null && rightState !== undefined) {
-      set({ rightSidebarVisible: rightState })
-      localStorage.setItem('rightSidebarVisible', String(rightState))
-    }
-    if (leftTab) {
-      set({ leftSidebarTab: leftTab })
-      localStorage.setItem('leftSidebarTab', leftTab)
-    }
-    if (leftWidth) set({ leftWidth: normalizeLeftRailWidth(leftWidth) })
-    if (documentPanelWidth) set({ documentPanelWidth: normalizeDocumentPanelWidth(documentPanelWidth, window.innerWidth) })
+  initSidebarState: () => {
+    void loadSidebarState(set)
   },
 }))

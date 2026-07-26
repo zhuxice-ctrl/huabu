@@ -24,7 +24,8 @@ test('canvas startup waits for the database and always leaves the loading state'
   assert.ok(databaseReady >= 0)
   assert.ok(tabsReady > databaseReady)
   assert.ok(projectsReady > databaseReady)
-  assert.match(startupSource, /try \{[\s\S]*?await initAllDatabases\(\)[\s\S]*?\} catch \(error\) \{[\s\S]*?console\.error\([\s\S]*?\} finally \{[\s\S]*?if \(!cancelled\) setReady\(true\)/)
+  assert.match(startupSource, /async function initializeCanvasStartup\(\) \{[\s\S]*?await initAllDatabases\(\)/)
+  assert.match(startupSource, /try \{[\s\S]*?await initializeCanvasStartup\(\)[\s\S]*?\} catch \(error\) \{[\s\S]*?console\.error\([\s\S]*?\} finally \{[\s\S]*?if \(!cancelled\) setReady\(true\)/)
 })
 
 test('canvas dot grid retains React Flow pan and zoom behavior with the required contrast', () => {

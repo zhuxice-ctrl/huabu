@@ -151,7 +151,6 @@ export function CanvasActions() {
   const setSortMode = useCanvasStore(state => state.setSortMode)
   const trashMode = useCanvasStore(state => state.trashMode)
   const setTrashMode = useCanvasStore(state => state.setTrashMode)
-  const setActiveCanvasId = useCanvasStore(state => state.setActiveCanvasId)
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
@@ -164,8 +163,7 @@ export function CanvasActions() {
   }, [setTrashMode, trashMode])
 
   const handleCreate = async (canvasType: CanvasProjectType) => {
-    const project = await createProject(canvasType, t(`templates.${canvasType}`))
-    if (project) setActiveCanvasId(project.id)
+    await createProject(canvasType, t(`templates.${canvasType}`))
   }
 
   const changeViewMode = (mode: string) => {
@@ -198,7 +196,6 @@ export function CanvasActions() {
         : parseCanvasProjectFile(source)
       const project = await createProjectFromDocument(imported.document, imported.title, imported.canvasType)
       if (project) {
-        setActiveCanvasId(project.id)
         toast.success(t('import.success'))
       }
     } catch (error) {
@@ -413,13 +410,11 @@ export function CanvasSidebar() {
   }
 
   const handleOpen = async (id: string) => {
-    const project = await openProject(id)
-    if (project) setActiveCanvasId(project.id)
+    await openProject(id)
   }
 
   const handleCreate = async (canvasType: CanvasProjectType = 'blank') => {
-    const project = await createProject(canvasType, t(`templates.${canvasType}`))
-    if (project) setActiveCanvasId(project.id)
+    await createProject(canvasType, t(`templates.${canvasType}`))
   }
 
   const handleRestore = async (id: string) => {
@@ -428,11 +423,10 @@ export function CanvasSidebar() {
   }
 
   const handleDuplicate = async (project: CanvasProject) => {
-    const duplicate = await duplicateProject(
+    await duplicateProject(
       project.id,
       t('duplicateTitle', { title: project.title })
     )
-    if (duplicate) setActiveCanvasId(duplicate.id)
   }
 
   const handleDelete = async (id: string) => {

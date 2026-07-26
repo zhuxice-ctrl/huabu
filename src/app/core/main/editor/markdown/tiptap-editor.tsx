@@ -4772,7 +4772,6 @@ export function TipTapEditor({
     const titleSource = selectedText.split('\n').find(Boolean)?.slice(0, 32) || labels[type]
     const project = await useCanvasStore.getState().createProject('blank', titleSource)
     if (!project) return
-    useCanvasStore.getState().setActiveCanvasId(project.id)
     await useSidebarStore.getState().setLeftSidebarTab('canvases')
     if (!useSidebarStore.getState().rightSidebarVisible) await useSidebarStore.getState().toggleRightSidebar()
     const instruction = t(`bubbleMenu.canvasPrompts.${type}`)

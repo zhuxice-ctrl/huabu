@@ -1,7 +1,8 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, type PointerEventHandler } from 'react'
+import { useWindowSize } from 'usehooks-ts'
 import { EditorLayout } from '../editor/editor-layout'
 import { LeftSidebar } from '../left-sidebar'
 import useCanvasStore from '@/stores/canvas'
@@ -13,36 +14,12 @@ const CanvasEditor = dynamic(
   { ssr: false },
 )
 
-function useWindowWidth() {
-  const [width, setWidth] = useState(0)
-
-  useEffect(() => {
-    const updateWidth = () => setWidth(window.innerWidth)
-    updateWidth()
-    window.addEventListener('resize', updateWidth)
-    return () => window.removeEventListener('resize', updateWidth)
-  }, [])
-
-  return width
-}
-
-function ResizeDivider({ onResize }: { onResize: (delta: number) => void }) {
+function ResizeDivider({ onPointerDown }: { onPointerDown: PointerEventHandler<HTMLDivElement> }) {
   return (
     <div
       aria-hidden="true"
       className="z-20 w-1 shrink-0 cursor-col-resize bg-border/70 transition-colors hover:bg-primary"
-      onPointerDown={(event) => {
-        const startX = event.clientX
-        const target = event.currentTarget
-        target.setPointerCapture(event.pointerId)
-        const onMove = (moveEvent: PointerEvent) => onResize(moveEvent.clientX - startX)
-        const onUp = () => {
-          target.removeEventListener('pointermove', onMove)
-          target.removeEventListener('pointerup', onUp)
-        }
-        target.addEventListener('pointermove', onMove)
-        target.addEventListener('pointerup', onUp, { once: true })
-      }}
+      onPointerDown={onPointerDown}
     />
   )
 }
@@ -53,7 +30,7 @@ export function CanvasChatHud() {
 }
 
 export function CanvasWorkspace() {
-  const windowWidth = useWindowWidth()
+  const { width: windowWidth } = useWindowSize()
   const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
   const {
     leftSidebarVisible,
@@ -62,15 +39,13 @@ export function CanvasWorkspace() {
     leftWidth,
     documentPanelWidth,
     initSidebarState,
-    setLeftWidth,
-    setDocumentPanelWidth,
     toggleLeftSidebar,
     toggleRightSidebar,
+    startLeftResize,
+    startDocumentPanelResize,
   } = useSidebarStore()
 
-  useEffect(() => {
-    void initSidebarState()
-  }, [initSidebarState])
+  useEffect(initSidebarState, [initSidebarState])
 
   const layout = useMemo(() => normalizeWorkspaceLayout({
     leftCollapsed: !leftSidebarVisible,
@@ -97,16 +72,14 @@ export function CanvasWorkspace() {
             aria-label="Expand navigation"
             className="h-full w-full text-xs text-muted-foreground hover:bg-muted"
             disabled={layout.autoLeftCollapsed}
-            onClick={() => {
-              if (!layout.autoLeftCollapsed) void toggleLeftSidebar()
-            }}
+            onClick={toggleLeftSidebar}
           >
             ☰
           </button>
         ) : <LeftSidebar />}
       </aside>
       {!layout.leftCollapsed && (
-        <ResizeDivider onResize={(delta) => void setLeftWidth(layout.preferences.leftWidth + delta)} />
+        <ResizeDivider onPointerDown={startLeftResize} />
       )}
 
       <main className="relative min-w-0 flex-1 overflow-hidden">
@@ -123,9 +96,7 @@ export function CanvasWorkspace() {
             aria-label="Expand documents"
             className="absolute right-3 top-3 z-20 rounded border bg-background/90 px-2 py-1 text-xs text-muted-foreground shadow-sm hover:bg-muted"
             disabled={layout.autoDocumentPanelCollapsed}
-            onClick={() => {
-              if (!layout.autoDocumentPanelCollapsed) void toggleRightSidebar()
-            }}
+            onClick={toggleRightSidebar}
           >
             Documents
           </button>
@@ -134,7 +105,7 @@ export function CanvasWorkspace() {
       </main>
 
       {!layout.documentPanelCollapsed && (
-        <ResizeDivider onResize={(delta) => void setDocumentPanelWidth(layout.preferences.documentPanelWidth - delta, windowWidth)} />
+        <ResizeDivider onPointerDown={startDocumentPanelResize} />
       )}
       <aside
         className="h-full shrink-0 overflow-hidden border-l bg-background"
