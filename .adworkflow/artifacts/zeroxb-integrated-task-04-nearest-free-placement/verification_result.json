@@ -1,0 +1,26 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
+  "status": "passed",
+  "source_revision": "f2168e6ead1b9e309ab17fa0def0fe0351a498d1",
+  "commands": [
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-placement-policy.test.mjs", "status": "passed", "summary": "10/10 passed; the real candidateOffsets generator prototype is observed at configured and default caps, and the node-ID causality test remains covered.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-content-ingest.test.mjs", "status": "passed", "summary": "8/8 passed.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-editor-contract.test.mjs", "status": "passed", "summary": "6/6 passed.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "84/84 passed.", "exit_code": 0},
+    {"command": ".\\node_modules\\.bin\\tsc.cmd --noEmit", "status": "passed", "summary": "Passed without diagnostics.", "exit_code": 0},
+    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors.", "exit_code": 0},
+    {"command": "codegraph_post_edit.py --task-id zeroxb-integrated-task-04-nearest-free-placement", "status": "passed", "summary": "L2 impact passed at graph revision c8eea77fe798be985cadae92 with complete declared/predicted files, no unexpected impact and no new production/test critical unresolved edges.", "exit_code": 0}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "Observable node-ID ordering and bounded real candidate traversal", "status": "passed", "evidence": ["placement focused tests", "causality mutations"]},
+    {"criterion": "Deterministic nearest-free placement, rigid-copy validation and search bounds", "status": "passed", "evidence": ["placement focused tests", "TypeScript"]},
+    {"criterion": "Vertical stacking, six-screen gap, compaction and runtime editor integration", "status": "passed", "evidence": ["ingest focused tests", "editor contract tests"]},
+    {"criterion": "Full canvas suite and diff checks", "status": "passed", "evidence": ["84 canvas tests", "git diff --check"]},
+    {"criterion": "Independent review and L2 post-edit gate", "status": "passed", "evidence": ["all fix-round-2 findings addressed", "impact report passed"]}
+  ],
+  "passed": ["fix-round-2-causality", "focused-tests", "editor-contract", "canvas-suite", "typescript", "diff-check", "l2-impact", "independent-rereview", "self-review"],
+  "failed": [],
+  "not_run_reason": null,
+  "residual_risk": ["Node module-type warning is non-blocking and pre-existing."]
+}

@@ -3,9 +3,11 @@
   "configured": true,
   "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
   "task_type": "code",
-  "goal": "Implement Task 4 deterministic nearest-free placement, vertical ingest stacking and rigid-copy placement using the completed viewport and collision policies.",
-  "non_goals": ["No Task 5 editor integration.", "No AI, chat, credential, persistence, dependency, packaging or release changes."],
+  "goal": "Fix Task 4 round 2 test contracts so node-ID tie ordering and bounded lazy candidate generation are genuinely observable through pure reusable implementation seams.",
+  "non_goals": ["No approved runtime behavior changes.", "No Task 5 editor integration.", "No AI, chat, credential, persistence, dependency, packaging or release changes."],
   "acceptance_criteria": [
+    "A test observes a deterministic node-ID tie contract whose result changes without implementation ID sorting.",
+    "A test exercises the real candidate iterator/search path and fails on eager generation beyond the configured or default cap.",
     "Free original positions succeed and vertical ingest batches use a six-screen-pixel gap.",
     "Rigid copy preserves relative geometry, uses 32-screen-pixel repeated offsets and rejects overlapping sources.",
     "Search order is deterministic: up, right, down, left, then node ID.",
@@ -18,8 +20,8 @@
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": ["src/lib/canvas/placement-policy.ts", "src/lib/canvas/content-ingest.ts", "scripts/tests/canvas-placement-policy.test.mjs", "scripts/tests/canvas-content-ingest.test.mjs"],
   "do_not_touch": ["src/app/core/main/canvas/canvas-editor.tsx", "src/app/core/main/canvas/nodes/canvas-nodes.tsx", "src/lib/agent", "main branch", "remote repositories", "release artifacts", "installed zeroxB application", "zeroxB user documents", "C:\\Users\\Lenovo\\AppData\\Roaming\\com.zeroxb.desktop provider secrets"],
-  "entrypoints": ["typescript:src.lib.canvas.content-ingest:offsetIngestDrafts:function", "typescript:src.lib.canvas.collision-policy:conflicts:function"],
-  "context_sources": [".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-4-brief.md", "src/lib/canvas/viewport-sizing.ts", "src/lib/canvas/collision-policy.ts", "src/lib/canvas/spatial-index.ts", "src/lib/canvas/content-ingest.ts", "scripts/tests/canvas-collision-policy.test.mjs", "scripts/tests/canvas-content-ingest.test.mjs"],
+  "entrypoints": ["typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function", "typescript:src.lib.canvas.collision-policy:conflicts:function"],
+  "context_sources": [".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-4-brief.md", "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md", "src/lib/canvas/viewport-sizing.ts", "src/lib/canvas/collision-policy.ts", "src/lib/canvas/spatial-index.ts", "src/lib/canvas/content-ingest.ts", "scripts/tests/canvas-collision-policy.test.mjs", "scripts/tests/canvas-content-ingest.test.mjs"],
   "notes": ["Use fixed UTF-8 I/O.", "Follow strict TDD.", "Keep placement pure and deterministic.", "Do not read or print provider credentials."],
   "implementation_owner": "task-04-implementer"
 }

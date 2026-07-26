@@ -9,13 +9,18 @@
       "reason": "semantic-slice"
     },
     {
-      "path": "src/lib/canvas/content-ingest.ts",
-      "sha256": "a8c1288ab899916bc7e2bb27e4668ec3f601def53f502d1d93499ad6a300340d",
+      "path": "src/lib/canvas/gesture-policy.ts",
+      "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
       "reason": "semantic-slice"
     },
     {
-      "path": "src/lib/canvas/gesture-policy.ts",
-      "sha256": "e9ccaafb42acb698f7e01c97a3c4b57b163050267307af128b3a77d07590856a",
+      "path": "src/lib/canvas/placement-policy.ts",
+      "sha256": "1598e41b82f11264ebcd90db221aec693a17bc4d2d56f95e29780263caea0202",
+      "reason": "semantic-slice"
+    },
+    {
+      "path": "src/lib/canvas/viewport-sizing.ts",
+      "sha256": "891950f480966caba5dee046aa8335d63c0b0fc90362c2d792817e6c656750c1",
       "reason": "semantic-slice"
     },
     {
@@ -23,11 +28,15 @@
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/lib/canvas/viewport-sizing.ts",
+      "path": "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
       "reason": "task_spec.context_sources"
     },
     {
       "path": "src/lib/canvas/spatial-index.ts",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/lib/canvas/content-ingest.ts",
       "reason": "task_spec.context_sources"
     },
     {
@@ -40,6 +49,38 @@
     }
   ],
   "matched_symbols": [
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:SAFETY_GAP_SCREEN:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.SAFETY_GAP_SCREEN",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 5,
+      "end_line": 5,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:SNAP_ENTRY_SCREEN:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.SNAP_ENTRY_SCREEN",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 6,
+      "end_line": 6,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:SNAP_BREAK_SCREEN:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.SNAP_BREAK_SCREEN",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 7,
+      "end_line": 7,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:COLLISION_EPSILON_SCREEN:variable",
+      "qualified_name": "src.lib.canvas.collision-policy.COLLISION_EPSILON_SCREEN",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 8,
+      "end_line": 8,
+      "distance": 2
+    },
     {
       "stable_id": "typescript:src.lib.canvas.collision-policy:CollisionThresholds:interface",
       "qualified_name": "src.lib.canvas.collision-policy.CollisionThresholds",
@@ -62,6 +103,14 @@
       "file": "src/lib/canvas/collision-policy.ts",
       "start_line": 101,
       "end_line": 110,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.collision-policy:thresholdsForSnapshot:function",
+      "qualified_name": "src.lib.canvas.collision-policy.thresholdsForSnapshot",
+      "file": "src/lib/canvas/collision-policy.ts",
+      "start_line": 178,
+      "end_line": 185,
       "distance": 1
     },
     {
@@ -129,26 +178,332 @@
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:offsetIngestDrafts:function",
-      "qualified_name": "src.lib.canvas.content-ingest.offsetIngestDrafts",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 121,
-      "end_line": 126,
-      "distance": 0
-    },
-    {
       "stable_id": "typescript:src.lib.canvas.gesture-policy:CanvasRect:interface",
       "qualified_name": "src.lib.canvas.gesture-policy.CanvasRect",
       "file": "src/lib/canvas/gesture-policy.ts",
       "start_line": 5,
       "end_line": 10,
       "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:PlacementResult:interface",
+      "qualified_name": "src.lib.canvas.placement-policy.PlacementResult",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 6,
+      "end_line": 10,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:PlacementOffset:interface",
+      "qualified_name": "src.lib.canvas.placement-policy.PlacementOffset",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 17,
+      "end_line": 20,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:REPEAT_OFFSET_SCREEN:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.REPEAT_OFFSET_SCREEN",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 22,
+      "end_line": 22,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:DEFAULT_MAX_SCREEN_RADIUS:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.DEFAULT_MAX_SCREEN_RADIUS",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 23,
+      "end_line": 23,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:DEFAULT_MAX_CANDIDATES:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.DEFAULT_MAX_CANDIDATES",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 24,
+      "end_line": 24,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:finite:function",
+      "qualified_name": "src.lib.canvas.placement-policy.finite",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 26,
+      "end_line": 28,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:compareIds:function",
+      "qualified_name": "src.lib.canvas.placement-policy.compareIds",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 30,
+      "end_line": 32,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:orderPlacementNodesById:function",
+      "qualified_name": "src.lib.canvas.placement-policy.orderPlacementNodesById",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 34,
+      "end_line": 36,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:translated:function",
+      "qualified_name": "src.lib.canvas.placement-policy.translated",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 38,
+      "end_line": 40,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:validTranslation:function",
+      "qualified_name": "src.lib.canvas.placement-policy.validTranslation",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 42,
+      "end_line": 44,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:CandidateOffset:interface",
+      "qualified_name": "src.lib.canvas.placement-policy.CandidateOffset",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 54,
+      "end_line": 59,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:popCandidate:function",
+      "qualified_name": "src.lib.canvas.placement-policy.popCandidate",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 80,
+      "end_line": 96,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets:function",
+      "qualified_name": "src.lib.canvas.placement-policy.candidateOffsets",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 98,
+      "end_line": 122,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.heap:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.candidateOffsets.heap",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 101,
+      "end_line": 101,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.candidateOffsets.add",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 103,
+      "end_line": 110,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.candidate:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.candidateOffsets.candidate",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 114,
+      "end_line": 114,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid:function",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 124,
+      "end_line": 141,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid.normalized:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid.normalized",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 125,
+      "end_line": 129,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid.normalized.rect:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid.normalized.rect",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 127,
+      "end_line": 127,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid.sorted:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid.sorted",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 131,
+      "end_line": 131,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid.index:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid.index",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 132,
+      "end_line": 132,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid.left:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid.left",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 135,
+      "end_line": 135,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid.right:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.sourceMembersValid.right",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 136,
+      "end_line": 136,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 143,
+      "end_line": 186,
+      "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.thresholds:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.thresholds",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 152,
+      "end_line": 152,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.members:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.members",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 153,
+      "end_line": 153,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.obstacles:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.obstacles",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 156,
+      "end_line": 160,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.obstacles.rect:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.obstacles.rect",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 158,
+      "end_line": 158,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.maxScreenRadius:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.maxScreenRadius",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 164,
+      "end_line": 165,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.maxCandidates:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.maxCandidates",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 166,
+      "end_line": 167,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.step:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.step",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 168,
+      "end_line": 168,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.radius:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.radius",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 169,
+      "end_line": 169,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.checkedCandidates:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.checkedCandidates",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 171,
+      "end_line": 171,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.translation:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.translation",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 176,
+      "end_line": 179,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement.free:variable",
+      "qualified_name": "src.lib.canvas.placement-policy.findNearestFreePlacement.free",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "start_line": 180,
+      "end_line": 182,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:ViewportSnapshot:interface",
+      "qualified_name": "src.lib.canvas.viewport-sizing.ViewportSnapshot",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 11,
+      "end_line": 18,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:round4:function",
+      "qualified_name": "src.lib.canvas.viewport-sizing.round4",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 38,
+      "end_line": 40,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:snapshotZoom:function",
+      "qualified_name": "src.lib.canvas.viewport-sizing.snapshotZoom",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 60,
+      "end_line": 62,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
+      "qualified_name": "src.lib.canvas.viewport-sizing.screenDistanceToCanvas",
+      "file": "src/lib/canvas/viewport-sizing.ts",
+      "start_line": 95,
+      "end_line": 97,
+      "distance": 1
     }
   ],
   "likely_tests": [],
-  "warnings": [],
-  "graph_revision": "28ad3d0dec66ea7eda9fd64a",
-  "confidence": 1.0,
+  "warnings": [
+    "slice-truncated"
+  ],
+  "graph_revision": "c8eea77fe798be985cadae92",
+  "confidence": 0.8,
   "unresolved_edges": [
     {
       "file": "src/lib/canvas/collision-policy.ts",
@@ -241,23 +596,361 @@
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:offsetIngestDrafts:function",
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:finite:function",
       "kind": "call",
-      "target": "drafts.map",
-      "line": 122,
+      "target": "Number.isFinite",
+      "line": 27,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:orderPlacementNodesById:function",
+      "kind": "call",
+      "target": "[...nodes].sort",
+      "line": 35,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate:function",
+      "kind": "call",
+      "target": "heap.pop",
+      "line": 82,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets:function",
+      "kind": "call",
+      "target": "Set",
+      "line": 102,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable",
+      "kind": "call",
+      "target": "seen.has",
+      "line": 105,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable",
+      "kind": "call",
+      "target": "seen.add",
+      "line": 106,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid:function",
+      "kind": "call",
+      "target": "members.map",
+      "line": 125,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:sourceMembersValid:function",
+      "kind": "call",
+      "target": "normalized.some",
+      "line": 130,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "kind": "call",
+      "target": "input.obstacles.map",
+      "line": 156,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "kind": "call",
+      "target": "obstacles.some",
+      "line": 161,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "kind": "call",
+      "target": "Math.trunc",
+      "line": 167,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "kind": "call",
+      "target": "offsets.next",
+      "line": 173,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "kind": "call",
+      "target": "members.every",
+      "line": 180,
+      "reason": "external-call",
+      "critical": 0
+    },
+    {
+      "file": "src/lib/canvas/placement-policy.ts",
+      "source_symbol_id": "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+      "kind": "call",
+      "target": "sortedObstacles.every",
+      "line": 180,
       "reason": "external-call",
       "critical": 0
     }
   ],
-  "boundary_symbols": [],
+  "boundary_symbols": [
+    {
+      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
+      "relation": "callee",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.viewport-sizing:round4:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:round:function",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.viewport-sizing:round4:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function",
+      "relation": "callee",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.viewport-sizing:snapshotZoom:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.viewport-sizing:normalizeZoom:function",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.viewport-sizing:snapshotZoom:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:pushCandidate:function",
+      "relation": "callee",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:directionRank:function",
+      "relation": "callee",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add.key:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add.key:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add.distanceSquared:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:candidateOffsets.maxDistanceSquared:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:pushCandidate:function",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:directionRank:function",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:candidateOffsets.add:variable"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:compareCandidates:function",
+      "relation": "callee",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:compareCandidates:function",
+      "relation": "callee",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.first:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.last:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.first:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.index:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.left:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.left:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.right:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:compareCandidates:function",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.right:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.left:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.right:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.left:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:compareCandidates:function",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.last:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.child:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.index:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.child:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.index:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.child:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.index:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.last:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "symbol_id": "typescript:src.lib.canvas.placement-policy:popCandidate.first:variable",
+      "relation": "reference",
+      "reason": "depth-limit",
+      "from": "typescript:src.lib.canvas.placement-policy:popCandidate:function"
+    },
+    {
+      "reason": "item-budget",
+      "remaining_frontier": 0
+    }
+  ],
   "predicted_impact_files": [
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/agent/tool-registry.ts",
     "src/lib/agent/tools/canvas-tools.ts",
     "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/content-ingest.ts",
-    "src/lib/canvas/operations.ts"
+    "src/lib/canvas/operations.ts",
+    "src/lib/canvas/placement-policy.ts"
   ]
 }

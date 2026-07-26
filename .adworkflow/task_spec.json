@@ -3,14 +3,17 @@
   "configured": true,
   "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
   "task_type": "code",
-  "goal": "Implement Task 4 deterministic nearest-free placement, vertical ingest stacking and rigid-copy placement using the completed viewport and collision policies.",
+  "goal": "Fix Task 4 round 2 test contracts so node-ID tie ordering and bounded lazy candidate generation are genuinely observable through pure reusable implementation seams.",
   "non_goals": [
+    "Do not change the approved placement, ingest, checkpoint or editor runtime behavior.",
     "Do not integrate live move, resize or draw collision sessions into the React editor; that belongs to Task 5.",
     "Do not change relation routing, AI behavior, chat, credentials, persistence, packaging or release behavior.",
     "Do not add or upgrade dependencies.",
     "Do not read, print or modify provider credentials."
   ],
   "acceptance_criteria": [
+    "A test observes a deterministic node-ID tie contract whose result changes if implementation ID sorting is removed.",
+    "A test exercises the real candidate iterator/search path and fails if offsets are eagerly generated beyond the configured or default cap.",
     "Original target placement succeeds without translation when it is free.",
     "Ingest drafts stack vertically with a six-screen-pixel gap and compact after resource failures.",
     "Rigid-copy placement preserves relative member geometry and rejects sources that already overlap.",
@@ -19,7 +22,8 @@
     "Search stops at a 2400-screen-pixel radius and 4096 candidates by default and returns an explicit no-space result.",
     "The former 28px diagonal cascade is removed or only wraps the new vertical stack behavior; no call site retains overlap placement.",
     "Focused placement and ingest tests, the complete canvas suite, TypeScript and diff checks pass.",
-    "The implementation is committed and independently reviewed for spec compliance and task quality."
+    "The implementation is committed and independently reviewed for spec compliance and task quality.",
+    "The Task 4 report includes exact fix-round-2 commands, results and self-review, and a final handoff report is written."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
@@ -49,13 +53,13 @@
     "unrelated runtime modules"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.content-ingest:offsetIngestDrafts:function",
+    "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
     "typescript:src.lib.canvas.collision-policy:conflicts:function"
   ],
   "context_sources": [
     ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-4-brief.md",
     "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md Task 4",
-    "docs/superpowers/specs/2026-07-25-solid-block-collision-design.md",
+    "docs/superpowers/specs/2026-07-25-solid-canvas-block-collision-design.md",
     "src/lib/canvas/viewport-sizing.ts",
     "src/lib/canvas/collision-policy.ts",
     "src/lib/canvas/spatial-index.ts",
@@ -64,6 +68,7 @@
     "scripts/tests/canvas-content-ingest.test.mjs"
   ],
   "notes": [
+    "Fix round 2 is test-contract-only: preserve the first three accepted findings and change only the open finding.",
     "Use fixed UTF-8 I/O for every non-ASCII read, search, edit and test output.",
     "Follow strict TDD and record the initial focused failure before implementation.",
     "Keep placement-policy pure and deterministic; do not add React or persistence dependencies.",

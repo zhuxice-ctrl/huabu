@@ -1,16 +1,16 @@
 {
   "schema": "ADworkflo.context_expansion_request.v1",
-  "task_id": "zeroxb-integrated-task-03-collision-policy",
+  "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
   "status": "applied",
   "relation": "callees",
   "targets": [
-    "typescript:src.lib.canvas.viewport-sizing:screenDistanceToCanvas:function",
-    "typescript:src.lib.canvas.gesture-policy:rectanglesIntersect:function"
+    "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+    "typescript:src.lib.canvas.collision-policy:conflicts:function"
   ],
-  "depth": 3,
-  "budget": 240,
-  "reason": "Resolve the truncated frontier around the two pure geometry entrypoints without expanding through React canvas consumers.",
+  "depth": 5,
+  "budget": 800,
+  "reason": "Finish the remaining pure placement/collision callee frontier without expanding through React consumers.",
   "requested_by": "orchestrator",
-  "source_graph_revision": "59b9f7d9114176daf13e170c",
-  "applied_slice_revision": "59b9f7d9114176daf13e170c"
+  "source_graph_revision": "c8eea77fe798be985cadae92",
+  "applied_slice_revision": "c8eea77fe798be985cadae92"
 }

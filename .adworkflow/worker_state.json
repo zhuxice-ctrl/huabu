@@ -1,16 +1,75 @@
 {
   "schema": "ADworkflo.worker_state.v1",
   "task_id": "zeroxb-integrated-task-04-nearest-free-placement",
-  "status": "in_progress",
-  "revision": 1,
-  "done": ["Configured the Task 4 contract and extracted its SDD brief."],
-  "changed_files": [],
+  "status": "verified",
+  "revision": 5,
+  "done": [
+    "Configured the Task 4 contract and accepted bounded L2 context.",
+    "Implemented deterministic nearest-free placement and viewport-normalized ingest stacking.",
+    "Resolved all Task 4 review findings through two fix rounds.",
+    "Passed focused, editor-contract, full canvas, TypeScript, diff, L2 impact and independent re-review gates."
+  ],
+  "changed_files": [
+    "src/lib/canvas/placement-policy.ts",
+    "src/lib/canvas/content-ingest.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "scripts/tests/canvas-placement-policy.test.mjs",
+    "scripts/tests/canvas-content-ingest.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs"
+  ],
   "current_problem": null,
-  "next_action": "Prepare and accept bounded L2 context before implementation dispatch.",
-  "must_keep_context": ["Task 3 collision policies are load-bearing.", "Every placement operation uses one supplied ViewportSnapshot.", "Task 5 owns editor integration."],
+  "next_action": "Begin Task 5.",
+  "must_keep_context": [
+    "Task 3 collision policies are load-bearing.",
+    "Every placement operation uses one supplied ViewportSnapshot.",
+    "Task 5 owns live move, resize and draw collision-session integration."
+  ],
   "discarded_context": [],
-  "remaining_risks": ["Candidate ordering and search bounds must remain deterministic under dense canvases."],
+  "remaining_risks": [
+    "Direct TypeScript test imports emit the pre-existing module-type warning.",
+    "Live geometry session integration remains for Task 5."
+  ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": []
+  "context_expansion_history": [
+    {
+      "relation": "both",
+      "targets": [
+        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+        "typescript:src.lib.canvas.collision-policy:conflicts:function"
+      ],
+      "depth": 3,
+      "budget": 400,
+      "reason": "Resolve the truncated placement/collision frontier while retaining a bounded Task 4 semantic slice.",
+      "requested_by": "orchestrator",
+      "graph_revision": "c8eea77fe798be985cadae92",
+      "preflight_status": "needs_expansion"
+    },
+    {
+      "relation": "callees",
+      "targets": [
+        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+        "typescript:src.lib.canvas.collision-policy:conflicts:function"
+      ],
+      "depth": 3,
+      "budget": 240,
+      "reason": "Resolve only the truncated pure placement/collision callee frontier without expanding through React consumers.",
+      "requested_by": "orchestrator",
+      "graph_revision": "c8eea77fe798be985cadae92",
+      "preflight_status": "needs_expansion"
+    },
+    {
+      "relation": "callees",
+      "targets": [
+        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function",
+        "typescript:src.lib.canvas.collision-policy:conflicts:function"
+      ],
+      "depth": 5,
+      "budget": 800,
+      "reason": "Finish the remaining pure placement/collision callee frontier without expanding through React consumers.",
+      "requested_by": "orchestrator",
+      "graph_revision": "c8eea77fe798be985cadae92",
+      "preflight_status": "accepted"
+    }
+  ]
 }
