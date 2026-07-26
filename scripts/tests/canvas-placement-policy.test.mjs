@@ -1,6 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { findNearestFreePlacement } from '../../src/lib/canvas/placement-policy.ts'
+import {
+  candidateOffsets,
+  findFirstFreeCandidateOffset,
+  findNearestFreePlacement,
+  orderPlacementNodesById,
+} from '../../src/lib/canvas/placement-policy.ts'
 
 const snapshot = zoom => ({
   x: 0,
@@ -54,21 +59,15 @@ test('candidate ties continue in cardinal order and are independent of member in
   assert.deepEqual(result.translation, { x: -32, y: 0 })
 })
 
-test('equal-distance obstacle ties are deterministic by node ID regardless of input order', () => {
-  const members = [{ id: 'source', rect: rect(0, 0) }]
-  const obstacles = [
-    { id: 'z-target', rect: rect(0, 0) },
-    { id: 'a-up', rect: rect(0, -32) },
+test('geometrically tied placement nodes are ordered deterministically by node ID', () => {
+  const tiedNodes = [
+    { id: 'z-node', rect: rect(0, 0) },
+    { id: 'a-node', rect: rect(0, 0) },
   ]
-  const place = items => findNearestFreePlacement({
-    members,
-    obstacles: items,
-    targetTranslation: { x: 0, y: 0 },
-    snapshot: snapshot(1),
-  })
 
-  assert.deepEqual(place(obstacles), place([...obstacles].reverse()))
-  assert.deepEqual(place(obstacles).translation, { x: 32, y: 0 })
+  assert.deepEqual(orderPlacementNodesById(tiedNodes).map(node => node.id), ['a-node', 'z-node'])
+  assert.deepEqual(orderPlacementNodesById([...tiedNodes].reverse()).map(node => node.id), ['a-node', 'z-node'])
+  assert.deepEqual(tiedNodes.map(node => node.id), ['z-node', 'a-node'])
 })
 
 test('repeat lattice stays 32 screen pixels at non-unit zoom', () => {
@@ -137,26 +136,29 @@ test('search honors radius and candidate caps', () => {
   assert.equal(result.checkedCandidates, 3)
 })
 
-test('default search cap is 4096 candidates at the 2400-screen-pixel radius', () => {
-  const originalHypot = Math.hypot
-  let generatedDistanceChecks = 0
-  Math.hypot = (...values) => {
-    generatedDistanceChecks += 1
-    if (generatedDistanceChecks > 5000) throw new Error('candidate generation exceeded the bounded default search')
-    return originalHypot(...values)
+test('actual candidate traversal never pulls beyond configured or default caps', () => {
+  function* failIfPulledPast(maxPulls) {
+    let pulls = 0
+    for (const offset of candidateOffsets(32, 2400)) {
+      pulls += 1
+      if (pulls > maxPulls) throw new Error(`candidate ${pulls} exceeded the ${maxPulls}-candidate cap`)
+      yield offset
+    }
   }
-  let result
-  try {
-    result = findNearestFreePlacement({
-      members: [{ id: 'source', rect: rect(0, 0) }],
-      obstacles: [{ id: 'block', rect: rect(-10000, -10000, 20000, 20000) }],
-      targetTranslation: { x: 0, y: 0 },
-      snapshot: snapshot(1),
-    })
-  } finally {
-    Math.hypot = originalHypot
-  }
+
+  assert.deepEqual(findFirstFreeCandidateOffset(failIfPulledPast(3), () => false, 3), {
+    checkedCandidates: 3,
+  })
+  assert.deepEqual(findFirstFreeCandidateOffset(failIfPulledPast(4096), () => false), {
+    checkedCandidates: 4096,
+  })
+
+  const result = findNearestFreePlacement({
+    members: [{ id: 'source', rect: rect(0, 0) }],
+    obstacles: [{ id: 'block', rect: rect(-10000, -10000, 20000, 20000) }],
+    targetTranslation: { x: 0, y: 0 },
+    snapshot: snapshot(1),
+  })
   assert.equal(result.status, 'no-space')
   assert.equal(result.checkedCandidates, 4096)
-  assert.ok(generatedDistanceChecks <= 5000)
 })
