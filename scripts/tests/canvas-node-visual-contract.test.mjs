@@ -55,3 +55,10 @@ test('text defaults persist for new nodes and render compatibly for legacy nodes
   assert.match(menuSource, /NODE_TEXT_PRESETS = \['#202321'/)
   assert.match(menuSource, /NODE_BORDER_PRESETS = \['#D8D6CF'/)
 })
+
+test('selected text nodes yield their inline warm shadow to visual-state priority', () => {
+  assert.match(
+    nodesSource,
+    /boxShadow: selected\s*\?\s*undefined\s*:\s*`\$\{savedStyle\?\.boxShadow \? `\$\{savedStyle\.boxShadow\}, ` : ''\}\$\{TEXT_SHADOW_DEFAULT\}`/,
+  )
+})

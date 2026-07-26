@@ -177,7 +177,11 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
         backgroundColor: data.backgroundColor ?? data.fillColor ?? TEXT_BACKGROUND_DEFAULT,
         color: data.textColor ?? TEXT_COLOR_DEFAULT,
         borderColor: data.borderColor ?? data.color ?? TEXT_BORDER_DEFAULT,
-        boxShadow: `${savedStyle?.boxShadow ? `${savedStyle.boxShadow}, ` : ''}${TEXT_SHADOW_DEFAULT}`,
+        // A selected node must not retain an inline shadow: it would override
+        // the selected/priority visual-state utilities below.
+        boxShadow: selected
+          ? undefined
+          : `${savedStyle?.boxShadow ? `${savedStyle.boxShadow}, ` : ''}${TEXT_SHADOW_DEFAULT}`,
         padding: 8 * contentScale(data),
       }}
       className={cn(
