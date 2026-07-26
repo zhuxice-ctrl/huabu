@@ -1,9 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  commitNoteReferenceDrop,
+  createNoteReferenceLinkData,
   NOTE_REFERENCE_MIME,
   createNoteReferenceSnapshot,
+  deleteNoteReference,
   noteReferenceId,
+  openNoteReferenceRecord,
   refreshNoteReferences,
 } from '../../src/lib/canvas/note-reference.ts'
 
@@ -65,26 +69,111 @@ test('all references to a source refresh together and retain no full source body
   assert.equal(JSON.stringify(refreshed).includes('Updated body for a cached excerpt.'.repeat(2)), false)
 })
 
-test('missing sources preserve their cached metadata and are marked stale', () => {
-  const [missing] = refreshNoteReferences([{
+test('partial source views update matching caches but cannot orphan unloaded sources', () => {
+  const reference = {
     id: 'one',
     type: 'note',
     position: { x: 0, y: 0 },
     data: {
-      sourceNoteId: '404',
+      sourceNoteId: '42',
       sourceTitle: 'Last known title',
       sourceExcerpt: 'Last known excerpt',
       sourceUpdatedAt: 12,
       sourceStatus: 'available',
     },
-  }], [])
+  }
+  const [incomplete] = refreshNoteReferences([reference], [])
+  assert.strictEqual(incomplete, reference)
+
+  const [incremental] = refreshNoteReferences([reference], [mark({ desc: 'Partial update' })])
+  assert.equal(incremental.data.sourceTitle, 'Partial update')
+
+  const [missing] = refreshNoteReferences([reference], [], { allowMissing: true })
 
   assert.deepEqual(missing.data, {
-    sourceNoteId: '404',
+    sourceNoteId: '42',
     sourceTitle: 'Last known title',
     sourceExcerpt: 'Last known excerpt',
     sourceUpdatedAt: 12,
     sourceStatus: 'missing',
     sourceSyncStatus: 'stale',
   })
+})
+
+test('drop transactions commit once only after placement and leave failed drops unchanged', async () => {
+  const payload = JSON.stringify(createNoteReferenceLinkData(mark()))
+  const calls = { place: 0, commit: 0 }
+  const placed = await commitNoteReferenceDrop({
+    payload,
+    place: async reference => {
+      calls.place += 1
+      return { id: 'canvas-reference', reference }
+    },
+    commit: () => { calls.commit += 1 },
+  })
+  assert.equal(placed, 'placed')
+  assert.deepEqual(calls, { place: 1, commit: 1 })
+
+  const noSpace = await commitNoteReferenceDrop({
+    payload,
+    place: async () => null,
+    commit: () => { calls.commit += 1 },
+  })
+  assert.equal(noSpace, 'no-space')
+  assert.equal(calls.commit, 1)
+
+  const unreadable = await commitNoteReferenceDrop({
+    payload: '{not-json',
+    place: async () => {
+      calls.place += 1
+      return { id: 'unexpected' }
+    },
+    commit: () => { calls.commit += 1 },
+  })
+  assert.equal(unreadable, 'invalid')
+  assert.deepEqual(calls, { place: 1, commit: 1 })
+})
+
+test('relinking and deleting a reference do not mutate its source, and opening reuses the record tab', async () => {
+  const source = Object.freeze(mark())
+  const relinked = createNoteReferenceLinkData(source)
+  assert.equal(relinked.referenceId, 'record:42')
+  assert.equal(source.id, 42)
+
+  const removed = []
+  deleteNoteReference('canvas-reference', id => removed.push(id))
+  assert.deepEqual(removed, ['canvas-reference'])
+  assert.equal(source.id, 42)
+
+  const calls = []
+  const opened = await openNoteReferenceRecord({
+    sourceNoteId: '42',
+    marks: [source],
+    createTab: item => ({ id: `record:${item.id}`, path: `record://mark/${item.id}` }),
+    openTabs: [{ id: 'existing', path: 'record://mark/42' }],
+    setActiveTabId: async id => { calls.push(`active:${id}`) },
+    addTab: async () => { calls.push('add') },
+    setActiveFilePath: async path => { calls.push(`file:${path}`) },
+    centerPanelVisible: false,
+    showCenterPanel: async () => { calls.push('panel') },
+  })
+  assert.equal(opened, true)
+  assert.deepEqual(calls, ['active:existing', 'file:', 'panel'])
+
+  const deferredCalls = []
+  const openedAfterAuthorityLoad = await openNoteReferenceRecord({
+    sourceNoteId: '42',
+    marks: [],
+    referenceMarksAuthoritative: false,
+    loadAuthoritativeMarks: async () => [source],
+    createTab: item => ({ id: `record:${item.id}`, path: `record://mark/${item.id}` }),
+    openTabs: [],
+    setActiveTabId: async () => { deferredCalls.push('active') },
+    addTab: async () => { deferredCalls.push('add') },
+    setActiveFilePath: async () => { deferredCalls.push('file') },
+    centerPanelVisible: true,
+    showCenterPanel: async () => { deferredCalls.push('panel') },
+  })
+  assert.equal(openedAfterAuthorityLoad, true)
+  assert.deepEqual(deferredCalls, ['add', 'file'])
 })

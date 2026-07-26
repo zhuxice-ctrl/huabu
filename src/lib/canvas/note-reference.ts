@@ -47,7 +47,86 @@ export function createNoteReferenceSnapshot(mark: Mark): NoteReferenceData {
   }
 }
 
-export function refreshNoteReferences(nodes: CanvasNode[], marks: Mark[]): CanvasNode[] {
+export function createNoteReferenceLinkData(mark: Mark) {
+  return {
+    referenceId: noteReferenceId(mark.id),
+    ...createNoteReferenceSnapshot(mark),
+  }
+}
+
+export function parseNoteReferenceDrop(payload: string): NoteReferenceData | null {
+  try {
+    const candidate = JSON.parse(payload) as Partial<NoteReferenceData> & { referenceId?: unknown }
+    const sourceUpdatedAt = candidate.sourceUpdatedAt
+    if (typeof candidate.sourceNoteId !== 'string'
+      || !/^\d+$/.test(candidate.sourceNoteId)
+      || typeof candidate.sourceTitle !== 'string'
+      || typeof candidate.sourceExcerpt !== 'string'
+      || typeof sourceUpdatedAt !== 'number'
+      || !Number.isFinite(sourceUpdatedAt)
+      || candidate.referenceId !== noteReferenceId(Number(candidate.sourceNoteId))) return null
+    return {
+      sourceNoteId: candidate.sourceNoteId,
+      sourceTitle: candidate.sourceTitle,
+      sourceExcerpt: candidate.sourceExcerpt,
+      sourceUpdatedAt,
+      sourceStatus: 'available',
+      sourceSyncStatus: 'current',
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function commitNoteReferenceDrop<T>(input: {
+  payload: string
+  place: (reference: NoteReferenceData) => Promise<T | null>
+  commit: (placed: T) => void
+}): Promise<'placed' | 'invalid' | 'no-space'> {
+  const reference = parseNoteReferenceDrop(input.payload)
+  if (!reference) return 'invalid'
+  const placed = await input.place(reference)
+  if (!placed) return 'no-space'
+  input.commit(placed)
+  return 'placed'
+}
+
+export async function openNoteReferenceRecord<T extends { id: string; path: string }>(input: {
+  sourceNoteId: string
+  marks: Mark[]
+  referenceMarksAuthoritative?: boolean
+  loadAuthoritativeMarks?: () => Promise<Mark[]>
+  createTab: (mark: Mark) => T
+  openTabs: Array<{ id: string; path: string }>
+  setActiveTabId: (id: string) => Promise<void> | void
+  addTab: (tab: T) => Promise<void> | void
+  setActiveFilePath: (path: string) => Promise<void> | void
+  centerPanelVisible: boolean
+  showCenterPanel: () => Promise<void> | void
+}): Promise<boolean> {
+  let source = input.marks.find(mark => String(mark.id) === input.sourceNoteId)
+  if (!source && !input.referenceMarksAuthoritative && input.loadAuthoritativeMarks) {
+    source = (await input.loadAuthoritativeMarks()).find(mark => String(mark.id) === input.sourceNoteId)
+  }
+  if (!source) return false
+  const recordTab = input.createTab(source)
+  const existingTab = input.openTabs.find(tab => tab.path === recordTab.path)
+  if (existingTab) await input.setActiveTabId(existingTab.id)
+  else await input.addTab(recordTab)
+  await input.setActiveFilePath('')
+  if (!input.centerPanelVisible) await input.showCenterPanel()
+  return true
+}
+
+export function deleteNoteReference(referenceNodeId: string, removeNode: (nodeId: string) => void) {
+  removeNode(referenceNodeId)
+}
+
+export function refreshNoteReferences(
+  nodes: CanvasNode[],
+  marks: Mark[],
+  options: { allowMissing?: boolean } = {},
+): CanvasNode[] {
   const marksById = new Map(marks.map(mark => [String(mark.id), mark]))
   return nodes.map(node => {
     const sourceNoteId = node.data.sourceNoteId
@@ -56,6 +135,7 @@ export function refreshNoteReferences(nodes: CanvasNode[], marks: Mark[]): Canva
     if (source) {
       return { ...node, data: { ...node.data, ...createNoteReferenceSnapshot(source) } }
     }
+    if (!options.allowMissing) return node
     return {
       ...node,
       data: {

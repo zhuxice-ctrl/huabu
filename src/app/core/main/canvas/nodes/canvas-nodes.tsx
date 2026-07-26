@@ -14,7 +14,7 @@ import useMarkStore from '@/stores/mark'
 import { cn, convertImageByWorkspace } from '@/lib/utils'
 import { getFilePathOptions } from '@/lib/workspace'
 import { normalizeContentScaleForRead } from '@/lib/canvas/content-ingest'
-import { createNoteReferenceSnapshot, noteReferenceId } from '@/lib/canvas/note-reference'
+import { createNoteReferenceLinkData, deleteNoteReference, openNoteReferenceRecord } from '@/lib/canvas/note-reference'
 import { createRecordTab } from '@/app/core/main/mark/mark-record-tab'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
@@ -221,15 +221,24 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
   const sourceNoteId = data.sourceNoteId
   const openNote = async () => {
     if (sourceNoteId) {
-      const source = useMarkStore.getState().getReferenceMarks().find(mark => String(mark.id) === sourceNoteId)
-      if (!source) return
-      const recordTab = createRecordTab(source, data.sourceTitle || '记录')
       const articleStore = useArticleStore.getState()
-      const existingTab = articleStore.openTabs.find(tab => tab.path === recordTab.path)
-      if (existingTab) await articleStore.setActiveTabId(existingTab.id)
-      else await articleStore.addTab(recordTab)
-      await articleStore.setActiveFilePath('')
-      if (!useSidebarStore.getState().centerPanelVisible) await useSidebarStore.getState().showCenterPanel()
+      const markStore = useMarkStore.getState()
+      await openNoteReferenceRecord({
+        sourceNoteId,
+        marks: markStore.getReferenceMarks(),
+        referenceMarksAuthoritative: markStore.referenceMarksAuthoritative,
+        loadAuthoritativeMarks: async () => {
+          await markStore.fetchAllMarks()
+          return useMarkStore.getState().getReferenceMarks()
+        },
+        createTab: source => createRecordTab(source, data.sourceTitle || '记录'),
+        openTabs: articleStore.openTabs,
+        setActiveTabId: articleStore.setActiveTabId,
+        addTab: articleStore.addTab,
+        setActiveFilePath: articleStore.setActiveFilePath,
+        centerPanelVisible: useSidebarStore.getState().centerPanelVisible,
+        showCenterPanel: useSidebarStore.getState().showCenterPanel,
+      })
       return
     }
     if (!filePath) return
@@ -240,10 +249,7 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
     const nextId = globalThis.prompt('请输入要关联的记录 ID')
     if (!nextId) return
     const source = useMarkStore.getState().getReferenceMarks().find(mark => String(mark.id) === nextId.trim())
-    if (source) updateNodeData(id, {
-      referenceId: noteReferenceId(source.id),
-      ...createNoteReferenceSnapshot(source),
-    })
+    if (source) updateNodeData(id, createNoteReferenceLinkData(source))
   }
 
   return (
@@ -264,7 +270,7 @@ export const NoteCanvasNode = memo(function NoteCanvasNode({ id, data, selected 
             <div className="flex items-center gap-2 text-xs text-destructive" style={fontStyle(data, 0.8)}>
               <span>来源已不存在</span>
               <button type="button" className="nodrag underline" onClick={relink}>重新关联</button>
-              <button type="button" className="nodrag underline" onClick={() => void deleteElements({ nodes: [{ id }] })}>删除引用</button>
+              <button type="button" className="nodrag underline" onClick={() => deleteNoteReference(id, nodeId => void deleteElements({ nodes: [{ id: nodeId }] }))}>删除引用</button>
             </div>
           ) : <span className="line-clamp-3 text-xs text-muted-foreground" style={fontStyle(data, 0.8)}>{data.sourceExcerpt}</span>
         ) : <span className="truncate text-xs text-muted-foreground" style={fontStyle(data, 0.8)}>{filePath}</span>}

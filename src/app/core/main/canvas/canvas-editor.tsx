@@ -187,7 +187,7 @@ import {
 } from '@/lib/canvas/collision-policy'
 import { CanvasSpatialIndex } from '@/lib/canvas/spatial-index'
 import { findNearestFreePlacement } from '@/lib/canvas/placement-policy'
-import { NOTE_REFERENCE_MIME, noteReferenceId, refreshNoteReferences, type NoteReferenceData } from '@/lib/canvas/note-reference'
+import { commitNoteReferenceDrop, NOTE_REFERENCE_MIME, noteReferenceId, refreshNoteReferences } from '@/lib/canvas/note-reference'
 
 const elk = new ELK()
 const PLACEMENT_PREVIEW_MS = 120
@@ -1119,14 +1119,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const refresh = () => {
       const current = latestNodesRef.current
       const markStore = useMarkStore.getState()
-      if (!markStore.referenceMarksLoaded) return
-      const refreshed = refreshNoteReferences(current as CanvasNode[], markStore.getReferenceMarks()) as FlowCanvasNode[]
+      const refreshed = refreshNoteReferences(current as CanvasNode[], markStore.getReferenceMarks(), {
+        allowMissing: markStore.referenceMarksAuthoritative,
+      }) as FlowCanvasNode[]
       const changed = refreshed.some((node, index) => (
         node !== current[index] && JSON.stringify(node.data) !== JSON.stringify(current[index]?.data)
       ))
       if (changed) setNodes(refreshed)
     }
     refresh()
+    void useMarkStore.getState().fetchAllMarks().catch(error => {
+      console.error('Failed to load authoritative note references:', error)
+    })
     const unsubscribe = useMarkStore.subscribe(() => {
       if (noteReferenceRefreshTimerRef.current) clearTimeout(noteReferenceRefreshTimerRef.current)
       noteReferenceRefreshTimerRef.current = setTimeout(refresh, 120)
@@ -2530,54 +2534,33 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     screenOrigin: { x: number; y: number },
     capturedViewport: ViewportSnapshot,
   ) => {
-    let reference: NoteReferenceData
-    try {
-      const candidate = JSON.parse(payload) as Partial<NoteReferenceData> & { referenceId?: unknown }
-      const sourceUpdatedAt = candidate.sourceUpdatedAt
-      if (typeof candidate.sourceNoteId !== 'string'
-        || !/^\d+$/.test(candidate.sourceNoteId)
-        || typeof candidate.sourceTitle !== 'string'
-        || typeof candidate.sourceExcerpt !== 'string'
-        || typeof sourceUpdatedAt !== 'number'
-        || !Number.isFinite(sourceUpdatedAt)
-        || candidate.referenceId !== noteReferenceId(Number(candidate.sourceNoteId))) return false
-      reference = {
-        sourceNoteId: candidate.sourceNoteId,
-        sourceTitle: candidate.sourceTitle,
-        sourceExcerpt: candidate.sourceExcerpt,
-        sourceUpdatedAt,
-        sourceStatus: 'available',
-        sourceSyncStatus: 'current',
-      }
-    } catch {
-      return false
-    }
-
-    const target = screenPointToCanvas({ clientX: screenOrigin.x, clientY: screenOrigin.y }, capturedViewport)
-    const size = screenSizeToCanvas({ width: 320, height: 156 }, capturedViewport)
-    const node: FlowCanvasNode = {
-      id: crypto.randomUUID(),
-      type: 'note',
-      position: { x: 0, y: 0 },
-      width: size.width,
-      height: size.height,
-      selected: true,
-      data: {
-        referenceId: noteReferenceId(Number(reference.sourceNoteId)),
-        ...reference,
-        fontSize: screenDistanceToCanvas(15, capturedViewport),
-        contentScale: contentScaleForZoom(capturedViewport.zoom),
+    const result = await commitNoteReferenceDrop({
+      payload,
+      place: async reference => {
+        const target = screenPointToCanvas({ clientX: screenOrigin.x, clientY: screenOrigin.y }, capturedViewport)
+        const size = screenSizeToCanvas({ width: 320, height: 156 }, capturedViewport)
+        const node: FlowCanvasNode = {
+          id: crypto.randomUUID(),
+          type: 'note',
+          position: { x: 0, y: 0 },
+          width: size.width,
+          height: size.height,
+          selected: true,
+          data: {
+            referenceId: noteReferenceId(Number(reference.sourceNoteId)),
+            ...reference,
+            fontSize: screenDistanceToCanvas(15, capturedViewport),
+            contentScale: contentScaleForZoom(capturedViewport.zoom),
+          },
+        }
+        return previewNearestFreePlacement({ nodes: [node], targetTranslation: target, snapshot: capturedViewport })
       },
-    }
-    const placed = await previewNearestFreePlacement({
-      nodes: [node],
-      targetTranslation: target,
-      snapshot: capturedViewport,
+      commit: placed => {
+        pushHistory()
+        setNodes(current => [...current.map(existing => ({ ...existing, selected: false })), ...placed])
+      },
     })
-    if (!placed) return false
-    pushHistory()
-    setNodes(current => [...current.map(existing => ({ ...existing, selected: false })), ...placed])
-    return true
+    return result === 'placed'
   }, [previewNearestFreePlacement, pushHistory, setNodes])
 
   const handleCanvasDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {

@@ -736,6 +736,7 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
   const {
     marks,
     fetchMarks,
+    fetchAllMarks,
     trashState,
     fetchAllTrashMarks,
     isMultiSelectMode,
@@ -843,12 +844,13 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
       await delMark(mark.id)
     }
     await fetchMarks()
+    await fetchAllMarks()
     await fetchTags()
     getCurrentTag()
     if (shouldClearActiveMark()) {
       clearActiveMark()
     }
-  }, [isMultiSelectMode, selectedMarkIds, clearSelection, fetchMarks, fetchTags, getCurrentTag, mark.id, shouldClearActiveMark, clearActiveMark])
+  }, [isMultiSelectMode, selectedMarkIds, clearSelection, fetchAllMarks, fetchMarks, fetchTags, getCurrentTag, mark.id, shouldClearActiveMark, clearActiveMark])
 
   const handleDelForever = useCallback(async (e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -870,10 +872,11 @@ export const MarkItem = React.memo(({mark, variant = 'list', interactive = true}
       await delMarkForever(mark.id)
     }
     await fetchAllTrashMarks()
+    await fetchAllMarks()
     if (shouldClearActiveMark()) {
       clearActiveMark()
     }
-  }, [isMultiSelectMode, selectedMarkIds, clearSelection, fetchAllTrashMarks, mark.id, shouldClearActiveMark, clearActiveMark, t])
+  }, [isMultiSelectMode, selectedMarkIds, clearSelection, fetchAllMarks, fetchAllTrashMarks, mark.id, shouldClearActiveMark, clearActiveMark, t])
 
   const handleRestore = useCallback(async (e?: React.MouseEvent) => {
     e?.stopPropagation()
