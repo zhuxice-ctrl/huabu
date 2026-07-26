@@ -1,0 +1,29 @@
+{
+  "schema": "ADworkflo.worker_state.v1",
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
+  "status": "verified",
+  "revision": 3,
+  "done": [
+    "Implemented captured-viewport creation, deterministic AI sizing and persisted contentScale rendering.",
+    "Resolved all independent-review Important findings.",
+    "Passed focused, canvas, TypeScript, diff and L2 impact gates."
+  ],
+  "changed_files": [
+    "src/lib/canvas/content-ingest.ts",
+    "src/lib/canvas/operations.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "scripts/tests/canvas-content-ingest.test.mjs",
+    "scripts/tests/canvas-creation-sizing.test.mjs"
+  ],
+  "current_problem": null,
+  "next_action": "Begin Task 3.",
+  "must_keep_context": ["Task 2 viewport and contentScale contracts are now load-bearing inputs for later canvas tasks."],
+  "discarded_context": ["Adjudicated conservative L2 propagation and framework callback edges."],
+  "remaining_risks": ["pnpm wrappers require a later TTY-capable acceptance environment."],
+  "clarification_events": [],
+  "timeout_fallbacks": [],
+  "context_expansion_history": []
+}

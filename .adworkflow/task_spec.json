@@ -22,12 +22,14 @@
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
-  "allowed_actions": ["read", "edit", "test", "shell", "commit"],
+  "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
     "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/operations.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "scripts/tests/canvas-content-ingest.test.mjs",
     "scripts/tests/canvas-creation-sizing.test.mjs",
     ".adworkflow/context_manifest.json",
@@ -56,8 +58,10 @@
     "src/lib/canvas/viewport-sizing.ts",
     "src/lib/canvas/content-ingest.ts",
     "src/lib/canvas/operations.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "scripts/tests/canvas-content-ingest.test.mjs",
     "scripts/tests/canvas-creation-sizing.test.mjs"
   ],
@@ -65,6 +69,8 @@
     "Use fixed UTF-8 I/O for every non-ASCII read, search, edit and test output.",
     "Follow strict TDD and record the expected failing focused tests before implementation.",
     "Treat canvas-editor.tsx as manually bounded read-first context rather than an L2 semantic entrypoint to avoid expanding through the full React shell.",
+    "The node renderer is included because persisted contentScale cannot affect icons, padding and gaps from the editor alone.",
+    "The canvas agent tool schema is included because AI target/size fields must be reachable through the only applyCanvasOperations caller.",
     "Do not expose or change configured provider secrets."
   ],
   "implementation_owner": "task-02-implementer"

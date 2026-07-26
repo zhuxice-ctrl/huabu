@@ -1,42 +1,33 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-reactflow-gesture-and-editable-relations",
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
   "status": "approved",
-  "reviewer": "independent_final_and_scoped_re_review",
-  "source_revision": "60c3d5edd504a2c39bd1c8521ed4b79e08e758bc",
+  "reviewer": "independent task reviewer and scoped re-reviewer",
+  "source_revision": "7d6e58716c06066b26545b2b2464d8a519af8756",
   "review_basis": [
-    "Task specification, design and implementation plan",
-    "Full source review from 979bb821 through e66858ff",
-    "Scoped fix re-review from e66858ff through 60c3d5ed",
-    "Accepted L2 context preflight at graph revision e081fcbc7669732a10d632b8",
-    "Independently assessed post-edit impact report",
-    "36 canvas tests, foundation contract, TypeScript, production build and locked Cargo check",
-    "Fresh NSIS packaging and sanitized installed-runtime verification"
+    "Task 2 implementation brief and report",
+    "Full Task 2 review package plus two scoped fix packages",
+    "Accepted L2 context preflight at graph revision 19e79f4c121f5673bdd233a4",
+    "Post-edit impact report at graph revision 59b9f7d9114176daf13e170c",
+    "15 focused tests, 53 canvas tests, TypeScript and diff check"
   ],
   "blocking_findings": [],
   "non_blocking_findings": [
     {
-      "id": "native-pointer-acceptance",
+      "id": "pnpm-noninteractive-repair",
       "severity": "non_blocking",
-      "issue": "Automated executable policy tests and source review cannot fully judge the subjective feel of every native Windows right-button gesture.",
-      "expected_fix": "Use the installed build for the user's hands-on acceptance pass; no source defect is currently identified.",
-      "evidence": "F:\\zeroxBApp\\zeroxb.exe is running and responsive."
-    },
-    {
-      "id": "cancel-test-seam",
-      "severity": "non_blocking",
-      "issue": "The relation cancellation test verifies unchanged persistent state rather than invoking the React Cancel callback directly.",
-      "expected_fix": "Add a component-level pointer interaction harness if the canvas editor later exposes an injectable UI test seam.",
-      "evidence": "Independent source inspection verified Cancel closes the draft without setEdges or pushHistory."
+      "issue": "pnpm wrapper commands request an interactive node_modules repair.",
+      "expected_fix": "Repeat the wrappers in a TTY-capable or CI environment without changing dependencies during this task.",
+      "evidence": "The equivalent locked Node test command and local TypeScript executable both pass."
     }
   ],
   "suggested_tests": [
-    "Add a component-level React Flow pointer harness when the Tauri canvas exposes a stable browser-test seam."
+    "Run the pnpm wrappers during release-wide Windows acceptance when dependency repair is explicitly in scope."
   ],
   "risk_notes": [
-    "The first independent review found seven Important semantic issues; all were fixed and the scoped re-review marked each ADDRESSED with no new Critical or Important breakage.",
-    "The automated graph's broad shared-type propagation and dynamic-dispatch entries were independently reviewed as conservative framework edges rather than unexpected behavioral impact.",
-    "The repository-level design_alignment_report remains an unconfigured PRD/ARCH scaffold; project instructions require that gate for PRD/ARCH work, while this task is an already specified code implementation and validate_adworkflow passes.",
-    "No credential value appears in source, reports, commits or verification output."
+    "The initial reviewer reported four Important issues; target typing, field-by-field fallback, contentScale validation, behavioral coverage and partial width/height forwarding were all corrected.",
+    "The final scoped re-review marked spec compliance and task quality PASS with no new Critical or Important finding.",
+    "Conservative chat/page propagation and React dynamic-dispatch edges were independently reviewed and accepted as existing import-chain and framework-callback behavior.",
+    "No provider credential was read, printed or modified."
   ]
 }

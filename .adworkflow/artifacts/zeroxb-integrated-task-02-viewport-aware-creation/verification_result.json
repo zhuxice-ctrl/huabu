@@ -1,0 +1,20 @@
+{
+  "schema": "ADworkflo.verification_result.v1",
+  "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
+  "status": "passed",
+  "source_revision": "7d6e58716c06066b26545b2b2464d8a519af8756",
+  "commands": [
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-content-ingest.test.mjs scripts/tests/canvas-creation-sizing.test.mjs", "status": "passed", "summary": "15/15 passed.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "53/53 passed.", "exit_code": 0},
+    {"command": "node_modules\\.bin\\tsc.cmd --noEmit", "status": "passed", "summary": "Passed without diagnostics.", "exit_code": 0},
+    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors.", "exit_code": 0}
+  ],
+  "acceptance_criteria_coverage": [
+    {"criterion": "All Task 2 functional acceptance criteria", "status": "passed", "evidence": ["15 focused tests", "53 canvas tests", "independent review PASS"]},
+    {"criterion": "L2 post-edit impact gate", "status": "passed", "evidence": ["impact_report.json review_adjudication verdict accepted"]}
+  ],
+  "passed": ["focused-tests", "canvas-suite", "typescript", "diff-check", "independent-review", "l2-impact"],
+  "failed": [],
+  "not_run_reason": null,
+  "residual_risk": ["pnpm wrappers remain deferred to a TTY-capable release acceptance environment."]
+}

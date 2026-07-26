@@ -1,26 +1,39 @@
 {
   "schema": "ADworkflo.worker_state.v1",
   "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
-  "status": "in_progress",
-  "revision": 1,
+  "status": "verified",
+  "revision": 3,
   "done": [
-    "Configured the Task 2 implementation contract.",
-    "Prepared and read the L2 semantic context manifest.",
-    "Accepted context preflight at confidence 0.909 with no critical unresolved edges."
+    "Configured and completed the Task 2 implementation contract.",
+    "Routed direct creation paths through one immutable captured viewport while preserving duplicate and import geometry.",
+    "Implemented deterministic AI sizing, validated style font conversion and persisted contentScale rendering.",
+    "Resolved every independent-review Important finding through two scoped fix rounds.",
+    "Passed focused, full canvas, TypeScript, diff and L2 impact gates."
   ],
-  "changed_files": [],
+  "changed_files": [
+    "src/lib/canvas/content-ingest.ts",
+    "src/lib/canvas/operations.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "scripts/tests/canvas-content-ingest.test.mjs",
+    "scripts/tests/canvas-creation-sizing.test.mjs"
+  ],
   "current_problem": null,
-  "next_action": "Dispatch the Task 2 implementation worker with the captured context and strict TDD contract.",
+  "next_action": "Begin Task 3 solid-entity collision and snapping policies.",
   "must_keep_context": [
     "Every direct creation operation captures one viewport at operation start.",
-    "Internal paste/duplicate and full-document imports preserve stored geometry.",
-    "Task 2 stops before collision and snapping policy implementation.",
+    "Internal paste, duplicate and full-document imports preserve stored geometry.",
+    "Persisted contentScale is bounded to 0.1667-10 for runtime reads.",
     "No provider secret may be read, printed or changed."
   ],
-  "discarded_context": [],
+  "discarded_context": [
+    "Conservative chat and page propagation from the existing agent import chain was independently adjudicated as expected.",
+    "React Flow getter, React state setter and component callback dynamic edges were independently adjudicated as resolved framework dispatch."
+  ],
   "remaining_risks": [
-    "canvas-editor.tsx is a large integration surface and requires bounded edits plus independent review.",
-    "AI canvas operations share consumers in agent runtime and tool registry."
+    "pnpm wrapper commands still require a TTY-capable node_modules repair; locked direct executables passed and no repair was performed."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],

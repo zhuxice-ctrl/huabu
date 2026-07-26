@@ -2,9 +2,9 @@
   "schema": "ADworkflo.context_preflight.v1",
   "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
   "status": "accepted",
-  "graph_revision": "573fa700d9dcbaeef21ee233",
-  "slice_revision": "573fa700d9dcbaeef21ee233",
-  "confidence": 0.909,
+  "graph_revision": "19e79f4c121f5673bdd233a4",
+  "slice_revision": "19e79f4c121f5673bdd233a4",
+  "confidence": 0.951,
   "confidence_threshold": 0.8,
   "freshness": {
     "fresh": true,

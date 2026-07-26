@@ -1,29 +1,88 @@
 {
   "schema": "ADworkflo.verification_result.v1",
   "task_id": "zeroxb-integrated-task-02-viewport-aware-creation",
-  "status": "not_run",
+  "status": "passed",
+  "source_revision": "7d6e58716c06066b26545b2b2464d8a519af8756",
   "commands": [
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-content-ingest.test.mjs scripts/tests/canvas-creation-sizing.test.mjs",
-      "status": "pending",
-      "summary": "Pending implementation.",
-      "exit_code": null
+      "status": "passed",
+      "summary": "15/15 focused tests passed.",
+      "exit_code": 0
     },
     {
-      "command": "pnpm test:canvas",
-      "status": "pending",
-      "summary": "Pending implementation.",
-      "exit_code": null
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
+      "status": "passed",
+      "summary": "53/53 canvas tests passed.",
+      "exit_code": 0
     },
     {
-      "command": "pnpm exec tsc --noEmit",
-      "status": "pending",
-      "summary": "Pending implementation.",
+      "command": "node_modules\\.bin\\tsc.cmd --noEmit",
+      "status": "passed",
+      "summary": "TypeScript check passed without diagnostics.",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "summary": "No whitespace errors; only existing line-ending checkout warnings were printed.",
+      "exit_code": 0
+    },
+    {
+      "command": "pnpm test:canvas and pnpm exec tsc --noEmit",
+      "status": "not_run",
+      "summary": "pnpm requests an interactive node_modules repair; equivalent locked direct commands passed and dependencies were not modified.",
       "exit_code": null
     }
   ],
-  "passed": [],
+  "acceptance_criteria_coverage": [
+    {
+      "criterion": "Direct creation paths use one immutable captured viewport.",
+      "status": "passed",
+      "evidence": ["canvas-creation-sizing.test.mjs direct creation session regression", "independent final re-review PASS"]
+    },
+    {
+      "criterion": "Screen dimensions, font size and contentScale convert and persist once.",
+      "status": "passed",
+      "evidence": ["canvas-content-ingest.test.mjs viewport materialization and font conversion regressions", "15/15 focused tests"]
+    },
+    {
+      "criterion": "Internal duplicate, paste and document imports preserve geometry.",
+      "status": "passed",
+      "evidence": ["canvas-creation-sizing.test.mjs geometry preservation contract"]
+    },
+    {
+      "criterion": "AI sizing is zoom-independent and deterministic with target, nearby and fallback precedence.",
+      "status": "passed",
+      "evidence": ["canvas-creation-sizing.test.mjs target, cross-type, median and partial-dimension regressions", "canvas tool schema exposes target and size fields"]
+    },
+    {
+      "criterion": "Style font editing uses captured menu zoom and validates 8-96 screen pixels.",
+      "status": "passed",
+      "evidence": ["canvas-content-ingest.test.mjs style conversion regression", "TypeScript check"]
+    },
+    {
+      "criterion": "Outer-frame resizing does not rewrite content semantics.",
+      "status": "passed",
+      "evidence": ["canvas-creation-sizing.test.mjs source contract", "independent source review"]
+    },
+    {
+      "criterion": "L2 post-edit impact is reviewed and accepted.",
+      "status": "passed",
+      "evidence": ["impact_report.json current revision 59b9f7d9114176daf13e170c", "task-2-final-rereview.md"]
+    }
+  ],
+  "passed": [
+    "focused-tests",
+    "canvas-suite",
+    "typescript",
+    "diff-check",
+    "independent-review",
+    "l2-impact"
+  ],
   "failed": [],
-  "not_run_reason": "Implementation has not started.",
-  "residual_risk": []
+  "not_run_reason": null,
+  "residual_risk": [
+    "Repeat pnpm wrapper commands in a TTY-capable or CI environment before release-wide acceptance; equivalent direct commands passed."
+  ]
 }
