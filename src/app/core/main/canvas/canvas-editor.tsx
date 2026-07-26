@@ -190,12 +190,13 @@ import { CanvasSpatialIndex } from '@/lib/canvas/spatial-index'
 import { findNearestFreePlacement } from '@/lib/canvas/placement-policy'
 import {
   mergeNoteReferenceMarks,
-  normalizeLiveNoteReferenceMarks,
   NOTE_REFERENCE_MIME,
   noteReferenceId,
   planNoteReferenceDrop,
   planNoteReferencePlacement,
   refreshNoteReferences,
+  type NoteReferenceAuthorityState,
+  updateNoteReferenceAuthority,
 } from '@/lib/canvas/note-reference'
 
 const elk = new ELK()
@@ -1126,57 +1127,96 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
 
   useEffect(() => {
     const initialStore = useMarkStore.getState()
-    let authoritativeMarks = initialStore.allMarks
+    let referenceAuthority: NoteReferenceAuthorityState = {
+      marks: [],
+      status: 'unconfirmed',
+    }
     let observedAllMarks = initialStore.allMarks
-    let partialMarks = initialStore.marks
-    let referenceMarksAuthoritative = false
+    let partialMarks = mergeNoteReferenceMarks(initialStore.allMarks, initialStore.marks)
+    let authorityRequest = 0
+    let authorityRefreshPending = false
+    let disposed = false
     const initialNodes = latestNodesRef.current
     const initialRefresh = refreshNoteReferences(
       initialNodes as CanvasNode[],
-      mergeNoteReferenceMarks(authoritativeMarks, partialMarks),
+      mergeNoteReferenceMarks(referenceAuthority.marks, partialMarks),
       { allowMissing: false },
     ) as FlowCanvasNode[]
     if (initialRefresh.some((node, index) => (
       node !== initialNodes[index] && JSON.stringify(node.data) !== JSON.stringify(initialNodes[index]?.data)
     ))) updateFlowNodes(initialRefresh)
 
+    const initialAuthorityRequest = ++authorityRequest
     void getAllMarks().then(function (records) {
-      authoritativeMarks = normalizeLiveNoteReferenceMarks(records)
-      referenceMarksAuthoritative = true
+      if (disposed || initialAuthorityRequest !== authorityRequest) return
+      referenceAuthority = updateNoteReferenceAuthority(referenceAuthority, {
+        source: 'database',
+        marks: records,
+      })
       const current = latestNodesRef.current
       const refreshed = refreshNoteReferences(
         current as CanvasNode[],
-        mergeNoteReferenceMarks(authoritativeMarks, partialMarks),
-        { allowMissing: true },
+        mergeNoteReferenceMarks(referenceAuthority.marks, partialMarks),
+        { allowMissing: referenceAuthority.status === 'authoritative' },
       ) as FlowCanvasNode[]
       if (refreshed.some((node, index) => (
         node !== current[index] && JSON.stringify(node.data) !== JSON.stringify(current[index]?.data)
       ))) updateFlowNodes(refreshed)
     }).catch(function (error) {
-      console.error('Failed to load authoritative note references:', error)
+      if (!disposed && initialAuthorityRequest === authorityRequest) {
+        console.error('Failed to load authoritative note references:', error)
+      }
     })
 
     const unsubscribe = useMarkStore.subscribe(function (markStore) {
-      partialMarks = markStore.marks
+      partialMarks = mergeNoteReferenceMarks(markStore.allMarks, markStore.marks)
       if (markStore.allMarks !== observedAllMarks) {
         observedAllMarks = markStore.allMarks
-        authoritativeMarks = markStore.allMarks
-        referenceMarksAuthoritative = true
+        authorityRequest += 1
+        referenceAuthority = updateNoteReferenceAuthority(referenceAuthority, { source: 'store' })
+        authorityRefreshPending = true
       }
       if (noteReferenceRefreshTimerRef.current) clearTimeout(noteReferenceRefreshTimerRef.current)
       noteReferenceRefreshTimerRef.current = setTimeout(function () {
         const current = latestNodesRef.current
         const refreshed = refreshNoteReferences(
           current as CanvasNode[],
-          mergeNoteReferenceMarks(authoritativeMarks, partialMarks),
-          { allowMissing: referenceMarksAuthoritative },
+          mergeNoteReferenceMarks(referenceAuthority.marks, partialMarks),
+          { allowMissing: referenceAuthority.status === 'authoritative' },
         ) as FlowCanvasNode[]
         if (refreshed.some((node, index) => (
           node !== current[index] && JSON.stringify(node.data) !== JSON.stringify(current[index]?.data)
         ))) updateFlowNodes(refreshed)
+
+        if (!authorityRefreshPending) return
+        authorityRefreshPending = false
+        const requestedAuthority = ++authorityRequest
+        void getAllMarks().then(function (records) {
+          if (disposed || requestedAuthority !== authorityRequest) return
+          referenceAuthority = updateNoteReferenceAuthority(referenceAuthority, {
+            source: 'database',
+            marks: records,
+          })
+          const currentAfterAuthority = latestNodesRef.current
+          const refreshedAfterAuthority = refreshNoteReferences(
+            currentAfterAuthority as CanvasNode[],
+            mergeNoteReferenceMarks(referenceAuthority.marks, partialMarks),
+            { allowMissing: referenceAuthority.status === 'authoritative' },
+          ) as FlowCanvasNode[]
+          if (refreshedAfterAuthority.some((node, index) => (
+            node !== currentAfterAuthority[index]
+              && JSON.stringify(node.data) !== JSON.stringify(currentAfterAuthority[index]?.data)
+          ))) updateFlowNodes(refreshedAfterAuthority)
+        }).catch(function (error) {
+          if (!disposed && requestedAuthority === authorityRequest) {
+            console.error('Failed to refresh authoritative note references:', error)
+          }
+        })
       }, 120)
     })
     return () => {
+      disposed = true
+      authorityRequest += 1
       if (noteReferenceRefreshTimerRef.current) clearTimeout(noteReferenceRefreshTimerRef.current)
       unsubscribe()
     }

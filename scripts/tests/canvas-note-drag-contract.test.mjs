@@ -59,5 +59,8 @@ test('reference nodes open record tabs, expose a missing-source state, and remov
   assert.doesNotMatch(markStoreSource, /referenceMarksAuthoritative/)
   assert.match(editorSource, /let observedAllMarks = initialStore\.allMarks/)
   assert.match(editorSource, /markStore\.allMarks !== observedAllMarks/)
+  assert.match(editorSource, /updateNoteReferenceAuthority\(referenceAuthority, \{ source: 'store' \}\)/)
+  assert.match(editorSource, /source: 'database'/)
+  assert.doesNotMatch(editorSource, /authoritativeMarks = markStore\.allMarks/)
   assert.match(nodesSource, /memo\(function \(\{ id, data, selected \}/)
 })

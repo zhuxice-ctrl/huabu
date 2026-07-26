@@ -11,6 +11,7 @@ import {
   planNoteReferencePlacement,
   planNoteReferenceRecordOpen,
   refreshNoteReferences,
+  updateNoteReferenceAuthority,
 } from '../../src/lib/canvas/note-reference.ts'
 
 const mark = (overrides = {}) => ({
@@ -100,6 +101,42 @@ test('partial source views update matching caches but cannot orphan unloaded sou
     sourceStatus: 'missing',
     sourceSyncStatus: 'stale',
   })
+})
+
+test('an empty allMarks identity change remains partial until the database confirms authority', () => {
+  const reference = {
+    id: 'one',
+    type: 'note',
+    position: { x: 0, y: 0 },
+    data: {
+      sourceNoteId: '42',
+      sourceTitle: 'Last known title',
+      sourceExcerpt: 'Last known excerpt',
+      sourceUpdatedAt: 12,
+      sourceStatus: 'available',
+    },
+  }
+  const previousAllMarks = []
+  const nextAllMarks = []
+  assert.notStrictEqual(nextAllMarks, previousAllMarks)
+
+  let authority = { marks: [], status: 'unconfirmed' }
+  authority = updateNoteReferenceAuthority(authority, { source: 'store' })
+  const [afterStoreUpdate] = refreshNoteReferences(
+    [reference],
+    mergeNoteReferenceMarks(authority.marks, nextAllMarks),
+    { allowMissing: authority.status === 'authoritative' },
+  )
+  assert.strictEqual(afterStoreUpdate, reference)
+
+  authority = updateNoteReferenceAuthority(authority, { source: 'database', marks: [] })
+  const [afterDatabaseRead] = refreshNoteReferences(
+    [reference],
+    mergeNoteReferenceMarks(authority.marks, nextAllMarks),
+    { allowMissing: authority.status === 'authoritative' },
+  )
+  assert.equal(afterDatabaseRead.data.sourceStatus, 'missing')
+  assert.equal(afterDatabaseRead.data.sourceTitle, 'Last known title')
 })
 
 test('drop planners allow one checkpoint only after placement and reject failed drops', () => {

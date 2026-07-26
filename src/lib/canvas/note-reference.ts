@@ -60,6 +60,30 @@ export function normalizeLiveNoteReferenceMarks(marks: Mark[]): Mark[] {
     .map(mark => ({ ...mark, content: mark.content || '' }))
 }
 
+export interface NoteReferenceAuthorityState {
+  marks: Mark[]
+  status: 'unconfirmed' | 'authoritative'
+}
+
+export type NoteReferenceAuthorityUpdate =
+  | { source: 'store' }
+  | { source: 'database'; marks: Mark[] }
+
+export function updateNoteReferenceAuthority(
+  current: NoteReferenceAuthorityState,
+  update: NoteReferenceAuthorityUpdate,
+): NoteReferenceAuthorityState {
+  if (update.source === 'store') {
+    return current.status === 'unconfirmed'
+      ? current
+      : { ...current, status: 'unconfirmed' }
+  }
+  return {
+    marks: normalizeLiveNoteReferenceMarks(update.marks),
+    status: 'authoritative',
+  }
+}
+
 export function mergeNoteReferenceMarks(authoritative: Mark[], partial: Mark[]): Mark[] {
   const records = new Map<number, Mark>()
   for (const mark of authoritative) if (mark.deleted === 0) records.set(mark.id, mark)
