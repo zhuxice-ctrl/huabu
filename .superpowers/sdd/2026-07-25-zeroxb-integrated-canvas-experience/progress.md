@@ -1,0 +1,40 @@
+# SDD ledger — plan: docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md
+
+Plan baseline: 74db5bc5cc018fb1a5f8505b2e2fe27aff0c49b5
+Execution started: 2026-07-25
+Task 1: complete (commits 09ec6fbc..6a10c177, independent review findings resolved)
+Task 2: fix round 1/5 (4 Important findings addressed, 0 open; commits 77f463e..6e8a15a)
+Task 2: fix round 2/5 (partial AI width/height forwarding addressed, 0 open; commits 6e8a15a..7d6e587)
+Task 2: complete (commits d91284a..7d6e587, independent scoped re-review clean; L2 impact accepted)
+Task 3: minor (deferred): direct TypeScript test imports emit the repository-wide MODULE_TYPELESS_PACKAGE_JSON warning; runner/package infrastructure is outside this task.
+Task 3: fix round 1/5 (3 Important findings addressed, 0 open; commits 6b50009..71be5a9)
+Task 3: complete (commits fea43fd..71be5a9, scoped re-review clean; L2 impact passed)
+Task 4: fix round 1/5 (3 findings addressed, 1 open — node-ID tie and bounded-generation tests do not prove their claims; commits 2318949..702e5a4)
+Task 4: fix round 2/5 (2 findings addressed, 0 open — observable ID ordering and bounded real-generator traversal accepted; L2 graph correction passed; commits 702e5a4..f2168e6)
+Task 4: complete (commits 3938109..f2168e6, scoped re-review clean; L2 impact passed)
+Task 5: started (base d219a68a; accepted L2 preflight at c8eea77fe798be985cadae92)
+Task 5: minor (deferred): geometry index and all-pairs legacy-conflict scoring currently rebuild on every nodes identity change, which may add avoidable latency on large canvases.
+Task 5: fix round 1/5 (4 Important findings addressed, 0 open — viewport geometry, group copy ownership, async history authority and causal session tests; commits db8ab9b..e01e955)
+Task 5: L2 structural correction (8 dynamic callback edges removed, shared-type line-ending variance normalized with zero semantic delta; commits e01e955..c9afe0a; impact passed)
+Task 5: complete (commits d219a68..c9afe0a, independent review findings resolved; focused 13/13, Canvas 97/97, TypeScript and L2 impact passed)
+Task 6: started (base 46877401; accepted L2 preflight at db62eea35e713e30ddf7c41e)
+Task 6: fix round 1/5 (1 Important finding addressed, 0 open — selected text nodes yield inline shadow to the selected visual state; commits c108ce4..f40fd69)
+Task 6: complete (commits 4687740..f40fd69, independent scoped re-review clean; focused 5/5, Canvas 101/101, TypeScript, production build and final L2 impact passed)
+Task 7: started (base bef54b0b; accepted L2 preflight at 02a1e523f2174d01b782b3c6)
+Task 7: fix round 1/5 (4 Important and 2 Minor findings addressed, 0 open; commits 91b9bcf..dde9c47)
+Task 7: fix round 2/5 (13 new dynamic-dispatch critical graph edges addressed, 0 open; commits de192e9..1073bff)
+Task 7: complete (commits bef54b0..1073bff, independent structural re-review clean; focused 10/10, Canvas 109/109, TypeScript and final L2 impact passed)
+Task 8: started (base a8c2a0c; accepted L2 preflight at 7a6d9f539fd8dacb183be9e0)
+Task 8: fix round 1/5 (2 Important findings addressed, 0 open — authoritative all-live source state and causal reference transaction tests; commits ede8a1a..cd9bab5)
+Task 8: fix round 2/5 (19 initial L2 dynamic-dispatch findings addressed by pure planners, 0 review findings open; commit 18b088a; refreshed L2 exposed 8 additional UI-boundary edges and propagation budget truncation for round 3)
+Task 8: fix round 3/5 (8 L2 dynamic-dispatch edges addressed, 1 Important open — `allMarks` identity can falsely promote a partial cache to authoritative; commit 308a89f)
+Task 8: fix round 4/5 (remaining authority finding addressed, 0 open; commits 308a89f..ff1197c; clean scoped re-review; focused 10/10, Canvas 119/119, TypeScript and diff checks passed)
+Task 8: complete (commits a8c2a0c..ff1197c, clean scoped review; focused 10/10, Canvas 119/119, TypeScript and diff checks passed; exhaustive L2 impact passed at 32d05f0651ee3919b4379f9b with unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
+Task 9: started (base bbf7d941; accepted L2 preflight at 32d05f0651ee3919b4379f9b)
+Task 9: minor (deferred): Git emits working-tree line-ending conversion notices; focused tests, build, typecheck and diff check show no source-encoding or whitespace defect.
+Task 9: fix round 1/5 (production build gate and two media behavior findings addressed, 0 open; commits 299382c..4498739)
+Task 9: complete (commits bbf7d94..4498739, independent scoped reviews clean; focused 8/8, Canvas 127/127, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at ee97336f148549aa5e742b9c with predicted/observed 327/327, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
+Task 10: started (base afcdefe2; accepted L2 preflight at ee97336f148549aa5e742b9c)
+Task 10: fix round 1/5 (raw sync-ID restore and null-source chip findings resolved; commits 813fe7c3..f7ad05ee; focused re-review approved)
+Task 10: L2 structural correction (source navigation dynamic-dispatch edge removed; commit 08767a01)
+Task 10: complete (commits afcdefe2..08767a01, independent review approved; focused 6/6, Canvas 133/133, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at 6a8a2e3207a3dfe43cfbf2bf with predicted/observed 315/313, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
