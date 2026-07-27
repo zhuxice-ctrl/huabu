@@ -25,6 +25,24 @@ export interface Chat {
   // 压缩相关字段
   condensedContent?: string    // 压缩后的摘要内容（存储在本条消息上）
   condensedAt?: number         // 压缩时间戳
+  canvasContext?: string | null // 本地画布来源，不参与同步
+  completionState?: 'complete' | 'interrupted' | 'failed'
+}
+
+export function serializeChatForSync(chat: Chat): Omit<Chat, 'canvasContext'> {
+  const syncChat = { ...chat }
+  delete syncChat.canvasContext
+  return syncChat
+}
+
+function getChatRestoreKey(chat: Pick<Chat, 'conversationId' | 'createdAt' | 'role' | 'type' | 'content'>) {
+  return JSON.stringify([
+    chat.conversationId ?? null,
+    chat.createdAt,
+    chat.role,
+    chat.type,
+    chat.content ?? null,
+  ])
 }
 
 // 创建 chats 表
@@ -45,7 +63,9 @@ export async function initChatsDb() {
       ragSources text default null,
       agentHistory text default null,
       thinking text default null,
-      quoteData text default null
+      quoteData text default null,
+      canvasContext text default null,
+      completionState text default null
     )
   `)
   
@@ -168,6 +188,22 @@ export async function initChatsDb() {
   } catch {
     // 如果列已存在，忽略错误
   }
+
+  try {
+    await db.execute(`
+      alter table chats add column canvasContext text default null
+    `)
+  } catch {
+    // 如果列已存在，忽略错误
+  }
+
+  try {
+    await db.execute(`
+      alter table chats add column completionState text default null
+    `)
+  } catch {
+    // 如果列已存在，忽略错误
+  }
 }
 
 // 插入一条 chat
@@ -175,8 +211,8 @@ export async function insertChat(chat: Omit<Chat, 'id' | 'createdAt'>) {
   const db = await getDb()
   const createdAt = Date.now();
   const result = await db.execute(
-    "insert into chats (tagId, conversationId, content, role, type, image, images, attachments, inserted, createdAt, ragSources, ragSourceDetails, agentHistory, thinking, quoteData, condensedContent, condensedAt) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
-    [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, createdAt, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt]
+    "insert into chats (tagId, conversationId, content, role, type, image, images, attachments, inserted, createdAt, ragSources, ragSourceDetails, agentHistory, thinking, quoteData, condensedContent, condensedAt, canvasContext, completionState) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
+    [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, createdAt, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, chat.canvasContext, chat.completionState]
   )
 
   if (chat.role === 'user' && chat.content?.trim()) {
@@ -191,6 +227,18 @@ export async function insertChat(chat: Omit<Chat, 'id' | 'createdAt'>) {
   }
 
   return result
+}
+
+export async function getLocalCanvasContexts() {
+  const db = await getDb()
+  const result = await db.select<Chat[]>(
+    'select * from chats where canvasContext is not null',
+    []
+  )
+  return new Map(result.flatMap(chat => chat.canvasContext ? [
+    [`id:${chat.id}`, chat.canvasContext] as const,
+    [getChatRestoreKey(chat), chat.canvasContext] as const,
+  ] : []))
 }
 
 // 获取所有 chats
@@ -220,19 +268,19 @@ export async function getAllChats() {
     "select * from chats order by createdAt",
     []
   )
-  return result
+  return result.map(serializeChatForSync)
 }
 
 // 插入多条 chat（用于同步）
-export async function insertChats(chats: Chat[]) {
+export async function insertChats(chats: Chat[], localCanvasContexts?: Map<string, string>) {
   const db = await getDb()
 
   await db.execute('BEGIN TRANSACTION')
   try {
     for (const chat of chats) {
       await db.execute(
-        "insert into chats (tagId, conversationId, content, role, type, image, images, attachments, inserted, createdAt, ragSources, ragSourceDetails, agentHistory, thinking, quoteData, condensedContent, condensedAt) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
-        [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.createdAt, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt]
+        "insert into chats (tagId, conversationId, content, role, type, image, images, attachments, inserted, createdAt, ragSources, ragSourceDetails, agentHistory, thinking, quoteData, condensedContent, condensedAt, canvasContext, completionState) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
+        [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.createdAt, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, localCanvasContexts?.get(`id:${chat.id}`) ?? localCanvasContexts?.get(getChatRestoreKey(chat)) ?? null, chat.completionState]
       )
     }
     await db.execute('COMMIT')
@@ -255,8 +303,8 @@ export async function deleteAllChats() {
 export async function updateChat(chat: Chat) {
   const db = await getDb()
   return await db.execute(
-    "update chats set tagId = $1, conversationId = $2, content = $3, role = $4, type = $5, image = $6, images = $7, attachments = $8, inserted = $9, ragSources = $10, ragSourceDetails = $11, agentHistory = $12, thinking = $13, quoteData = $14, condensedContent = $15, condensedAt = $16 where id = $17",
-    [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, chat.id])
+    "update chats set tagId = $1, conversationId = $2, content = $3, role = $4, type = $5, image = $6, images = $7, attachments = $8, inserted = $9, ragSources = $10, ragSourceDetails = $11, agentHistory = $12, thinking = $13, quoteData = $14, condensedContent = $15, condensedAt = $16, canvasContext = coalesce($17, canvasContext), completionState = coalesce($18, completionState) where id = $19",
+    [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, chat.canvasContext, chat.completionState, chat.id])
 }
 
 // 清空 tagId 下的所有 chats
@@ -288,8 +336,8 @@ export async function updateChats(chats: Chat[]) {
   try {
     for (const chat of chats) {
       await db.execute(
-        "update chats set tagId = $1, conversationId = $2, content = $3, role = $4, type = $5, image = $6, images = $7, attachments = $8, inserted = $9, ragSources = $10, ragSourceDetails = $11, agentHistory = $12, thinking = $13, quoteData = $14, condensedContent = $15, condensedAt = $16 where id = $17",
-        [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, chat.id]
+        "update chats set tagId = $1, conversationId = $2, content = $3, role = $4, type = $5, image = $6, images = $7, attachments = $8, inserted = $9, ragSources = $10, ragSourceDetails = $11, agentHistory = $12, thinking = $13, quoteData = $14, condensedContent = $15, condensedAt = $16, canvasContext = coalesce($17, canvasContext), completionState = coalesce($18, completionState) where id = $19",
+        [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, chat.canvasContext, chat.completionState, chat.id]
       )
     }
   } catch (error) {

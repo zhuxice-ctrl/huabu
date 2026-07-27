@@ -24,6 +24,8 @@ import type { AgentTraceEvent } from "@/lib/agent/types"
 import type { AgentApprovalDecision, AgentSteeringPayload } from "@/lib/agent/types"
 import { serializeChatAttachments, type RuntimeChatAttachment } from '@/lib/chat-attachments'
 import { retainCompletedAgentTraceEvents } from '@/lib/agent/trace-retention'
+import useCanvasStore from '@/stores/canvas'
+import { createCanvasChatContext, parseCanvasChatContext } from '@/lib/chat/canvas-context'
 
 function getLastDisplayableAgentContent(
   liveContent: string | undefined,
@@ -353,7 +355,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
   }
 
   // Agent 模式处理
-  async function handleAgentMode(imageUrls: string[]) {
+  async function handleAgentMode(imageUrls: string[], canvasContext: string) {
     // 先创建一个占位的 AI 消息
     const placeholderMessage = await insert({
       tagId: currentTagId,
@@ -361,6 +363,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
       content: '',
       type: 'chat',
       inserted: false,
+      canvasContext,
     })
 
     if (!placeholderMessage) return
@@ -371,14 +374,13 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
 
     const useArticleStore = (await import('@/stores/article')).default
     const articleStore = useArticleStore.getState()
-    const useCanvasStore = (await import('@/stores/canvas')).default
-    const canvasStore = useCanvasStore.getState()
+    const sourceCanvasId = parseCanvasChatContext(canvasContext)?.sourceCanvasId || undefined
 
     // 每次都创建新的 AgentHandler，使用当前的 placeholderMessage
     const agentHandler = new AgentHandler({
       activeChatId: placeholderMessage.id,
       activeFilePath: articleStore.activeFilePath,
-      activeCanvasId: canvasStore.activeCanvasId || undefined,
+      activeCanvasId: sourceCanvasId,
       permissionMode: agentPermissionMode,
       requestConfirmation,
       currentQuote: quoteData
@@ -474,6 +476,8 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
           // 保留来自 currentMessage 的 RAG 相关字段
           ragSources: currentMessage?.ragSources,
           ragSourceDetails: currentMessage?.ragSourceDetails,
+          canvasContext: currentMessage?.canvasContext ?? canvasContext,
+          completionState: effectivelyStopped ? 'interrupted' : 'complete',
           // 设置新的内容
           content: finalContent,
           agentHistory: JSON.stringify(agentHistory),
@@ -536,6 +540,8 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
           // 保留来自 currentMessage 的 RAG 相关字段
           ragSources: currentMessage?.ragSources,
           ragSourceDetails: currentMessage?.ragSourceDetails,
+          canvasContext: currentMessage?.canvasContext ?? canvasContext,
+          completionState: aborted ? 'interrupted' : 'failed',
           content: aborted
             ? preservedContent || t('record.chat.input.stopped')
             : `Error: ${error}`,
@@ -880,6 +886,13 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
     setLoading(true)
     try {
       const imageUrls = attachedImages.map(img => img.url)
+      const sentAt = Date.now()
+      const canvasState = useCanvasStore.getState()
+      const canvasContext = createCanvasChatContext(
+        canvasState.activeCanvasId,
+        canvasState.projects,
+        sentAt,
+      )
       await insert({
         tagId: currentTagId,
         role: 'user',
@@ -889,8 +902,9 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
         images: imageUrls.length > 0 ? JSON.stringify(imageUrls) : undefined,
         attachments: fileAttachments.length > 0 ? serializeChatAttachments(fileAttachments) : undefined,
         quoteData: quoteData ? JSON.stringify(quoteData) : undefined,
+        canvasContext,
       })
-      await handleAgentMode(imageUrls)
+      await handleAgentMode(imageUrls, canvasContext)
     } finally {
       activeRunRef.current = false
       setLoading(false)

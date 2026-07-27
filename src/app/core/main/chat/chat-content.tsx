@@ -22,6 +22,9 @@ import { ChatImages } from "./chat-images"
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { parsePersistedChatAttachments } from '@/lib/chat-attachments'
+import { parseCanvasChatContext, UNKNOWN_CANVAS_SOURCE_LABEL } from '@/lib/chat/canvas-context'
+import useCanvasStore from '@/stores/canvas'
+import emitter from '@/lib/emitter'
 import { ChatAttachmentSummary } from './chat-file-attachments'
 import {
   MessageScroller,
@@ -152,6 +155,55 @@ const MessageWrapper = React.memo(function MessageWrapper({ chat, children }: { 
   )
 })
 MessageWrapper.displayName = 'MessageWrapper'
+
+function CanvasSourceChip({ chat }: { chat: Chat }) {
+  const { activeCanvasId, projects, setActiveCanvasId } = useCanvasStore()
+  const canvasContext = useMemo(
+    () => parseCanvasChatContext(chat.canvasContext),
+    [chat.canvasContext]
+  )
+
+  if (chat.canvasContext == null || activeCanvasId === canvasContext?.sourceCanvasId) {
+    return null
+  }
+
+  if (!canvasContext || !canvasContext.sourceCanvasId) {
+    return (
+      <span className="inline-flex text-xs text-muted-foreground" aria-disabled="true">
+        {UNKNOWN_CANVAS_SOURCE_LABEL}
+      </span>
+    )
+  }
+
+  const currentProject = projects.find(project => project.id === canvasContext.sourceCanvasId)
+  const title = currentProject?.title ?? canvasContext.sourceCanvasTitle
+  if (!currentProject) {
+    return (
+      <span className="inline-flex text-xs text-muted-foreground" aria-disabled="true">
+        {title ? `来源画布已删除：${title}` : '来源画布已删除'}
+      </span>
+    )
+  }
+
+  const focusSource = () => {
+    setActiveCanvasId(canvasContext.sourceCanvasId)
+    requestAnimationFrame(() => {
+      for (const nodeId of canvasContext.sourceNodeIds || []) {
+        emitter.emit('canvas-focus-node', nodeId)
+      }
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={focusSource}
+      className="inline-flex max-w-full text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+    >
+      来源：{title || UNKNOWN_CANVAS_SOURCE_LABEL}
+    </button>
+  )
+}
 
 const Message = React.memo(function Message({ chat }: { chat: Chat }) {
   const t = useTranslations()
@@ -298,6 +350,7 @@ const Message = React.memo(function Message({ chat }: { chat: Chat }) {
         {chat.role === 'system' ? (
           // AI 消息：所有内容放在一个容器中
           <div className="w-full space-y-4">
+            <CanvasSourceChip chat={chat} />
             {/* 合并的 RAG 和 Agent 面板 - 只在有 agentHistory 时显示（历史模式） */}
             {/* 实时执行时，RAG 和 Agent 步骤在 AgentExecutionStatusWrapper 中统一显示 */}
             {chat.agentHistory && (
@@ -339,6 +392,7 @@ const Message = React.memo(function Message({ chat }: { chat: Chat }) {
         ) : (
           // 用户消息
           <div className="w-full space-y-3 text-primary">
+            <CanvasSourceChip chat={chat} />
             {/* 显示用户消息中的图片 */}
             {images.length > 0 && <ChatImages images={images} />}
             <ChatAttachmentSummary attachments={attachments} />

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Chat, clearChatsByTagId, deleteChat, initChatsDb, insertChat, updateChat, updateChatsInsertedById, getAllChats, deleteAllChats, insertChats, updateChatCondensedContent, getChatsByConversation } from '@/db/chats'
+import { Chat, clearChatsByTagId, deleteChat, initChatsDb, insertChat, updateChat, updateChatsInsertedById, getAllChats, getLocalCanvasContexts, deleteAllChats, insertChats, updateChatCondensedContent, getChatsByConversation } from '@/db/chats'
 import { uploadFile as uploadGithubFile, getFiles as githubGetFiles, decodeBase64ToString } from '@/lib/sync/github';
 import { uploadFile as uploadGiteeFile, getFiles as giteeGetFiles } from '@/lib/sync/gitee';
 import { uploadFile as uploadGitlabFile, getFiles as gitlabGetFiles, getFileContent as gitlabGetFileContent } from '@/lib/sync/gitlab';
@@ -744,8 +744,9 @@ const useChatStore = create<ChatState>((set, get) => ({
       result = JSON.parse(configJson)
     }
     if (result.length > 0) {
+      const localCanvasContexts = await getLocalCanvasContexts()
       await deleteAllChats()
-      await insertChats(result)
+      await insertChats(result, localCanvasContexts)
     }
     set({ syncState: false })
     return result
