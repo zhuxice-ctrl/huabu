@@ -1,50 +1,49 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-10-chat-canvas-context",
+  "task_id": "zeroxb-integrated-task-11-generation-transactions",
   "status": "verified",
-  "revision": 3,
+  "revision": 4,
   "done": [
-    "Persisted one local source-canvas snapshot across each user message and its assistant placeholder/completion.",
-    "Kept canvas IDs, titles and evidence node IDs out of every outbound chat sync payload and preserved local context safely during restore.",
-    "Resolved the independent review findings for raw sync-ID matching and null-source chip rendering, then passed focused re-review.",
-    "Passed focused tests 6/6, the complete Canvas suite 133/133, TypeScript, production build, diff checks and exhaustive L2 impact analysis."
+    "Moved active generation ownership to the shared chat-store boundary and serialized stop, switch, create, temporary and delete actions.",
+    "Persisted partial assistant output as interrupted before clearing the active generation and executing the target action.",
+    "Resolved the independent mobile-confirmation finding at the store boundary and replaced dynamic transaction dispatch with graph-resolvable planners and static execution boundaries.",
+    "Passed focused tests 7/7, the complete Canvas suite 140/140, TypeScript, production build, diff checks and exhaustive L2 impact analysis."
   ],
   "changed_files": [
-    "scripts/tests/canvas-chat-context.test.mjs",
-    "scripts/tests/canvas-chat-db-contract.test.mjs",
-    "src/app/core/main/chat/chat-content.tsx",
+    "scripts/tests/canvas-chat-generation-transaction.test.mjs",
+    "src/app/core/main/chat/chat-header.tsx",
     "src/app/core/main/chat/chat-send.tsx",
-    "src/db/chats.ts",
-    "src/lib/chat/canvas-context.ts",
+    "src/app/core/main/chat/history-dropdown.tsx",
+    "src/app/core/main/chat/new-chat.tsx",
+    "src/lib/chat/generation-transaction.ts",
     "src/stores/chat.ts"
   ],
   "current_problem": null,
   "next_action": null,
   "must_keep_context": [
-    ".adworkflow/context_preflight.json (accepted baseline graph revision ee97336f148549aa5e742b9c)",
-    ".adworkflow/impact_report.json (passed current graph revision 6a8a2e3207a3dfe43cfbf2bf)",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-10-review.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-10-rereview.md"
+    ".adworkflow/context_preflight.json (accepted baseline graph revision 6a8a2e3207a3dfe43cfbf2bf)",
+    ".adworkflow/impact_report.json (passed current graph revision b8e7a82536ae616442d01369)",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-11-review.md"
   ],
   "discarded_context": [
-    "The first L2 run was superseded after it exposed one new dynamic-dispatch edge in source-chip navigation.",
-    "The initial bounded predicted set was expanded only from the first exhaustive observed-impact result before the final run."
+    "The first L2 run was superseded after it exposed 20 dynamic-dispatch edges and five unpredicted consumers.",
+    "The final predicted set was expanded only from the exhaustive observed-impact result before rerunning the installed impact algorithm."
   ],
   "remaining_risks": [
     "Node's existing MODULE_TYPELESS_PACKAGE_JSON warning remains outside this task and does not affect test results.",
-    "The standard 10,000-item reverse-impact budget is too small for the shared Chat frontier; final verification used the installed algorithm with only its in-memory item budget raised to 50,000."
+    "The shared Chat frontier requires the installed impact algorithm's in-memory reverse-impact budget to be raised from 10000 to 50000."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": [],
-  "source_revision": "08767a0173f2fda6d974fc5da269b3e19b827b0f",
+  "source_revision": "cc90925f3b9712ee5f4914a52ff2a5620a363e14",
   "context_preflight": {
     "status": "accepted",
-    "graph_revision": "ee97336f148549aa5e742b9c"
+    "graph_revision": "6a8a2e3207a3dfe43cfbf2bf"
   },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "6a8a2e3207a3dfe43cfbf2bf",
+    "graph_revision": "b8e7a82536ae616442d01369",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }

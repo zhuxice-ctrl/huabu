@@ -38,3 +38,7 @@ Task 10: started (base afcdefe2; accepted L2 preflight at ee97336f148549aa5e742b
 Task 10: fix round 1/5 (raw sync-ID restore and null-source chip findings resolved; commits 813fe7c3..f7ad05ee; focused re-review approved)
 Task 10: L2 structural correction (source navigation dynamic-dispatch edge removed; commit 08767a01)
 Task 10: complete (commits afcdefe2..08767a01, independent review approved; focused 6/6, Canvas 133/133, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at 6a8a2e3207a3dfe43cfbf2bf with predicted/observed 315/313, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
+Task 11: started (base aba7c357; accepted L2 preflight at 6a8a2e3207a3dfe43cfbf2bf)
+Task 11: fix round 1/5 (mobile silent-stop confirmation moved into the shared store boundary; commits 19eab46b..3253ae39; focused rereview APPROVED)
+Task 11: L2 structural correction (20 new dynamic-dispatch edges replaced by a pure command planner and static store execution boundaries; commits 5bafcd8d..cc90925f)
+Task 11: complete (commits aba7c357..cc90925f, independent finding resolved; focused 7/7, Canvas 140/140, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at b8e7a82536ae616442d01369 with predicted/observed 63/62, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)

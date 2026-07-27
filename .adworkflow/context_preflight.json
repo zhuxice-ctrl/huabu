@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-10-chat-canvas-context",
+  "task_id": "zeroxb-integrated-task-11-generation-transactions",
   "status": "accepted",
-  "graph_revision": "ee97336f148549aa5e742b9c",
-  "slice_revision": "ee97336f148549aa5e742b9c",
+  "graph_revision": "6a8a2e3207a3dfe43cfbf2bf",
+  "slice_revision": "6a8a2e3207a3dfe43cfbf2bf",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

@@ -1,92 +1,82 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-10-chat-canvas-context",
+  "task_id": "zeroxb-integrated-task-11-generation-transactions",
   "status": "passed",
-  "source_revision": "08767a0173f2fda6d974fc5da269b3e19b827b0f",
+  "source_revision": "cc90925f3b9712ee5f4914a52ff2a5620a363e14",
   "commands": [
     {
-      "command": "node --test scripts/tests/canvas-chat-context.test.mjs scripts/tests/canvas-chat-db-contract.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-chat-generation-transaction.test.mjs",
       "status": "passed",
-      "summary": "Focused Task 10 tests passed 6/6 after both review fixes and the graph-safe navigation correction.",
+      "summary": "Focused Task 11 transaction and source-contract tests passed 7/7.",
       "exit_code": 0
     },
     {
-      "command": "pnpm test:canvas",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Complete Canvas suite passed 133/133 at the final source revision.",
+      "summary": "Complete Canvas regression suite passed 140/140.",
       "exit_code": 0
     },
     {
-      "command": "pnpm exec tsc --noEmit",
+      "command": "node_modules/.bin/tsc.CMD --noEmit",
       "status": "passed",
-      "summary": "TypeScript typecheck completed without diagnostics.",
+      "summary": "Workspace TypeScript compiler completed without diagnostics.",
       "exit_code": 0
     },
     {
       "command": "$env:pnpm_config_verify_deps_before_run='false'; pnpm build",
       "status": "passed",
-      "summary": "Production compile, lint/type validation, 53 static pages, export and source-map pruning passed at the final source revision.",
+      "summary": "Production compile, lint/type validation, 53 static pages, export and source-map pruning passed.",
       "exit_code": 0
     },
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors were found in the Task 10 product diff.",
+      "summary": "No whitespace errors were found in the Task 11 diff.",
       "exit_code": 0
     },
     {
       "command": "installed l2_codegraph.safety.post_edit_impact with in-memory reverse-impact budget 50000",
       "status": "passed",
-      "summary": "Final graph revision 6a8a2e3207a3dfe43cfbf2bf: predicted 315, observed 313, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
+      "summary": "Final graph b8e7a82536ae616442d01369: predicted 63, observed 62, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Local chat rows tolerate nullable canvasContext and completionState migrations without deleting or reordering old chats.",
+      "criterion": "Switch, new, temporary and delete-current serialize abort, close, interrupted persistence and target execution.",
       "status": "passed",
-      "evidence": ["canvas-chat-db-contract.test.mjs", "production build"]
+      "evidence": ["canvas-chat-generation-transaction.test.mjs", "generation-transaction.ts"]
     },
     {
-      "criterion": "The user message and assistant placeholder share one source-canvas snapshot captured before asynchronous work.",
+      "criterion": "Deleting a non-active conversation leaves the active stream running.",
       "status": "passed",
-      "evidence": ["canvas-chat-context.test.mjs", "independent review"]
+      "evidence": ["delete non-active focused test", "planGenerationTransaction"]
     },
     {
-      "criterion": "Invalid or historical context parses safely and source chips navigate existing canvases while missing sources remain non-blocking.",
+      "criterion": "A failed stop or persistence step prevents the target action, and repeated actions coalesce.",
       "status": "passed",
-      "evidence": ["canvas-chat-context.test.mjs", "focused re-review"]
+      "evidence": ["abort failure focused test", "serialized in-flight key test"]
     },
     {
-      "criterion": "Every sync, backup and restore flow omits local canvas IDs, titles and node IDs while retaining ordinary content and completionState.",
+      "criterion": "All callers receive explicit protected-action confirmation at the shared store boundary.",
       "status": "passed",
-      "evidence": ["canvas-chat-db-contract.test.mjs", "independent review"]
+      "evidence": ["3253ae39", "independent focused rereview APPROVED"]
     },
     {
-      "criterion": "Remote restore cannot overwrite or misassociate locally captured canvasContext.",
+      "criterion": "Implementation is committed, reviewed and passes regression, build and L2 gates.",
       "status": "passed",
-      "evidence": ["f7ad05ee restore-identity fix", "focused re-review APPROVED"]
-    },
-    {
-      "criterion": "Focused tests, Canvas regression, TypeScript, production build and diff checks pass.",
-      "status": "passed",
-      "evidence": ["6/6 focused", "133/133 Canvas", "tsc", "pnpm build", "git diff --check"]
-    },
-    {
-      "criterion": "Implementation is committed, independently reviewed and passes the L2 post-edit gate.",
-      "status": "passed",
-      "evidence": ["08767a0173f2fda6d974fc5da269b3e19b827b0f", "review_findings.json", "impact_report.json"]
+      "evidence": ["cc90925f", "140/140 Canvas", "production build", "impact_report.json"]
     }
   ],
   "passed": [
-    "All Task 10 acceptance criteria",
-    "Independent review and focused re-review",
+    "All Task 11 acceptance criteria",
+    "Independent review finding resolved",
     "Exhaustive L2 post-edit impact gate"
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Cross-device restore and source navigation remain part of the Task 21 Windows hands-on checklist.",
+    "Hands-on rapid switching during live provider streams remains in the final Windows acceptance pass.",
     "Existing Node module-type and Turbopack experimental warnings remain non-blocking."
   ]
 }

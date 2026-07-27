@@ -1,34 +1,32 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-10-chat-canvas-context",
+  "task_id": "zeroxb-integrated-task-11-generation-transactions",
   "task_type": "code",
-  "goal": "Persist the source canvas snapshot on local chat messages, render low-noise source navigation, and prove that local canvas anchor metadata never enters sync or backup payloads.",
+  "goal": "Serialize streaming conversation switch, create and delete actions so active generation is stopped, partial output is persisted as interrupted, and the target action occurs exactly once.",
   "non_goals": [
-    "Do not implement Task 11 generation transactions, Task 12 HUD replacement, or later AI and retrieval work.",
-    "Do not migrate canvas context into remote sync state or accept remote canvasContext values.",
-    "Do not change canvas geometry, media ingestion, credentials, recovery or release behavior."
+    "Do not build the Task 12 transcript HUD or Task 13 voice/TTS state machine.",
+    "Do not change canvas geometry, rich media, retrieval, AI permissions, credentials, recovery or release behavior.",
+    "Do not alter remote sync formats beyond preserving Task 10 completionState behavior."
   ],
   "acceptance_criteria": [
-    "Local chat rows tolerate nullable canvasContext and completionState migrations without deleting or reordering old chats.",
-    "The user message and its placeholder or system reply share one source-canvas snapshot captured before asynchronous work.",
-    "Invalid or historical context parses safely and source chips navigate existing canvases while missing sources remain non-blocking.",
-    "serializeChatForSync and all upload, backup and restore flows omit local canvas IDs, titles and node IDs while preserving ordinary content and completionState.",
-    "Remote restore cannot overwrite locally captured canvasContext on an existing message.",
-    "Focused tests, TypeScript, production build and diff checks pass.",
+    "Switch, new, temporary and delete-current actions serialize abort request, stream close, interrupted persistence and target action in that order.",
+    "Deleting a non-active conversation does not cancel the active stream.",
+    "Abort or persistence failure keeps the current conversation, received text and active target IDs without creating or deleting another conversation.",
+    "Repeated UI actions do not create duplicate conversations, orphan messages or overlapping transactions.",
+    "History actions expose explicit stop-and-switch or stop-and-delete confirmation while streaming.",
+    "Focused tests, Canvas regression, TypeScript and diff checks pass.",
     "Implementation is committed and independently reviewed."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/chat/canvas-context.ts",
-    "src/db/chats.ts",
+    "src/lib/chat/generation-transaction.ts",
     "src/stores/chat.ts",
     "src/app/core/main/chat/chat-send.tsx",
-    "src/app/core/main/chat/chat-content.tsx",
-    "scripts/tests/canvas-chat-context.test.mjs",
-    "scripts/tests/canvas-chat-db-contract.test.mjs",
+    "src/app/core/main/chat/history-dropdown.tsx",
+    "scripts/tests/canvas-chat-generation-transaction.test.mjs",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -36,11 +34,11 @@
     ".adworkflow/review_findings.json"
   ],
   "do_not_touch": [
-    "src/lib/canvas geometry or media modules",
     "src/app/mobile",
     "src-tauri",
+    "canvas geometry or media modules",
     "main branch",
-    "remote repositories",
+    "remote repositories before the Phase C push gate",
     "release artifacts",
     "installed zeroxB application",
     "zeroxB user documents",
@@ -48,24 +46,24 @@
     "unrelated runtime modules"
   ],
   "entrypoints": [
-    "typescript:src.db.chats:getAllChats:function",
-    "typescript:src.db.chats:insertChats:function"
+    "typescript:src.app.core.main.chat.chat-send:ChatSend:variable",
+    "typescript:src.stores.chat:useChatStore:variable"
   ],
   "context_sources": [
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-10-brief.md",
-    "src/db/chats.ts",
+    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md",
+    "src/lib/chat/generation-transaction.ts",
     "src/stores/chat.ts",
     "src/app/core/main/chat/chat-send.tsx",
-    "src/app/core/main/chat/chat-content.tsx",
-    "src/stores/canvas.ts",
-    "src/types/canvas.ts"
+    "src/app/core/main/chat/history-dropdown.tsx",
+    "src/db/chats.ts",
+    "src/db/conversations.ts"
   ],
   "notes": [
-    "Read the Task 10 brief first and use test-first implementation.",
-    "Preserve message ordering and all existing chat content.",
-    "Canvas context is local-only and must be omitted structurally rather than redacted after serialization.",
+    "Use test-first implementation and keep review/report evidence concise.",
+    "Preserve partial assistant output and Task 10 source canvas context.",
+    "Use one serialized promise chain and fail closed before the target action.",
     "Use fixed UTF-8 I/O for non-ASCII reads and edits.",
     "Never inspect, print, log or modify configured provider secrets."
   ],
-  "implementation_owner": "task-10-implementer"
+  "implementation_owner": "main-solo-executor"
 }
