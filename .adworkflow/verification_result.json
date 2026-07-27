@@ -1,19 +1,19 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
+  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
   "status": "passed",
-  "source_revision": "bde36fb9d9df765a98d0453d23481da75d47bb87",
+  "source_revision": "feda6bf6ef4a8625d90efbc3316a8958f7604ad5",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-voice-session.test.mjs scripts/tests/canvas-ai-breath-contract.test.mjs scripts/tests/canvas-chat-generation-transaction.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-ai-permission.test.mjs scripts/tests/canvas-ai-transaction.test.mjs",
       "status": "passed",
-      "summary": "Task 13 voice/breath and Task 11 generation-lifecycle regression passed 19/19 after review fixes.",
+      "summary": "Task 14 permission, preview, atomic commit and rollback contracts passed 15/15 after all review fixes.",
       "exit_code": 0
     },
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Complete Canvas regression suite passed 162/162 at the reviewed source revision.",
+      "summary": "Complete Canvas regression suite passed 176/176 at the reviewed source revision.",
       "exit_code": 0
     },
     {
@@ -23,65 +23,65 @@
       "exit_code": 0
     },
     {
-      "command": "node_modules/.bin/next.CMD build --turbopack plus build source-map pruning",
+      "command": "node_modules/.bin/next.CMD build --turbopack",
       "status": "passed",
-      "summary": "Production compile, lint/type validation, 53 static pages, export and source-map pruning passed.",
+      "summary": "Production build completed with all 53 static pages generated.",
       "exit_code": 0
     },
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors were found in the Task 13 product or evidence diff.",
+      "summary": "No whitespace errors were found; existing working-tree line-ending notices remain informational.",
       "exit_code": 0
     },
     {
-      "command": "installed l2_codegraph.safety.post_edit_impact with in-memory reverse-impact budget 50000",
+      "command": "l2_codegraph post_edit_impact with reverse-impact budget 50000",
       "status": "passed",
-      "summary": "Final graph 441c25ca1711d38f8e374c4d: predicted 78, observed 78, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
+      "summary": "Baseline 441c25ca1711d38f8e374c4d to current f52bb0c32307d2bd8af04049: predicted 358, observed 358, unexpected 0, production/test critical 0/0, propagation complete and baseline not reused.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Speech recognition fills the composer for review and never auto-sends.",
+      "criterion": "Unknown operation JSON is parsed into a strict discriminated union before authorization.",
       "status": "passed",
-      "evidence": ["ChatInput microphone lifecycle", "canvas-ai-breath-contract.test.mjs"]
+      "evidence": ["ai-permission.ts strict batch parser", "canvas-ai-permission.test.mjs"]
     },
     {
-      "criterion": "Keyboard prompts remain silent and a microphone-origin request auto-reads one persisted final answer exactly once.",
+      "criterion": "Management permits only reads, evidence focus and derived overlay changes; editing is explicit, session-scoped and expires safely.",
       "status": "passed",
-      "evidence": ["voice-session.ts pure state machine", "awaited AgentHandler completion", "19/19 focused regression"]
+      "evidence": ["permission matrix", "15-minute in-memory grant", "read-only rollback gate"]
     },
     {
-      "criterion": "Partial streams are never spoken and TTS failures leave visible text intact.",
+      "criterion": "Delete, source overwrite and deterministic large geometry changes require confirmation with impact shown before approval.",
       "status": "passed",
-      "evidence": ["final save precedes completeVoiceSession", "stream update policy", "automatic playback failure boundary"]
+      "evidence": ["approval preview ordering", "movement and size thresholds", "11fa74fc"]
     },
     {
-      "criterion": "Speech start, context change, HUD collapse/unmount and replacement playback stop the shared current owner.",
+      "criterion": "Canvas AI proposals stage a preview, revalidate permission, revision, results and collision, then commit atomically or restore the before snapshot.",
       "status": "passed",
-      "evidence": ["CanvasChatHud effects", "shared chat-store session boundary", "WeakMap system utterance ownership", "ReadAloudControl shared snapshot"]
+      "evidence": ["canvas-tools transaction gateway", "SQLite BEGIN IMMEDIATE ledger", "static preview staging"]
     },
     {
-      "criterion": "The low-noise breath exposes explicit AI states with reduced-motion-safe transform, opacity and blur animation only.",
+      "criterion": "Whole AI transactions roll back separately from manual undo and persist no credentials or raw sensitive prompt values.",
       "status": "passed",
-      "evidence": ["canvas-ai-breath.tsx", "canvas-ai-breath-contract.test.mjs"]
+      "evidence": ["canvas-ai-transactions.ts", "hashed/redacted instruction metadata", "rollback tests"]
     },
     {
-      "criterion": "Implementation is committed, independently reviewed and passes regression, production build and L2 gates.",
+      "criterion": "Implementation is committed, independently reviewed and passes regression, production build and exhaustive L2 impact.",
       "status": "passed",
-      "evidence": ["bde36fb9", "independent Task 13 review", "162/162 Canvas", "53-page build", "impact_report.json"]
+      "evidence": ["feda6bf6", "three scoped independent re-reviews", "176/176 Canvas", "53-page build", "impact_report.json"]
     }
   ],
   "passed": [
-    "All Task 13 acceptance criteria",
-    "Independent review findings fixed",
+    "All Task 14 acceptance criteria",
+    "All Critical and Important independent findings fixed",
     "Exhaustive L2 post-edit impact gate"
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Hands-on microphone permission, real system/model TTS interruption and multilingual tooltip behavior remain in the Task 21 Windows checklist.",
-    "Existing Node module-type and Turbopack experimental warnings remain non-blocking."
+    "Hands-on approval interruption, restart expiry and whole-transaction rollback remain in the Task 21 Windows checklist.",
+    "Existing Node module-type, Turbopack and working-tree line-ending notices remain non-blocking."
   ]
 }

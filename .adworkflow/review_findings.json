@@ -1,39 +1,39 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
+  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
   "status": "approved",
-  "reviewer": "independent Task 13 high-risk reviewer; remediation closure verified by main executor tests and final L2 gate",
-  "source_revision": "bde36fb9d9df765a98d0453d23481da75d47bb87",
+  "reviewer": "independent Task 14 high-risk reviewer plus three scoped remediation re-reviews",
+  "source_revision": "feda6bf6ef4a8625d90efbc3316a8958f7604ad5",
   "review_basis": [
     ".adworkflow/task_spec.json",
-    ".adworkflow/context_preflight.json (accepted baseline dc11f36f4b6eb93e6d76fa66)",
-    ".adworkflow/impact_report.json (passed current graph 441c25ca1711d38f8e374c4d)",
-    "Independent review of a85c1118..3241125a and focused remediation review through 86a87f96.",
-    "Closure commits 85776e36 and bde36fb9 plus focused 19/19, Canvas 162/162, TypeScript and production build."
+    ".adworkflow/context_preflight.json (accepted; immutable baseline 441c25ca1711d38f8e374c4d)",
+    ".adworkflow/impact_report.json (passed current graph f52bb0c32307d2bd8af04049)",
+    "Independent review of a1f9a7fb and scoped remediation reviews through feda6bf6.",
+    "Focused 15/15, Canvas 176/176, TypeScript and 53-page production build evidence."
   ],
   "blocking_findings": [],
   "non_blocking_findings": [
     {
-      "id": "hands-on-speech-runtime",
+      "id": "hands-on-ai-transaction-runtime",
       "severity": "non_blocking",
-      "issue": "Browser permission prompts and real system/model audio timing cannot be fully exercised by the Node contract suite.",
-      "expected_fix": "Retain microphone, system voice, model TTS and rapid context-switch scenarios in Task 21 Windows acceptance.",
-      "evidence": "Pure/state/source contracts and exhaustive L2 impact pass; hands-on runtime work remains explicitly scheduled."
+      "issue": "Real approval interruption, application restart and database recovery timing cannot be fully exercised by the Node source-contract suite.",
+      "expected_fix": "Retain management/editing approval, restart expiry and rollback scenarios in Task 21 Windows acceptance.",
+      "evidence": "Focused transaction tests, full Canvas regression and exhaustive L2 impact pass."
     },
     {
-      "id": "module-type-warning",
+      "id": "line-ending-impact-expansion",
       "severity": "non_blocking",
-      "issue": "Node emits the existing MODULE_TYPELESS_PACKAGE_JSON warning for direct TypeScript test imports.",
-      "expected_fix": "Handle package/test-runner module policy outside Task 13.",
-      "evidence": "Focused and complete Canvas suites pass."
+      "issue": "A reverted Task 14 emitter edit retained a byte-level line-ending delta, so file-level L2 propagation required a baseline/current observed-impact expansion.",
+      "expected_fix": "Keep raw-byte graph hashing stable and avoid unrelated repository-wide line-ending normalization.",
+      "evidence": "Final official impact report independently recomputed 358 predicted and observed files with zero unexpected impact."
     }
   ],
   "suggested_tests": [
-    "Exercise microphone permission denial, STT review/edit/send, rapid canvas/session switching, final-persistence steering, system utterance cancellation and model TTS replacement in Task 21 Windows acceptance."
+    "Exercise approval denial, steering, stop, editing-session expiry, application restart, stale-document rejection and whole-transaction rollback in Task 21 Windows acceptance."
   ],
   "risk_notes": [
-    "Independent review found an unawaited completion race, mutable request ownership, stale system utterance callbacks, origin/session leaks and missing mobile stop behavior; all were fixed through 86a87f96.",
-    "Focused remediation review found final-persistence steering loss and callback-error misclassification; 85776e36 and bde36fb9 added finalizing ownership, persistence-gated auto-read and callback-error isolation.",
+    "The initial review found five Important permission/transaction defects and two Minor schema inconsistencies; all were fixed in a04f91ac and 11fa74fc with clean scoped re-review.",
+    "L2 review then found and fixed the database initialization cycle in f85eacf3 and dynamic preview-store dispatch in feda6bf6.",
     "The final L2 report has zero unexpected impact, zero new production/test critical edges, complete propagation and no reused baseline."
   ]
 }

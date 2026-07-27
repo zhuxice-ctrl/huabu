@@ -51,3 +51,8 @@ Task 13: L2 structural corrections (prompt-origin setters, speech actions and Pr
 Task 13: review fix round 1/5 (one Critical, four Important and two Minor voice/session findings addressed; commit 86a87f96)
 Task 13: review fix round 2/5 (final-persistence steering and callback-failure isolation addressed; commits 85776e36..bde36fb9)
 Task 13: complete (commits 7ec1d766..bde36fb9, independent findings resolved; focused 19/19, Canvas 162/162, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at 441c25ca1711d38f8e374c4d with predicted/observed 78/78, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
+Task 14: started (base fb7b18f9; accepted expanded L2 preflight at 441c25ca1711d38f8e374c4d)
+Task 14: fix round 1/5 (five Important permission/transaction findings and two Minor schema findings addressed; commits a1f9a7fb..a04f91ac; scoped re-review clean)
+Task 14: fix round 2/5 (approval impact ordering addressed; commit 11fa74fc; scoped re-review clean)
+Task 14: L2 structural corrections (database initializer cycle and dynamic preview-store dispatch replaced with static leaf boundaries; commits f85eacf3..feda6bf6; scoped re-reviews clean)
+Task 14: complete (commits fb7b18f9..feda6bf6, independent findings resolved; focused 15/15, Canvas 176/176, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at f52bb0c32307d2bd8af04049 with predicted/observed 358/358, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)

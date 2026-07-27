@@ -1,10 +1,10 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
+  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
   "status": "accepted",
-  "graph_revision": "dc11f36f4b6eb93e6d76fa66",
-  "slice_revision": "dc11f36f4b6eb93e6d76fa66",
-  "confidence": 1.0,
+  "graph_revision": "f52bb0c32307d2bd8af04049",
+  "slice_revision": "f52bb0c32307d2bd8af04049",
+  "confidence": 0.942,
   "confidence_threshold": 0.8,
   "freshness": {
     "fresh": true,
@@ -23,7 +23,7 @@
         "source_ranges",
         "unresolved_edges"
       ],
-      "implementation_identity": "956d7372dd6d7d0a484bdeb2277832282caeac439116e70d9b4927b98b96c18a",
+      "implementation_identity": "b500ea5a0f4d47f19679ab4a7d816784b6fe39ea11d0f26cb6700fa576e5e2d1",
       "languages": [
         "javascript",
         "typescript"

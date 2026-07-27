@@ -1,61 +1,78 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
+  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
   "status": "verified",
-  "revision": 8,
+  "revision": 11,
   "done": [
-    "Added reviewed speech-to-composer input with per-request keyboard or microphone origin and no automatic send.",
-    "Added final-answer-only microphone auto-read, one shared playback owner and shared stop behavior for speech start, HUD collapse, context change and replacement playback.",
-    "Added the reduced-motion-safe AI breath indicator and passed focused tests, Canvas regression, TypeScript and production build.",
-    "Replaced React setter and destructured speech-action dynamic dispatch with request-local refs and static store boundaries after the first L2 impact run.",
-    "Resolved all independent Critical/Important/Minor review findings, including final-persistence steering, callback failure isolation and utterance ownership races."
+    "Implemented strict all-or-nothing parsing and the management/editing permission matrix with an expiring in-memory editing grant.",
+    "Added preview-first atomic SQLite transactions, separate overlay-operation persistence and whole-transaction rollback outside manual undo.",
+    "Revalidated permission, document revision, operation results and geometry inside the SQL transaction and removed direct agent-path updateDocument mutation.",
+    "Closed all independent review findings, including preview cleanup, read-only rollback, stale editor snapshots and approval impact ordering.",
+    "Moved the shared SQLite handle to a leaf client module so the AI ledger initializer is statically imported without an index initialization cycle.",
+    "Moved preview baseline staging behind a statically imported store-module boundary while preserving stale-save cancellation and durable-write ordering.",
+    "Passed focused tests, the 176-test Canvas suite, TypeScript, production build and scoped independent re-reviews.",
+    "Passed exhaustive post-edit L2 impact after reconciling baseline/current file-level propagation with 358 predicted and observed consumers."
   ],
   "changed_files": [
-    "scripts/tests/canvas-ai-breath-contract.test.mjs",
-    "scripts/tests/canvas-voice-session.test.mjs",
-    "src/app/core/main/chat/canvas-ai-breath.tsx",
-    "src/app/core/main/chat/canvas-chat-hud.tsx",
-    "src/app/core/main/chat/chat-input.tsx",
-    "src/app/core/main/chat/chat-send.tsx",
-    "src/app/core/main/chat/message-control/read-aloud-control.tsx",
-    "src/lib/agent/agent-handler.ts",
-    "src/lib/audio.ts",
-    "src/lib/chat/voice-session.ts",
-    "src/stores/chat-hud.ts",
-    "src/stores/chat.ts",
-    "src/stores/speech-recognition.ts"
+    "scripts/tests/canvas-ai-permission.test.mjs",
+    "scripts/tests/canvas-ai-transaction.test.mjs",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/chat/agent-permission-mode.tsx",
+    "src/db/canvas-ai-transactions.ts",
+    "src/db/client.ts",
+    "src/db/index.ts",
+    "src/lib/agent/permission-engine.ts",
+    "src/lib/agent/runtime.ts",
+    "src/lib/agent/tool-confirmation-display.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/agent/types.ts",
+    "src/lib/canvas/ai-permission.ts",
+    "src/lib/canvas/ai-transaction.ts",
+    "src/lib/canvas/operations.ts",
+    "src/lib/emitter.ts",
+    "src/stores/canvas.ts",
+    "src/stores/setting.ts"
   ],
   "current_problem": null,
-  "next_action": null,
+  "next_action": "Start Task 15 with a fresh task specification and accepted L2 preflight.",
   "must_keep_context": [
-    ".adworkflow/context_preflight.json (accepted baseline dc11f36f4b6eb93e6d76fa66)",
-    "Task 13 product commits 7ec1d766 and 15f61231",
-    "The shared audio frontier is expected to include existing chat, recording and shell consumers."
+    ".adworkflow/context_preflight.json accepted the immutable Task 14 baseline graph 441c25ca1711d38f8e374c4d.",
+    "Task 14 product commits span a1f9a7fb through feda6bf6.",
+    "The AI overlay-operation table is a Task 14 transaction boundary; Task 15 owns the durable derived-overlay lifecycle."
   ],
   "discarded_context": [
-    "The first post-edit impact used stale Task 12 worker_state declarations and was retained only as diagnostic evidence.",
-    "Seven new dynamic-dispatch edges from prompt-origin setters and speech actions were removed before final impact verification."
+    "The first Task 14 post-edit report used stale Task 13 declared files and pre-fix dynamic edges, so it is diagnostic only.",
+    "Previously reported editor setters, permission setters, tool.authorize and editing-session listener dynamic edges were removed before the final run."
   ],
   "remaining_risks": [
-    "Hands-on microphone permission, system voice and TTS interruption behavior remains in the Task 21 Windows checklist.",
-    "The shared audio reverse-impact frontier requires the 50000 propagation budget wrapper."
+    "Hands-on management/editing approval and rollback behavior remains in the Task 21 Windows checklist.",
+    "Hands-on approval interruption, restart expiry and transaction rollback remain in the Task 21 Windows checklist."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": [
     {
-      "reason": "The first exhaustive post-edit impact exposed the existing shared audio and chat consumer frontier.",
-      "result": "Recorded the observed frontier as predicted for the corrected final impact run."
+      "relation": "callees",
+      "targets": [
+        "typescript:src.lib.agent.tools.canvas-tools:applyCanvasOperationsTool:variable",
+        "typescript:src.lib.canvas.operations:applyCanvasOperations:function"
+      ],
+      "depth": 10,
+      "budget": 5000,
+      "reason": "The initial slice reached its item/depth budget inside deterministic AI sizing helpers; Task 14 needed a complete mutation and validation callee frontier before editing the atomic gateway.",
+      "requested_by": "main-solo-executor",
+      "graph_revision": "441c25ca1711d38f8e374c4d",
+      "preflight_status": "accepted"
     }
   ],
-  "source_revision": "bde36fb9d9df765a98d0453d23481da75d47bb87",
+  "source_revision": "feda6bf6ef4a8625d90efbc3316a8958f7604ad5",
   "context_preflight": {
     "status": "accepted",
-    "graph_revision": "dc11f36f4b6eb93e6d76fa66"
+    "graph_revision": "441c25ca1711d38f8e374c4d"
   },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "441c25ca1711d38f8e374c4d",
+    "graph_revision": "f52bb0c32307d2bd8af04049",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }

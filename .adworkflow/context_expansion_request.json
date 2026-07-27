@@ -1,16 +1,16 @@
 {
   "schema": "ADworkflo.context_expansion_request.v1",
-  "task_id": "zeroxb-integrated-task-09-rich-media",
-  "status": "rejected",
-  "relation": "callers",
+  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
+  "status": "applied",
+  "relation": "callees",
   "targets": [
-    "typescript:src.types.canvas:CanvasNodeType:type",
-    "typescript:src.types.canvas:CanvasNodeData:interface"
+    "typescript:src.lib.agent.tools.canvas-tools:applyCanvasOperationsTool:variable",
+    "typescript:src.lib.canvas.operations:applyCanvasOperations:function"
   ],
-  "depth": 12,
-  "budget": 50000,
-  "reason": "Rejected after the first-party expansion widened the worker slice into unrelated application dynamic-dispatch edges. Exhaustive post-edit propagation is instead recorded as an explicit predicted impact set for review without expanding implementation context.",
-  "requested_by": "orchestrator",
-  "source_graph_revision": "32d05f0651ee3919b4379f9b",
-  "applied_slice_revision": null
+  "depth": 10,
+  "budget": 5000,
+  "reason": "The initial slice reached its item/depth budget inside deterministic AI sizing helpers; Task 14 needs a complete mutation and validation callee frontier before editing the atomic gateway.",
+  "requested_by": "main-solo-executor",
+  "source_graph_revision": "441c25ca1711d38f8e374c4d",
+  "applied_slice_revision": "441c25ca1711d38f8e374c4d"
 }
