@@ -20,7 +20,7 @@ function activeGeneration(overrides = {}) {
     generation: {
       conversationId: 1,
       assistantChatId: 10,
-      abort: async () => {},
+      abortController: new AbortController(),
       closed: closed.promise,
       ...overrides,
     },
@@ -28,110 +28,69 @@ function activeGeneration(overrides = {}) {
   }
 }
 
-test('switch waits for abort, close, interrupted persistence, and clear in order', async () => {
-  const { createGenerationTransactionCoordinator } = await import(moduleUrl.href)
-  const events = []
-  const { generation, closed } = activeGeneration({
-    abort: async () => events.push('abort'),
-  })
-  let current = generation
-  const coordinator = createGenerationTransactionCoordinator({
-    getActive: () => current,
-    persistInterrupted: async active => events.push(`persist:${active.assistantChatId}`),
-    clearActive: active => {
-      events.push(`clear:${active.assistantChatId}`)
-      if (current === active) current = null
-    },
-    switchConversation: async id => events.push(`switch:${id}`),
-    createConversation: async options => events.push(`create:${options.temporary}`),
-    deleteConversation: async id => events.push(`delete:${id}`),
-  })
-
-  const switching = coordinator.stopAndSwitch(2)
-  await Promise.resolve()
-  assert.deepEqual(events, ['abort'])
-  closed.resolve()
-  await switching
-  assert.deepEqual(events, ['abort', 'persist:10', 'clear:10', 'switch:2'])
+test('switch plans abort, close, interrupted persistence, clear, and target in order', async () => {
+  const { planGenerationTransaction } = await import(moduleUrl.href)
+  const { generation } = activeGeneration()
+  assert.deepEqual(
+    planGenerationTransaction({ type: 'switch', conversationId: 2 }, generation)
+      .map(command => command.type),
+    ['abort', 'await-closed', 'persist-interrupted', 'clear-active', 'switch'],
+  )
 })
 
-test('abort failure preserves the active generation and skips the target action', async () => {
-  const { createGenerationTransactionCoordinator } = await import(moduleUrl.href)
+test('an abort failure stops command execution before persistence and target action', async () => {
+  const { planGenerationTransaction } = await import(moduleUrl.href)
+  const { generation } = activeGeneration()
   const events = []
   const failure = new Error('abort failed')
-  const { generation } = activeGeneration({ abort: async () => { throw failure } })
-  let current = generation
-  const coordinator = createGenerationTransactionCoordinator({
-    getActive: () => current,
-    persistInterrupted: async () => events.push('persist'),
-    clearActive: () => { current = null },
-    switchConversation: async () => events.push('switch'),
-    createConversation: async () => events.push('create'),
-    deleteConversation: async () => events.push('delete'),
-  })
 
-  await assert.rejects(coordinator.stopAndSwitch(2), failure)
-  assert.equal(current, generation)
+  await assert.rejects(async () => {
+    for (const command of planGenerationTransaction({ type: 'switch', conversationId: 2 }, generation)) {
+      if (command.type === 'abort') throw failure
+      events.push(command.type)
+    }
+  }, failure)
   assert.deepEqual(events, [])
 })
 
-test('deleting a non-active conversation never stops the active stream', async () => {
-  const { createGenerationTransactionCoordinator } = await import(moduleUrl.href)
-  const events = []
-  const { generation } = activeGeneration({ abort: async () => events.push('abort') })
-  const coordinator = createGenerationTransactionCoordinator({
-    getActive: () => generation,
-    persistInterrupted: async () => events.push('persist'),
-    clearActive: () => events.push('clear'),
-    switchConversation: async () => events.push('switch'),
-    createConversation: async () => events.push('create'),
-    deleteConversation: async id => events.push(`delete:${id}`),
-  })
-
-  await coordinator.stopAndDelete(2)
-  assert.deepEqual(events, ['delete:2'])
+test('deleting a non-active conversation never plans stream cancellation', async () => {
+  const { planGenerationTransaction } = await import(moduleUrl.href)
+  const { generation } = activeGeneration()
+  assert.deepEqual(
+    planGenerationTransaction({ type: 'delete', conversationId: 2 }, generation),
+    [{ type: 'delete', conversationId: 2 }],
+  )
 })
 
-test('repeated create requests share one serialized transaction', async () => {
-  const { createGenerationTransactionCoordinator } = await import(moduleUrl.href)
+test('repeated identical requests share one serialized transaction', async () => {
+  const {
+    createGenerationTransactionCoordinator,
+    enqueueGenerationTransaction,
+  } = await import(moduleUrl.href)
+  const coordinator = createGenerationTransactionCoordinator()
+  const gate = deferred()
   const events = []
-  const { generation, closed } = activeGeneration({ abort: async () => events.push('abort') })
-  let current = generation
-  const coordinator = createGenerationTransactionCoordinator({
-    getActive: () => current,
-    persistInterrupted: async () => events.push('persist'),
-    clearActive: () => { current = null; events.push('clear') },
-    switchConversation: async () => events.push('switch'),
-    createConversation: async options => events.push(`create:${options.temporary}`),
-    deleteConversation: async () => events.push('delete'),
-  })
+  const operation = async () => {
+    events.push('started')
+    await gate.promise
+    events.push('completed')
+  }
 
-  const first = coordinator.stopAndCreate({ temporary: true })
-  const second = coordinator.stopAndCreate({ temporary: true })
-  closed.resolve()
+  const first = enqueueGenerationTransaction(coordinator, 'create:true', operation)
+  const second = enqueueGenerationTransaction(coordinator, 'create:true', operation)
+  assert.equal(first, second)
+  gate.resolve()
   await Promise.all([first, second])
-  assert.deepEqual(events, ['abort', 'persist', 'clear', 'create:true'])
+  assert.deepEqual(events, ['started', 'completed'])
 })
 
-test('delete-current and explicit stop persist partial output exactly once', async () => {
-  const { createGenerationTransactionCoordinator } = await import(moduleUrl.href)
-  const events = []
-  const { generation, closed } = activeGeneration({ abort: async () => events.push('abort') })
-  let current = generation
-  const coordinator = createGenerationTransactionCoordinator({
-    getActive: () => current,
-    persistInterrupted: async active => events.push(`persist:${active.assistantChatId}`),
-    clearActive: () => { current = null; events.push('clear') },
-    switchConversation: async () => events.push('switch'),
-    createConversation: async () => events.push('create'),
-    deleteConversation: async id => events.push(`delete:${id}`),
-  })
-
-  const deletion = coordinator.stopAndDelete(1)
-  closed.resolve()
-  await deletion
-  await coordinator.stopActive()
-  assert.deepEqual(events, ['abort', 'persist:10', 'clear', 'delete:1'])
+test('delete-current and explicit stop each plan partial persistence at most once', async () => {
+  const { planGenerationTransaction } = await import(moduleUrl.href)
+  const { generation } = activeGeneration()
+  const deletion = planGenerationTransaction({ type: 'delete', conversationId: 1 }, generation)
+  const stoppedAfterClear = planGenerationTransaction({ type: 'stop' }, null)
+  assert.equal(deletion.filter(command => command.type === 'persist-interrupted').length, 1)
+  assert.equal(stoppedAfterClear.filter(command => command.type === 'persist-interrupted').length, 0)
 })
 
 test('protected history actions expose explicit stop-and-target confirmation copy', async () => {
@@ -142,7 +101,7 @@ test('protected history actions expose explicit stop-and-target confirmation cop
   assert.match(getGenerationConfirmationMessage('temporary'), /停止生成并进入临时对话/)
 })
 
-test('chat store owns generation lifetime and every conversation action uses the coordinator', async () => {
+test('chat store owns generation lifetime and routes protected actions through static boundaries', async () => {
   const root = new URL('../../', import.meta.url)
   const [store, send, history] = await Promise.all([
     readFile(new URL('src/stores/chat.ts', root), 'utf8'),
@@ -150,16 +109,18 @@ test('chat store owns generation lifetime and every conversation action uses the
     readFile(new URL('src/app/core/main/chat/history-dropdown.tsx', root), 'utf8'),
   ])
   assert.match(store, /activeGeneration: ActiveGeneration \| null/)
-  assert.match(store, /stopAndSwitch\(id\)/)
-  assert.match(store, /stopAndCreate\(\{ temporary: false \}\)/)
-  assert.match(store, /stopAndCreate\(\{ temporary: true \}\)/)
-  assert.match(store, /stopAndDelete\(id\)/)
+  assert.match(store, /enqueueProtectedGenerationAction\(\{ type: 'switch'/)
+  assert.match(store, /enqueueProtectedGenerationAction\(\{ type: 'create', temporary: false \}\)/)
+  assert.match(store, /enqueueProtectedGenerationAction\(\{ type: 'create', temporary: true \}\)/)
+  assert.match(store, /enqueueProtectedGenerationAction\(\{ type: 'delete'/)
   assert.match(store, /window\.confirm\(getGenerationConfirmationMessage\(action\)\)/)
   assert.match(store, /confirmGenerationAction\('switch'\)/)
-  assert.match(send, /registerActiveGeneration\(\{/)
+  assert.match(send, /registerActiveChatGeneration\(\{/)
+  assert.match(send, /abortController: generationAbortController/)
   assert.match(send, /closed,/)
-  assert.match(send, /await stopActiveGeneration\(\)/)
+  assert.match(send, /await stopActiveChatGeneration\(\)/)
   assert.equal(send.match(/\}, !transactionStopRequested\)/g)?.length, 2)
   assert.doesNotMatch(send, /abortControllerRef/)
   assert.match(store, /getGenerationConfirmationMessage/)
+  assert.match(history, /onSwitch/)
 })

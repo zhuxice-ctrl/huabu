@@ -1,11 +1,31 @@
 export interface ActiveGeneration {
   conversationId: number | null
   assistantChatId: number
-  abort: () => Promise<void>
+  abortController: AbortController
   closed: Promise<void>
 }
 
 export type GenerationProtectedAction = 'switch' | 'delete' | 'create' | 'temporary'
+
+export type GenerationTransactionAction =
+  | { type: 'stop' }
+  | { type: 'switch'; conversationId: number }
+  | { type: 'create'; temporary: boolean }
+  | { type: 'delete'; conversationId: number }
+
+export type GenerationTransactionCommand =
+  | { type: 'abort'; generation: ActiveGeneration }
+  | { type: 'await-closed'; generation: ActiveGeneration }
+  | { type: 'persist-interrupted'; generation: ActiveGeneration }
+  | { type: 'clear-active'; generation: ActiveGeneration }
+  | { type: 'switch'; conversationId: number }
+  | { type: 'create'; temporary: boolean }
+  | { type: 'delete'; conversationId: number }
+
+export interface GenerationTransactionCoordinator {
+  chain: Promise<void>
+  inFlight: Map<string, Promise<void>>
+}
 
 export function getGenerationConfirmationMessage(action: GenerationProtectedAction) {
   switch (action) {
@@ -20,73 +40,74 @@ export function getGenerationConfirmationMessage(action: GenerationProtectedActi
   }
 }
 
-interface GenerationTransactionDependencies {
-  getActive: () => ActiveGeneration | null
-  persistInterrupted: (generation: ActiveGeneration) => Promise<void>
-  clearActive: (generation: ActiveGeneration) => void
-  switchConversation: (id: number) => Promise<void>
-  createConversation: (options: { temporary: boolean }) => Promise<void>
-  deleteConversation: (id: number) => Promise<void>
+export function getGenerationTransactionKey(action: GenerationTransactionAction) {
+  switch (action.type) {
+    case 'switch':
+      return `switch:${action.conversationId}`
+    case 'create':
+      return `create:${action.temporary}`
+    case 'delete':
+      return `delete:${action.conversationId}`
+    default:
+      return 'stop-active'
+  }
 }
 
-export function createGenerationTransactionCoordinator(
-  dependencies: GenerationTransactionDependencies,
-) {
-  let chain: Promise<void> = Promise.resolve()
-  const inFlight = new Map<string, Promise<void>>()
+export function planGenerationTransaction(
+  action: GenerationTransactionAction,
+  active: ActiveGeneration | null,
+): GenerationTransactionCommand[] {
+  const commands: GenerationTransactionCommand[] = []
+  const stopsActive = Boolean(active) && (
+    action.type !== 'delete' || active?.conversationId === action.conversationId
+  )
 
-  const enqueueUnique = (key: string, operation: () => Promise<void>) => {
-    const existing = inFlight.get(key)
-    if (existing) return existing
-
-    const scheduled = chain.then(operation)
-    chain = scheduled.catch(() => undefined)
-    inFlight.set(key, scheduled)
-
-    const clear = () => {
-      if (inFlight.get(key) === scheduled) inFlight.delete(key)
-    }
-    void scheduled.then(clear, clear)
-    return scheduled
+  if (active && stopsActive) {
+    commands.push(
+      { type: 'abort', generation: active },
+      { type: 'await-closed', generation: active },
+      { type: 'persist-interrupted', generation: active },
+      { type: 'clear-active', generation: active },
+    )
   }
 
-  const stopGeneration = async (generation: ActiveGeneration) => {
-    await generation.abort()
-    await generation.closed
-    await dependencies.persistInterrupted(generation)
-    dependencies.clearActive(generation)
+  switch (action.type) {
+    case 'switch':
+      commands.push({ type: 'switch', conversationId: action.conversationId })
+      break
+    case 'create':
+      commands.push({ type: 'create', temporary: action.temporary })
+      break
+    case 'delete':
+      commands.push({ type: 'delete', conversationId: action.conversationId })
+      break
   }
 
+  return commands
+}
+
+export function createGenerationTransactionCoordinator(): GenerationTransactionCoordinator {
   return {
-    stopActive() {
-      return enqueueUnique('stop-active', async () => {
-        const active = dependencies.getActive()
-        if (active) await stopGeneration(active)
-      })
-    },
-
-    stopAndSwitch(id: number) {
-      return enqueueUnique(`switch:${id}`, async () => {
-        const active = dependencies.getActive()
-        if (active) await stopGeneration(active)
-        await dependencies.switchConversation(id)
-      })
-    },
-
-    stopAndCreate(options: { temporary: boolean }) {
-      return enqueueUnique(`create:${options.temporary}`, async () => {
-        const active = dependencies.getActive()
-        if (active) await stopGeneration(active)
-        await dependencies.createConversation(options)
-      })
-    },
-
-    stopAndDelete(id: number) {
-      return enqueueUnique(`delete:${id}`, async () => {
-        const active = dependencies.getActive()
-        if (active?.conversationId === id) await stopGeneration(active)
-        await dependencies.deleteConversation(id)
-      })
-    },
+    chain: Promise.resolve(),
+    inFlight: new Map<string, Promise<void>>(),
   }
+}
+
+export function enqueueGenerationTransaction(
+  coordinator: GenerationTransactionCoordinator,
+  key: string,
+  operation: () => Promise<void>,
+) {
+  const existing = coordinator.inFlight.get(key)
+  if (existing) return existing
+
+  const scheduled = coordinator.chain.then(operation)
+  coordinator.chain = scheduled.catch(() => undefined)
+  coordinator.inFlight.set(key, scheduled)
+
+  const clear = () => {
+    if (coordinator.inFlight.get(key) === scheduled) coordinator.inFlight.delete(key)
+  }
+  void scheduled.then(clear, clear)
+  return scheduled
 }

@@ -1,7 +1,11 @@
 "use client"
 import { Send, Square } from "lucide-react"
 import useSettingStore from "@/stores/setting"
-import useChatStore from "@/stores/chat"
+import useChatStore, {
+  finishActiveChatGeneration,
+  registerActiveChatGeneration,
+  stopActiveChatGeneration,
+} from "@/stores/chat"
 import useTagStore from "@/stores/tag"
 import { TooltipButton } from "@/components/tooltip-button"
 import { useImperativeHandle, forwardRef, useRef, useEffect } from "react"
@@ -86,9 +90,6 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
     setAgentState,
     maybeCondense,
     linkedResourcePreview,
-    registerActiveGeneration,
-    finishActiveGeneration,
-    stopActiveGeneration,
   } = useChatStore()
   const { isRagEnabled } = useVectorStore()
   const agentHandlerRef = useRef<AgentHandler | null>(null)
@@ -380,7 +381,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
       if (generationClosed) return
       generationClosed = true
       if (!transactionStopRequested) {
-        finishActiveGeneration(placeholderMessage.id)
+        finishActiveChatGeneration(placeholderMessage.id)
       }
       resolveClosed()
     }
@@ -585,18 +586,21 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
 
     // 保存到 ref
     agentHandlerRef.current = agentHandler
-    registerActiveGeneration({
+    const generationAbortController = new AbortController()
+    generationAbortController.signal.addEventListener('abort', () => {
+      transactionStopRequested = true
+      manualStopRequestedRef.current = true
+      activeRunRef.current = false
+      pendingSteeringRef.current = []
+      if (agentHandlerRef.current === agentHandler) {
+        agentHandler.stop()
+      }
+    }, { once: true })
+
+    registerActiveChatGeneration({
       conversationId: placeholderMessage.conversationId ?? null,
       assistantChatId: placeholderMessage.id,
-      abort: async () => {
-        transactionStopRequested = true
-        manualStopRequestedRef.current = true
-        activeRunRef.current = false
-        pendingSteeringRef.current = []
-        if (agentHandlerRef.current === agentHandler) {
-          agentHandler.stop()
-        }
-      },
+      abortController: generationAbortController,
       closed,
     })
     for (const payload of pendingSteeringRef.current.splice(0)) {
@@ -947,7 +951,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
 
   const handleStop = async () => {
     try {
-      await stopActiveGeneration()
+      await stopActiveChatGeneration()
       setLoading(false)
     } catch (error) {
       console.error('Failed to stop active generation:', error)

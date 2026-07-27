@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { MessageSquareDashed, MessageSquarePlus, ChevronDown, Search, Trash2 } from "lucide-react"
 import { TooltipButton } from "@/components/tooltip-button"
-import useChatStore from "@/stores/chat"
+import useChatStore, { startTemporaryChatConversation } from "@/stores/chat"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -30,7 +30,6 @@ function formatRelativeTime(timestamp: number, locale: string): string {
 export function ChatHeader() {
   const {
     startNewConversation,
-    startTemporaryConversation,
     conversations,
     currentConversationId,
     isTemporaryConversation,
@@ -162,7 +161,7 @@ export function ChatHeader() {
           icon={<MessageSquareDashed />}
           tooltipText={t('record.chat.input.temporaryChat')}
           side="bottom"
-          onClick={() => void startTemporaryConversation()}
+          onClick={() => void startTemporaryChatConversation()}
           disabled={isTemporaryConversation}
           variant={isTemporaryConversation ? 'secondary' : 'ghost'}
         />

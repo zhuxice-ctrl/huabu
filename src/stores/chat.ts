@@ -13,12 +13,22 @@ import { locales } from '@/lib/locales';
 import { AgentState, ToolCall } from '@/lib/agent/types'
 import { LinkedResource } from '@/lib/files'
 import type { Conversation } from '@/db/conversations'
+import {
+  deleteConversation as deleteConversationRecord,
+  getAllConversations,
+  getConversation,
+  syncConversationMessageCount,
+} from '@/db/conversations'
 import { S3Config, WebDAVConfig } from '@/types/sync'
 import {
   createGenerationTransactionCoordinator,
+  enqueueGenerationTransaction,
+  getGenerationTransactionKey,
   getGenerationConfirmationMessage,
+  planGenerationTransaction,
   type ActiveGeneration,
   type GenerationProtectedAction,
+  type GenerationTransactionAction,
 } from '@/lib/chat/generation-transaction'
 
 export interface PendingQuote {
@@ -161,30 +171,7 @@ interface ChatState {
 
 let nextTemporaryChatId = -1
 
-let generationCoordinator: ReturnType<typeof createGenerationTransactionCoordinator> | null = null
-
-function getGenerationCoordinator() {
-  if (generationCoordinator) return generationCoordinator
-
-  generationCoordinator = createGenerationTransactionCoordinator({
-    getActive: () => useChatStore.getState().activeGeneration,
-    persistInterrupted: async (generation) => {
-      const state = useChatStore.getState()
-      const chat = state.chats.find(item => item.id === generation.assistantChatId)
-      if (!chat) return
-      await state.saveChat({ ...chat, completionState: 'interrupted' }, true)
-    },
-    clearActive: generation => {
-      useChatStore.getState().finishActiveGeneration(generation.assistantChatId)
-    },
-    switchConversation: id => useChatStore.getState()._switchConversationNow(id),
-    createConversation: options => options.temporary
-      ? useChatStore.getState()._startTemporaryConversationNow()
-      : useChatStore.getState()._startNewConversationNow(),
-    deleteConversation: id => useChatStore.getState()._deleteConversationNow(id),
-  })
-  return generationCoordinator
-}
+const generationCoordinator = createGenerationTransactionCoordinator()
 
 function confirmGenerationAction(
   action: GenerationProtectedAction,
@@ -199,6 +186,191 @@ function confirmGenerationAction(
     && window.confirm(getGenerationConfirmationMessage(action))
 }
 
+function resetConversationRuntime(isTemporaryConversation: boolean) {
+  useChatStore.setState(state => ({
+    currentConversationId: null,
+    chats: [],
+    isTemporaryConversation,
+    pendingQuote: null,
+    editorSelectionQuote: null,
+    agentAutoApproveConversationId: null,
+    agentAutoApproveRuntimeScriptKey: null,
+    mcpToolCalls: [],
+    agentState: {
+      ...state.agentState,
+      activeChatId: undefined,
+      runId: undefined,
+      status: 'idle',
+      isRunning: false,
+      isThinking: false,
+      currentThought: '',
+      thoughtHistory: [],
+      completedSteps: [],
+      currentAction: '',
+      currentObservation: '',
+      toolCalls: [],
+      traceEvents: [],
+      changes: [],
+      maxIterations: 15,
+      currentIteration: 0,
+      pendingConfirmation: undefined,
+      confirmationHistory: [],
+      loadedSkills: undefined,
+      selectedSkills: undefined,
+      currentStepStartTime: undefined,
+      isFinalAnswerMode: false,
+      finalAnswerContent: undefined,
+    },
+  }))
+}
+
+async function refreshConversationsNow() {
+  const conversations = await getAllConversations()
+  useChatStore.setState({ conversations })
+}
+
+async function switchConversationNow(id: number) {
+  await syncConversationMessageCount(id)
+  const chats = await getChatsByConversation(id)
+  useChatStore.setState({
+    currentConversationId: id,
+    chats,
+    isTemporaryConversation: false,
+    pendingQuote: null,
+    editorSelectionQuote: null,
+  })
+  await refreshConversationsNow()
+}
+
+async function deleteConversationNow(id: number) {
+  await deleteConversationRecord(id)
+  const { currentConversationId, conversations } = useChatStore.getState()
+
+  if (id === currentConversationId) {
+    const remainingConversations = conversations.filter(conversation => conversation.id !== id)
+    if (remainingConversations.length > 0) {
+      await switchConversationNow(remainingConversations[0].id)
+    } else {
+      resetConversationRuntime(false)
+    }
+  }
+
+  await refreshConversationsNow()
+}
+
+async function startNewConversationNow() {
+  const { currentConversationId } = useChatStore.getState()
+  if (currentConversationId) {
+    const currentConversation = await getConversation(currentConversationId)
+    if (currentConversation?.messageCount === 0) {
+      await deleteConversationRecord(currentConversationId)
+    }
+    await refreshConversationsNow()
+  }
+  resetConversationRuntime(false)
+}
+
+async function startTemporaryConversationNow() {
+  resetConversationRuntime(true)
+}
+
+function requestGenerationAbort(generation: ActiveGeneration) {
+  generation.abortController.abort()
+}
+
+async function persistInterruptedGeneration(generation: ActiveGeneration) {
+  const state = useChatStore.getState()
+  const chat = state.chats.find(item => item.id === generation.assistantChatId)
+  if (!chat) return
+
+  const interruptedChat = { ...chat, completionState: 'interrupted' as const }
+  useChatStore.setState(current => ({
+    chats: current.chats.map(item => item.id === interruptedChat.id ? interruptedChat : item),
+  }))
+  if (!state.isTemporaryConversation) await updateChat(interruptedChat)
+}
+
+export function registerActiveChatGeneration(activeGeneration: ActiveGeneration) {
+  useChatStore.setState({ activeGeneration })
+}
+
+export function finishActiveChatGeneration(assistantChatId: number) {
+  useChatStore.setState(state => (
+    state.activeGeneration?.assistantChatId === assistantChatId
+      ? { activeGeneration: null }
+      : state
+  ))
+}
+
+async function executeGenerationTransaction(action: GenerationTransactionAction) {
+  const active = useChatStore.getState().activeGeneration
+  const commands = planGenerationTransaction(action, active)
+
+  for (const command of commands) {
+    switch (command.type) {
+      case 'abort':
+        requestGenerationAbort(command.generation)
+        break
+      case 'await-closed':
+        await command.generation.closed
+        break
+      case 'persist-interrupted':
+        await persistInterruptedGeneration(command.generation)
+        break
+      case 'clear-active':
+        finishActiveChatGeneration(command.generation.assistantChatId)
+        break
+      case 'switch':
+        await switchConversationNow(command.conversationId)
+        break
+      case 'create':
+        if (command.temporary) await startTemporaryConversationNow()
+        else await startNewConversationNow()
+        break
+      case 'delete':
+        await deleteConversationNow(command.conversationId)
+        break
+    }
+  }
+}
+
+function enqueueProtectedGenerationAction(action: GenerationTransactionAction) {
+  const key = getGenerationTransactionKey(action)
+  return enqueueGenerationTransaction(
+    generationCoordinator,
+    key,
+    () => executeGenerationTransaction(action),
+  )
+}
+
+export function stopActiveChatGeneration() {
+  return enqueueProtectedGenerationAction({ type: 'stop' })
+}
+
+export function switchChatConversation(id: number) {
+  return confirmGenerationAction('switch')
+    ? enqueueProtectedGenerationAction({ type: 'switch', conversationId: id })
+    : Promise.resolve()
+}
+
+export function deleteChatConversation(id: number) {
+  return confirmGenerationAction('delete', id)
+    ? enqueueProtectedGenerationAction({ type: 'delete', conversationId: id })
+    : Promise.resolve()
+}
+
+export function startNewChatConversation() {
+  return confirmGenerationAction('create')
+    ? enqueueProtectedGenerationAction({ type: 'create', temporary: false })
+    : Promise.resolve()
+}
+
+export function startTemporaryChatConversation() {
+  return confirmGenerationAction('temporary')
+    ? enqueueProtectedGenerationAction({ type: 'create', temporary: true })
+    : Promise.resolve()
+}
+
 const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
 
@@ -207,13 +379,9 @@ const useChatStore = create<ChatState>((set, get) => ({
   },
 
   activeGeneration: null,
-  registerActiveGeneration: (activeGeneration) => set({ activeGeneration }),
-  finishActiveGeneration: (assistantChatId) => set(state => (
-    state.activeGeneration?.assistantChatId === assistantChatId
-      ? { activeGeneration: null }
-      : state
-  )),
-  stopActiveGeneration: () => getGenerationCoordinator().stopActive(),
+  registerActiveGeneration: registerActiveChatGeneration,
+  finishActiveGeneration: finishActiveChatGeneration,
+  stopActiveGeneration: stopActiveChatGeneration,
 
   isCondensing: false,
   _condenseLock: false,
@@ -835,27 +1003,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     return id
   },
 
-  switchConversation: (id: number) => confirmGenerationAction('switch')
-    ? getGenerationCoordinator().stopAndSwitch(id)
-    : Promise.resolve(),
+  switchConversation: switchChatConversation,
 
-  _switchConversationNow: async (id: number) => {
-    // 先同步消息数量，确保 messageCount 与实际消息数量一致
-    const { syncConversationMessageCount } = await import('@/db/conversations')
-    await syncConversationMessageCount(id)
-    // 然后加载消息
-    const { getChatsByConversation } = await import('@/db/chats')
-    const data = await getChatsByConversation(id)
-    set({
-      currentConversationId: id,
-      chats: data,
-      isTemporaryConversation: false,
-      pendingQuote: null,
-      editorSelectionQuote: null,
-    })
-    // 刷新会话列表以确保 UI 显示最新的会话状态
-    await get().initConversations()
-  },
+  _switchConversationNow: switchConversationNow,
 
   updateConversationTitle: async (id: number, title: string) => {
     const { updateConversationTitle: updateTitle } = await import('@/db/conversations')
@@ -864,40 +1014,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     await get().initConversations()
   },
 
-  deleteConversation: (id: number) => confirmGenerationAction('delete', id)
-    ? getGenerationCoordinator().stopAndDelete(id)
-    : Promise.resolve(),
+  deleteConversation: deleteChatConversation,
 
-  _deleteConversationNow: async (id: number) => {
-    const { deleteConversation: deleteConv } = await import('@/db/conversations')
-    await deleteConv(id)
-
-    const { currentConversationId, conversations, _switchConversationNow } = get()
-
-    // 如果删除的是当前会话，切换到另一个会话
-    if (id === currentConversationId) {
-      const remainingConversations = conversations.filter(c => c.id !== id)
-      if (remainingConversations.length > 0) {
-        await _switchConversationNow(remainingConversations[0].id)
-      } else {
-        // 没有其他会话了，清空状态，不创建新会话
-        set({
-          currentConversationId: null,
-          chats: [],
-          isTemporaryConversation: false,
-          pendingQuote: null,
-          editorSelectionQuote: null,
-          agentAutoApproveConversationId: null,
-          agentAutoApproveRuntimeScriptKey: null
-        })
-        get().resetAgentState()
-        get().clearMcpToolCalls()
-      }
-    }
-
-    // 刷新会话列表
-    await get().initConversations()
-  },
+  _deleteConversationNow: deleteConversationNow,
 
   toggleConversationPin: async (id: number) => {
     const { toggleConversationPin: togglePin } = await import('@/db/conversations')
@@ -907,59 +1026,13 @@ const useChatStore = create<ChatState>((set, get) => ({
     return isPinned
   },
 
-  startNewConversation: () => confirmGenerationAction('create')
-    ? getGenerationCoordinator().stopAndCreate({ temporary: false })
-    : Promise.resolve(),
+  startNewConversation: startNewChatConversation,
 
-  _startNewConversationNow: async () => {
-    const { currentConversationId } = get()
+  _startNewConversationNow: startNewConversationNow,
 
-    // 如果当前会话无消息，删除它（从数据库查询最新状态）
-    if (currentConversationId) {
-      const { getConversation } = await import('@/db/conversations')
-      const currentConv = await getConversation(currentConversationId)
-      if (currentConv && currentConv.messageCount === 0) {
-        // 空会话，直接删除
-        const { deleteConversation: deleteConv } = await import('@/db/conversations')
-        await deleteConv(currentConversationId)
-      }
-      // 刷新会话列表
-      await get().initConversations()
-    }
+  startTemporaryConversation: startTemporaryChatConversation,
 
-    // 清空聊天，不立即创建新会话
-    // 等到用户发送第一条消息时才创建会话
-    set({
-      currentConversationId: null,
-      chats: [],
-      isTemporaryConversation: false,
-      pendingQuote: null,
-      editorSelectionQuote: null,
-      agentAutoApproveConversationId: null,
-      agentAutoApproveRuntimeScriptKey: null
-    })
-    // 清空 Agent 状态
-    get().resetAgentState()
-    get().clearMcpToolCalls()
-  },
-
-  startTemporaryConversation: () => confirmGenerationAction('temporary')
-    ? getGenerationCoordinator().stopAndCreate({ temporary: true })
-    : Promise.resolve(),
-
-  _startTemporaryConversationNow: async () => {
-    set({
-      currentConversationId: null,
-      chats: [],
-      isTemporaryConversation: true,
-      pendingQuote: null,
-      editorSelectionQuote: null,
-      agentAutoApproveConversationId: null,
-      agentAutoApproveRuntimeScriptKey: null,
-    })
-    get().resetAgentState()
-    get().clearMcpToolCalls()
-  },
+  _startTemporaryConversationNow: startTemporaryConversationNow,
 }))
 
 export default useChatStore
