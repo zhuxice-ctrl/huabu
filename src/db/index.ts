@@ -4,6 +4,7 @@ import { initCanvasIndexDb } from './canvas-index'
 import { initCanvasAiOverlayDb } from './canvas-ai-overlay'
 
 export { db, getDb } from './client'
+export { queryPersistedCanvasKnowledgeAnchors } from './canvas-index'
 
 let initAllDatabasesPromise: Promise<void> | null = null
 

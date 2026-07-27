@@ -24,6 +24,8 @@ import {
 import { applyValidatedCanvasOperations } from '@/lib/canvas/operations'
 import type { ViewportSnapshot } from '@/lib/canvas/viewport-sizing'
 import { stageCanvasDocumentForAiPreview } from '@/stores/canvas'
+import { retrieveCanvasEvidence } from '@/lib/canvas/canvas-retrieval'
+import { prepareCanvasEvidenceForRequest } from '@/lib/canvas/sensitive-content'
 import type { CanvasDocument } from '@/types/canvas'
 import type {
   AgentTool,
@@ -258,6 +260,55 @@ const applyCanvasOperationsTool: AgentTool = {
   },
 }
 
+const searchOtherCanvasEvidenceTool: AgentTool = {
+  name: 'canvas_search_other_canvases',
+  title: '搜索指定的其他画布',
+  description: '仅在用户明确要求跨画布查找时使用。必须提供目标画布 ID；默认当前画布检索不会搜索其他画布。',
+  category: 'canvas',
+  risk: 'read',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      canvasId: { type: 'string', description: 'User-requested target canvas ID.' },
+      query: { type: 'string', description: 'Evidence query for that target canvas.' },
+    },
+    required: ['canvasId', 'query'],
+    additionalProperties: false,
+  },
+  execute: async (input, context): Promise<AgentToolResult> => {
+    const canvasId = typeof input.canvasId === 'string' ? input.canvasId.trim() : ''
+    const query = typeof input.query === 'string' ? input.query.trim() : ''
+    if (!canvasId || !query) {
+      return { ok: false, message: '跨画布搜索需要明确的目标画布 ID 和查询。', error: 'INVALID_CROSS_CANVAS_QUERY' }
+    }
+    if (canvasId === context.context.activeCanvasId) {
+      return { ok: false, message: '当前画布由默认检索边界处理；此工具仅用于其他画布。', error: 'NOT_CROSS_CANVAS' }
+    }
+    const result = await retrieveCanvasEvidence({ canvasId, query })
+    // Tool output may enter a cloud model turn, so unknown endpoint state remains fail-closed.
+    const protectedEvidence = prepareCanvasEvidenceForRequest(
+      result.evidence.map(item => item.anchor),
+      { baseUrl: undefined },
+    )
+    return {
+      ok: true,
+      message: protectedEvidence.anchors.length
+        ? `已从指定画布找到 ${protectedEvidence.anchors.length} 条证据。`
+        : '没有找到与指定画布相关的证据。',
+      data: {
+        canvasId,
+        evidence: protectedEvidence.anchors.map(anchor => ({
+          anchorId: anchor.id,
+          nodeId: anchor.nodeId,
+          startOffset: anchor.startOffset,
+          endOffset: anchor.endOffset,
+          text: anchor.plainText,
+        })),
+      },
+    }
+  },
+}
+
 async function authorizeApplyCanvasOperations(
   input: Record<string, unknown>,
   context: AgentToolExecutionContext,
@@ -395,6 +446,7 @@ const rollbackCanvasAiTransactionTool: AgentTool = {
 
 export const canvasTools: AgentTool[] = [
   getCanvasStateTool,
+  searchOtherCanvasEvidenceTool,
   applyCanvasOperationsTool,
   rollbackCanvasAiTransactionTool,
 ]

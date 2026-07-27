@@ -11,6 +11,10 @@ import {
   type CanvasIndexJob,
   type CanvasIndexJobDraft,
 } from '@/lib/canvas/canvas-index-jobs'
+import {
+  extractCanvasKnowledgeAnchors,
+  type CanvasKnowledgeAnchor,
+} from '@/lib/canvas/knowledge-extraction'
 import { DEFAULT_CANVAS_DOCUMENT, normalizeCanvasDocument, type CanvasDocument } from '@/types/canvas'
 
 interface SqlExecutor {
@@ -26,6 +30,24 @@ interface CanvasIndexAnchorRow {
   entities: string
   timeTerms: string
   embedding: string | null
+}
+
+interface CanvasKnowledgeAnchorRow {
+  id: string
+  workspaceId: string
+  canvasId: string
+  nodeId: string
+  attachmentId: string | null
+  startOffset: number
+  endOffset: number
+  nodeX: number
+  nodeY: number
+  contentRevision: string
+  plainText: string
+  entities: string
+  timeHints: string
+  contentType: string
+  userMarkedSensitive: number
 }
 
 export async function initCanvasIndexDb() {
@@ -72,6 +94,29 @@ export async function initCanvasIndexDb() {
       updatedAt integer not null,
       primary key (canvasId, nodeId, model)
     )
+  `)
+  await db.execute(`
+    create table if not exists canvas_knowledge_anchors (
+      id text primary key,
+      workspaceId text not null,
+      canvasId text not null,
+      nodeId text not null,
+      attachmentId text default null,
+      startOffset integer not null,
+      endOffset integer not null,
+      nodeX real not null,
+      nodeY real not null,
+      contentRevision text not null,
+      plainText text not null,
+      entities text not null default '[]',
+      timeHints text not null default '[]',
+      contentType text not null,
+      userMarkedSensitive integer not null default 0
+    )
+  `)
+  await db.execute(`
+    create index if not exists canvas_knowledge_anchors_canvas_recall
+    on canvas_knowledge_anchors(canvasId, nodeId, contentRevision, startOffset)
   `)
 }
 
@@ -206,6 +251,7 @@ export async function removeCanvasIndexNode(canvasId: string, nodeId: string, ex
   const db = executor ?? await getDb()
   await db.execute('delete from canvas_index_anchors where canvasId = $1 and nodeId = $2', [canvasId, nodeId])
   await db.execute('delete from canvas_index_embeddings where canvasId = $1 and nodeId = $2', [canvasId, nodeId])
+  await db.execute('delete from canvas_knowledge_anchors where canvasId = $1 and nodeId = $2', [canvasId, nodeId])
 }
 
 export async function removeAbsentCanvasIndexNodes(
@@ -217,6 +263,7 @@ export async function removeAbsentCanvasIndexNodes(
   if (currentNodeIds.length === 0) {
     await db.execute('delete from canvas_index_anchors where canvasId = $1', [canvasId])
     await db.execute('delete from canvas_index_embeddings where canvasId = $1', [canvasId])
+    await db.execute('delete from canvas_knowledge_anchors where canvasId = $1', [canvasId])
     return
   }
   const placeholders = currentNodeIds.map((_, index) => `$${index + 2}`).join(', ')
@@ -229,9 +276,41 @@ export async function removeAbsentCanvasIndexNodes(
     `delete from canvas_index_embeddings where canvasId = $1 and nodeId not in (${placeholders})`,
     values,
   )
+  await db.execute(
+    `delete from canvas_knowledge_anchors where canvasId = $1 and nodeId not in (${placeholders})`,
+    values,
+  )
 }
 
-export async function processCanvasIndexJob(job: CanvasIndexJob) {
+async function replaceCanvasKnowledgeAnchors(
+  canvasId: string,
+  nodeId: string,
+  contentRevision: string,
+  anchors: CanvasKnowledgeAnchor[],
+  executor: SqlExecutor,
+) {
+  // A node revision is authoritative: old ranges cannot survive a successful replacement.
+  await executor.execute(
+    'delete from canvas_knowledge_anchors where canvasId = $1 and nodeId = $2',
+    [canvasId, nodeId],
+  )
+  for (const anchor of anchors) {
+    await executor.execute(
+      `insert into canvas_knowledge_anchors (
+        id, workspaceId, canvasId, nodeId, attachmentId, startOffset, endOffset,
+        nodeX, nodeY, contentRevision, plainText, entities, timeHints, contentType, userMarkedSensitive
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      [
+        anchor.id, anchor.workspaceId, canvasId, nodeId, anchor.attachmentId ?? null,
+        anchor.startOffset, anchor.endOffset, anchor.nodePosition.x, anchor.nodePosition.y,
+        contentRevision, anchor.plainText, JSON.stringify(anchor.entities), JSON.stringify(anchor.timeHints),
+        anchor.contentType, anchor.userMarkedSensitive ? 1 : 0,
+      ],
+    )
+  }
+}
+
+export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'complete' | 'retry'> {
   const db = await getDb()
   if (job.operation === 'delete') {
     await db.execute('BEGIN IMMEDIATE')
@@ -255,7 +334,7 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
       try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
       throw error
     }
-    return
+    return 'complete'
   }
 
   const rows = await db.select<Array<{ content: string }>>(
@@ -274,14 +353,14 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
     }
     await enqueueCanvasIndexJobDrafts(job.canvasId, plan.upserts)
     await completeCanvasIndexJob(job.id)
-    return
+    return 'complete'
   }
 
   const node = document.nodes.find(candidate => candidate.id === job.nodeId)
   if (!node) {
     await removeCanvasIndexNode(job.canvasId, job.nodeId)
     await completeCanvasIndexJob(job.id)
-    return
+    return 'complete'
   }
   const currentRevision = canvasNodeContentRevision(node)
   if (currentRevision !== job.contentRevision) {
@@ -289,12 +368,20 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
       nodeId: node.id, contentRevision: currentRevision, operation: 'upsert',
     }])
     await completeCanvasIndexJob(job.id)
-    return
+    return 'complete'
   }
   const content = extractCanvasNodeIndexText(node)
   const features = buildLocalCanvasIndexFeatures(content)
+  const extraction = extractCanvasKnowledgeAnchors({
+    workspaceId: 'default',
+    canvasId: job.canvasId,
+    contentRevision: currentRevision,
+    node,
+  })
   const now = Date.now()
-  await db.execute(
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    await db.execute(
     `insert into canvas_index_anchors (
       canvasId, nodeId, contentRevision, content, entities, timeTerms, updatedAt
     ) values ($1, $2, $3, $4, $5, $6, $7)
@@ -306,8 +393,8 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
       updatedAt = excluded.updatedAt`,
     [job.canvasId, job.nodeId, currentRevision, content,
       JSON.stringify(features.entities), JSON.stringify(features.timeTerms), now],
-  )
-  await db.execute(
+    )
+    await db.execute(
     `insert into canvas_index_embeddings (
       canvasId, nodeId, contentRevision, embedding, model, updatedAt
     ) values ($1, $2, $3, $4, 'local-sparse-v1', $5)
@@ -316,8 +403,46 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
       embedding = excluded.embedding,
       updatedAt = excluded.updatedAt`,
     [job.canvasId, job.nodeId, currentRevision, JSON.stringify(features.vector), now],
+    )
+    await replaceCanvasKnowledgeAnchors(job.canvasId, job.nodeId, currentRevision, extraction.anchors, db)
+    if (extraction.failures.length === 0) await completeCanvasIndexJob(job.id, db)
+    await db.execute('COMMIT')
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
+  if (extraction.failures.length > 0) {
+    // Failure messages are already redacted by the extractor; retry does not affect the saved source node.
+    await retryCanvasIndexJob(job, new Error(extraction.failures.map(failure => failure.message).join('; ')))
+    return 'retry'
+  }
+  return 'complete'
+}
+
+export async function queryPersistedCanvasKnowledgeAnchors(canvasId: string): Promise<CanvasKnowledgeAnchor[]> {
+  const db = await getDb()
+  const rows = await db.select<CanvasKnowledgeAnchorRow[]>(
+    `select id, workspaceId, canvasId, nodeId, attachmentId, startOffset, endOffset,
+       nodeX, nodeY, contentRevision, plainText, entities, timeHints, contentType, userMarkedSensitive
+     from canvas_knowledge_anchors where canvasId = $1 order by nodeId, startOffset, id`,
+    [canvasId],
   )
-  await completeCanvasIndexJob(job.id)
+  return rows.map(row => ({
+    id: row.id,
+    workspaceId: row.workspaceId,
+    canvasId: row.canvasId,
+    nodeId: row.nodeId,
+    ...(row.attachmentId ? { attachmentId: row.attachmentId } : {}),
+    startOffset: row.startOffset,
+    endOffset: row.endOffset,
+    nodePosition: { x: row.nodeX, y: row.nodeY },
+    contentRevision: row.contentRevision,
+    plainText: row.plainText,
+    entities: parseStringArray(row.entities),
+    timeHints: parseStringArray(row.timeHints),
+    contentType: row.contentType,
+    ...(row.userMarkedSensitive ? { userMarkedSensitive: true } : {}),
+  }))
 }
 
 export async function getCanvasIndexSourceCandidate(canvasId: string, nodeId: string): Promise<(

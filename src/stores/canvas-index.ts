@@ -25,7 +25,11 @@ async function drainCanvasIndexJobsSerially(): Promise<number> {
     const job = await claimReadyCanvasIndexJob()
     if (!job) break
     try {
-      await processCanvasIndexJob(job)
+      const outcome = await processCanvasIndexJob(job)
+      if (outcome === 'retry') {
+        processed += 1
+        continue
+      }
     } catch (error) {
       await retryCanvasIndexJob(job, error)
       processed += 1
