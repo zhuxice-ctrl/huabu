@@ -24,7 +24,10 @@ test('HUD reuses ChatContent and owns summary, history and composer as siblings'
   assert.match(hud, /<CanvasChatSummary/)
   assert.match(hud, /<CanvasChatHistoryPopover/)
   assert.match(hud, /<ChatInput key=\{conversationKey\} \/>/)
+  assert.match(hud, /startNewChatConversation/)
+  assert.match(hud, /startTemporaryChatConversation/)
   assert.match(hud, /Escape/)
+  assert.match(hud, /event\.defaultPrevented/)
 })
 
 test('ChatContent exposes layout and scroller identity while windowing long histories', async () => {
@@ -34,6 +37,8 @@ test('ChatContent exposes layout and scroller identity while windowing long hist
   assert.match(content, /createInitialMessageWindow/)
   assert.match(content, /prependChatHudMessageWindow/)
   assert.match(content, /visibleChats\.map/)
+  assert.match(content, /resolvedConversationKey/)
+  assert.match(content, /currentConversationId/)
   assert.doesNotMatch(content, /chats\.map\(\(chat\)/)
 })
 
@@ -44,17 +49,23 @@ test('history uses the protected static transaction boundary and fixed popover b
   assert.match(history, /w-\[360px\]/)
   assert.match(history, /h-\[420px\]/)
   assert.match(history, /Search/)
+  assert.match(history, /conversation\.id !== currentConversationId/)
+  assert.match(history, /focus-visible:opacity-100/)
 })
 
 test('ChatInput saves and restores in-memory keyed drafts and clears only on accepted send', async () => {
-  const [input, send] = await Promise.all([
+  const [input, send, store] = await Promise.all([
     readFile(new URL('src/app/core/main/chat/chat-input.tsx', root), 'utf8'),
     readFile(new URL('src/app/core/main/chat/chat-send.tsx', root), 'utf8'),
+    readFile(new URL('src/stores/chat.ts', root), 'utf8'),
   ])
   assert.match(input, /createChatHudDraftKey/)
   assert.match(input, /saveChatHudDraft/)
   assert.match(input, /getChatHudDraft/)
   assert.match(input, /clearChatHudDraft/)
+  assert.match(input, /pendingQuote/)
+  assert.match(input, /editorSelectionQuote/)
+  assert.match(store, /renewChatHudTemporarySession/)
   assert.match(send, /const insertedUserChat = await insert/)
   assert.match(send, /if \(!insertedUserChat\) return/)
 })

@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useRef, type WheelEvent } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, MessageSquareDashed, MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import useCanvasStore from '@/stores/canvas'
-import useChatStore from '@/stores/chat'
+import useChatStore, {
+  startNewChatConversation,
+  startTemporaryChatConversation,
+} from '@/stores/chat'
 import useChatHudStore, {
   createChatHudDraftKey,
   getExpandedChatHudHeight,
@@ -19,6 +22,35 @@ import { CanvasChatHistoryPopover } from './canvas-chat-history-popover'
 
 function stopHudWheelPropagation(event: WheelEvent) {
   event.stopPropagation()
+}
+
+function CanvasChatConversationActions() {
+  const chatsLength = useChatStore(state => state.chats.length)
+  const isTemporaryConversation = useChatStore(state => state.isTemporaryConversation)
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="临时对话"
+        disabled={isTemporaryConversation}
+        onClick={() => void startTemporaryChatConversation()}
+      >
+        <MessageSquareDashed className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="新建对话"
+        disabled={chatsLength === 0 && !isTemporaryConversation}
+        onClick={() => void startNewChatConversation()}
+      >
+        <MessageSquarePlus className="size-4" />
+      </Button>
+    </>
+  )
 }
 
 export function CanvasChatHud() {
@@ -47,7 +79,7 @@ export function CanvasChatHud() {
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
+      if (event.key !== 'Escape' || event.defaultPrevented) return
       if (historyOpen) setChatHudHistoryOpen(false)
       else if (expanded) setChatHudExpanded(false)
     }
@@ -76,6 +108,7 @@ export function CanvasChatHud() {
             <div className="flex h-10 shrink-0 items-center justify-between border-b px-2">
               <span className="px-2 text-xs font-medium">当前画布对话</span>
               <div className="flex items-center gap-1">
+                <CanvasChatConversationActions />
                 <CanvasChatHistoryPopover />
                 <Button
                   type="button"
@@ -98,6 +131,7 @@ export function CanvasChatHud() {
           <div className="relative">
             <CanvasChatSummary onExpand={() => setChatHudExpanded(true)} />
             <div className="absolute right-2 top-1.5 flex items-center gap-1">
+              <CanvasChatConversationActions />
               <CanvasChatHistoryPopover />
               <Button
                 type="button"

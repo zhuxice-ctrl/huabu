@@ -30,6 +30,7 @@ import {
   type GenerationProtectedAction,
   type GenerationTransactionAction,
 } from '@/lib/chat/generation-transaction'
+import { renewChatHudTemporarySession } from '@/stores/chat-hud'
 
 export interface PendingQuote {
   quote: string
@@ -251,6 +252,7 @@ async function deleteConversationNow(id: number) {
     if (remainingConversations.length > 0) {
       await switchConversationNow(remainingConversations[0].id)
     } else {
+      renewChatHudTemporarySession()
       resetConversationRuntime(false)
     }
   }
@@ -267,10 +269,12 @@ async function startNewConversationNow() {
     }
     await refreshConversationsNow()
   }
+  renewChatHudTemporarySession()
   resetConversationRuntime(false)
 }
 
 async function startTemporaryConversationNow() {
+  renewChatHudTemporarySession()
   resetConversationRuntime(true)
 }
 

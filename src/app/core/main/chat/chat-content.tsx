@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/message-scroller'
 import useChatHudStore, {
   appendChatHudMessageWindow,
+  createChatHudDraftKey,
   createInitialMessageWindow,
   ensureChatHudMessageWindow,
   getChatHudScrollPosition,
@@ -53,11 +54,17 @@ interface ChatContentProps {
 const ChatContent = React.memo(function ChatContent({
   layoutVariant = 'panel',
   scrollerId = 'chats-wrapper',
-  conversationKey = 'panel',
+  conversationKey,
 }: ChatContentProps) {
-  const { chats, init, agentState, loading } = useChatStore()
+  const { chats, init, agentState, loading, currentConversationId } = useChatStore()
   const { currentTagId } = useTagStore()
-  const storedMessageWindow = useChatHudStore(state => state.messageWindows[conversationKey])
+  const temporarySessionId = useChatHudStore(state => state.temporarySessionId)
+  const resolvedConversationKey = conversationKey ?? `panel:${createChatHudDraftKey(
+    currentConversationId,
+    temporarySessionId,
+    null,
+  )}`
+  const storedMessageWindow = useChatHudStore(state => state.messageWindows[resolvedConversationKey])
   const initialMessageWindow = useMemo(() => createInitialMessageWindow(chats.length), [chats.length])
   const messageWindow = storedMessageWindow ?? initialMessageWindow
   const previousTotalRef = useRef(chats.length)
@@ -68,21 +75,21 @@ const ChatContent = React.memo(function ChatContent({
   }, [currentTagId, init])
 
   useEffect(() => {
-    ensureChatHudMessageWindow(conversationKey, chats.length)
+    ensureChatHudMessageWindow(resolvedConversationKey, chats.length)
     previousTotalRef.current = chats.length
     const frame = window.requestAnimationFrame(() => {
       const viewport = document.getElementById(scrollerId)
-      const savedScrollPosition = getChatHudScrollPosition(conversationKey)
+      const savedScrollPosition = getChatHudScrollPosition(resolvedConversationKey)
       if (viewport && savedScrollPosition !== null) viewport.scrollTop = savedScrollPosition
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [conversationKey, scrollerId])
+  }, [resolvedConversationKey, scrollerId])
 
   useEffect(() => {
     const previousTotal = previousTotalRef.current
     previousTotalRef.current = chats.length
-    syncChatHudMessageWindow(conversationKey, previousTotal, chats.length)
-  }, [chats.length, conversationKey])
+    syncChatHudMessageWindow(resolvedConversationKey, previousTotal, chats.length)
+  }, [chats.length, resolvedConversationKey])
 
   useLayoutEffect(() => {
     if (prependHeightRef.current === null) return
@@ -101,11 +108,11 @@ const ChatContent = React.memo(function ChatContent({
 
   const handleTranscriptScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
     const viewport = event.currentTarget
-    saveChatHudScrollPosition(conversationKey, viewport.scrollTop)
+    saveChatHudScrollPosition(resolvedConversationKey, viewport.scrollTop)
     if (viewport.scrollTop <= 2 && messageWindow.start > 0) {
       prependHeightRef.current = viewport.scrollHeight
       prependChatHudMessageWindow(
-        conversationKey,
+        resolvedConversationKey,
         chats.length,
         viewport.contains(document.activeElement),
       )
@@ -113,9 +120,9 @@ const ChatContent = React.memo(function ChatContent({
     }
     const atBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2
     if (atBottom && messageWindow.end < chats.length) {
-      appendChatHudMessageWindow(conversationKey, chats.length)
+      appendChatHudMessageWindow(resolvedConversationKey, chats.length)
     }
-  }, [chats.length, conversationKey, messageWindow.end, messageWindow.start])
+  }, [chats.length, messageWindow.end, messageWindow.start, resolvedConversationKey])
 
   // 判断是否应该显示 loading：loading=true 且最后一个 AI 消息还没有内容
   const shouldShowLoading = useMemo(() => {

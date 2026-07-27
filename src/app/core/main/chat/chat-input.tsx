@@ -44,7 +44,6 @@ import useChatHudStore, {
   clearChatHudDraft,
   createChatHudDraftKey,
   getChatHudDraft,
-  renewChatHudTemporarySession,
   saveChatHudDraft,
   type ChatHudDraft,
 } from '@/stores/chat-hud'
@@ -159,12 +158,13 @@ export const ChatInput = React.memo(function ChatInput() {
     () => (initialDraftRef.current?.fileAttachments ?? []) as RuntimeChatAttachment[],
   )
   const activeDraftKeyRef = useRef(draftKey)
-  const previousTemporaryStateRef = useRef(isTemporaryConversation)
   const draftSnapshotRef = useRef<ChatHudDraft>({
     text: '',
     attachedImages: [],
     fileAttachments: [],
     linkedResource: null,
+    pendingQuote: null,
+    editorSelectionQuote: null,
   })
 
   useEffect(() => {
@@ -173,22 +173,25 @@ export const ChatInput = React.memo(function ChatInput() {
       attachedImages,
       fileAttachments,
       linkedResource,
+      pendingQuote,
+      editorSelectionQuote,
     }
-  }, [attachedImages, fileAttachments, linkedResource, text])
+  }, [attachedImages, editorSelectionQuote, fileAttachments, linkedResource, pendingQuote, text])
 
   useEffect(() => {
     useChatStore.setState({ linkedResource })
   }, [linkedResource])
 
+  useEffect(() => {
+    useChatStore.setState({
+      pendingQuote: (initialDraftRef.current?.pendingQuote as PendingQuote | null | undefined) ?? null,
+      editorSelectionQuote: (initialDraftRef.current?.editorSelectionQuote as PendingQuote | null | undefined) ?? null,
+    })
+  }, [])
+
   useEffect(() => () => {
     saveChatHudDraft(activeDraftKeyRef.current, draftSnapshotRef.current)
   }, [])
-
-  useEffect(() => {
-    if (previousTemporaryStateRef.current === isTemporaryConversation) return
-    previousTemporaryStateRef.current = isTemporaryConversation
-    renewChatHudTemporarySession()
-  }, [isTemporaryConversation])
 
   const applyTypedText = useCallback((value: string) => {
     setText(value)
@@ -700,6 +703,8 @@ export const ChatInput = React.memo(function ChatInput() {
       attachedImages: [],
       fileAttachments: [],
       linkedResource: null,
+      pendingQuote: null,
+      editorSelectionQuote: null,
     }
     setText('')
     setHistoryIndex(-1)

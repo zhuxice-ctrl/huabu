@@ -21,12 +21,13 @@ export function CanvasChatHistoryPopover() {
   const query = useChatHudStore(state => state.historyQuery)
 
   const filtered = useMemo(() => conversations
+    .filter(conversation => conversation.id !== currentConversationId)
     .filter(conversation => conversation.messageCount > 0)
     .filter(conversation => conversation.title.toLowerCase().includes(query.trim().toLowerCase()))
     .sort((left, right) => {
       if (left.isPinned !== right.isPinned) return left.isPinned ? -1 : 1
       return right.updatedAt - left.updatedAt
-    }), [conversations, query])
+    }), [conversations, currentConversationId, query])
 
   const handleSwitch = async (id: number) => {
     await switchChatConversation(id)
@@ -76,7 +77,7 @@ export function CanvasChatHistoryPopover() {
               </button>
               <button
                 type="button"
-                className="rounded p-1 text-muted-foreground opacity-0 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                className="rounded p-1 text-muted-foreground opacity-0 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                 aria-label={`删除 ${conversation.title}`}
                 onClick={() => void deleteChatConversation(conversation.id)}
               >

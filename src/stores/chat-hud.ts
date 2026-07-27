@@ -10,6 +10,8 @@ export interface ChatHudDraft {
   attachedImages: unknown[]
   fileAttachments: unknown[]
   linkedResource: unknown | null
+  pendingQuote: unknown | null
+  editorSelectionQuote: unknown | null
 }
 
 export interface MessageWindow {
@@ -172,7 +174,12 @@ export function getChatHudDraft(key: string) {
 
 export function saveChatHudDraft(key: string, draft: ChatHudDraft) {
   useChatHudStore.setState(state => ({
-    drafts: draft.text || draft.attachedImages.length || draft.fileAttachments.length || draft.linkedResource
+    drafts: draft.text
+      || draft.attachedImages.length
+      || draft.fileAttachments.length
+      || draft.linkedResource
+      || draft.pendingQuote
+      || draft.editorSelectionQuote
       ? { ...state.drafts, [key]: draft }
       : Object.fromEntries(Object.entries(state.drafts).filter(([draftKey]) => draftKey !== key)),
   }))
