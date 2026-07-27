@@ -919,7 +919,6 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
     manualStopRequestedRef.current = false
     activeRunRef.current = true
     repeatedScriptApprovalRef.current = { signature: '', count: 0 }
-    onSent?.()
 
     setLoading(true)
     try {
@@ -931,7 +930,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
         canvasState.projects,
         sentAt,
       )
-      await insert({
+      const insertedUserChat = await insert({
         tagId: currentTagId,
         role: 'user',
         content: inputValue,
@@ -942,6 +941,8 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
         quoteData: quoteData ? JSON.stringify(quoteData) : undefined,
         canvasContext,
       })
+      if (!insertedUserChat) return
+      onSent?.()
       await handleAgentMode(imageUrls, canvasContext)
     } finally {
       activeRunRef.current = false

@@ -2,7 +2,7 @@ import React from 'react'
 import useChatStore from '@/stores/chat'
 import useTagStore from '@/stores/tag'
 import { X, Loader2, QuoteIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Chat } from '@/db/chats'
 import ChatPreview from './chat-preview'
 import './chat.css'
@@ -34,14 +34,88 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller'
+import useChatHudStore, {
+  appendChatHudMessageWindow,
+  createInitialMessageWindow,
+  ensureChatHudMessageWindow,
+  getChatHudScrollPosition,
+  prependChatHudMessageWindow,
+  saveChatHudScrollPosition,
+  syncChatHudMessageWindow,
+} from '@/stores/chat-hud'
 
-const ChatContent = React.memo(function ChatContent() {
+interface ChatContentProps {
+  layoutVariant?: 'panel' | 'hud'
+  scrollerId?: string
+  conversationKey?: string
+}
+
+const ChatContent = React.memo(function ChatContent({
+  layoutVariant = 'panel',
+  scrollerId = 'chats-wrapper',
+  conversationKey = 'panel',
+}: ChatContentProps) {
   const { chats, init, agentState, loading } = useChatStore()
   const { currentTagId } = useTagStore()
+  const storedMessageWindow = useChatHudStore(state => state.messageWindows[conversationKey])
+  const initialMessageWindow = useMemo(() => createInitialMessageWindow(chats.length), [chats.length])
+  const messageWindow = storedMessageWindow ?? initialMessageWindow
+  const previousTotalRef = useRef(chats.length)
+  const prependHeightRef = useRef<number | null>(null)
 
   useEffect(() => {
     init(currentTagId)
   }, [currentTagId, init])
+
+  useEffect(() => {
+    ensureChatHudMessageWindow(conversationKey, chats.length)
+    previousTotalRef.current = chats.length
+    const frame = window.requestAnimationFrame(() => {
+      const viewport = document.getElementById(scrollerId)
+      const savedScrollPosition = getChatHudScrollPosition(conversationKey)
+      if (viewport && savedScrollPosition !== null) viewport.scrollTop = savedScrollPosition
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [conversationKey, scrollerId])
+
+  useEffect(() => {
+    const previousTotal = previousTotalRef.current
+    previousTotalRef.current = chats.length
+    syncChatHudMessageWindow(conversationKey, previousTotal, chats.length)
+  }, [chats.length, conversationKey])
+
+  useLayoutEffect(() => {
+    if (prependHeightRef.current === null) return
+    const viewport = document.getElementById(scrollerId)
+    if (viewport) viewport.scrollTop += viewport.scrollHeight - prependHeightRef.current
+    prependHeightRef.current = null
+  }, [messageWindow, scrollerId])
+
+  const visibleChats = useMemo(() => {
+    const windowed = chats.slice(messageWindow.start, messageWindow.end)
+    const activeChatId = agentState.activeChatId
+    if (activeChatId == null || windowed.some(chat => chat.id === activeChatId)) return windowed
+    const active = chats.find(chat => chat.id === activeChatId)
+    return active ? [...windowed, active] : windowed
+  }, [agentState.activeChatId, chats, messageWindow])
+
+  const handleTranscriptScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
+    const viewport = event.currentTarget
+    saveChatHudScrollPosition(conversationKey, viewport.scrollTop)
+    if (viewport.scrollTop <= 2 && messageWindow.start > 0) {
+      prependHeightRef.current = viewport.scrollHeight
+      prependChatHudMessageWindow(
+        conversationKey,
+        chats.length,
+        viewport.contains(document.activeElement),
+      )
+      return
+    }
+    const atBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2
+    if (atBottom && messageWindow.end < chats.length) {
+      appendChatHudMessageWindow(conversationKey, chats.length)
+    }
+  }, [chats.length, conversationKey, messageWindow.end, messageWindow.start])
 
   // 判断是否应该显示 loading：loading=true 且最后一个 AI 消息还没有内容
   const shouldShowLoading = useMemo(() => {
@@ -60,11 +134,15 @@ const ChatContent = React.memo(function ChatContent() {
   return (
     <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor" scrollPreviousItemPeek={8}>
       <MessageScroller className="flex-1">
-        <MessageScrollerViewport id="chats-wrapper" className="overflow-x-hidden p-4">
+        <MessageScrollerViewport
+          id={scrollerId}
+          className={cn('overflow-x-hidden', layoutVariant === 'hud' ? 'p-3' : 'p-4')}
+          onScroll={handleTranscriptScroll}
+        >
           <MessageScrollerContent
             className={cn("items-end", chats.length === 0 && "h-full")}
           >
-            {chats.length ? chats.map((chat) => (
+            {chats.length ? visibleChats.map((chat) => (
               <MessageScrollerItem
                 key={chat.id}
                 messageId={String(chat.id)}

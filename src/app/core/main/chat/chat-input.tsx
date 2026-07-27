@@ -39,6 +39,15 @@ import {
   createFolderAttachment,
   type RuntimeChatAttachment,
 } from '@/lib/chat-attachments'
+import useCanvasStore from '@/stores/canvas'
+import useChatHudStore, {
+  clearChatHudDraft,
+  createChatHudDraftKey,
+  getChatHudDraft,
+  renewChatHudTemporarySession,
+  saveChatHudDraft,
+  type ChatHudDraft,
+} from '@/stores/chat-hud'
 
 const MAX_IMAGE_ATTACHMENTS = 6
 const MAX_IMAGE_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024
@@ -107,7 +116,10 @@ export const ChatInput = React.memo(function ChatInput() {
     clearEditorSelectionQuote,
     agentState,
     isTemporaryConversation,
+    currentConversationId,
   } = useChatStore()
+  const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
+  const temporarySessionId = useChatHudStore(state => state.temporarySessionId)
   const { marks, trashState } = useMarkStore()
   const { activeFilePath, activeTabId } = useArticleStore()
   const [isComposing, setIsComposing] = useState(false)
@@ -134,6 +146,51 @@ export const ChatInput = React.memo(function ChatInput() {
   const onboardingTypingTimerRefs = useRef<number[]>([])
   const maxImageSizeLabel = formatFileSize(MAX_IMAGE_ATTACHMENT_SIZE_BYTES)
   const activeQuote = pendingQuote || editorSelectionQuote
+  const draftKey = React.useMemo(() => createChatHudDraftKey(
+    currentConversationId,
+    temporarySessionId,
+    activeCanvasId,
+  ), [activeCanvasId, currentConversationId, temporarySessionId])
+  const activeDraftKeyRef = useRef(draftKey)
+  const previousTemporaryStateRef = useRef(isTemporaryConversation)
+  const draftSnapshotRef = useRef<ChatHudDraft>({
+    text: '',
+    attachedImages: [],
+    fileAttachments: [],
+    linkedResource: null,
+  })
+
+  useEffect(() => {
+    draftSnapshotRef.current = {
+      text,
+      attachedImages,
+      fileAttachments,
+      linkedResource,
+    }
+  }, [attachedImages, fileAttachments, linkedResource, text])
+
+  useEffect(() => {
+    const previousKey = activeDraftKeyRef.current
+    if (previousKey !== draftKey) saveChatHudDraft(previousKey, draftSnapshotRef.current)
+
+    const draft = getChatHudDraft(draftKey)
+    setText(draft?.text ?? '')
+    setAttachedImages((draft?.attachedImages ?? []) as ImageAttachment[])
+    setFileAttachments((draft?.fileAttachments ?? []) as RuntimeChatAttachment[])
+    setLinkedResource((draft?.linkedResource ?? null) as LinkedResource | null)
+    setChatLinkedResource((draft?.linkedResource ?? null) as LinkedResource | null)
+    activeDraftKeyRef.current = draftKey
+  }, [draftKey, setChatLinkedResource])
+
+  useEffect(() => () => {
+    saveChatHudDraft(activeDraftKeyRef.current, draftSnapshotRef.current)
+  }, [])
+
+  useEffect(() => {
+    if (previousTemporaryStateRef.current === isTemporaryConversation) return
+    previousTemporaryStateRef.current = isTemporaryConversation
+    renewChatHudTemporarySession()
+  }, [isTemporaryConversation])
 
   const applyTypedText = useCallback((value: string) => {
     setText(value)
@@ -639,6 +696,13 @@ export const ChatInput = React.memo(function ChatInput() {
       emitter.emit('onboarding-step-complete', { step: 'ai-polish' })
     }
     addToHistory(text)
+    clearChatHudDraft(draftKey)
+    draftSnapshotRef.current = {
+      text: '',
+      attachedImages: [],
+      fileAttachments: [],
+      linkedResource: null,
+    }
     setText('')
     setHistoryIndex(-1)
     setAttachedImages([])

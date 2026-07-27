@@ -8,6 +8,7 @@ import { LeftSidebar } from '../left-sidebar'
 import useCanvasStore from '@/stores/canvas'
 import { useSidebarStore } from '@/stores/sidebar'
 import { normalizeWorkspaceLayout } from '@/lib/canvas/workspace-layout-policy'
+import { CanvasChatHud } from '../chat/canvas-chat-hud'
 
 const CanvasEditor = dynamic(
   () => import('./canvas-editor').then(module => module.CanvasEditor),
@@ -24,9 +25,15 @@ function ResizeDivider({ onPointerDown }: { onPointerDown: PointerEventHandler<H
   )
 }
 
-export function CanvasChatHud() {
-  // Task 12 owns the HUD implementation. This permanent slot avoids a shell change later.
-  return <div data-canvas-chat-hud className="pointer-events-none absolute inset-x-0 bottom-0 z-30" />
+let canvasEditorRenderCount = 0
+
+export function getCanvasEditorRenderCountForTest() {
+  return canvasEditorRenderCount
+}
+
+function CanvasEditorRenderProbe() {
+  if (process.env.NODE_ENV !== 'production') canvasEditorRenderCount += 1
+  return null
 }
 
 export function CanvasWorkspace() {
@@ -82,9 +89,12 @@ export function CanvasWorkspace() {
         <ResizeDivider onPointerDown={startLeftResize} />
       )}
 
-      <main className="relative min-w-0 flex-1 overflow-hidden">
+      <main data-canvas-chat-hud-host className="relative min-w-0 flex-1 overflow-hidden">
         {activeCanvasId ? (
-          <CanvasEditor key={activeCanvasId} canvasId={activeCanvasId} />
+          <>
+            <CanvasEditor key={activeCanvasId} canvasId={activeCanvasId} />
+            <CanvasEditorRenderProbe />
+          </>
         ) : (
           <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
             Select or create a canvas to begin
