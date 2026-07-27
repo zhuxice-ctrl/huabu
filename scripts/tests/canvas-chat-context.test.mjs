@@ -31,10 +31,11 @@ test('chat send captures one canvas snapshot before asynchronous work and shares
   assert.match(send, /canvasContext: currentMessage\?\.canvasContext \?\? canvasContext/)
 })
 
-test('chat content renders local source chips with current, renamed, missing, and invalid states', async () => {
+test('chat content hides absent sources and renders renamed, missing, and invalid source states', async () => {
   const content = await source('src/app/core/main/chat/chat-content.tsx')
   const context = await source('src/lib/chat/canvas-context.ts')
   assert.match(content, /parseCanvasChatContext/)
+  assert.match(content, /if \(canvasContext\.sourceCanvasId === null\) \{\s*return null\s*\}/)
   assert.match(content, /currentProject\?\.title \?\? canvasContext\.sourceCanvasTitle/)
   assert.match(content, /来源画布已删除/)
   assert.match(context, /来源未记录/)

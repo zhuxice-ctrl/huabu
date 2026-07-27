@@ -29,7 +29,9 @@ test('every outbound chat payload strips local canvas metadata while retaining c
 test('remote rows never provide local canvas metadata and restore keeps a matching local context', async () => {
   const db = await source('src/db/chats.ts')
   const store = await source('src/stores/chat.ts')
-  assert.match(db, /localCanvasContexts\?\.get\(`id:\$\{chat\.id\}`\) \?\? localCanvasContexts\?\.get\(getChatRestoreKey\(chat\)\) \?\? null/)
+  assert.match(db, /localCanvasContexts\?\.get\(getChatRestoreKey\(chat\)\) \?\? null/)
+  assert.doesNotMatch(db, /\[`id:\$\{chat\.id\}`, chat\.canvasContext\]/)
+  assert.doesNotMatch(db, /localCanvasContexts\?\.get\(`id:\$\{chat\.id\}`\)/)
   assert.match(db, /insertChats\(chats: Chat\[\], localCanvasContexts\?: Map<string, string>\)/)
   assert.match(store, /getLocalCanvasContexts\(\)/)
   assert.match(store, /insertChats\(result, localCanvasContexts\)/)

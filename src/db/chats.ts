@@ -235,10 +235,9 @@ export async function getLocalCanvasContexts() {
     'select * from chats where canvasContext is not null',
     []
   )
-  return new Map(result.flatMap(chat => chat.canvasContext ? [
-    [`id:${chat.id}`, chat.canvasContext] as const,
-    [getChatRestoreKey(chat), chat.canvasContext] as const,
-  ] : []))
+  return new Map(result.flatMap(chat => chat.canvasContext
+    ? [[getChatRestoreKey(chat), chat.canvasContext] as const]
+    : []))
 }
 
 // 获取所有 chats
@@ -280,7 +279,7 @@ export async function insertChats(chats: Chat[], localCanvasContexts?: Map<strin
     for (const chat of chats) {
       await db.execute(
         "insert into chats (tagId, conversationId, content, role, type, image, images, attachments, inserted, createdAt, ragSources, ragSourceDetails, agentHistory, thinking, quoteData, condensedContent, condensedAt, canvasContext, completionState) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
-        [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.createdAt, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, localCanvasContexts?.get(`id:${chat.id}`) ?? localCanvasContexts?.get(getChatRestoreKey(chat)) ?? null, chat.completionState]
+        [chat.tagId, chat.conversationId, chat.content, chat.role, chat.type, chat.image, chat.images, chat.attachments, chat.inserted ? 1 : 0, chat.createdAt, chat.ragSources, chat.ragSourceDetails, chat.agentHistory, chat.thinking, chat.quoteData, chat.condensedContent, chat.condensedAt, localCanvasContexts?.get(getChatRestoreKey(chat)) ?? null, chat.completionState]
       )
     }
     await db.execute('COMMIT')

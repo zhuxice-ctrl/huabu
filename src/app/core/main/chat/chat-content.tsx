@@ -167,12 +167,16 @@ function CanvasSourceChip({ chat }: { chat: Chat }) {
     return null
   }
 
-  if (!canvasContext || !canvasContext.sourceCanvasId) {
+  if (!canvasContext) {
     return (
       <span className="inline-flex text-xs text-muted-foreground" aria-disabled="true">
         {UNKNOWN_CANVAS_SOURCE_LABEL}
       </span>
     )
+  }
+
+  if (canvasContext.sourceCanvasId === null) {
+    return null
   }
 
   const currentProject = projects.find(project => project.id === canvasContext.sourceCanvasId)
