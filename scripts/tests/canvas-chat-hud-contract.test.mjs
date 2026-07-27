@@ -23,7 +23,7 @@ test('HUD reuses ChatContent and owns summary, history and composer as siblings'
   assert.match(hud, /<ChatContent\s+layoutVariant="hud"/)
   assert.match(hud, /<CanvasChatSummary/)
   assert.match(hud, /<CanvasChatHistoryPopover/)
-  assert.match(hud, /<ChatInput \/>/)
+  assert.match(hud, /<ChatInput key=\{conversationKey\} \/>/)
   assert.match(hud, /Escape/)
 })
 

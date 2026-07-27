@@ -112,7 +112,7 @@ export function CanvasChatHud() {
           </div>
         )}
         <div className="rounded-b-xl border bg-background/96 shadow-xl backdrop-blur-xl">
-          <ChatInput />
+          <ChatInput key={conversationKey} />
         </div>
       </section>
     </div>

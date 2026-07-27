@@ -100,7 +100,6 @@ function createImageAttachmentId(prefix: string) {
 }
 
 export const ChatInput = React.memo(function ChatInput() {
-  const [text, setText] = useState("")
   const { primaryModel } = useSettingStore()
   const {
     chats,
@@ -130,9 +129,6 @@ export const ChatInput = React.memo(function ChatInput() {
   const [inputHistory, setInputHistory] = useLocalStorage<string[]>('chat-input-history', [])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [tempInput, setTempInput] = useState('')
-  const [linkedResource, setLinkedResource] = useState<LinkedResource | null>(null)
-  const [attachedImages, setAttachedImages] = useState<ImageAttachment[]>([])
-  const [fileAttachments, setFileAttachments] = useState<RuntimeChatAttachment[]>([])
   const [isImageDragOver, setIsImageDragOver] = useState(false)
   const chatSendRef = useRef<{ sendChat: () => void } | null>(null)
   const isMobile = useIsMobile()
@@ -151,6 +147,17 @@ export const ChatInput = React.memo(function ChatInput() {
     temporarySessionId,
     activeCanvasId,
   ), [activeCanvasId, currentConversationId, temporarySessionId])
+  const initialDraftRef = useRef(getChatHudDraft(draftKey))
+  const [text, setText] = useState(() => initialDraftRef.current?.text ?? '')
+  const [linkedResource, setLinkedResource] = useState<LinkedResource | null>(
+    () => (initialDraftRef.current?.linkedResource ?? null) as LinkedResource | null,
+  )
+  const [attachedImages, setAttachedImages] = useState<ImageAttachment[]>(
+    () => (initialDraftRef.current?.attachedImages ?? []) as ImageAttachment[],
+  )
+  const [fileAttachments, setFileAttachments] = useState<RuntimeChatAttachment[]>(
+    () => (initialDraftRef.current?.fileAttachments ?? []) as RuntimeChatAttachment[],
+  )
   const activeDraftKeyRef = useRef(draftKey)
   const previousTemporaryStateRef = useRef(isTemporaryConversation)
   const draftSnapshotRef = useRef<ChatHudDraft>({
@@ -170,17 +177,8 @@ export const ChatInput = React.memo(function ChatInput() {
   }, [attachedImages, fileAttachments, linkedResource, text])
 
   useEffect(() => {
-    const previousKey = activeDraftKeyRef.current
-    if (previousKey !== draftKey) saveChatHudDraft(previousKey, draftSnapshotRef.current)
-
-    const draft = getChatHudDraft(draftKey)
-    setText(draft?.text ?? '')
-    setAttachedImages((draft?.attachedImages ?? []) as ImageAttachment[])
-    setFileAttachments((draft?.fileAttachments ?? []) as RuntimeChatAttachment[])
-    setLinkedResource((draft?.linkedResource ?? null) as LinkedResource | null)
-    setChatLinkedResource((draft?.linkedResource ?? null) as LinkedResource | null)
-    activeDraftKeyRef.current = draftKey
-  }, [draftKey, setChatLinkedResource])
+    useChatStore.setState({ linkedResource })
+  }, [linkedResource])
 
   useEffect(() => () => {
     saveChatHudDraft(activeDraftKeyRef.current, draftSnapshotRef.current)
@@ -1145,11 +1143,7 @@ ${previewLines.join('\n')}
             disabled={!primaryModel}
             value={text}
             onChange={(e) => {
-              setText(e.target.value)
-              const textarea = e.target
-              textarea.style.height = 'auto'
-              const newHeight = Math.min(textarea.scrollHeight, 240)
-              textarea.style.height = `${newHeight}px`
+              applyTypedText(e.target.value)
             }}
             placeholder={loading ? steeringPlaceholder : placeholder || defaultPlaceholder}
             onKeyDown={(e) => {
