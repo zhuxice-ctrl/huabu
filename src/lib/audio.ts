@@ -10,8 +10,6 @@ import { blobToBytes, invokeAiBinary, invokeAiMultipart, resolveAiRequestConfig 
 export function speakWithSystemVoice(
   text: string, 
   speed: number = 1,
-  onStart?: () => void,
-  onEnd?: () => void
 ): void {
   if (!text.trim()) {
     throw new Error('文本内容为空')
@@ -32,15 +30,10 @@ export function speakWithSystemVoice(
   utterance.volume = 1
   utterance.pitch = 1
 
-  // 设置事件监听器
-  if (onStart) {
-    utterance.onstart = onStart
-  }
-  
-  if (onEnd) {
-    utterance.onend = onEnd
-    utterance.onerror = onEnd
-  }
+  // 所有系统朗读都通过共享播放所有者更新状态。
+  utterance.onstart = handleSystemSpeechStart
+  utterance.onend = handleSystemSpeechEnd
+  utterance.onerror = handleSystemSpeechError
 
   // 开始朗读
   window.speechSynthesis.speak(utterance)
@@ -152,35 +145,107 @@ export async function fetchAudioSpeech(text: string, customVoice?: string, custo
   }
 }
 
-// 全局音频控制器
+// 手动朗读和麦克风请求的自动朗读共享一个播放所有者。
 let currentAudioController: AudioController | null = null
+let audioPlaybackEpoch = 0
+let currentSystemPlaybackEpoch: number | null = null
+let currentSystemPlaybackOwner: string | null = null
 
-/**
- * 音频控制器类，支持播放和停止
- */
+export type AudioPlaybackPhase = 'idle' | 'loading' | 'playing' | 'failed'
+
+export interface AudioPlaybackSnapshot {
+  ownerId: string | null
+  phase: AudioPlaybackPhase
+  error: string | null
+}
+
+const IDLE_AUDIO_PLAYBACK: AudioPlaybackSnapshot = Object.freeze({
+  ownerId: null,
+  phase: 'idle',
+  error: null,
+})
+let audioPlaybackSnapshot: AudioPlaybackSnapshot = IDLE_AUDIO_PLAYBACK
+const audioPlaybackListeners = new Set<() => void>()
+
+function publishAudioPlayback(snapshot: AudioPlaybackSnapshot) {
+  audioPlaybackSnapshot = Object.freeze(snapshot)
+  for (const listener of audioPlaybackListeners) listener()
+}
+
+function updateOwnedAudioPlayback(
+  epoch: number,
+  ownerId: string,
+  phase: AudioPlaybackPhase,
+  error: string | null = null,
+) {
+  if (epoch !== audioPlaybackEpoch || audioPlaybackSnapshot.ownerId !== ownerId) return
+  publishAudioPlayback({ ownerId, phase, error })
+}
+
+function beginAudioPlayback(ownerId: string) {
+  stopCurrentAudio()
+  const epoch = audioPlaybackEpoch
+  publishAudioPlayback({ ownerId, phase: 'loading', error: null })
+  return epoch
+}
+
+function handleSystemSpeechStart() {
+  if (currentSystemPlaybackEpoch === null || !currentSystemPlaybackOwner) return
+  updateOwnedAudioPlayback(currentSystemPlaybackEpoch, currentSystemPlaybackOwner, 'playing')
+}
+
+function handleSystemSpeechEnd() {
+  if (currentSystemPlaybackEpoch === null || !currentSystemPlaybackOwner) return
+  updateOwnedAudioPlayback(currentSystemPlaybackEpoch, currentSystemPlaybackOwner, 'idle')
+  currentSystemPlaybackEpoch = null
+  currentSystemPlaybackOwner = null
+}
+
+function handleSystemSpeechError(event: SpeechSynthesisErrorEvent) {
+  if (currentSystemPlaybackEpoch === null || !currentSystemPlaybackOwner) return
+  updateOwnedAudioPlayback(
+    currentSystemPlaybackEpoch,
+    currentSystemPlaybackOwner,
+    'failed',
+    event.error || 'system-speech-error',
+  )
+  currentSystemPlaybackEpoch = null
+  currentSystemPlaybackOwner = null
+}
+
+export function subscribeAudioPlayback(listener: () => void) {
+  audioPlaybackListeners.add(listener)
+  return () => {
+    audioPlaybackListeners.delete(listener)
+  }
+}
+
+export function getAudioPlaybackSnapshot() {
+  return audioPlaybackSnapshot
+}
+
+export function getAudioPlaybackServerSnapshot() {
+  return IDLE_AUDIO_PLAYBACK
+}
+
 class AudioController {
   private audioContext: AudioContext | null = null
   private source: AudioBufferSourceNode | null = null
   private isPlaying = false
-  private onPlayingChange?: (playing: boolean) => void
 
-  constructor(onPlayingChange?: (playing: boolean) => void) {
-    this.onPlayingChange = onPlayingChange
-  }
+  constructor(
+    private readonly playbackEpoch: number,
+    private readonly ownerId: string,
+  ) {}
 
-  /**
-   * 播放音频数据
-   */
   async playAudioBuffer(audioBuffer: ArrayBuffer): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        // 如果已经在播放，先停止
         this.stop()
-
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-        
+
         this.audioContext.decodeAudioData(
-          audioBuffer.slice(0), // 创建副本避免detached buffer问题
+          audioBuffer.slice(0),
           (decodedData) => {
             if (!this.audioContext) {
               reject(new Error('音频上下文已被销毁'))
@@ -190,21 +255,20 @@ class AudioController {
             this.source = this.audioContext.createBufferSource()
             this.source.buffer = decodedData
             this.source.connect(this.audioContext.destination)
-            
             this.source.onended = () => {
               this.cleanup()
-              this.onPlayingChange?.(false)
+              updateOwnedAudioPlayback(this.playbackEpoch, this.ownerId, 'idle')
               resolve()
             }
-            
+
             this.isPlaying = true
-            this.onPlayingChange?.(true)
+            updateOwnedAudioPlayback(this.playbackEpoch, this.ownerId, 'playing')
             this.source.start(0)
           },
           (error) => {
             this.cleanup()
             reject(new Error(`音频解码失败: ${error}`))
-          }
+          },
         )
       } catch (error) {
         this.cleanup()
@@ -213,141 +277,89 @@ class AudioController {
     })
   }
 
-  /**
-   * 停止播放
-   */
   stop(): void {
     if (this.source && this.isPlaying) {
       try {
         this.source.stop()
       } catch {
-        // 忽略已经停止的错误
+        // 已经停止的音源无需再次处理。
       }
     }
     this.cleanup()
-    this.onPlayingChange?.(false)
   }
 
-  /**
-   * 清理资源
-   */
   private cleanup(): void {
     this.isPlaying = false
     this.source = null
     if (this.audioContext) {
-      this.audioContext.close()
+      void this.audioContext.close()
       this.audioContext = null
     }
   }
-
-  /**
-   * 获取播放状态
-   */
-  getIsPlaying(): boolean {
-    return this.isPlaying
-  }
 }
 
-/**
- * 播放音频数据（向后兼容）
- */
 export function playAudioBuffer(audioBuffer: ArrayBuffer): Promise<void> {
-  const controller = new AudioController()
+  const ownerId = 'audio-buffer'
+  const epoch = beginAudioPlayback(ownerId)
+  const controller = new AudioController(epoch, ownerId)
+  currentAudioController = controller
   return controller.playAudioBuffer(audioBuffer)
 }
 
-/**
- * 文本转语音并播放（支持状态回调）
- * 如果没有配置AI音频模型，则使用系统原生朗读功能
- */
 export async function textToSpeechAndPlay(
-  text: string, 
+  text: string,
   customVoice?: string,
   customSpeed?: number,
-  onPlayingChange?: (playing: boolean) => void
+  ownerId = 'manual-read-aloud',
 ): Promise<void> {
-  if (!text.trim()) {
-    throw new Error('文本内容为空')
-  }
+  if (!text.trim()) throw new Error('文本内容为空')
 
-  const resolution = resolveCurrentSpeechEngine('tts')
-
-  if (!resolution.available) {
-    throw new Error('当前朗读模式不可用，请检查本地语音支持或模型配置')
-  }
-
-  if (resolution.engine === 'local') {
-    try {
-      // 停止当前播放
-      stopCurrentAudio()
-      stopSystemVoice()
-      
-      if (onPlayingChange) {
-        onPlayingChange(true)
-      }
-      
-      const speed = customSpeed !== undefined ? customSpeed : 1
-      
-      speakWithSystemVoice(
-        text,
-        speed,
-        () => {
-          // 开始播放
-          if (onPlayingChange) {
-            onPlayingChange(true)
-          }
-        },
-        () => {
-          // 结束播放
-          if (onPlayingChange) {
-            onPlayingChange(false)
-          }
-        }
-      )
-      
-      return
-    } catch (error) {
-      if (onPlayingChange) {
-        onPlayingChange(false)
-      }
-      throw error
-    }
-  }
+  const playbackEpoch = beginAudioPlayback(ownerId)
 
   try {
-    // 停止当前播放
-    stopCurrentAudio()
-    stopSystemVoice()
-    
+    const resolution = resolveCurrentSpeechEngine('tts')
+    if (!resolution.available) {
+      throw new Error('当前朗读模式不可用，请检查本地语音支持或模型配置')
+    }
+
+    if (resolution.engine === 'local') {
+      currentSystemPlaybackEpoch = playbackEpoch
+      currentSystemPlaybackOwner = ownerId
+      speakWithSystemVoice(text, customSpeed ?? 1)
+      return
+    }
+
     const audioBuffer = await fetchAudioSpeech(text, customVoice, customSpeed)
-    
-    // 创建新的音频控制器
-    currentAudioController = new AudioController(onPlayingChange)
+    if (playbackEpoch !== audioPlaybackEpoch || audioPlaybackSnapshot.ownerId !== ownerId) return
+
+    currentAudioController = new AudioController(playbackEpoch, ownerId)
     await currentAudioController.playAudioBuffer(audioBuffer)
   } catch (error) {
     console.error('朗读失败:', error)
-    onPlayingChange?.(false)
+    updateOwnedAudioPlayback(
+      playbackEpoch,
+      ownerId,
+      'failed',
+      error instanceof Error ? error.message : String(error),
+    )
     throw error
   }
 }
 
-/**
- * 停止当前播放的音频（包括AI音频和系统朗读）
- */
 export function stopCurrentAudio(): void {
+  audioPlaybackEpoch += 1
   if (currentAudioController) {
     currentAudioController.stop()
     currentAudioController = null
   }
-  // 同时停止系统朗读
+  currentSystemPlaybackEpoch = null
+  currentSystemPlaybackOwner = null
   stopSystemVoice()
+  publishAudioPlayback(IDLE_AUDIO_PLAYBACK)
 }
 
-/**
- * 获取当前音频播放状态
- */
 export function getCurrentAudioPlayingState(): boolean {
-  return currentAudioController?.getIsPlaying() ?? false
+  return audioPlaybackSnapshot.phase === 'playing'
 }
 
 /**

@@ -19,6 +19,7 @@ import ChatContent from './chat-content'
 import { ChatInput } from './chat-input'
 import { CanvasChatSummary } from './canvas-chat-summary'
 import { CanvasChatHistoryPopover } from './canvas-chat-history-popover'
+import { stopCurrentAudio } from '@/lib/audio'
 
 function stopHudWheelPropagation(event: WheelEvent) {
   event.stopPropagation()
@@ -66,6 +67,20 @@ export function CanvasChatHud() {
     temporarySessionId,
     activeCanvasId,
   ), [activeCanvasId, currentConversationId, temporarySessionId])
+  const previousConversationKeyRef = useRef(conversationKey)
+  const previousExpandedRef = useRef(expanded)
+
+  useEffect(() => {
+    if (previousConversationKeyRef.current !== conversationKey) stopCurrentAudio()
+    previousConversationKeyRef.current = conversationKey
+  }, [conversationKey])
+
+  useEffect(() => {
+    if (previousExpandedRef.current && !expanded) stopCurrentAudio()
+    previousExpandedRef.current = expanded
+  }, [expanded])
+
+  useEffect(() => () => stopCurrentAudio(), [])
 
   useEffect(() => {
     const host = hostRef.current?.parentElement

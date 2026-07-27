@@ -66,6 +66,10 @@ interface SpeechRecognitionState {
   isSupported: () => boolean
 }
 
+export function composeSpeechRecognitionText(transcript: string, interimTranscript: string) {
+  return `${transcript}${interimTranscript}`.trim()
+}
+
 const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => ({
   isRecognizing: false,
   transcript: '',
@@ -121,20 +125,19 @@ const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => (
       // 错误处理
       recognition.onerror = (event: any) => {
         console.error('语音识别错误:', event.error, event)
-        
-        // 重置状态
-        get().resetState()
-        
-        // 记录错误类型，供外部判断
-        set({ 
+        if (get().recognition !== recognition) return
+        set({
+          recognition: null,
           isRecognizing: false,
-          lastError: event.error 
+          lastError: event.error,
         })
       }
 
       // 识别结束处理
       recognition.onend = () => {
-        set({ isRecognizing: false })
+        if (get().recognition === recognition) {
+          set({ recognition: null, isRecognizing: false })
+        }
       }
 
       await new Promise<void>((resolve, reject) => {
@@ -153,13 +156,13 @@ const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => (
 
         recognition.onerror = (event: any) => {
           console.error('语音识别错误:', event.error, event)
-
-          get().resetState()
-
-          set({
-            isRecognizing: false,
-            lastError: event.error
-          })
+          if (get().recognition === recognition) {
+            set({
+              recognition: null,
+              isRecognizing: false,
+              lastError: event.error,
+            })
+          }
 
           if (startupPending) {
             reject(new Error(event.error || 'speech-recognition-error'))
@@ -185,7 +188,7 @@ const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => (
     const { recognition } = get()
 
     if (!recognition) {
-      return `${get().transcript}${get().interimTranscript}`.trim()
+      return composeSpeechRecognitionText(get().transcript, get().interimTranscript)
     }
 
     return new Promise((resolve) => {
@@ -194,7 +197,10 @@ const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => (
       recognition.onend = () => {
         originalOnEnd?.()
 
-        const finalTranscript = `${get().transcript}${get().interimTranscript}`.trim()
+        const finalTranscript = composeSpeechRecognitionText(
+          get().transcript,
+          get().interimTranscript,
+        )
 
         set({
           isRecognizing: false,

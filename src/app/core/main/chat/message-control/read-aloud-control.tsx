@@ -2,8 +2,14 @@ import { TooltipButton } from "@/components/tooltip-button"
 import { Chat } from "@/db/chats"
 import { Volume2, VolumeX, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { textToSpeechAndPlay, stopCurrentAudio } from "@/lib/audio"
+import { useSyncExternalStore } from "react"
+import {
+  getAudioPlaybackServerSnapshot,
+  getAudioPlaybackSnapshot,
+  subscribeAudioPlayback,
+  textToSpeechAndPlay,
+  stopCurrentAudio,
+} from "@/lib/audio"
 import useSettingStore from "@/stores/setting"
 
 interface ReadAloudControlProps {
@@ -13,23 +19,26 @@ interface ReadAloudControlProps {
 
 export function ReadAloudControl({ chat, translatedContent }: ReadAloudControlProps) {
   const t = useTranslations()
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const ownerId = `manual:${chat.id}`
+  const playback = useSyncExternalStore(
+    subscribeAudioPlayback,
+    getAudioPlaybackSnapshot,
+    getAudioPlaybackServerSnapshot,
+  )
+  const ownsPlayback = playback.ownerId === ownerId
+  const isPlaying = ownsPlayback && playback.phase === 'playing'
+  const isLoading = ownsPlayback && playback.phase === 'loading'
   
   // 处理朗读/停止
   async function handleTextToSpeech() {
     // 如果正在播放，则停止播放
-    if (isPlaying) {
+    if (isPlaying || isLoading) {
       stopCurrentAudio()
-      setIsPlaying(false)
-      setIsLoading(false)
       return
     }
     
     // 如果正在加载或没有内容，则返回
     if (!chat.content || isLoading) return
-    
-    setIsLoading(true)
     
     try {
       // 使用翻译后的内容或原始内容
@@ -48,19 +57,9 @@ export function ReadAloudControl({ chat, translatedContent }: ReadAloudControlPr
       const audioConfig = aiModelList.find(config => config.key === audioModel)
       const speed = audioConfig?.speed
       
-      // 调用新的音频API，传入voice、speed和状态回调
-      await textToSpeechAndPlay(textToRead, undefined, speed, (playing: boolean) => {
-        setIsPlaying(playing)
-        if (playing) {
-          setIsLoading(false) // 开始播放时清除loading状态
-        }
-      })
+      await textToSpeechAndPlay(textToRead, undefined, speed, ownerId)
     } catch (error) {
       console.error('朗读失败:', error)
-      // 可以在这里添加错误提示
-    } finally {
-      setIsLoading(false)
-      setIsPlaying(false)
     }
   }
 
@@ -88,7 +87,6 @@ export function ReadAloudControl({ chat, translatedContent }: ReadAloudControlPr
         onClick={handleTextToSpeech}
         variant="ghost"
         size="sm"
-        disabled={isLoading}
       />
     </>
   )

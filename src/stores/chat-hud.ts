@@ -7,6 +7,7 @@ export const CHAT_WINDOW_MAX_SIZE = 120
 
 export interface ChatHudDraft {
   text: string
+  promptOrigin?: 'keyboard' | 'microphone'
   attachedImages: unknown[]
   fileAttachments: unknown[]
   linkedResource: unknown | null

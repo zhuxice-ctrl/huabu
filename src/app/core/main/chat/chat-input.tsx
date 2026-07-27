@@ -18,7 +18,7 @@ import emitter from "@/lib/emitter"
 import { ChatToolsDrawer } from "@/app/mobile/chat/components/chat-tools-drawer"
 import { useIsMobile } from '@/hooks/use-mobile'
 import { ImageAttachments, ImageAttachment } from "./image-attachments"
-import { ImageIcon } from "lucide-react"
+import { ImageIcon, Mic, Square } from "lucide-react"
 import { isMobileDevice } from '@/lib/check'
 import { QuoteDisplay } from "./quote-display"
 import type { PendingQuote } from "@/stores/chat"
@@ -47,6 +47,16 @@ import useChatHudStore, {
   saveChatHudDraft,
   type ChatHudDraft,
 } from '@/stores/chat-hud'
+import useSpeechRecognitionStore, {
+  composeSpeechRecognitionText,
+} from '@/stores/speech-recognition'
+import { stopCurrentAudio } from '@/lib/audio'
+import {
+  resolveAiBreathState,
+  type PromptOrigin,
+} from '@/lib/chat/voice-session'
+import { CanvasAiBreath } from './canvas-ai-breath'
+import { TooltipButton } from '@/components/tooltip-button'
 
 const MAX_IMAGE_ATTACHMENTS = 6
 const MAX_IMAGE_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024
@@ -99,7 +109,7 @@ function createImageAttachmentId(prefix: string) {
 }
 
 export const ChatInput = React.memo(function ChatInput() {
-  const { primaryModel } = useSettingStore()
+  const { primaryModel, agentPermissionMode } = useSettingStore()
   const {
     chats,
     loading,
@@ -118,6 +128,15 @@ export const ChatInput = React.memo(function ChatInput() {
   } = useChatStore()
   const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
   const temporarySessionId = useChatHudStore(state => state.temporarySessionId)
+  const {
+    isRecognizing,
+    transcript,
+    interimTranscript,
+    lastError: speechRecognitionError,
+    startRecognition,
+    stopRecognition,
+    resetState: resetSpeechRecognition,
+  } = useSpeechRecognitionStore()
   const { marks, trashState } = useMarkStore()
   const { activeFilePath, activeTabId } = useArticleStore()
   const [isComposing, setIsComposing] = useState(false)
@@ -148,6 +167,9 @@ export const ChatInput = React.memo(function ChatInput() {
   ), [activeCanvasId, currentConversationId, temporarySessionId])
   const initialDraftRef = useRef(getChatHudDraft(draftKey))
   const [text, setText] = useState(() => initialDraftRef.current?.text ?? '')
+  const [promptOrigin, setPromptOrigin] = useState<PromptOrigin>(
+    () => initialDraftRef.current?.promptOrigin ?? 'keyboard',
+  )
   const [linkedResource, setLinkedResource] = useState<LinkedResource | null>(
     () => (initialDraftRef.current?.linkedResource ?? null) as LinkedResource | null,
   )
@@ -160,6 +182,7 @@ export const ChatInput = React.memo(function ChatInput() {
   const activeDraftKeyRef = useRef(draftKey)
   const draftSnapshotRef = useRef<ChatHudDraft>({
     text: '',
+    promptOrigin: 'keyboard',
     attachedImages: [],
     fileAttachments: [],
     linkedResource: null,
@@ -170,13 +193,14 @@ export const ChatInput = React.memo(function ChatInput() {
   useEffect(() => {
     draftSnapshotRef.current = {
       text,
+      promptOrigin,
       attachedImages,
       fileAttachments,
       linkedResource,
       pendingQuote,
       editorSelectionQuote,
     }
-  }, [attachedImages, editorSelectionQuote, fileAttachments, linkedResource, pendingQuote, text])
+  }, [attachedImages, editorSelectionQuote, fileAttachments, linkedResource, pendingQuote, promptOrigin, text])
 
   useEffect(() => {
     useChatStore.setState({ linkedResource })
@@ -206,6 +230,44 @@ export const ChatInput = React.memo(function ChatInput() {
       textarea.style.height = `${newHeight}px`
     })
   }, [])
+
+  useEffect(() => {
+    if (!isRecognizing) return
+    const recognizedText = composeSpeechRecognitionText(transcript, interimTranscript)
+    if (!recognizedText) return
+    setPromptOrigin('microphone')
+    applyTypedText(recognizedText)
+  }, [applyTypedText, interimTranscript, isRecognizing, transcript])
+
+  useEffect(() => {
+    if (!speechRecognitionError) return
+    toast({
+      variant: 'destructive',
+      description: `语音识别失败：${speechRecognitionError}`,
+    })
+  }, [speechRecognitionError])
+
+  async function handleToggleSpeechRecognition() {
+    if (isRecognizing) {
+      const recognizedText = await stopRecognition()
+      if (recognizedText) {
+        setPromptOrigin('microphone')
+        applyTypedText(recognizedText)
+        textareaRef.current?.focus()
+      }
+      return
+    }
+
+    stopCurrentAudio()
+    try {
+      await startRecognition()
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        description: error instanceof Error ? error.message : '无法启动语音识别',
+      })
+    }
+  }
 
   // 添加输入到历史记录
   function addToHistory(input: string) {
@@ -700,6 +762,7 @@ export const ChatInput = React.memo(function ChatInput() {
     clearChatHudDraft(draftKey)
     draftSnapshotRef.current = {
       text: '',
+      promptOrigin: 'keyboard',
       attachedImages: [],
       fileAttachments: [],
       linkedResource: null,
@@ -707,6 +770,8 @@ export const ChatInput = React.memo(function ChatInput() {
       editorSelectionQuote: null,
     }
     setText('')
+    setPromptOrigin('keyboard')
+    resetSpeechRecognition()
     setHistoryIndex(-1)
     setAttachedImages([])
     setFileAttachments([])
@@ -1059,6 +1124,25 @@ ${previewLines.join('\n')}
     }
   }, [linkedResource, debouncedGenPlaceholder])
 
+  const latestToolName = [...agentState.toolCalls]
+    .reverse()
+    .find(toolCall => toolCall.status === 'running' || toolCall.status === 'pending')
+    ?.toolName ?? ''
+  const breathActivity = /search|query|rag|retrieve/i.test(latestToolName)
+    ? 'retrieving' as const
+    : /focus|navigate|locate|view/i.test(latestToolName)
+      ? 'locating' as const
+      : agentState.status === 'applying_change'
+        ? agentPermissionMode === 'auto-edit' ? 'editing' as const : 'managing' as const
+        : undefined
+  const breathState = resolveAiBreathState({
+    isRecognizing,
+    loading,
+    status: agentState.status,
+    hasPendingConfirmation: Boolean(agentState.pendingConfirmation),
+    activity: breathActivity,
+  })
+
   return (
     <footer
       id="onboarding-target-chat-input"
@@ -1148,6 +1232,9 @@ ${previewLines.join('\n')}
             disabled={!primaryModel}
             value={text}
             onChange={(e) => {
+              if (!text.trim() && e.target.value.trim() && !isRecognizing) {
+                setPromptOrigin('keyboard')
+              }
               applyTypedText(e.target.value)
             }}
             placeholder={loading ? steeringPlaceholder : placeholder || defaultPlaceholder}
@@ -1217,8 +1304,17 @@ ${previewLines.join('\n')}
             )}
           </div>
           <div className="flex items-center justify-end gap-2 pr-1">
+            <CanvasAiBreath state={breathState} />
+            <TooltipButton
+              icon={isRecognizing ? <Square className="size-4" /> : <Mic className="size-4" />}
+              tooltipText={isRecognizing ? '停止语音输入' : '语音输入'}
+              onClick={() => void handleToggleSpeechRecognition()}
+              variant={isRecognizing ? 'destructive' : 'ghost'}
+              size="sm"
+              disabled={!primaryModel}
+            />
             <AgentPermissionModeSelect />
-            <ChatSend inputValue={text} onSent={handleSent} linkedResource={linkedResource} attachedImages={attachedImages} fileAttachments={fileAttachments} quoteData={activeQuote} dockStyle={isMobile} ref={chatSendRef} />
+            <ChatSend inputValue={text} promptOrigin={promptOrigin} onSent={handleSent} linkedResource={linkedResource} attachedImages={attachedImages} fileAttachments={fileAttachments} quoteData={activeQuote} dockStyle={isMobile} ref={chatSendRef} />
           </div>
         </div>
 

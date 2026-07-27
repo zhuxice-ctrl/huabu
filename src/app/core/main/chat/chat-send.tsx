@@ -30,6 +30,29 @@ import { serializeChatAttachments, type RuntimeChatAttachment } from '@/lib/chat
 import { retainCompletedAgentTraceEvents } from '@/lib/agent/trace-retention'
 import useCanvasStore from '@/stores/canvas'
 import { createCanvasChatContext, parseCanvasChatContext } from '@/lib/chat/canvas-context'
+import {
+  completeVoiceSession,
+  createVoiceSession,
+  type PromptOrigin,
+  type VoicePlaybackPlan,
+  type VoiceSession,
+} from '@/lib/chat/voice-session'
+import { textToSpeechAndPlay } from '@/lib/audio'
+
+function reportAutomaticSpeechFailure(error: unknown) {
+  console.error('自动朗读失败，已保留文字答复:', error)
+}
+
+function playAutomaticVoiceFinal(playback: VoicePlaybackPlan) {
+  const { aiModelList, audioModel } = useSettingStore.getState()
+  const audioConfig = aiModelList.find(config => config.key === audioModel)
+  void textToSpeechAndPlay(
+    playback.text,
+    undefined,
+    audioConfig?.speed,
+    playback.ownerId,
+  ).catch(reportAutomaticSpeechFailure)
+}
 
 function getLastDisplayableAgentContent(
   liveContent: string | undefined,
@@ -71,6 +94,7 @@ interface QuoteData {
 
 interface ChatSendProps {
   inputValue: string;
+  promptOrigin: PromptOrigin;
   onSent?: () => void;
   linkedResource?: LinkedResource | null;
   attachedImages?: ImageAttachment[];
@@ -79,7 +103,7 @@ interface ChatSendProps {
   dockStyle?: boolean;
 }
 
-export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ inputValue, onSent, linkedResource, attachedImages = [], fileAttachments = [], quoteData = null, dockStyle = false }, ref) => {
+export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ inputValue, promptOrigin, onSent, linkedResource, attachedImages = [], fileAttachments = [], quoteData = null, dockStyle = false }, ref) => {
   const { primaryModel, agentPermissionMode } = useSettingStore()
   const { currentTagId } = useTagStore()
   const {
@@ -98,6 +122,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
   const steeringChainRef = useRef<Promise<void>>(Promise.resolve())
   const pendingSteeringRef = useRef<AgentSteeringPayload[]>([])
   const activeRunRef = useRef(false)
+  const activeVoiceSessionRef = useRef<VoiceSession | null>(null)
   const repeatedScriptApprovalRef = useRef<{ signature: string; count: number }>({ signature: '', count: 0 })
   const t = useTranslations()
   const requestText = inputValue.trim() || t('record.chat.input.addAttachment.attachmentOnlyPrompt')
@@ -501,6 +526,16 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
           agentHistory: JSON.stringify(agentHistory),
         }, !transactionStopRequested)
 
+        const activeVoiceSession = activeVoiceSessionRef.current
+        if (activeVoiceSession) {
+          const voiceCompletion = completeVoiceSession(activeVoiceSession, {
+            completionState: effectivelyStopped ? 'interrupted' : 'complete',
+            content: finalContent,
+          })
+          activeVoiceSessionRef.current = voiceCompletion.session
+          if (voiceCompletion.playback) playAutomaticVoiceFinal(voiceCompletion.playback)
+        }
+
         // 清空 Final Answer 模式状态
         setAgentState({
           activeChatId: undefined,
@@ -889,6 +924,11 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
       } : undefined
 
       agentHandlerRef.current?.beginSteering()
+      activeVoiceSessionRef.current = createVoiceSession({
+        id: crypto.randomUUID(),
+        origin: promptOrigin,
+        sourceKey: `steering:${sequence}`,
+      })
       onSent?.()
 
       steeringChainRef.current = steeringChainRef.current.then(async () => {
@@ -930,6 +970,11 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
         canvasState.projects,
         sentAt,
       )
+      activeVoiceSessionRef.current = createVoiceSession({
+        id: crypto.randomUUID(),
+        origin: promptOrigin,
+        sourceKey: canvasContext,
+      })
       const insertedUserChat = await insert({
         tagId: currentTagId,
         role: 'user',
@@ -946,6 +991,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
       await handleAgentMode(imageUrls, canvasContext)
     } finally {
       activeRunRef.current = false
+      activeVoiceSessionRef.current = null
       setLoading(false)
     }
   }
