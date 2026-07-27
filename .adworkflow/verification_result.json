@@ -1,19 +1,19 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-11-generation-transactions",
+  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
   "status": "passed",
-  "source_revision": "cc90925f3b9712ee5f4914a52ff2a5620a363e14",
+  "source_revision": "43f66efbba0013e683b45fd8ecf497ed9abeec4c",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-chat-generation-transaction.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-chat-hud-policy.test.mjs scripts/tests/canvas-chat-hud-contract.test.mjs scripts/tests/canvas-chat-generation-transaction.test.mjs",
       "status": "passed",
-      "summary": "Focused Task 11 transaction and source-contract tests passed 7/7.",
+      "summary": "Task 12 HUD plus Task 11 transaction regression passed 17/17 after review fixes.",
       "exit_code": 0
     },
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Complete Canvas regression suite passed 140/140.",
+      "summary": "Complete Canvas regression suite passed 150/150 at the final source revision.",
       "exit_code": 0
     },
     {
@@ -31,52 +31,52 @@
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors were found in the Task 11 diff.",
+      "summary": "No whitespace errors were found in the Task 12 product diff.",
       "exit_code": 0
     },
     {
       "command": "installed l2_codegraph.safety.post_edit_impact with in-memory reverse-impact budget 50000",
       "status": "passed",
-      "summary": "Final graph b8e7a82536ae616442d01369: predicted 63, observed 62, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
+      "summary": "Final graph dc11f36f4b6eb93e6d76fa66: predicted 66, observed 64, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Switch, new, temporary and delete-current serialize abort, close, interrupted persistence and target execution.",
+      "criterion": "Collapsed and expanded HUD sizing, clipping and screen-space isolation match the approved contract.",
       "status": "passed",
-      "evidence": ["canvas-chat-generation-transaction.test.mjs", "generation-transaction.ts"]
+      "evidence": ["canvas-chat-hud-policy.test.mjs", "canvas-chat-hud-contract.test.mjs"]
     },
     {
-      "criterion": "Deleting a non-active conversation leaves the active stream running.",
+      "criterion": "ChatContent is reused and 10000-message histories mount 40 initially with bounded bidirectional windows.",
       "status": "passed",
-      "evidence": ["delete non-active focused test", "planGenerationTransaction"]
+      "evidence": ["10,000-message policy test", "ChatContent layout/scroller contract"]
     },
     {
-      "criterion": "A failed stop or persistence step prevents the target action, and repeated actions coalesce.",
+      "criterion": "History search and every protected conversation action use the Task 11 store boundary.",
       "status": "passed",
-      "evidence": ["abort failure focused test", "serialized in-flight key test"]
+      "evidence": ["CanvasChatHistoryPopover", "CanvasChatConversationActions", "Task 11 regression 7/7"]
     },
     {
-      "criterion": "All callers receive explicit protected-action confirmation at the shared store boundary.",
+      "criterion": "Session-only drafts isolate conversation, temporary-session and canvas identities and preserve text, files, images, linked resources and quotes.",
       "status": "passed",
-      "evidence": ["3253ae39", "independent focused rereview APPROVED"]
+      "evidence": ["chat-hud.ts", "keyed ChatInput remount", "43f66efb review fix"]
     },
     {
-      "criterion": "Implementation is committed, reviewed and passes regression, build and L2 gates.",
+      "criterion": "Implementation is committed, independently reviewed and passes regression, build and L2 gates.",
       "status": "passed",
-      "evidence": ["cc90925f", "140/140 Canvas", "production build", "impact_report.json"]
+      "evidence": ["43f66efb", "task-12-review.md", "150/150 Canvas", "production build", "impact_report.json"]
     }
   ],
   "passed": [
-    "All Task 11 acceptance criteria",
-    "Independent review finding resolved",
+    "All Task 12 acceptance criteria",
+    "All independent review findings resolved",
     "Exhaustive L2 post-edit impact gate"
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Hands-on rapid switching during live provider streams remains in the final Windows acceptance pass.",
+    "Hands-on HUD resizing, wheel isolation, history navigation and draft restoration remain in Task 21 Windows acceptance.",
     "Existing Node module-type and Turbopack experimental warnings remain non-blocking."
   ]
 }

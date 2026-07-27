@@ -1,49 +1,54 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-11-generation-transactions",
+  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
   "status": "verified",
   "revision": 4,
   "done": [
-    "Moved active generation ownership to the shared chat-store boundary and serialized stop, switch, create, temporary and delete actions.",
-    "Persisted partial assistant output as interrupted before clearing the active generation and executing the target action.",
-    "Resolved the independent mobile-confirmation finding at the store boundary and replaced dynamic transaction dispatch with graph-resolvable planners and static execution boundaries.",
-    "Passed focused tests 7/7, the complete Canvas suite 140/140, TypeScript, production build, diff checks and exhaustive L2 impact analysis."
+    "Mounted one screen-space transcript HUD above the canvas composer without adding chat state to CanvasDocument or subscribing CanvasEditor to chat tokens.",
+    "Reused ChatContent rendering with deterministic 40-message initial windows, bounded 120-message traversal and per-conversation scroll restoration.",
+    "Added searchable 360x420 history, protected new/temporary/switch/delete actions, deterministic collapsed summaries and session-only per-conversation/per-canvas drafts including quotes and attachments.",
+    "Resolved all five Important and two Minor independent review findings, then passed focused tests 17/17, Canvas 150/150, TypeScript, production build, diff checks and exhaustive L2 impact."
   ],
   "changed_files": [
-    "scripts/tests/canvas-chat-generation-transaction.test.mjs",
-    "src/app/core/main/chat/chat-header.tsx",
+    "scripts/tests/canvas-chat-hud-contract.test.mjs",
+    "scripts/tests/canvas-chat-hud-policy.test.mjs",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/chat/canvas-chat-history-popover.tsx",
+    "src/app/core/main/chat/canvas-chat-hud.tsx",
+    "src/app/core/main/chat/canvas-chat-summary.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/chat/chat-input.tsx",
     "src/app/core/main/chat/chat-send.tsx",
-    "src/app/core/main/chat/history-dropdown.tsx",
-    "src/app/core/main/chat/new-chat.tsx",
-    "src/lib/chat/generation-transaction.ts",
+    "src/stores/chat-hud.ts",
     "src/stores/chat.ts"
   ],
   "current_problem": null,
   "next_action": null,
   "must_keep_context": [
-    ".adworkflow/context_preflight.json (accepted baseline graph revision 6a8a2e3207a3dfe43cfbf2bf)",
-    ".adworkflow/impact_report.json (passed current graph revision b8e7a82536ae616442d01369)",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-11-review.md"
+    ".adworkflow/context_preflight.json (accepted baseline b8e7a82536ae616442d01369)",
+    ".adworkflow/impact_report.json (passed current graph dc11f36f4b6eb93e6d76fa66)",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-12-review.md"
   ],
   "discarded_context": [
-    "The first L2 run was superseded after it exposed 20 dynamic-dispatch edges and five unpredicted consumers.",
-    "The final predicted set was expanded only from the exhaustive observed-impact result before rerunning the installed impact algorithm."
+    "The first broad preflight was replaced after Page pulled unrelated editor/onboarding dynamic edges; the accepted slice uses ChatContent and ChatInput entrypoints with manual shell context.",
+    "The first post-edit graph exposed five draft-restore setter edges; a keyed remount and static store boundaries replaced them.",
+    "The final predicted set was expanded only from the exhaustive observed-impact result after the chat-store session fix."
   ],
   "remaining_risks": [
-    "Node's existing MODULE_TYPELESS_PACKAGE_JSON warning remains outside this task and does not affect test results.",
+    "Hands-on viewport, wheel, popover and draft-switch behavior remains in the Task 21 Windows checklist.",
     "The shared Chat frontier requires the installed impact algorithm's in-memory reverse-impact budget to be raised from 10000 to 50000."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": [],
-  "source_revision": "cc90925f3b9712ee5f4914a52ff2a5620a363e14",
+  "source_revision": "43f66efbba0013e683b45fd8ecf497ed9abeec4c",
   "context_preflight": {
     "status": "accepted",
-    "graph_revision": "6a8a2e3207a3dfe43cfbf2bf"
+    "graph_revision": "b8e7a82536ae616442d01369"
   },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "b8e7a82536ae616442d01369",
+    "graph_revision": "dc11f36f4b6eb93e6d76fa66",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }

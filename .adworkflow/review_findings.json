@@ -1,15 +1,15 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-11-generation-transactions",
+  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
   "status": "approved",
-  "reviewer": "independent commit reviewer with focused rereview; final structural gate by verified L2 impact",
-  "source_revision": "cc90925f3b9712ee5f4914a52ff2a5620a363e14",
+  "reviewer": "independent Task 12 commit reviewer; closure verified by main executor tests and final L2 gate",
+  "source_revision": "43f66efbba0013e683b45fd8ecf497ed9abeec4c",
   "review_basis": [
     ".adworkflow/task_spec.json",
-    ".adworkflow/context_preflight.json (accepted baseline 6a8a2e3207a3dfe43cfbf2bf)",
-    ".adworkflow/impact_report.json (passed current graph b8e7a82536ae616442d01369)",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-11-review.md",
-    "Independent review of 19eab46b and focused rereview after 3253ae39 returned APPROVED."
+    ".adworkflow/context_preflight.json (accepted baseline b8e7a82536ae616442d01369)",
+    ".adworkflow/impact_report.json (passed current graph dc11f36f4b6eb93e6d76fa66)",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-12-review.md",
+    "Independent review of e97a2c05..a4cfb5db and closure commit 43f66efb."
   ],
   "blocking_findings": [],
   "non_blocking_findings": [
@@ -17,16 +17,16 @@
       "id": "module-type-warning",
       "severity": "non_blocking",
       "issue": "Node emits the existing MODULE_TYPELESS_PACKAGE_JSON warning for direct TypeScript test imports.",
-      "expected_fix": "Handle package/test-runner module policy outside Task 11.",
+      "expected_fix": "Handle package/test-runner module policy outside Task 12.",
       "evidence": "Focused and complete Canvas suites pass."
     }
   ],
   "suggested_tests": [
-    "Retain rapid live-stream switch, create, temporary, delete-current and delete-non-active scenarios in Task 21 Windows acceptance."
+    "Retain same-conversation click, null-session draft rotation, quote restoration, mobile/panel scroll isolation and HUD wheel/escape behavior in Task 21 Windows acceptance."
   ],
   "risk_notes": [
-    "The initial independent review found one P2 mobile silent-stop path; 3253ae39 moved confirmation into the shared store boundary and focused rereview returned APPROVED.",
-    "The first L2 report found 20 production dynamic-dispatch edges; 5bafcd8d replaced them with a pure command planner and static store execution boundaries.",
+    "Independent review found five Important session/action/state-isolation issues and two Minor accessibility/escape issues; all were addressed in 43f66efb.",
+    "The first L2 report found five setter dynamic-dispatch edges; a keyed ChatInput lifecycle and static HUD store boundaries removed them.",
     "The final L2 report has zero unexpected impact, zero new production/test critical edges, complete propagation and no reused baseline."
   ]
 }

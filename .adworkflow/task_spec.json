@@ -1,32 +1,37 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-11-generation-transactions",
+  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
   "task_type": "code",
-  "goal": "Serialize streaming conversation switch, create and delete actions so active generation is stopped, partial output is persisted as interrupted, and the target action occurs exactly once.",
+  "goal": "Render the complete chat transcript and searchable conversation history in a screen-space canvas HUD with bounded long-history rendering and session-only per-conversation/per-canvas drafts.",
   "non_goals": [
-    "Do not build the Task 12 transcript HUD or Task 13 voice/TTS state machine.",
-    "Do not change canvas geometry, rich media, retrieval, AI permissions, credentials, recovery or release behavior.",
-    "Do not alter remote sync formats beyond preserving Task 10 completionState behavior."
+    "Do not implement Task 13 speech, TTS or AI breathing state.",
+    "Do not change Task 11 generation transaction ordering or Task 10 canvas-context persistence.",
+    "Do not add chat nodes to CanvasDocument or transform the HUD with React Flow.",
+    "Do not change retrieval, AI permissions, credentials, recovery or release behavior."
   ],
   "acceptance_criteria": [
-    "Switch, new, temporary and delete-current actions serialize abort request, stream close, interrupted persistence and target action in that order.",
-    "Deleting a non-active conversation does not cancel the active stream.",
-    "Abort or persistence failure keeps the current conversation, received text and active target IDs without creating or deleting another conversation.",
-    "Repeated UI actions do not create duplicate conversations, orphan messages or overlapping transactions.",
-    "History actions expose explicit stop-and-switch or stop-and-delete confirmation while streaming.",
-    "Focused tests, Canvas regression, TypeScript and diff checks pass.",
-    "Implementation is committed and independently reviewed."
+    "Collapsed HUD shows deterministic latest user and assistant excerpts; expanded height is bounded by visible canvas height and 560 pixels.",
+    "Expanded transcript reuses ChatContent rendering, preserves per-conversation scroll state and windows long histories in deterministic 40-message segments.",
+    "Searchable history is bounded to 360 by 420 pixels and routes protected actions through the Task 11 store boundary.",
+    "Session-only unsent drafts are keyed by conversation or temporary session plus canvas ID, are never stored in chats or sync, and clear only after successful send or explicit clear.",
+    "HUD wheel, escape and outside-click behavior remains isolated from React Flow and chat token updates do not recreate CanvasEditor.",
+    "Focused tests, Canvas regression, TypeScript, production build and diff checks pass.",
+    "Implementation is committed, independently reviewed and passes the L2 post-edit impact gate."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/chat/generation-transaction.ts",
-    "src/stores/chat.ts",
-    "src/app/core/main/chat/chat-send.tsx",
-    "src/app/core/main/chat/history-dropdown.tsx",
-    "scripts/tests/canvas-chat-generation-transaction.test.mjs",
+    "src/app/core/main/chat/canvas-chat-hud.tsx",
+    "src/app/core/main/chat/canvas-chat-summary.tsx",
+    "src/app/core/main/chat/canvas-chat-history-popover.tsx",
+    "src/stores/chat-hud.ts",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/chat/chat-input.tsx",
+    "src/app/core/main/page.tsx",
+    "scripts/tests/canvas-chat-hud-policy.test.mjs",
+    "scripts/tests/canvas-chat-hud-contract.test.mjs",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -34,9 +39,8 @@
     ".adworkflow/review_findings.json"
   ],
   "do_not_touch": [
-    "src/app/mobile",
     "src-tauri",
-    "canvas geometry or media modules",
+    "canvas geometry, collision or rich-media modules",
     "main branch",
     "remote repositories before the Phase C push gate",
     "release artifacts",
@@ -46,22 +50,23 @@
     "unrelated runtime modules"
   ],
   "entrypoints": [
-    "typescript:src.app.core.main.chat.chat-send:ChatSend:variable",
-    "typescript:src.stores.chat:useChatStore:variable"
+    "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
+    "typescript:src.app.core.main.chat.chat-input:ChatInput:variable"
   ],
   "context_sources": [
     "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md",
-    "src/lib/chat/generation-transaction.ts",
-    "src/stores/chat.ts",
-    "src/app/core/main/chat/chat-send.tsx",
+    "src/app/core/main/page.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/chat/chat-header.tsx",
+    "src/app/core/main/chat/chat-input.tsx",
     "src/app/core/main/chat/history-dropdown.tsx",
-    "src/db/chats.ts",
-    "src/db/conversations.ts"
+    "src/stores/chat.ts"
   ],
   "notes": [
     "Use test-first implementation and keep review/report evidence concise.",
-    "Preserve partial assistant output and Task 10 source canvas context.",
-    "Use one serialized promise chain and fail closed before the target action.",
+    "Reuse the existing message renderer and Task 11 protected action boundary.",
+    "Keep HUD state session-only and outside CanvasDocument and persisted chat rows.",
     "Use fixed UTF-8 I/O for non-ASCII reads and edits.",
     "Never inspect, print, log or modify configured provider secrets."
   ],

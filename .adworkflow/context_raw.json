@@ -1,16 +1,16 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "zeroxb-integrated-task-11-generation-transactions",
+  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
   "source": "semantic-codegraph-l2",
   "matched_files": [
     {
-      "path": "src/app/core/main/chat/chat-send.tsx",
-      "sha256": "47d02d8647452a708f1a5e622812ddb30570c5ce72a37a3b62a099cd5337e2fa",
+      "path": "src/app/core/main/chat/chat-content.tsx",
+      "sha256": "5ae97b9d5e6bcdca43094dd7cc479ae32b659d7e63c24f61e16ddee0e950829e",
       "reason": "semantic-slice"
     },
     {
-      "path": "src/stores/chat.ts",
-      "sha256": "d6e663535c1753c5d1d067455d775e4c6aca9a9a4eb3e2f9a3cbb8a185be9b8d",
+      "path": "src/app/core/main/chat/chat-input.tsx",
+      "sha256": "09f4a6943cc42378747814f52266ed6a28360f5d3e6864d9c1ac7c261acfd3ea",
       "reason": "semantic-slice"
     },
     {
@@ -18,98 +18,54 @@
       "reason": "task_spec.context_sources"
     },
     {
+      "path": "src/app/core/main/page.tsx",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/app/core/main/canvas/canvas-workspace.tsx",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/app/core/main/chat/chat-header.tsx",
+      "reason": "task_spec.context_sources"
+    },
+    {
       "path": "src/app/core/main/chat/history-dropdown.tsx",
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/db/chats.ts",
-      "reason": "task_spec.context_sources"
-    },
-    {
-      "path": "src/db/conversations.ts",
+      "path": "src/stores/chat.ts",
       "reason": "task_spec.context_sources"
     }
   ],
   "matched_symbols": [
     {
-      "stable_id": "typescript:src.app.core.main.chat.chat-send:ChatSend:variable",
-      "qualified_name": "src.app.core.main.chat.chat-send.ChatSend",
-      "file": "src/app/core/main/chat/chat-send.tsx",
-      "start_line": 78,
-      "end_line": 954,
+      "stable_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
+      "qualified_name": "src.app.core.main.chat.chat-content.ChatContent",
+      "file": "src/app/core/main/chat/chat-content.tsx",
+      "start_line": 38,
+      "end_line": 98,
       "distance": 0
     },
     {
-      "stable_id": "typescript:src.stores.chat:useChatStore:variable",
-      "qualified_name": "src.stores.chat.useChatStore",
-      "file": "src/stores/chat.ts",
-      "start_line": 148,
-      "end_line": 884,
+      "stable_id": "typescript:src.app.core.main.chat.chat-input:ChatInput:variable",
+      "qualified_name": "src.app.core.main.chat.chat-input.ChatInput",
+      "file": "src/app/core/main/chat/chat-input.tsx",
+      "start_line": 93,
+      "end_line": 1165,
       "distance": 0
     }
   ],
   "likely_tests": [],
   "warnings": [],
-  "graph_revision": "6a8a2e3207a3dfe43cfbf2bf",
+  "graph_revision": "b8e7a82536ae616442d01369",
   "confidence": 1.0,
   "unresolved_edges": [],
   "boundary_symbols": [],
   "predicted_impact_files": [
-    "src/app/core/layout.tsx",
-    "src/app/core/main/canvas/canvas-workspace.tsx",
-    "src/app/core/main/chat/agent-approval-actions.ts",
-    "src/app/core/main/chat/agent-execution-status.tsx",
-    "src/app/core/main/chat/agent-permission-mode.tsx",
-    "src/app/core/main/chat/chat-clipboard.tsx",
     "src/app/core/main/chat/chat-content.tsx",
-    "src/app/core/main/chat/chat-empty.tsx",
-    "src/app/core/main/chat/chat-header.tsx",
     "src/app/core/main/chat/chat-input.tsx",
-    "src/app/core/main/chat/chat-send.tsx",
-    "src/app/core/main/chat/clear-chat.tsx",
-    "src/app/core/main/chat/clear-context.tsx",
-    "src/app/core/main/chat/clipboard-listener.tsx",
     "src/app/core/main/chat/index.tsx",
-    "src/app/core/main/chat/mcp-tool-call.tsx",
-    "src/app/core/main/chat/message-control/index.tsx",
-    "src/app/core/main/chat/message-control/mark-text.tsx",
-    "src/app/core/main/chat/new-chat.tsx",
-    "src/app/core/main/editor/editor-layout.tsx",
-    "src/app/core/main/editor/markdown/md-editor-wrapper.tsx",
-    "src/app/core/main/editor/markdown/quote-session.ts",
-    "src/app/core/main/editor/markdown/tiptap-editor.tsx",
-    "src/app/core/main/left-sidebar.tsx",
-    "src/app/core/main/mark/index.tsx",
-    "src/app/core/main/mark/mark-actions.tsx",
-    "src/app/core/main/mark/mark-detail-panel.tsx",
-    "src/app/core/main/mark/organize-notes.tsx",
-    "src/app/core/main/mark/tag-manage.tsx",
-    "src/app/core/main/page.tsx",
-    "src/app/core/setting/components/settings-dialog.tsx",
-    "src/app/core/setting/prompt/page.tsx",
-    "src/app/core/setting/prompt/setting-prompt.tsx",
-    "src/app/core/setting/sync/page.tsx",
-    "src/app/mobile/chat/components/chat-attachments-drawer.tsx",
-    "src/app/mobile/chat/components/clear-chat.tsx",
-    "src/app/mobile/chat/components/clear-context.tsx",
-    "src/app/mobile/chat/components/mobile-chat-header.tsx",
-    "src/app/mobile/chat/components/new-chat.tsx",
-    "src/app/mobile/chat/page.tsx",
-    "src/app/mobile/setting/components/mobile-me-page.tsx",
-    "src/app/mobile/setting/components/mobile-me-profile-card.tsx",
-    "src/app/mobile/setting/pages/sync/page.tsx",
-    "src/app/mobile/writing/mobile-editor.tsx",
-    "src/app/mobile/writing/writing-screen.tsx",
-    "src/components/app-footbar.tsx",
-    "src/components/title-bar-toolbars/sync-toggle.tsx",
-    "src/components/title-bar.tsx",
-    "src/lib/agent/agent-handler.ts",
-    "src/lib/agent/runtime.ts",
-    "src/lib/agent/tool-registry.ts",
-    "src/lib/agent/tools/index.ts",
-    "src/lib/agent/tools/note-tools.ts",
-    "src/lib/ai/chat.ts",
-    "src/lib/ai/condense.ts",
-    "src/stores/chat.ts"
+    "src/app/mobile/chat/page.tsx"
   ]
 }

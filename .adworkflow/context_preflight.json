@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-11-generation-transactions",
+  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
   "status": "accepted",
-  "graph_revision": "6a8a2e3207a3dfe43cfbf2bf",
-  "slice_revision": "6a8a2e3207a3dfe43cfbf2bf",
+  "graph_revision": "b8e7a82536ae616442d01369",
+  "slice_revision": "b8e7a82536ae616442d01369",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {
