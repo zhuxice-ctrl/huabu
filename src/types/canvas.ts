@@ -24,6 +24,9 @@ export type CanvasNodeType =
   | 'text'
   | 'note'
   | 'image'
+  | 'pdf'
+  | 'video'
+  | 'web-preview'
   | 'file'
   | 'link'
   | 'todo'
@@ -35,6 +38,43 @@ export interface CanvasPoint {
   y: number
   pressure: number
 }
+
+export interface CanvasAttachmentMetadata {
+  kind: 'attachment'
+  fileName: string
+  directory: string
+  userNotes: string
+}
+
+export interface CanvasPdfMetadata {
+  kind: 'pdf'
+  fileName: string
+  directory: string
+  userNotes: string
+}
+
+export interface CanvasVideoMetadata {
+  kind: 'video'
+  title: string
+  description: string
+  subtitles: string[]
+  userNotes: string
+}
+
+export interface CanvasWebPreviewMetadata {
+  kind: 'web-preview'
+  title: string
+  description: string
+  siteName: string
+  imageUrl?: string
+  untrusted: true
+}
+
+export type CanvasRichMediaMetadata =
+  | CanvasAttachmentMetadata
+  | CanvasPdfMetadata
+  | CanvasVideoMetadata
+  | CanvasWebPreviewMetadata
 
 export interface CanvasNodeData extends Record<string, unknown> {
   label?: string
@@ -60,6 +100,7 @@ export interface CanvasNodeData extends Record<string, unknown> {
   filePath?: string
   imagePath?: string
   url?: string
+  metadata?: CanvasRichMediaMetadata
   checked?: boolean
   childIds?: string[]
   previewState?: 'add' | 'update' | 'delete'

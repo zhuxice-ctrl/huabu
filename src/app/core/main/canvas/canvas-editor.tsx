@@ -133,6 +133,9 @@ import {
   TodoCanvasNode,
   type FlowCanvasNode,
 } from './nodes/canvas-nodes'
+import { PdfCanvasNode } from './nodes/pdf-canvas-node'
+import { VideoCanvasNode } from './nodes/video-canvas-node'
+import { WebPreviewCanvasNode } from './nodes/web-preview-canvas-node'
 import { CanvasFooter } from './canvas-footer'
 import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { CanvasGeometryOverlays } from './canvas-geometry-overlays'
@@ -165,6 +168,7 @@ import {
   materializeIngestDraft,
   screenFontSizeForCanvasFont,
   stackIngestDrafts,
+  transferUrlChoice,
   type CanvasTransferInput,
 } from '@/lib/canvas/content-ingest'
 import {
@@ -214,6 +218,9 @@ const nodeTypes: NodeTypes = {
   text: TextCanvasNode,
   note: NoteCanvasNode,
   image: ImageCanvasNode,
+  pdf: PdfCanvasNode,
+  video: VideoCanvasNode,
+  'web-preview': WebPreviewCanvasNode,
   file: FileCanvasNode,
   link: LinkCanvasNode,
   todo: TodoCanvasNode,
@@ -2476,76 +2483,90 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         clientY: screenOrigin.y,
       }, capturedViewport)
       const materializedDrafts = drafts.map(draft => materializeIngestDraft(draft, capturedViewport))
-      const prepared = await Promise.all(stackIngestDrafts(materializedDrafts, capturedViewport).map(async item => {
+      const preparedItems: Array<{ node: FlowCanvasNode; resourcePath?: string }> = []
+      for (const item of stackIngestDrafts(materializedDrafts, capturedViewport)) {
         const position = item.position
         const draft = item.draft
         const materialized = item.draft
-        if (draft.kind === 'text') {
-          return {
-            id: crypto.randomUUID(),
-            type: 'text' as const,
-            position,
-            width: materialized.canvasSize.width,
-            height: materialized.canvasSize.height,
-            selected: true,
-            data: {
-              label: draft.text,
-              backgroundColor: '#F2F1ED',
-              textColor: '#202321',
-              borderColor: '#D8D6CF',
-              fontSize: materialized.fontSize,
-              contentScale: materialized.contentScale,
-            },
+        let resourcePath: string | undefined
+        try {
+          if (draft.kind === 'text') {
+            preparedItems.push({ node: {
+              id: crypto.randomUUID(),
+              type: 'text',
+              position,
+              width: materialized.canvasSize.width,
+              height: materialized.canvasSize.height,
+              selected: true,
+              data: {
+                label: draft.text,
+                backgroundColor: '#F2F1ED',
+                textColor: '#202321',
+                borderColor: '#D8D6CF',
+                fontSize: materialized.fontSize,
+                contentScale: materialized.contentScale,
+              },
+            } })
+            continue
           }
-        }
-        if (draft.kind === 'link') {
-          return {
-            id: crypto.randomUUID(),
-            type: 'link' as const,
-            position,
-            width: materialized.canvasSize.width,
-            height: materialized.canvasSize.height,
-            selected: true,
-            data: {
-              label: draft.label,
-              url: draft.url,
-              fontSize: materialized.fontSize,
-              contentScale: materialized.contentScale,
-            },
+          if (draft.kind === 'link' || draft.kind === 'web-preview' || (draft.kind === 'video' && !draft.file && draft.url)) {
+            preparedItems.push({ node: {
+              id: crypto.randomUUID(),
+              type: draft.kind,
+              position,
+              width: materialized.canvasSize.width,
+              height: materialized.canvasSize.height,
+              selected: true,
+              data: {
+                label: draft.label,
+                url: draft.url,
+                ...('metadata' in draft ? { metadata: draft.metadata } : {}),
+                fontSize: materialized.fontSize,
+                contentScale: materialized.contentScale,
+              },
+            } })
+            continue
           }
-        }
-        if (draft.kind === 'video' && !draft.file && draft.url) {
-          return {
-            id: crypto.randomUUID(),
-            type: 'link' as const,
-            position,
-            width: materialized.canvasSize.width,
-            height: materialized.canvasSize.height,
-            selected: true,
-            data: {
-              label: draft.label,
-              url: draft.url,
-              fontSize: materialized.fontSize,
-              contentScale: materialized.contentScale,
+          if (!draft.file) throw new Error('Ingest file is missing')
+          resourcePath = await persistIngestFile(draft.file)
+          const nodeType = draft.kind === 'image'
+            ? 'image' as const
+            : draft.kind === 'pdf'
+              ? 'pdf' as const
+              : draft.kind === 'video'
+                ? 'video' as const
+                : 'file' as const
+          preparedItems.push({
+            resourcePath,
+            node: {
+              id: crypto.randomUUID(),
+              type: nodeType,
+              position,
+              width: materialized.canvasSize.width,
+              height: materialized.canvasSize.height,
+              selected: true,
+              data: draft.kind === 'image'
+                ? { label: draft.label, imagePath: resourcePath, fontSize: materialized.fontSize, contentScale: materialized.contentScale }
+                : {
+                    label: draft.label,
+                    filePath: resourcePath,
+                    metadata: draft.metadata,
+                    fontSize: materialized.fontSize,
+                    contentScale: materialized.contentScale,
+                  },
             },
-          }
+          })
+        } catch {
+          if (resourcePath) await cleanupPersistedResources([resourcePath])
         }
-        if (!draft.file) throw new Error('Ingest file is missing')
-        const relativePath = await persistIngestFile(draft.file)
-        resourcePaths.push(relativePath)
-        const nodeType = draft.kind === 'image' ? 'image' as const : 'file' as const
-        return {
-          id: crypto.randomUUID(),
-          type: nodeType,
-          position,
-          width: materialized.canvasSize.width,
-          height: materialized.canvasSize.height,
-          selected: true,
-          data: draft.kind === 'image'
-            ? { label: draft.label, imagePath: relativePath, fontSize: materialized.fontSize, contentScale: materialized.contentScale }
-            : { label: draft.label, filePath: relativePath, fontSize: materialized.fontSize, contentScale: materialized.contentScale },
-        }
-      }))
+      }
+      const prepared = preparedItems.map(item => item.node)
+      resourcePaths.push(...preparedItems.flatMap(item => item.resourcePath ? [item.resourcePath] : []))
+
+      if (prepared.length === 0) {
+        toast.error('无法把此内容加入画布')
+        return false
+      }
 
       if (drafts.some(draft => 'file' in draft && draft.file)) {
         await loadFileTree({ skipRemoteSync: true })
@@ -2573,6 +2594,30 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [cleanupPersistedResources, loadFileTree, persistIngestFile,
     previewNearestFreePlacement, pushHistory, setEdges, setNodes])
 
+  const requestTransferIngest = useCallback((
+    input: CanvasTransferInput,
+    screenOrigin: { x: number; y: number },
+    snapshot: ViewportSnapshot,
+  ) => {
+    const choice = transferUrlChoice(input)
+    if (choice) {
+      toast('添加链接内容', {
+        description: choice.url,
+        duration: Infinity,
+        action: {
+          label: choice.mediaKind === 'video' ? '作为视频' : '生成网页预览',
+          onClick: () => void ingestTransfer({ ...input, urlChoice: choice.mediaKind }, screenOrigin, snapshot),
+        },
+        cancel: {
+          label: '作为链接',
+          onClick: () => void ingestTransfer({ ...input, urlChoice: 'link' }, screenOrigin, snapshot),
+        },
+      })
+      return
+    }
+    void ingestTransfer(input, screenOrigin, snapshot)
+  }, [ingestTransfer])
+
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
       if (useCanvasStore.getState().activeCanvasId !== canvasId) return
@@ -2591,7 +2636,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       if (!capturedViewport) return
       event.preventDefault()
       const bounds = root.getBoundingClientRect()
-      void ingestTransfer(
+      requestTransferIngest(
         input,
         { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 },
         capturedViewport,
@@ -2599,7 +2644,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     window.addEventListener('paste', handlePaste)
     return () => window.removeEventListener('paste', handlePaste)
-  }, [canvasId, captureCurrentViewport, ingestTransfer])
+  }, [canvasId, captureCurrentViewport, requestTransferIngest])
 
   const handleCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     if (event.dataTransfer.types.includes(NOTE_REFERENCE_MIME)
@@ -2661,8 +2706,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     if (!capturedViewport) return
     event.preventDefault()
     event.stopPropagation()
-    void ingestTransfer(input, { x: event.clientX, y: event.clientY }, capturedViewport)
-  }, [captureCurrentViewport, ingestTransfer, placeNoteReference, pushHistory, updateFlowNodes])
+    requestTransferIngest(input, { x: event.clientX, y: event.clientY }, capturedViewport)
+  }, [captureCurrentViewport, placeNoteReference, pushHistory, requestTransferIngest, updateFlowNodes])
 
   const commitValidatedGeometryMutation = useCallback((
     candidateNodes: FlowCanvasNode[],

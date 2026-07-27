@@ -1,4 +1,12 @@
-import type { CanvasNode, CanvasNodeType, CanvasSize } from '../../types/canvas'
+import type {
+  CanvasAttachmentMetadata,
+  CanvasNode,
+  CanvasNodeType,
+  CanvasPdfMetadata,
+  CanvasSize,
+  CanvasVideoMetadata,
+  CanvasWebPreviewMetadata,
+} from '../../types/canvas'
 import {
   canvasSizeToScreen,
   contentScaleForZoom,
@@ -11,6 +19,10 @@ import { stackIngestDrafts, type PositionedCanvasDraft } from './placement-polic
 const DEFAULT_SCREEN_FONT_SIZE = 15
 const MIN_CONTENT_SCALE = 0.1667
 const MAX_CONTENT_SCALE = 10
+const CANVAS_ASSET_DIRECTORY = '画布资源'
+const VIDEO_URL_RE = /(?:\.(?:m4v|mov|mp4|ogv|webm)(?:[?#]|$)|(?:bilibili\.com|vimeo\.com|youtu\.be|youtube\.com)\/)/i
+
+export type CanvasUrlChoice = 'link' | 'video' | 'web-preview'
 
 export function classifyTextContent(text: string) {
   const value = text.trim()
@@ -38,9 +50,10 @@ export type CanvasIngestDraft =
   | { kind: 'text'; text: string; screenSize: CanvasSize }
   | { kind: 'link'; url: string; label: string; screenSize: CanvasSize }
   | { kind: 'image'; file: File; label: string; screenSize: CanvasSize }
-  | { kind: 'file'; file: File; label: string; screenSize: CanvasSize }
-  | { kind: 'pdf'; file: File; label: string; screenSize: CanvasSize }
-  | { kind: 'video'; file?: File; url?: string; label: string; screenSize: CanvasSize }
+  | { kind: 'file'; file: File; label: string; metadata: CanvasAttachmentMetadata; screenSize: CanvasSize }
+  | { kind: 'pdf'; file: File; label: string; metadata: CanvasPdfMetadata; screenSize: CanvasSize }
+  | { kind: 'video'; file?: File; url?: string; label: string; metadata: CanvasVideoMetadata; screenSize: CanvasSize }
+  | { kind: 'web-preview'; url: string; label: string; metadata: CanvasWebPreviewMetadata; screenSize: CanvasSize }
 
 export type MaterializedCanvasDraft = CanvasIngestDraft & {
   canvasSize: CanvasSize
@@ -79,6 +92,45 @@ export interface CanvasTransferInput {
   files: File[]
   html: string
   text: string
+  urlChoice?: CanvasUrlChoice
+}
+
+function isVideoUrl(url: string): boolean {
+  return VIDEO_URL_RE.test(url)
+}
+
+function webPreviewMetadata(url: string): CanvasWebPreviewMetadata {
+  let siteName = url
+  try {
+    siteName = new URL(url).hostname
+  } catch {
+    // classifyTextContent already limits this path to HTTP(S) URLs.
+  }
+  return {
+    kind: 'web-preview',
+    title: url,
+    description: '',
+    siteName,
+    untrusted: true,
+  }
+}
+
+function videoMetadata(title: string): CanvasVideoMetadata {
+  return { kind: 'video', title, description: '', subtitles: [], userNotes: '' }
+}
+
+export function transferUrlChoice(input: CanvasTransferInput): {
+  url: string
+  mediaKind: 'video' | 'web-preview'
+} | null {
+  if (input.files.length > 0 || input.urlChoice) return null
+  const content = input.html ? htmlToPlainText(input.html) : input.text.trim()
+  const classified = classifyTextContent(content)
+  if (classified.kind !== 'link') return null
+  return {
+    url: classified.value,
+    mediaKind: isVideoUrl(classified.value) ? 'video' : 'web-preview',
+  }
 }
 
 function htmlToPlainText(html: string) {
@@ -100,12 +152,24 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
         return { kind: 'image' as const, file, label: file.name, screenSize: { width: 320, height: 220 } }
       }
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        return { kind: 'pdf' as const, file, label: file.name, screenSize: { width: 320, height: 220 } }
+        return {
+          kind: 'pdf' as const,
+          file,
+          label: file.name,
+          metadata: { kind: 'pdf' as const, fileName: file.name, directory: CANVAS_ASSET_DIRECTORY, userNotes: '' },
+          screenSize: { width: 320, height: 220 },
+        }
       }
       if (file.type.startsWith('video/')) {
-        return { kind: 'video' as const, file, label: file.name, screenSize: { width: 360, height: 220 } }
+        return { kind: 'video' as const, file, label: file.name, metadata: videoMetadata(file.name), screenSize: { width: 360, height: 220 } }
       }
-      return { kind: 'file' as const, file, label: file.name, screenSize: { width: 320, height: 112 } }
+      return {
+        kind: 'file' as const,
+        file,
+        label: file.name,
+        metadata: { kind: 'attachment' as const, fileName: file.name, directory: CANVAS_ASSET_DIRECTORY, userNotes: '' },
+        screenSize: { width: 320, height: 112 },
+      }
     })
   }
 
@@ -113,6 +177,24 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
   if (!content) return []
   const classified = classifyTextContent(content)
   if (classified.kind === 'link') {
+    if (input.urlChoice === 'web-preview') {
+      return [{
+        kind: 'web-preview',
+        url: classified.value,
+        label: classified.value,
+        metadata: webPreviewMetadata(classified.value),
+        screenSize: { width: 320, height: 180 },
+      }]
+    }
+    if (input.urlChoice === 'video' || (!input.urlChoice && isVideoUrl(classified.value))) {
+      return [{
+        kind: 'video',
+        url: classified.value,
+        label: classified.value,
+        metadata: videoMetadata(classified.value),
+        screenSize: { width: 360, height: 220 },
+      }]
+    }
     return [{ kind: 'link', url: classified.value, label: classified.value, screenSize: { width: 320, height: 112 } }]
   }
   const size = estimateTextBlockSize(classified.value)
@@ -128,6 +210,9 @@ const AI_FALLBACK_SIZE: Record<CanvasNodeType, CanvasSize> = {
   terminator: { width: 220, height: 88 },
   text: { width: 320, height: 160 },
   image: { width: 320, height: 220 },
+  pdf: { width: 320, height: 220 },
+  video: { width: 360, height: 220 },
+  'web-preview': { width: 320, height: 180 },
   note: { width: 320, height: 180 },
   link: { width: 320, height: 112 },
   file: { width: 320, height: 112 },
