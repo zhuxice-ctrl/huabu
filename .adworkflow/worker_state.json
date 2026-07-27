@@ -1,54 +1,61 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
+  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
   "status": "verified",
-  "revision": 4,
+  "revision": 8,
   "done": [
-    "Mounted one screen-space transcript HUD above the canvas composer without adding chat state to CanvasDocument or subscribing CanvasEditor to chat tokens.",
-    "Reused ChatContent rendering with deterministic 40-message initial windows, bounded 120-message traversal and per-conversation scroll restoration.",
-    "Added searchable 360x420 history, protected new/temporary/switch/delete actions, deterministic collapsed summaries and session-only per-conversation/per-canvas drafts including quotes and attachments.",
-    "Resolved all five Important and two Minor independent review findings, then passed focused tests 17/17, Canvas 150/150, TypeScript, production build, diff checks and exhaustive L2 impact."
+    "Added reviewed speech-to-composer input with per-request keyboard or microphone origin and no automatic send.",
+    "Added final-answer-only microphone auto-read, one shared playback owner and shared stop behavior for speech start, HUD collapse, context change and replacement playback.",
+    "Added the reduced-motion-safe AI breath indicator and passed focused tests, Canvas regression, TypeScript and production build.",
+    "Replaced React setter and destructured speech-action dynamic dispatch with request-local refs and static store boundaries after the first L2 impact run.",
+    "Resolved all independent Critical/Important/Minor review findings, including final-persistence steering, callback failure isolation and utterance ownership races."
   ],
   "changed_files": [
-    "scripts/tests/canvas-chat-hud-contract.test.mjs",
-    "scripts/tests/canvas-chat-hud-policy.test.mjs",
-    "src/app/core/main/canvas/canvas-workspace.tsx",
-    "src/app/core/main/chat/canvas-chat-history-popover.tsx",
+    "scripts/tests/canvas-ai-breath-contract.test.mjs",
+    "scripts/tests/canvas-voice-session.test.mjs",
+    "src/app/core/main/chat/canvas-ai-breath.tsx",
     "src/app/core/main/chat/canvas-chat-hud.tsx",
-    "src/app/core/main/chat/canvas-chat-summary.tsx",
-    "src/app/core/main/chat/chat-content.tsx",
     "src/app/core/main/chat/chat-input.tsx",
     "src/app/core/main/chat/chat-send.tsx",
+    "src/app/core/main/chat/message-control/read-aloud-control.tsx",
+    "src/lib/agent/agent-handler.ts",
+    "src/lib/audio.ts",
+    "src/lib/chat/voice-session.ts",
     "src/stores/chat-hud.ts",
-    "src/stores/chat.ts"
+    "src/stores/chat.ts",
+    "src/stores/speech-recognition.ts"
   ],
   "current_problem": null,
   "next_action": null,
   "must_keep_context": [
-    ".adworkflow/context_preflight.json (accepted baseline b8e7a82536ae616442d01369)",
-    ".adworkflow/impact_report.json (passed current graph dc11f36f4b6eb93e6d76fa66)",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-12-review.md"
+    ".adworkflow/context_preflight.json (accepted baseline dc11f36f4b6eb93e6d76fa66)",
+    "Task 13 product commits 7ec1d766 and 15f61231",
+    "The shared audio frontier is expected to include existing chat, recording and shell consumers."
   ],
   "discarded_context": [
-    "The first broad preflight was replaced after Page pulled unrelated editor/onboarding dynamic edges; the accepted slice uses ChatContent and ChatInput entrypoints with manual shell context.",
-    "The first post-edit graph exposed five draft-restore setter edges; a keyed remount and static store boundaries replaced them.",
-    "The final predicted set was expanded only from the exhaustive observed-impact result after the chat-store session fix."
+    "The first post-edit impact used stale Task 12 worker_state declarations and was retained only as diagnostic evidence.",
+    "Seven new dynamic-dispatch edges from prompt-origin setters and speech actions were removed before final impact verification."
   ],
   "remaining_risks": [
-    "Hands-on viewport, wheel, popover and draft-switch behavior remains in the Task 21 Windows checklist.",
-    "The shared Chat frontier requires the installed impact algorithm's in-memory reverse-impact budget to be raised from 10000 to 50000."
+    "Hands-on microphone permission, system voice and TTS interruption behavior remains in the Task 21 Windows checklist.",
+    "The shared audio reverse-impact frontier requires the 50000 propagation budget wrapper."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": [],
-  "source_revision": "43f66efbba0013e683b45fd8ecf497ed9abeec4c",
+  "context_expansion_history": [
+    {
+      "reason": "The first exhaustive post-edit impact exposed the existing shared audio and chat consumer frontier.",
+      "result": "Recorded the observed frontier as predicted for the corrected final impact run."
+    }
+  ],
+  "source_revision": "bde36fb9d9df765a98d0453d23481da75d47bb87",
   "context_preflight": {
     "status": "accepted",
-    "graph_revision": "b8e7a82536ae616442d01369"
+    "graph_revision": "dc11f36f4b6eb93e6d76fa66"
   },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "dc11f36f4b6eb93e6d76fa66",
+    "graph_revision": "441c25ca1711d38f8e374c4d",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }

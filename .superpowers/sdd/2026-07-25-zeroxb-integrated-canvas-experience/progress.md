@@ -46,3 +46,8 @@ Task 12: started (base e97a2c05; accepted narrow L2 preflight at b8e7a82536ae616
 Task 12: L2 structural correction (five draft-restore setter edges replaced by keyed ChatInput lifecycle and static HUD state boundaries; commits b9e471a4..a4cfb5db)
 Task 12: fix round 1/5 (five Important and two Minor independent review findings resolved: action completeness, same-ID protection, draft/session/quote isolation, transcript keys and accessibility; commit 43f66efb)
 Task 12: complete (commits e97a2c05..43f66efb, independent findings resolved; focused 17/17, Canvas 150/150, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at dc11f36f4b6eb93e6d76fa66 with predicted/observed 66/64, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
+Task 13: started (base a85c1118; accepted narrow L2 preflight at dc11f36f4b6eb93e6d76fa66 with audio/read-aloud retained as manual context)
+Task 13: L2 structural corrections (prompt-origin setters, speech actions and Promise callbacks moved behind request-local/static boundaries; commits 15f61231..3241125a)
+Task 13: review fix round 1/5 (one Critical, four Important and two Minor voice/session findings addressed; commit 86a87f96)
+Task 13: review fix round 2/5 (final-persistence steering and callback-failure isolation addressed; commits 85776e36..bde36fb9)
+Task 13: complete (commits 7ec1d766..bde36fb9, independent findings resolved; focused 19/19, Canvas 162/162, TypeScript, production build and diff checks passed; exhaustive L2 impact passed at 441c25ca1711d38f8e374c4d with predicted/observed 78/78, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)

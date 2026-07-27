@@ -1,46 +1,12 @@
 {
   "schema": "ADworkflo.semantic_slice.v1",
   "status": "ready",
-  "graph_revision": "b8e7a82536ae616442d01369",
+  "graph_revision": "dc11f36f4b6eb93e6d76fa66",
   "entrypoints": [
-    "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-    "typescript:src.app.core.main.chat.chat-input:ChatInput:variable"
+    "typescript:src.app.core.main.chat.chat-input:ChatInput:variable",
+    "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable"
   ],
   "entrypoint_resolutions": [
-    {
-      "status": "resolved",
-      "query": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-      "symbol": {
-        "stable_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-        "symbol_group_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-        "declaration_index": 0,
-        "runtime_effective": 1,
-        "name": "ChatContent",
-        "qualified_name": "src.app.core.main.chat.chat-content.ChatContent",
-        "kind": "variable",
-        "start_line": 38,
-        "end_line": 98,
-        "file": "src/app/core/main/chat/chat-content.tsx",
-        "sha256": "5ae97b9d5e6bcdca43094dd7cc479ae32b659d7e63c24f61e16ddee0e950829e",
-        "location": "src/app/core/main/chat/chat-content.tsx:38"
-      },
-      "candidates": [
-        {
-          "stable_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-          "symbol_group_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-          "declaration_index": 0,
-          "runtime_effective": 1,
-          "name": "ChatContent",
-          "qualified_name": "src.app.core.main.chat.chat-content.ChatContent",
-          "kind": "variable",
-          "start_line": 38,
-          "end_line": 98,
-          "file": "src/app/core/main/chat/chat-content.tsx",
-          "sha256": "5ae97b9d5e6bcdca43094dd7cc479ae32b659d7e63c24f61e16ddee0e950829e",
-          "location": "src/app/core/main/chat/chat-content.tsx:38"
-        }
-      ]
-    },
     {
       "status": "resolved",
       "query": "typescript:src.app.core.main.chat.chat-input:ChatInput:variable",
@@ -52,11 +18,11 @@
         "name": "ChatInput",
         "qualified_name": "src.app.core.main.chat.chat-input.ChatInput",
         "kind": "variable",
-        "start_line": 93,
-        "end_line": 1165,
+        "start_line": 101,
+        "end_line": 1228,
         "file": "src/app/core/main/chat/chat-input.tsx",
-        "sha256": "09f4a6943cc42378747814f52266ed6a28360f5d3e6864d9c1ac7c261acfd3ea",
-        "location": "src/app/core/main/chat/chat-input.tsx:93"
+        "sha256": "5dcac237fd7fbb05d0ad911519b6c950c860d677b99800a9a372bdc2ad090fb2",
+        "location": "src/app/core/main/chat/chat-input.tsx:101"
       },
       "candidates": [
         {
@@ -67,42 +33,76 @@
           "name": "ChatInput",
           "qualified_name": "src.app.core.main.chat.chat-input.ChatInput",
           "kind": "variable",
-          "start_line": 93,
-          "end_line": 1165,
+          "start_line": 101,
+          "end_line": 1228,
           "file": "src/app/core/main/chat/chat-input.tsx",
-          "sha256": "09f4a6943cc42378747814f52266ed6a28360f5d3e6864d9c1ac7c261acfd3ea",
-          "location": "src/app/core/main/chat/chat-input.tsx:93"
+          "sha256": "5dcac237fd7fbb05d0ad911519b6c950c860d677b99800a9a372bdc2ad090fb2",
+          "location": "src/app/core/main/chat/chat-input.tsx:101"
+        }
+      ]
+    },
+    {
+      "status": "resolved",
+      "query": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+      "symbol": {
+        "stable_id": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+        "symbol_group_id": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+        "declaration_index": 0,
+        "runtime_effective": 1,
+        "name": "useSpeechRecognitionStore",
+        "qualified_name": "src.stores.speech-recognition.useSpeechRecognitionStore",
+        "kind": "variable",
+        "start_line": 69,
+        "end_line": 225,
+        "file": "src/stores/speech-recognition.ts",
+        "sha256": "9a088ae80a2b7a8eb8ecdf8ce29378f8e1819371c474c3a5e566a0720a006416",
+        "location": "src/stores/speech-recognition.ts:69"
+      },
+      "candidates": [
+        {
+          "stable_id": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+          "symbol_group_id": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+          "declaration_index": 0,
+          "runtime_effective": 1,
+          "name": "useSpeechRecognitionStore",
+          "qualified_name": "src.stores.speech-recognition.useSpeechRecognitionStore",
+          "kind": "variable",
+          "start_line": 69,
+          "end_line": 225,
+          "file": "src/stores/speech-recognition.ts",
+          "sha256": "9a088ae80a2b7a8eb8ecdf8ce29378f8e1819371c474c3a5e566a0720a006416",
+          "location": "src/stores/speech-recognition.ts:69"
         }
       ]
     }
   ],
   "included_symbols": [
     {
-      "stable_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-      "name": "ChatContent",
-      "qualified_name": "src.app.core.main.chat.chat-content.ChatContent",
-      "kind": "variable",
-      "file": "src/app/core/main/chat/chat-content.tsx",
-      "start_line": 38,
-      "end_line": 98,
-      "sha256": "5ae97b9d5e6bcdca43094dd7cc479ae32b659d7e63c24f61e16ddee0e950829e",
-      "distance": 0
-    },
-    {
       "stable_id": "typescript:src.app.core.main.chat.chat-input:ChatInput:variable",
       "name": "ChatInput",
       "qualified_name": "src.app.core.main.chat.chat-input.ChatInput",
       "kind": "variable",
       "file": "src/app/core/main/chat/chat-input.tsx",
-      "start_line": 93,
-      "end_line": 1165,
-      "sha256": "09f4a6943cc42378747814f52266ed6a28360f5d3e6864d9c1ac7c261acfd3ea",
+      "start_line": 101,
+      "end_line": 1228,
+      "sha256": "5dcac237fd7fbb05d0ad911519b6c950c860d677b99800a9a372bdc2ad090fb2",
+      "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+      "name": "useSpeechRecognitionStore",
+      "qualified_name": "src.stores.speech-recognition.useSpeechRecognitionStore",
+      "kind": "variable",
+      "file": "src/stores/speech-recognition.ts",
+      "start_line": 69,
+      "end_line": 225,
+      "sha256": "9a088ae80a2b7a8eb8ecdf8ce29378f8e1819371c474c3a5e566a0720a006416",
       "distance": 0
     }
   ],
   "included_files": [
-    "src/app/core/main/chat/chat-content.tsx",
-    "src/app/core/main/chat/chat-input.tsx"
+    "src/app/core/main/chat/chat-input.tsx",
+    "src/stores/speech-recognition.ts"
   ],
   "boundary_symbols": [],
   "excluded": [
@@ -132,7 +132,11 @@
     "src/app/core/main/chat/agent-permission-mode.tsx",
     "src/app/core/main/chat/agent-run-timeline.tsx",
     "src/app/core/main/chat/attachment-add-menu.tsx",
+    "src/app/core/main/chat/canvas-chat-history-popover.tsx",
+    "src/app/core/main/chat/canvas-chat-hud.tsx",
+    "src/app/core/main/chat/canvas-chat-summary.tsx",
     "src/app/core/main/chat/chat-clipboard.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
     "src/app/core/main/chat/chat-empty.tsx",
     "src/app/core/main/chat/chat-file-attachments.tsx",
     "src/app/core/main/chat/chat-footer.tsx",
@@ -769,6 +773,7 @@
     "src/stores/article-remote-sync.ts",
     "src/stores/article.ts",
     "src/stores/canvas.ts",
+    "src/stores/chat-hud.ts",
     "src/stores/chat.ts",
     "src/stores/clipboard.ts",
     "src/stores/cloud-library.ts",
@@ -786,7 +791,6 @@
     "src/stores/shortcut.ts",
     "src/stores/sidebar.ts",
     "src/stores/skills.ts",
-    "src/stores/speech-recognition.ts",
     "src/stores/sync-confirm.ts",
     "src/stores/sync.ts",
     "src/stores/tag.ts",
@@ -807,8 +811,8 @@
   "confidence": 1.0,
   "truncated": false,
   "source_hashes": {
-    "src/app/core/main/chat/chat-content.tsx": "5ae97b9d5e6bcdca43094dd7cc479ae32b659d7e63c24f61e16ddee0e950829e",
-    "src/app/core/main/chat/chat-input.tsx": "09f4a6943cc42378747814f52266ed6a28360f5d3e6864d9c1ac7c261acfd3ea"
+    "src/app/core/main/chat/chat-input.tsx": "5dcac237fd7fbb05d0ad911519b6c950c860d677b99800a9a372bdc2ad090fb2",
+    "src/stores/speech-recognition.ts": "9a088ae80a2b7a8eb8ecdf8ce29378f8e1819371c474c3a5e566a0720a006416"
   },
   "provenance": [
     {
@@ -837,9 +841,12 @@
   },
   "expansion_history": [],
   "predicted_impact_files": [
-    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/chat/canvas-chat-hud.tsx",
     "src/app/core/main/chat/chat-input.tsx",
     "src/app/core/main/chat/index.tsx",
-    "src/app/mobile/chat/page.tsx"
+    "src/app/core/main/page.tsx",
+    "src/app/mobile/chat/page.tsx",
+    "src/stores/speech-recognition.ts"
   ]
 }

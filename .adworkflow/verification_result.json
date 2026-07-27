@@ -1,19 +1,19 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
+  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
   "status": "passed",
-  "source_revision": "43f66efbba0013e683b45fd8ecf497ed9abeec4c",
+  "source_revision": "bde36fb9d9df765a98d0453d23481da75d47bb87",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-chat-hud-policy.test.mjs scripts/tests/canvas-chat-hud-contract.test.mjs scripts/tests/canvas-chat-generation-transaction.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-voice-session.test.mjs scripts/tests/canvas-ai-breath-contract.test.mjs scripts/tests/canvas-chat-generation-transaction.test.mjs",
       "status": "passed",
-      "summary": "Task 12 HUD plus Task 11 transaction regression passed 17/17 after review fixes.",
+      "summary": "Task 13 voice/breath and Task 11 generation-lifecycle regression passed 19/19 after review fixes.",
       "exit_code": 0
     },
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Complete Canvas regression suite passed 150/150 at the final source revision.",
+      "summary": "Complete Canvas regression suite passed 162/162 at the reviewed source revision.",
       "exit_code": 0
     },
     {
@@ -23,7 +23,7 @@
       "exit_code": 0
     },
     {
-      "command": "$env:pnpm_config_verify_deps_before_run='false'; pnpm build",
+      "command": "node_modules/.bin/next.CMD build --turbopack plus build source-map pruning",
       "status": "passed",
       "summary": "Production compile, lint/type validation, 53 static pages, export and source-map pruning passed.",
       "exit_code": 0
@@ -31,52 +31,57 @@
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors were found in the Task 12 product diff.",
+      "summary": "No whitespace errors were found in the Task 13 product or evidence diff.",
       "exit_code": 0
     },
     {
       "command": "installed l2_codegraph.safety.post_edit_impact with in-memory reverse-impact budget 50000",
       "status": "passed",
-      "summary": "Final graph dc11f36f4b6eb93e6d76fa66: predicted 66, observed 64, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
+      "summary": "Final graph 441c25ca1711d38f8e374c4d: predicted 78, observed 78, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Collapsed and expanded HUD sizing, clipping and screen-space isolation match the approved contract.",
+      "criterion": "Speech recognition fills the composer for review and never auto-sends.",
       "status": "passed",
-      "evidence": ["canvas-chat-hud-policy.test.mjs", "canvas-chat-hud-contract.test.mjs"]
+      "evidence": ["ChatInput microphone lifecycle", "canvas-ai-breath-contract.test.mjs"]
     },
     {
-      "criterion": "ChatContent is reused and 10000-message histories mount 40 initially with bounded bidirectional windows.",
+      "criterion": "Keyboard prompts remain silent and a microphone-origin request auto-reads one persisted final answer exactly once.",
       "status": "passed",
-      "evidence": ["10,000-message policy test", "ChatContent layout/scroller contract"]
+      "evidence": ["voice-session.ts pure state machine", "awaited AgentHandler completion", "19/19 focused regression"]
     },
     {
-      "criterion": "History search and every protected conversation action use the Task 11 store boundary.",
+      "criterion": "Partial streams are never spoken and TTS failures leave visible text intact.",
       "status": "passed",
-      "evidence": ["CanvasChatHistoryPopover", "CanvasChatConversationActions", "Task 11 regression 7/7"]
+      "evidence": ["final save precedes completeVoiceSession", "stream update policy", "automatic playback failure boundary"]
     },
     {
-      "criterion": "Session-only drafts isolate conversation, temporary-session and canvas identities and preserve text, files, images, linked resources and quotes.",
+      "criterion": "Speech start, context change, HUD collapse/unmount and replacement playback stop the shared current owner.",
       "status": "passed",
-      "evidence": ["chat-hud.ts", "keyed ChatInput remount", "43f66efb review fix"]
+      "evidence": ["CanvasChatHud effects", "shared chat-store session boundary", "WeakMap system utterance ownership", "ReadAloudControl shared snapshot"]
     },
     {
-      "criterion": "Implementation is committed, independently reviewed and passes regression, build and L2 gates.",
+      "criterion": "The low-noise breath exposes explicit AI states with reduced-motion-safe transform, opacity and blur animation only.",
       "status": "passed",
-      "evidence": ["43f66efb", "task-12-review.md", "150/150 Canvas", "production build", "impact_report.json"]
+      "evidence": ["canvas-ai-breath.tsx", "canvas-ai-breath-contract.test.mjs"]
+    },
+    {
+      "criterion": "Implementation is committed, independently reviewed and passes regression, production build and L2 gates.",
+      "status": "passed",
+      "evidence": ["bde36fb9", "independent Task 13 review", "162/162 Canvas", "53-page build", "impact_report.json"]
     }
   ],
   "passed": [
-    "All Task 12 acceptance criteria",
-    "All independent review findings resolved",
+    "All Task 13 acceptance criteria",
+    "Independent review findings fixed",
     "Exhaustive L2 post-edit impact gate"
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Hands-on HUD resizing, wheel isolation, history navigation and draft restoration remain in Task 21 Windows acceptance.",
+    "Hands-on microphone permission, real system/model TTS interruption and multilingual tooltip behavior remain in the Task 21 Windows checklist.",
     "Existing Node module-type and Turbopack experimental warnings remain non-blocking."
   ]
 }

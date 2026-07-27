@@ -1,16 +1,16 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
+  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
   "source": "semantic-codegraph-l2",
   "matched_files": [
     {
-      "path": "src/app/core/main/chat/chat-content.tsx",
-      "sha256": "5ae97b9d5e6bcdca43094dd7cc479ae32b659d7e63c24f61e16ddee0e950829e",
+      "path": "src/app/core/main/chat/chat-input.tsx",
+      "sha256": "5dcac237fd7fbb05d0ad911519b6c950c860d677b99800a9a372bdc2ad090fb2",
       "reason": "semantic-slice"
     },
     {
-      "path": "src/app/core/main/chat/chat-input.tsx",
-      "sha256": "09f4a6943cc42378747814f52266ed6a28360f5d3e6864d9c1ac7c261acfd3ea",
+      "path": "src/stores/speech-recognition.ts",
+      "sha256": "9a088ae80a2b7a8eb8ecdf8ce29378f8e1819371c474c3a5e566a0720a006416",
       "reason": "semantic-slice"
     },
     {
@@ -18,54 +18,61 @@
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/app/core/main/page.tsx",
+      "path": "src/app/core/main/chat/canvas-chat-hud.tsx",
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/app/core/main/canvas/canvas-workspace.tsx",
+      "path": "src/app/core/main/chat/chat-send.tsx",
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/app/core/main/chat/chat-header.tsx",
+      "path": "src/app/core/main/chat/message-control/read-aloud-control.tsx",
       "reason": "task_spec.context_sources"
     },
     {
-      "path": "src/app/core/main/chat/history-dropdown.tsx",
+      "path": "src/lib/audio.ts",
       "reason": "task_spec.context_sources"
     },
     {
       "path": "src/stores/chat.ts",
       "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/stores/chat-hud.ts",
+      "reason": "task_spec.context_sources"
     }
   ],
   "matched_symbols": [
     {
-      "stable_id": "typescript:src.app.core.main.chat.chat-content:ChatContent:variable",
-      "qualified_name": "src.app.core.main.chat.chat-content.ChatContent",
-      "file": "src/app/core/main/chat/chat-content.tsx",
-      "start_line": 38,
-      "end_line": 98,
-      "distance": 0
-    },
-    {
       "stable_id": "typescript:src.app.core.main.chat.chat-input:ChatInput:variable",
       "qualified_name": "src.app.core.main.chat.chat-input.ChatInput",
       "file": "src/app/core/main/chat/chat-input.tsx",
-      "start_line": 93,
-      "end_line": 1165,
+      "start_line": 101,
+      "end_line": 1228,
+      "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.stores.speech-recognition:useSpeechRecognitionStore:variable",
+      "qualified_name": "src.stores.speech-recognition.useSpeechRecognitionStore",
+      "file": "src/stores/speech-recognition.ts",
+      "start_line": 69,
+      "end_line": 225,
       "distance": 0
     }
   ],
   "likely_tests": [],
   "warnings": [],
-  "graph_revision": "b8e7a82536ae616442d01369",
+  "graph_revision": "dc11f36f4b6eb93e6d76fa66",
   "confidence": 1.0,
   "unresolved_edges": [],
   "boundary_symbols": [],
   "predicted_impact_files": [
-    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/chat/canvas-chat-hud.tsx",
     "src/app/core/main/chat/chat-input.tsx",
     "src/app/core/main/chat/index.tsx",
-    "src/app/mobile/chat/page.tsx"
+    "src/app/core/main/page.tsx",
+    "src/app/mobile/chat/page.tsx",
+    "src/stores/speech-recognition.ts"
   ]
 }

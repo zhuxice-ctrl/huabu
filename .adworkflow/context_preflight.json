@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-12-canvas-chat-hud",
+  "task_id": "zeroxb-integrated-task-13-voice-breathing-state",
   "status": "accepted",
-  "graph_revision": "b8e7a82536ae616442d01369",
-  "slice_revision": "b8e7a82536ae616442d01369",
+  "graph_revision": "dc11f36f4b6eb93e6d76fa66",
+  "slice_revision": "dc11f36f4b6eb93e6d76fa66",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {
