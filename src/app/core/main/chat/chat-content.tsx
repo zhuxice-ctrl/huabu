@@ -157,7 +157,7 @@ const MessageWrapper = React.memo(function MessageWrapper({ chat, children }: { 
 MessageWrapper.displayName = 'MessageWrapper'
 
 function CanvasSourceChip({ chat }: { chat: Chat }) {
-  const { activeCanvasId, projects, setActiveCanvasId } = useCanvasStore()
+  const { activeCanvasId, projects } = useCanvasStore()
   const canvasContext = useMemo(
     () => parseCanvasChatContext(chat.canvasContext),
     [chat.canvasContext]
@@ -190,7 +190,7 @@ function CanvasSourceChip({ chat }: { chat: Chat }) {
   }
 
   const focusSource = () => {
-    setActiveCanvasId(canvasContext.sourceCanvasId)
+    useCanvasStore.setState({ activeCanvasId: canvasContext.sourceCanvasId })
     requestAnimationFrame(() => {
       for (const nodeId of canvasContext.sourceNodeIds || []) {
         emitter.emit('canvas-focus-node', nodeId)

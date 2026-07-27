@@ -39,6 +39,7 @@ test('chat content hides absent sources and renders renamed, missing, and invali
   assert.match(content, /currentProject\?\.title \?\? canvasContext\.sourceCanvasTitle/)
   assert.match(content, /来源画布已删除/)
   assert.match(context, /来源未记录/)
-  assert.match(content, /setActiveCanvasId\(canvasContext\.sourceCanvasId\)/)
+  assert.match(content, /useCanvasStore\.setState\(\{ activeCanvasId: canvasContext\.sourceCanvasId \}\)/)
+  assert.doesNotMatch(content, /setActiveCanvasId\(canvasContext\.sourceCanvasId\)/)
   assert.match(content, /canvas-focus-node/)
 })
