@@ -99,7 +99,7 @@ test('agent mutation path previews and commits through the AI ledger without dir
   assert.match(source, /createCanvasAiTransactionPreview/)
   assert.match(source, /commitCanvasAiTransaction/)
   assert.match(source, /authorizeCanvasProposal/)
-  assert.match(source, /stageDocumentForAiPreview/)
+  assert.match(source, /stageCanvasDocumentForAiPreview/)
   assert.match(source, /getCanvasAiRuntimeSnapshot/)
   assert.match(source, /authorizeCanvasToolCall/)
   assert.match(source, /cancelCanvasToolAuthorization/)
@@ -107,6 +107,37 @@ test('agent mutation path previews and commits through the AI ledger without dir
   assert.match(source, /permissionMode === 'read-only'/)
   assert.match(source, /canvas-agent-preview-clear/)
   assert.doesNotMatch(source, /store\.updateDocument\s*\(/)
+})
+
+test('live preview baseline staging uses a static typed boundary with causal store updates', async () => {
+  const [agentSource, storeSource] = await Promise.all([
+    readFile(new URL('../../src/lib/agent/tools/canvas-tools.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/stores/canvas.ts', import.meta.url), 'utf8'),
+  ])
+  assert.match(
+    agentSource,
+    /import\s*\{\s*stageCanvasDocumentForAiPreview\s*\}\s*from\s*['"]@\/stores\/canvas['"]/,
+  )
+  assert.match(agentSource, /await stageCanvasDocumentForAiPreview\(canvasId, beforeDocument\)/)
+  assert.doesNotMatch(agentSource, /store\.stageDocumentForAiPreview\s*\(/)
+
+  const boundaryStart = storeSource.indexOf('export async function stageCanvasDocumentForAiPreview(')
+  assert.ok(boundaryStart >= 0)
+  const boundary = storeSource.slice(boundaryStart)
+  assert.match(
+    boundary,
+    /id: string,\s*document: CanvasDocument,\s*\): Promise<number>/,
+  )
+  const clearTimer = boundary.indexOf('clearTimeout(previousTimer)')
+  const deleteTimer = boundary.indexOf('saveTimers.delete(id)')
+  const publishDocument = boundary.indexOf('documents: { ...state.documents, [id]: document }')
+  const durableWrite = boundary.indexOf('await updateCanvasDocument(id, document)')
+  const publishProject = boundary.indexOf('? { ...project, document, updatedAt } : project')
+  assert.ok(clearTimer >= 0)
+  assert.ok(clearTimer < deleteTimer)
+  assert.ok(deleteTimer < publishDocument)
+  assert.ok(publishDocument < durableWrite)
+  assert.ok(durableWrite < publishProject)
 })
 
 test('canvas approval presents transaction, mode and impact before raw operations', () => {

@@ -23,6 +23,7 @@ import {
 } from '@/lib/canvas/ai-transaction'
 import { applyValidatedCanvasOperations } from '@/lib/canvas/operations'
 import type { ViewportSnapshot } from '@/lib/canvas/viewport-sizing'
+import { stageCanvasDocumentForAiPreview } from '@/stores/canvas'
 import type { CanvasDocument } from '@/types/canvas'
 import type {
   AgentTool,
@@ -266,7 +267,7 @@ async function authorizeApplyCanvasOperations(
     canvasEditingSession.reportSecurityFailure()
     return denyCanvasOperation(parsed.issues.join(' '))
   }
-  const { store, canvasId, document } = await getActiveCanvas(context.context.activeCanvasId)
+  const { canvasId, document } = await getActiveCanvas(context.context.activeCanvasId)
   if (!canvasId || !document) return denyCanvasOperation('当前没有打开的画布。')
   const runtimeSnapshot = getCanvasAiRuntimeSnapshot(canvasId)
   const beforeDocument = runtimeSnapshot?.document ?? document
@@ -298,7 +299,7 @@ async function authorizeApplyCanvasOperations(
     after: applied.document,
     operations: parsed.operations,
   })
-  await store.stageDocumentForAiPreview(canvasId, beforeDocument)
+  await stageCanvasDocumentForAiPreview(canvasId, beforeDocument)
   await insertCanvasAiTransactionPreview(record)
   pendingCanvasAiTransactions.set(context.runId, {
     record,
