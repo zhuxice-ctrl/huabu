@@ -1,40 +1,32 @@
 import type { CanvasDocument, CanvasEdge, CanvasNodeType } from '@/types/canvas'
 import { resolveAiNodeContentScale, resolveAiNodeFontSize, resolveAiNodeSize } from './content-ingest.ts'
-
-type CanvasOperationType =
-  | 'add_node'
-  | 'update_node'
-  | 'delete_node'
-  | 'add_edge'
-  | 'delete_edge'
-  | 'clear'
+import {
+  parseCanvasOperations,
+  type SourceCanvasOperation,
+  type ValidatedCanvasOperation,
+} from './ai-permission.ts'
 
 const AI_CREATABLE_NODE_TYPES: CanvasNodeType[] = [
   'process', 'decision', 'terminator', 'text', 'note', 'image', 'file', 'link', 'todo',
 ]
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {}
+function isSourceOperation(operation: ValidatedCanvasOperation): operation is SourceCanvasOperation {
+  return ['add_node', 'update_node', 'delete_node', 'add_edge', 'delete_edge', 'layout', 'clear']
+    .includes(operation.type)
 }
 
-function asString(value: unknown) {
-  return typeof value === 'string' ? value.trim() : ''
-}
-
-function asFiniteNumber(value: unknown, fallback: number) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
-}
-
-export function applyCanvasOperations(document: CanvasDocument, rawOperations: unknown[]) {
+export function applyValidatedCanvasOperations(
+  document: CanvasDocument,
+  operations: ValidatedCanvasOperation[],
+) {
   let nodes = structuredClone(document.nodes)
   let edges = structuredClone(document.edges)
+  let settings = structuredClone(document.settings)
   let applied = 0
 
-  for (const rawOperation of rawOperations) {
-    const operation = asRecord(rawOperation)
-    const type = asString(operation.type) as CanvasOperationType
+  for (const operation of operations) {
+    if (!isSourceOperation(operation)) continue
+    const { type } = operation
 
     if (type === 'clear') {
       nodes = []
@@ -44,20 +36,20 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
     }
 
     if (type === 'add_node') {
-      const requestedType = asString(operation.nodeType)
-      const nodeType: CanvasNodeType = AI_CREATABLE_NODE_TYPES.includes(requestedType as CanvasNodeType)
-        ? requestedType as CanvasNodeType
+      const requestedType = operation.nodeType
+      const nodeType: CanvasNodeType = AI_CREATABLE_NODE_TYPES.includes(requestedType)
+        ? requestedType
         : 'process'
-      const id = asString(operation.id) || crypto.randomUUID()
+      const id = operation.id || crypto.randomUUID()
       if (nodes.some(node => node.id === id)) continue
       const index = nodes.length
-      const targetNode = nodes.find(node => node.id === asString(operation.targetNodeId))
+      const targetNode = nodes.find(node => node.id === operation.targetNodeId)
       const position = {
-        x: asFiniteNumber(operation.x, (index % 4) * 240),
-        y: asFiniteNumber(operation.y, Math.floor(index / 4) * 140),
+        x: operation.x ?? (index % 4) * 240,
+        y: operation.y ?? Math.floor(index / 4) * 140,
       }
-      const requestedWidth = asFiniteNumber(operation.width, Number.NaN)
-      const requestedHeight = asFiniteNumber(operation.height, Number.NaN)
+      const requestedWidth = operation.width ?? Number.NaN
+      const requestedHeight = operation.height ?? Number.NaN
       const sizingInput = {
         requestedType: nodeType,
         requestedSize: { width: requestedWidth, height: requestedHeight },
@@ -73,8 +65,8 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
         width: size.width,
         height: size.height,
         data: {
-          label: asString(operation.label) || (nodeType === 'decision' ? '判断条件' : nodeType === 'terminator' ? '开始 / 结束' : '处理步骤'),
-          description: asString(operation.description) || undefined,
+          label: operation.label || (nodeType === 'decision' ? '判断条件' : nodeType === 'terminator' ? '开始 / 结束' : '处理步骤'),
+          description: operation.description || undefined,
           contentScale: resolveAiNodeContentScale(sizingInput),
           fontSize: resolveAiNodeFontSize(sizingInput),
         },
@@ -84,20 +76,22 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
     }
 
     if (type === 'update_node') {
-      const id = asString(operation.id)
+      const { id } = operation
       const index = nodes.findIndex(node => node.id === id)
       if (index < 0) continue
       const current = nodes[index]
       nodes[index] = {
         ...current,
         position: {
-          x: asFiniteNumber(operation.x, current.position.x),
-          y: asFiniteNumber(operation.y, current.position.y),
+          x: operation.x ?? current.position.x,
+          y: operation.y ?? current.position.y,
         },
+        ...(operation.width !== undefined ? { width: operation.width } : {}),
+        ...(operation.height !== undefined ? { height: operation.height } : {}),
         data: {
           ...current.data,
-          ...(typeof operation.label === 'string' ? { label: operation.label.trim() } : {}),
-          ...(typeof operation.description === 'string' ? { description: operation.description.trim() } : {}),
+          ...(operation.label !== undefined ? { label: operation.label } : {}),
+          ...(operation.description !== undefined ? { description: operation.description } : {}),
         },
       }
       applied += 1
@@ -105,7 +99,7 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
     }
 
     if (type === 'delete_node') {
-      const id = asString(operation.id)
+      const { id } = operation
       if (!nodes.some(node => node.id === id)) continue
       nodes = nodes.filter(node => node.id !== id)
       edges = edges.filter(edge => edge.source !== id && edge.target !== id)
@@ -114,17 +108,16 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
     }
 
     if (type === 'add_edge') {
-      const source = asString(operation.source)
-      const target = asString(operation.target)
+      const { source, target } = operation
       if (!nodes.some(node => node.id === source) || !nodes.some(node => node.id === target)) continue
-      const id = asString(operation.id) || crypto.randomUUID()
+      const id = operation.id || crypto.randomUUID()
       if (edges.some(edge => edge.id === id)) continue
       const edge: CanvasEdge = {
         id,
         source,
         target,
         type: 'smoothstep',
-        label: asString(operation.label) || undefined,
+        label: operation.label || undefined,
       }
       edges.push(edge)
       applied += 1
@@ -132,15 +125,30 @@ export function applyCanvasOperations(document: CanvasDocument, rawOperations: u
     }
 
     if (type === 'delete_edge') {
-      const id = asString(operation.id)
+      const { id } = operation
       if (!edges.some(edge => edge.id === id)) continue
       edges = edges.filter(edge => edge.id !== id)
+      applied += 1
+      continue
+    }
+
+    if (type === 'layout' && settings.layoutDirection !== operation.direction) {
+      settings = { ...settings, layoutDirection: operation.direction }
       applied += 1
     }
   }
 
   return {
-    document: { ...document, nodes, edges },
+    document: { ...document, nodes, edges, settings },
     applied,
+    issues: [] as string[],
   }
+}
+
+export function applyCanvasOperations(document: CanvasDocument, rawOperations: unknown[]) {
+  const parsed = parseCanvasOperations(rawOperations)
+  if (!parsed.ok) {
+    return { document: structuredClone(document), applied: 0, issues: parsed.issues }
+  }
+  return applyValidatedCanvasOperations(document, parsed.operations)
 }

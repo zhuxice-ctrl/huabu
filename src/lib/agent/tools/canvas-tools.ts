@@ -1,7 +1,53 @@
 import emitter from '@/lib/emitter'
-import { applyCanvasOperations } from '@/lib/canvas/operations'
+import {
+  commitCanvasAiTransaction,
+  failCanvasAiTransaction,
+  insertCanvasAiTransactionPreview,
+  rollbackCanvasAiTransaction,
+} from '@/db/canvas-ai-transactions'
+import {
+  authorizeCanvasProposal,
+  canvasEditingSession,
+  parseCanvasOperations,
+  resolveCanvasAiMode,
+  type CanvasAiMode,
+  type ValidatedCanvasOperation,
+} from '@/lib/canvas/ai-permission'
+import {
+  canvasDocumentRevision,
+  createCanvasAiTransactionPreview,
+  getCanvasAiRuntimeSnapshot,
+  validateCanvasAiGeometry,
+  type CanvasAiTransactionRecord,
+} from '@/lib/canvas/ai-transaction'
+import { applyValidatedCanvasOperations } from '@/lib/canvas/operations'
+import type { ViewportSnapshot } from '@/lib/canvas/viewport-sizing'
 import type { CanvasDocument } from '@/types/canvas'
 import type { AgentTool, AgentToolResult } from '../types'
+
+interface PendingCanvasAiTransaction {
+  record: CanvasAiTransactionRecord
+  operations: ValidatedCanvasOperation[]
+  viewport: ViewportSnapshot
+  mode: CanvasAiMode
+}
+
+const pendingCanvasAiTransactions = new Map<string, PendingCanvasAiTransaction>()
+
+function viewportSnapshotForDocument(document: CanvasDocument): ViewportSnapshot {
+  return Object.freeze({
+    x: document.viewport.x,
+    y: document.viewport.y,
+    zoom: document.viewport.zoom,
+    containerLeft: 0,
+    containerTop: 0,
+    capturedAt: Date.now(),
+  })
+}
+
+function denyCanvasOperation(reason: string) {
+  return { allowed: false, requiresApproval: false, reason }
+}
 
 async function getActiveCanvas(contextCanvasId?: string) {
   const { default: useCanvasStore } = await import('@/stores/canvas')
@@ -69,13 +115,13 @@ const applyCanvasOperationsTool: AgentTool = {
     properties: {
       operations: {
         type: 'array',
-        description: 'Ordered canvas edits. Supported types: add_node, update_node, delete_node, add_edge, delete_edge, clear.',
+        description: 'Ordered canvas edits. Supported types: add_node, update_node, delete_node, add_edge, delete_edge, layout, clear.',
         items: {
           type: 'object',
           properties: {
-            type: { type: 'string', enum: ['add_node', 'update_node', 'delete_node', 'add_edge', 'delete_edge', 'clear'] },
+            type: { type: 'string', enum: ['add_node', 'update_node', 'delete_node', 'add_edge', 'delete_edge', 'layout', 'clear'] },
             id: { type: 'string', description: 'Node or edge ID.' },
-            nodeType: { type: 'string', enum: ['process', 'decision', 'terminator', 'text', 'note', 'image', 'file', 'link', 'todo'] },
+            nodeType: { type: 'string', enum: ['process', 'decision', 'terminator', 'text', 'note', 'image', 'pdf', 'video', 'web-preview', 'file', 'link', 'todo'] },
             targetNodeId: { type: 'string', description: 'Same-type reference node ID for inherited sizing.' },
             label: { type: 'string' },
             description: { type: 'string' },
@@ -85,6 +131,7 @@ const applyCanvasOperationsTool: AgentTool = {
             height: { type: 'number', description: 'Optional canvas height; invalid or missing fields fall back independently.' },
             source: { type: 'string' },
             target: { type: 'string' },
+            direction: { type: 'string', enum: ['TB', 'LR'] },
           },
           required: ['type'],
           additionalProperties: false,
@@ -94,42 +141,191 @@ const applyCanvasOperationsTool: AgentTool = {
     required: ['operations'],
     additionalProperties: false,
   },
+  authorize: async (input, context) => {
+    const parsed = parseCanvasOperations(input.operations)
+    if (!parsed.ok) {
+      canvasEditingSession.reportSecurityFailure()
+      return denyCanvasOperation(parsed.issues.join(' '))
+    }
+    const { store, canvasId, document } = await getActiveCanvas(context.context.activeCanvasId)
+    if (!canvasId || !document) return denyCanvasOperation('当前没有打开的画布。')
+    const runtimeSnapshot = getCanvasAiRuntimeSnapshot(canvasId)
+    const beforeDocument = runtimeSnapshot?.document ?? document
+    const mode = resolveCanvasAiMode(context.permissionMode)
+    const viewport = runtimeSnapshot?.viewport ?? viewportSnapshotForDocument(beforeDocument)
+    const permission = authorizeCanvasProposal(mode, parsed.operations, {
+      document: beforeDocument,
+      viewport,
+    })
+    if (permission.status === 'denied') return denyCanvasOperation(permission.reason)
+    const applied = applyValidatedCanvasOperations(beforeDocument, parsed.operations)
+    if (applied.applied === 0) return denyCanvasOperation('没有可预览的来源画布操作。')
+    const geometry = validateCanvasAiGeometry({ before: beforeDocument, after: applied.document, viewport })
+    if (!geometry.valid) {
+      canvasEditingSession.reportSecurityFailure()
+      return denyCanvasOperation(geometry.reason)
+    }
+    const record = await createCanvasAiTransactionPreview({
+      canvasId,
+      mode,
+      userInstruction: context.context.userInput,
+      modelId: context.modelId || 'unknown',
+      before: beforeDocument,
+      after: applied.document,
+      operations: parsed.operations,
+    })
+    await store.stageDocumentForAiPreview(canvasId, beforeDocument)
+    await insertCanvasAiTransactionPreview(record)
+    pendingCanvasAiTransactions.set(context.runId, {
+      record,
+      operations: parsed.operations,
+      viewport,
+      mode,
+    })
+    return { allowed: true, requiresApproval: permission.requiresConfirmation }
+  },
   execute: async (input, context): Promise<AgentToolResult> => {
     const { store, canvasId, document, project } = await getActiveCanvas(context.context.activeCanvasId)
     if (!canvasId || !document) {
       return { ok: false, message: '当前没有打开的画布。', error: 'NO_ACTIVE_CANVAS' }
     }
-    const operations = Array.isArray(input.operations) ? input.operations : []
-    if (operations.length === 0) {
-      return { ok: false, message: '没有提供可执行的画布操作。', error: 'EMPTY_OPERATIONS' }
+    const pending = pendingCanvasAiTransactions.get(context.runId)
+    pendingCanvasAiTransactions.delete(context.runId)
+    if (!pending || pending.record.canvasId !== canvasId) {
+      canvasEditingSession.reportSecurityFailure()
+      return { ok: false, message: 'AI 事务预览已失效，请重新生成。', error: 'STALE_AI_PREVIEW' }
     }
-
-    const before = JSON.stringify(summarizeDocument(document))
-    const result = applyCanvasOperations(document, operations)
-    if (result.applied === 0) {
-      return { ok: false, message: '没有操作被应用，请检查节点或连线 ID。', error: 'NO_OPERATION_APPLIED' }
+    const parsed = parseCanvasOperations(input.operations)
+    if (!parsed.ok || JSON.stringify(parsed.operations) !== JSON.stringify(pending.operations)) {
+      canvasEditingSession.reportSecurityFailure()
+      await failCanvasAiTransaction(pending.record.transactionId, '执行参数与已确认预览不一致。')
+      return { ok: false, message: '执行参数与已确认预览不一致。', error: 'AI_PREVIEW_MISMATCH' }
     }
-    store.updateDocument(canvasId, result.document)
-    emitter.emit('canvas-document-replace', { canvasId, document: result.document })
-    requestAnimationFrame(() => {
-      emitter.emit('canvas-auto-layout', { recordHistory: false })
+    const mode = resolveCanvasAiMode(context.permissionMode)
+    const liveDocument = getCanvasAiRuntimeSnapshot(canvasId)?.document ?? document
+    if (mode !== pending.mode || canvasDocumentRevision(liveDocument) !== pending.record.beforeRevision) {
+      canvasEditingSession.reportSecurityFailure()
+      await failCanvasAiTransaction(pending.record.transactionId, '画布或编辑授权已变化。')
+      return { ok: false, message: '画布或编辑授权已变化，请重新预览。', error: 'STALE_AI_PREVIEW' }
+    }
+    const permission = authorizeCanvasProposal(mode, parsed.operations, {
+      document: liveDocument,
+      viewport: pending.viewport,
     })
-
-    return {
-      ok: true,
-      message: `已在画布“${project?.title || canvasId}”应用 ${result.applied} 项修改。`,
-      data: summarizeDocument(result.document),
-      changes: [{
-        id: crypto.randomUUID(),
-        type: 'canvas',
-        target: canvasId,
-        before,
-        after: JSON.stringify(summarizeDocument(result.document)),
-        reversible: true,
-        summary: `修改画布“${project?.title || canvasId}”`,
-      }],
+    if (permission.status === 'denied' || (permission.requiresConfirmation && !context.approved)) {
+      canvasEditingSession.reportSecurityFailure()
+      await failCanvasAiTransaction(
+        pending.record.transactionId,
+        permission.status === 'denied' ? permission.reason : '缺少有效用户确认。',
+      )
+      return {
+        ok: false,
+        message: permission.status === 'denied' ? permission.reason : '此操作需要有效的用户确认。',
+        error: 'BLOCKED_BY_CANVAS_PERMISSION',
+      }
+    }
+    try {
+      const before = JSON.stringify(summarizeDocument(liveDocument))
+      const committed = await commitCanvasAiTransaction({
+        transactionId: pending.record.transactionId,
+        canvasId,
+        expectedRevision: pending.record.beforeRevision,
+        operations: parsed.operations,
+        mode,
+        viewport: pending.viewport,
+        approved: context.approved === true || !permission.requiresConfirmation,
+      })
+      const latestRevision = getCanvasAiRuntimeSnapshot(canvasId)?.revision
+      if (latestRevision && latestRevision !== pending.record.beforeRevision) {
+        await rollbackCanvasAiTransaction(pending.record.transactionId)
+        canvasEditingSession.reportSecurityFailure()
+        return {
+          ok: false,
+          message: '提交期间画布发生了新的用户修改，AI 事务已整体回滚。',
+          error: 'CANVAS_CHANGED_DURING_COMMIT',
+        }
+      }
+      store.replaceDocumentFromAiTransaction(canvasId, committed.document, committed.appliedAt)
+      emitter.emit('canvas-ai-transaction-applied', {
+        canvasId,
+        transactionId: pending.record.transactionId,
+        document: committed.document,
+      })
+      return {
+        ok: true,
+        message: `已在画布“${project?.title || canvasId}”原子应用 ${parsed.operations.length} 项修改。`,
+        data: {
+          transactionId: pending.record.transactionId,
+          impact: permission.impact,
+          document: summarizeDocument(committed.document),
+        },
+        changes: [{
+          id: pending.record.transactionId,
+          type: 'canvas',
+          target: canvasId,
+          before,
+          after: JSON.stringify(summarizeDocument(committed.document)),
+          reversible: true,
+          summary: `AI 事务修改画布“${project?.title || canvasId}”`,
+        }],
+      }
+    } catch (error) {
+      canvasEditingSession.reportSecurityFailure()
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : 'AI 事务提交失败，画布未改变。',
+        error: 'AI_TRANSACTION_FAILED',
+      }
     }
   },
 }
 
-export const canvasTools: AgentTool[] = [getCanvasStateTool, applyCanvasOperationsTool]
+const rollbackCanvasAiTransactionTool: AgentTool = {
+  name: 'canvas_rollback_ai_transaction',
+  title: '回滚 AI 画布事务',
+  description: '按事务 ID 整体回滚最近一次仍可安全回滚的 AI 画布修改；不会写入或消费手工撤销历史。',
+  category: 'canvas',
+  risk: 'editor-write',
+  inputSchema: {
+    type: 'object',
+    properties: { transactionId: { type: 'string' } },
+    required: ['transactionId'],
+    additionalProperties: false,
+  },
+  authorize: () => ({ allowed: true, requiresApproval: true }),
+  execute: async (input): Promise<AgentToolResult> => {
+    const transactionId = typeof input.transactionId === 'string' ? input.transactionId.trim() : ''
+    if (!transactionId) return { ok: false, message: '缺少 AI 事务 ID。', error: 'INVALID_TRANSACTION_ID' }
+    try {
+      const result = await rollbackCanvasAiTransaction(transactionId)
+      const { default: useCanvasStore } = await import('@/stores/canvas')
+      useCanvasStore.getState().replaceDocumentFromAiTransaction(
+        result.canvasId,
+        result.document,
+        result.rolledBackAt,
+      )
+      emitter.emit('canvas-ai-transaction-rolled-back', {
+        canvasId: result.canvasId,
+        transactionId,
+        document: result.document,
+      })
+      return {
+        ok: true,
+        message: '已整体回滚 AI 画布事务。',
+        data: { transactionId, canvasId: result.canvasId },
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : 'AI 事务回滚失败。',
+        error: 'AI_TRANSACTION_ROLLBACK_FAILED',
+      }
+    }
+  },
+}
+
+export const canvasTools: AgentTool[] = [
+  getCanvasStateTool,
+  applyCanvasOperationsTool,
+  rollbackCanvasAiTransactionTool,
+]

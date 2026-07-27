@@ -111,6 +111,10 @@ import type {
 } from '@/types/canvas'
 import { flattenFileTree } from '@/app/core/main/file/file-selection'
 import { applyCanvasOperations } from '@/lib/canvas/operations'
+import {
+  clearCanvasAiRuntimeSnapshot,
+  publishCanvasAiRuntimeSnapshot,
+} from '@/lib/canvas/ai-transaction'
 import { getFilePathOptions } from '@/lib/workspace'
 import {
   createFreehandGeometry,
@@ -883,6 +887,22 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const snapshot = captureViewportSnapshot({ viewport, containerRect: bounds })
     if (snapshot) lastViewportSnapshotRef.current = snapshot
   }, [viewport])
+  useEffect(() => {
+    if (!document) return
+    const snapshot = captureCurrentViewport()
+    if (!snapshot) return
+    publishCanvasAiRuntimeSnapshot({
+      canvasId,
+      document: {
+        ...document,
+        nodes: serializeNodes(nodes),
+        edges: serializeEdges(edges),
+        viewport: { x: snapshot.x, y: snapshot.y, zoom: snapshot.zoom },
+      },
+      viewport: snapshot,
+    })
+  }, [canvasId, captureCurrentViewport, document, edges, nodes, viewport])
+  useEffect(() => () => clearCanvasAiRuntimeSnapshot(canvasId), [canvasId])
   const activeBrushColor = tool === 'highlighter' ? highlighterColor : penColor
   const activeBrushSize = tool === 'highlighter' ? highlighterSize : penSize
   const activeBrushStyle = useMemo(() => ({
@@ -1266,6 +1286,30 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     emitter.on('canvas-document-replace', replaceDocument)
     return () => emitter.off('canvas-document-replace', replaceDocument)
   }, [canvasId, fitView, pushHistory, setEdges, updateFlowNodes])
+
+  useEffect(() => {
+    const replaceAiTransactionDocument = ({
+      canvasId: targetCanvasId,
+      document: nextDocument,
+    }: { canvasId: string; transactionId: string; document: CanvasDocument }) => {
+      if (targetCanvasId !== canvasId) return
+      const nextNodes = nextDocument.nodes as FlowCanvasNode[]
+      const nextEdges = nextDocument.edges as Edge[]
+      persistedNodesRef.current = nextNodes
+      persistedEdgesRef.current = nextEdges
+      rebuildSpatialIndex(nextNodes)
+      setAgentPreviewOperations(null)
+      updateFlowNodes(nextNodes)
+      setEdges(nextEdges)
+    }
+
+    emitter.on('canvas-ai-transaction-applied', replaceAiTransactionDocument)
+    emitter.on('canvas-ai-transaction-rolled-back', replaceAiTransactionDocument)
+    return () => {
+      emitter.off('canvas-ai-transaction-applied', replaceAiTransactionDocument)
+      emitter.off('canvas-ai-transaction-rolled-back', replaceAiTransactionDocument)
+    }
+  }, [canvasId, rebuildSpatialIndex, setEdges, updateFlowNodes])
 
   const undo = useCallback(() => {
     const snapshot = historyRef.current.pop()

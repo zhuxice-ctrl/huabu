@@ -117,6 +117,18 @@ export interface AgentToolExecutionContext {
   signal?: AbortSignal
   runId: string
   context: AgentContextSnapshot
+  permissionMode?: AgentPermissionMode
+  approved?: boolean
+  modelId?: string
+}
+
+export interface AgentToolPermissionDecision {
+  allowed: boolean
+  requiresApproval: boolean
+  reason?: string
+  canApproveForSession?: boolean
+  sessionApprovalType?: 'runtime-script'
+  sessionApprovalKey?: string
 }
 
 export interface AgentChange {
@@ -144,6 +156,10 @@ export interface AgentTool {
   category: AgentToolCategory
   risk: AgentToolRisk
   inputSchema: JsonSchema
+  authorize?: (
+    input: Record<string, unknown>,
+    context: AgentToolExecutionContext,
+  ) => Promise<AgentToolPermissionDecision> | AgentToolPermissionDecision
   execute: (
     input: Record<string, unknown>,
     context: AgentToolExecutionContext

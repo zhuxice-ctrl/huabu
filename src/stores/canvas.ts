@@ -58,6 +58,8 @@ interface CanvasState {
   openProject: (id: string) => Promise<CanvasProject | null>
   setActiveCanvasId: (id: string | null) => void
   updateDocument: (id: string, document: CanvasDocument) => void
+  stageDocumentForAiPreview: (id: string, document: CanvasDocument) => Promise<number>
+  replaceDocumentFromAiTransaction: (id: string, document: CanvasDocument, updatedAt: number) => void
   updateHistory: (id: string, history: CanvasHistoryState) => void
   saveProject: (id: string) => Promise<void>
   refreshThumbnail: (id: string) => Promise<void>
@@ -174,6 +176,32 @@ const useCanvasStore = create<CanvasState>((set, get) => ({
       saveTimers.delete(id)
       void get().saveProject(id)
     }, 1000))
+  },
+
+  stageDocumentForAiPreview: async (id, document) => {
+    const previousTimer = saveTimers.get(id)
+    if (previousTimer) clearTimeout(previousTimer)
+    saveTimers.delete(id)
+    set(state => ({ documents: { ...state.documents, [id]: document } }))
+    const updatedAt = await updateCanvasDocument(id, document)
+    set(state => ({
+      projects: state.projects.map(project => (
+        project.id === id ? { ...project, document, updatedAt } : project
+      )),
+    }))
+    return updatedAt
+  },
+
+  replaceDocumentFromAiTransaction: (id, document, updatedAt) => {
+    const previousTimer = saveTimers.get(id)
+    if (previousTimer) clearTimeout(previousTimer)
+    saveTimers.delete(id)
+    set(state => ({
+      documents: { ...state.documents, [id]: document },
+      projects: state.projects
+        .map(project => project.id === id ? { ...project, document, updatedAt } : project)
+        .sort((left, right) => right.updatedAt - left.updatedAt),
+    }))
   },
 
   updateHistory: (id, history) => {

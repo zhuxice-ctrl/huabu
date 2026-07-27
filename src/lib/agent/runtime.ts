@@ -52,10 +52,13 @@ async function executeAgentTool(
   args: Record<string, unknown>,
   runId: string,
   signal: AbortSignal | undefined,
-  context: AgentContextSnapshot
+  context: AgentContextSnapshot,
+  permissionMode: AgentPermissionMode | undefined,
+  approved: boolean,
+  modelId: string | undefined,
 ): Promise<AgentToolResult> {
   try {
-    return await tool.execute(args, { runId, signal, context })
+    return await tool.execute(args, { runId, signal, context, permissionMode, approved, modelId })
   } catch (error) {
     if (isRequestAbortError(error)) {
       throw error
@@ -1697,7 +1700,17 @@ export class AgentRuntime {
             continue
           }
 
-          const permission = this.permissionEngine.evaluate(tool, args, input.permissionMode)
+          const toolPermissionContext = {
+            runId,
+            signal: this.abortController?.signal,
+            context,
+            permissionMode: input.permissionMode,
+            approved: false,
+            modelId: aiConfig?.model,
+          }
+          const permission = tool.authorize
+            ? await tool.authorize(args, toolPermissionContext)
+            : this.permissionEngine.evaluate(tool, args, input.permissionMode)
           agentDebugLog('permission_decision', {
             runId,
             toolName,
@@ -1727,6 +1740,7 @@ export class AgentRuntime {
             continue
           }
 
+          let userApproved = false
           if (permission.requiresApproval) {
             callbacks.onStatus?.('waiting_approval')
             agentDebugLog('approval_request', {
@@ -1838,6 +1852,7 @@ export class AgentRuntime {
               message: '用户已确认操作。',
             })
             if (updatedApprovalTrace) callbacks.onTrace?.(updatedApprovalTrace)
+            userApproved = true
           }
 
           callbacks.onStatus?.(
@@ -1905,7 +1920,10 @@ export class AgentRuntime {
                 args,
                 runId,
                 this.abortController?.signal,
-                context
+                context,
+                input.permissionMode,
+                userApproved,
+                aiConfig?.model,
               )
           const folderAttachmentProgress = getFolderAttachmentProgress(tool.name, args, result)
           const duration = Date.now() - startedAt

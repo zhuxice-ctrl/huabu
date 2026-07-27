@@ -22,6 +22,7 @@ async function runDatabaseInitialization() {
   const { initMemoriesDb } = await import('./memories');
   const { initActivityDb } = await import('./activity');
   const { initCanvasesDb } = await import('./canvases');
+  const { initCanvasAiTransactionsDb } = await import('./canvas-ai-transactions');
 
   // 执行初始化：先确保基础表存在，再做 conversations 对 chats 的迁移/补列。
   await initChatsDb();
@@ -33,6 +34,7 @@ async function runDatabaseInitialization() {
   await initMemoriesDb();
   await initActivityDb();
   await initCanvasesDb();
+  await initCanvasAiTransactionsDb();
 }
 
 // 初始化所有数据库。父布局与画布首屏可能同时触发初始化，必须复用同一个 Promise，

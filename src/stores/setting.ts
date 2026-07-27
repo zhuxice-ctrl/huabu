@@ -275,6 +275,10 @@ function getChangedSyncableSettingKeys(current: SettingState, previous: SettingS
   const excludeSensitiveConfig = current.excludeSensitiveConfig !== false
 
   return Object.keys(currentRecord).filter((key) => {
+    if (key === 'agentPermissionMode') {
+      return false
+    }
+
     if (typeof currentRecord[key] === 'function') {
       return false
     }
@@ -383,6 +387,9 @@ const useSettingStore = create<SettingState>((set, get) => ({
           }, 0);
         } else if (key === 'aiModelList') {
           hydratedSettings[key] = finalAiModelList
+        } else if (key === 'agentPermissionMode') {
+          hydratedSettings[key] = res === 'auto-edit' ? 'ask' : res
+          if (res === 'auto-edit') await store.set(key, 'ask')
         } else if (key === 'recordToolbarConfig') {
           // 确保包含所有工具，如果缺少新工具则自动添加
           const storedConfig = res as RecordToolbarItem[]
@@ -555,8 +562,9 @@ const useSettingStore = create<SettingState>((set, get) => ({
   agentPermissionMode: 'ask',
   setAgentPermissionMode: async (agentPermissionMode) => {
     set({ agentPermissionMode })
+    if (agentPermissionMode === 'auto-edit') return
     const store = await Store.load('store.json')
-    await store.set('agentPermissionMode', agentPermissionMode)
+    await store.set('agentPermissionMode', agentPermissionMode === 'read-only' ? 'read-only' : 'ask')
     await store.save()
   },
 
