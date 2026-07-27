@@ -1,39 +1,32 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
+  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
   "status": "approved",
-  "reviewer": "independent Task 14 high-risk reviewer plus three scoped remediation re-reviews",
-  "source_revision": "feda6bf6ef4a8625d90efbc3316a8958f7604ad5",
+  "reviewer": "independent Task 15 high-risk reviewer plus scoped remediation evidence",
+  "source_revision": "dc3e3e08907e23097600e3123afce68a2c61cae9",
   "review_basis": [
     ".adworkflow/task_spec.json",
-    ".adworkflow/context_preflight.json (accepted; immutable baseline 441c25ca1711d38f8e374c4d)",
-    ".adworkflow/impact_report.json (passed current graph f52bb0c32307d2bd8af04049)",
-    "Independent review of a1f9a7fb and scoped remediation reviews through feda6bf6.",
-    "Focused 15/15, Canvas 176/176, TypeScript and 53-page production build evidence."
+    ".adworkflow/context_preflight.json with immutable baseline f52bb0c32307d2bd8af04049",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-15-independent-review.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-15-fix-round-1-rereview.md",
+    "Focused 16/16, Canvas 193/193, TypeScript, production build and final passed L2 impact."
   ],
   "blocking_findings": [],
   "non_blocking_findings": [
     {
-      "id": "hands-on-ai-transaction-runtime",
+      "id": "hands-on-overlay-runtime",
       "severity": "non_blocking",
-      "issue": "Real approval interruption, application restart and database recovery timing cannot be fully exercised by the Node source-contract suite.",
-      "expected_fix": "Retain management/editing approval, restart expiry and rollback scenarios in Task 21 Windows acceptance.",
-      "evidence": "Focused transaction tests, full Canvas regression and exhaustive L2 impact pass."
-    },
-    {
-      "id": "line-ending-impact-expansion",
-      "severity": "non_blocking",
-      "issue": "A reverted Task 14 emitter edit retained a byte-level line-ending delta, so file-level L2 propagation required a baseline/current observed-impact expansion.",
-      "expected_fix": "Keep raw-byte graph hashing stable and avoid unrelated repository-wide line-ending normalization.",
-      "evidence": "Final official impact report independently recomputed 358 predicted and observed files with zero unexpected impact."
+      "issue": "Real SQLite crash timing, configured provider execution and visual feedback cannot be fully exercised by Node source-contract tests.",
+      "expected_fix": "Exercise these scenarios in Task 21 Windows acceptance.",
+      "evidence": "Focused behavior tests, complete Canvas regression, production build and exhaustive L2 impact passed."
     }
   ],
   "suggested_tests": [
-    "Exercise approval denial, steering, stop, editing-session expiry, application restart, stale-document rejection and whole-transaction rollback in Task 21 Windows acceptance."
+    "Exercise crash/restart indexing, offline-to-online overlay generation, accept/reject controls and rebuild recovery in Task 21."
   ],
   "risk_notes": [
-    "The initial review found five Important permission/transaction defects and two Minor schema inconsistencies; all were fixed in a04f91ac and 11fa74fc with clean scoped re-review.",
-    "L2 review then found and fixed the database initialization cycle in f85eacf3 and dynamic preview-store dispatch in feda6bf6.",
-    "The final L2 report has zero unexpected impact, zero new production/test critical edges, complete propagation and no reused baseline."
+    "The independent review found one Critical and three Important lifecycle defects; all were fixed in 9a0a4df4 with explicit behavioral coverage.",
+    "L2 then identified 18 dynamic-dispatch edges; static planners and named boundaries in 374fed7c and dc3e3e08 reduced them to zero.",
+    "Final impact report has zero unexpected impact, zero new production/test critical edges, complete propagation and no reused baseline."
   ]
 }

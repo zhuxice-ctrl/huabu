@@ -1,38 +1,44 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
+  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
   "task_type": "code",
-  "goal": "Route every canvas AI mutation through a strict management/editing permission matrix, preview-first atomic transaction ledger and whole-transaction rollback boundary.",
+  "goal": "Establish a crash-resumable current-canvas index job lifecycle and persist AI-derived tags, relations, candidates and suppressions outside the authoritative CanvasDocument.",
   "non_goals": [
-    "Do not change manual canvas undo semantics or merge AI transactions into manual history.",
-    "Do not allow management mode to mutate source node text, geometry, delete nodes, manual relations or layout.",
-    "Do not execute untrusted attachment, web or prompt text as operations.",
-    "Do not implement Task 15 overlay generation, Task 16 retrieval, Task 17 navigation or later credential/recovery work."
+    "Do not implement Task 16 knowledge extraction, retrieval answers or sensitive-content redaction.",
+    "Do not implement Task 17 evidence navigation, linear views or saved filters.",
+    "Do not write AI-derived tags or relations into CanvasDocument nodes or manual edges.",
+    "Do not roll back an already-saved source canvas when later extraction or overlay generation fails.",
+    "Do not add all-pairs LLM classification when the local index is unavailable."
   ],
   "acceptance_criteria": [
-    "Unknown operation JSON is parsed into a strict discriminated union before authorization.",
-    "Management permits reads, evidence focus and derived overlay changes only; editing is explicit, session-scoped and expires on timeout, restart or security failure.",
-    "Delete, source overwrite and deterministic large movement always require confirmation.",
-    "canvas_apply_operations emits a preview, revalidates permission, collision and document revision, then commits one atomic ledger transaction or restores the before snapshot.",
-    "Whole AI transactions roll back independently from manual undo and the ledger stores no credentials or raw sensitive prompt values.",
-    "Direct canvas store updateDocument is absent from the agent tool mutation path.",
+    "Canvas create/update/delete/rebuild changes enqueue revision-deduplicated index jobs transactionally with authoritative document persistence.",
+    "The local worker resets abandoned running jobs, drains ready work serially per node, applies the exact bounded retry schedule and stops cleanly.",
+    "Delete tombstones remove current anchors/embeddings; rebuild enumerates authoritative nodes and removes stale absent-node records without rewriting source content.",
+    "AI tag and approved-relation records are stored separately with finite confidence validation, exact 0.85/0.60 thresholds, stale lifecycle and semantic suppression.",
+    "Candidate recall uses the tested index interface before controlled model classification and never falls back to all-pairs model calls.",
+    "The toggleable visual overlay and feedback controls never mutate manual edges, source nodes or manual history.",
     "Focused tests, Canvas regression, TypeScript, production build, independent review and exhaustive L2 impact pass."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/canvas/ai-permission.ts",
-    "src/lib/canvas/ai-transaction.ts",
-    "src/db/canvas-ai-transactions.ts",
+    "src/lib/canvas/ai-overlay.ts",
+    "src/lib/canvas/ai-overlay-runtime.ts",
+    "src/lib/canvas/canvas-index-jobs.ts",
+    "src/db/canvas-index.ts",
+    "src/db/canvas-ai-overlay.ts",
     "src/db/index.ts",
-    "src/lib/canvas/operations.ts",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/app/core/main/chat/agent-permission-mode.tsx",
+    "src/stores/canvas-index.ts",
+    "src/stores/canvas-ai.ts",
+    "src/stores/canvas.ts",
+    "src/db/canvases.ts",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-ai-overlay.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
-    "scripts/tests/canvas-ai-permission.test.mjs",
-    "scripts/tests/canvas-ai-transaction.test.mjs",
+    "scripts/tests/canvas-index-lifecycle.test.mjs",
+    "scripts/tests/canvas-ai-overlay.test.mjs",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -40,41 +46,38 @@
     ".adworkflow/review_findings.json"
   ],
   "do_not_touch": [
-    "manual undo history semantics outside the AI gateway",
+    "manual canvas undo history semantics",
+    "CanvasDocument manual edge ownership",
     "main branch",
     "official upstream remote",
     "release artifacts",
     "installed zeroxB application",
     "zeroxB user documents",
     "provider credentials",
-    "unrelated runtime modules"
+    "Task 16-21 product scope"
   ],
   "entrypoints": [
-    "typescript:src.lib.agent.tools.canvas-tools:applyCanvasOperationsTool:variable",
-    "typescript:src.lib.canvas.operations:applyCanvasOperations:function",
-    "typescript:src.lib.emitter:Events:interface",
-    "typescript:src.lib.emitter:emitter:variable",
-    "typescript:src.lib.agent.types:AgentToolExecutionContext:interface",
-    "typescript:src.lib.agent.types:AgentToolPermissionDecision:interface",
-    "typescript:src.lib.agent.runtime:AgentRuntime:class",
-    "typescript:src.stores.setting:useSettingStore:variable"
+    "typescript:src.db.canvases:updateCanvasDocument.content:variable",
+    "typescript:src.types.canvas:CanvasProject:interface"
   ],
   "context_sources": [
     "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/lib/canvas/operations.ts",
-    "src/app/core/main/chat/agent-permission-mode.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/stores/canvas.ts",
-    "src/types/canvas.ts",
+    "src/db/canvases.ts",
     "src/db/index.ts",
-    "src/lib/emitter.ts"
+    "src/db/client.ts",
+    "src/db/canvas-ai-transactions.ts",
+    "src/stores/canvas.ts",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/types/canvas.ts"
   ],
   "notes": [
     "Use test-first implementation and keep ordinary audit reporting concise.",
-    "Use one captured viewport to evaluate the 400-screen-pixel movement threshold.",
-    "Hash/redact user instructions before ledger persistence and never inspect configured provider secrets.",
+    "Retry delays are exactly 1s, 5s, 30s, 5m and then 30m capped; uniqueness is canvasId, nodeId, contentRevision and operation.",
+    "Confidence thresholds are exactly active >= 0.85, candidate >= 0.60 and < 0.85, retrieval-only < 0.60.",
+    "Task 14's canvas_ai_overlay_operations table is a transaction staging boundary; Task 15 owns durable derived overlay lifecycle tables.",
+    "L2 uses leaf data-contract entrypoints because the existing updateCanvasDocument function immediately enters unrelated global sync dynamic-dispatch boundaries; the full save/store/startup files remain required manual context and post-edit impact scope.",
     "Use fixed UTF-8 I/O for non-ASCII reads and edits."
   ],
-  "implementation_owner": "main-solo-executor"
+  "implementation_owner": "task15-implementer"
 }

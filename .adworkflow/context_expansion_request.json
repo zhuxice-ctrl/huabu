@@ -1,16 +1,16 @@
 {
   "schema": "ADworkflo.context_expansion_request.v1",
-  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
+  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
   "status": "applied",
   "relation": "callees",
   "targets": [
-    "typescript:src.lib.agent.tools.canvas-tools:applyCanvasOperationsTool:variable",
-    "typescript:src.lib.canvas.operations:applyCanvasOperations:function"
+    "typescript:src.db.canvases:updateCanvasDocument:function",
+    "typescript:src.stores.canvas:useCanvasStore:variable"
   ],
-  "depth": 10,
-  "budget": 5000,
-  "reason": "The initial slice reached its item/depth budget inside deterministic AI sizing helpers; Task 14 needs a complete mutation and validation callee frontier before editing the atomic gateway.",
+  "depth": 8,
+  "budget": 3000,
+  "reason": "The narrow authoritative-save slice has no critical unresolved edge and reaches the 0.80 confidence threshold, but depth-2 truncation leaves 28 persistence and store lifecycle boundaries needed for Task 15.",
   "requested_by": "main-solo-executor",
-  "source_graph_revision": "441c25ca1711d38f8e374c4d",
-  "applied_slice_revision": "441c25ca1711d38f8e374c4d"
+  "source_graph_revision": "f52bb0c32307d2bd8af04049",
+  "applied_slice_revision": "f52bb0c32307d2bd8af04049"
 }

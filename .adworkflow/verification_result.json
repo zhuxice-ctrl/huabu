@@ -1,87 +1,75 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
+  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
   "status": "passed",
-  "source_revision": "feda6bf6ef4a8625d90efbc3316a8958f7604ad5",
+  "source_revision": "dc3e3e08907e23097600e3123afce68a2c61cae9",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-ai-permission.test.mjs scripts/tests/canvas-ai-transaction.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-index-lifecycle.test.mjs scripts/tests/canvas-ai-overlay.test.mjs",
       "status": "passed",
-      "summary": "Task 14 permission, preview, atomic commit and rollback contracts passed 15/15 after all review fixes.",
+      "summary": "Task 15 lifecycle and overlay contracts passed 16/16.",
       "exit_code": 0
     },
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
+      "command": "node --experimental-strip-types --test --test-reporter=dot scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Complete Canvas regression suite passed 176/176 at the reviewed source revision.",
+      "summary": "Complete Canvas regression passed 193/193 at the final source revision.",
       "exit_code": 0
     },
     {
-      "command": "node_modules/.bin/tsc.CMD --noEmit",
+      "command": "node_modules/.bin/tsc.cmd --noEmit",
       "status": "passed",
-      "summary": "Workspace TypeScript compiler completed without diagnostics.",
+      "summary": "TypeScript completed without diagnostics.",
       "exit_code": 0
     },
     {
-      "command": "node_modules/.bin/next.CMD build --turbopack",
+      "command": "node_modules/.bin/next.cmd build --turbopack",
       "status": "passed",
-      "summary": "Production build completed with all 53 static pages generated.",
+      "summary": "Production build compiled and generated 53/53 static pages.",
       "exit_code": 0
     },
     {
-      "command": "git diff --check",
+      "command": "expanded L2 codegraph post_edit_impact",
       "status": "passed",
-      "summary": "No whitespace errors were found; existing working-tree line-ending notices remain informational.",
-      "exit_code": 0
-    },
-    {
-      "command": "l2_codegraph post_edit_impact with reverse-impact budget 50000",
-      "status": "passed",
-      "summary": "Baseline 441c25ca1711d38f8e374c4d to current f52bb0c32307d2bd8af04049: predicted 358, observed 358, unexpected 0, production/test critical 0/0, propagation complete and baseline not reused.",
+      "summary": "Baseline f52bb0c32307d2bd8af04049 to graph 4f864e025596fa43603480a9: predicted/observed 350/350, unexpected 0, production/test critical 0/0, propagation complete and baseline not reused.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Unknown operation JSON is parsed into a strict discriminated union before authorization.",
+      "criterion": "Canvas source changes enqueue revision-deduplicated index jobs transactionally.",
       "status": "passed",
-      "evidence": ["ai-permission.ts strict batch parser", "canvas-ai-permission.test.mjs"]
+      "evidence": ["canvas-index-lifecycle.test.mjs", "src/db/canvases.ts", "src/db/canvas-ai-transactions.ts"]
     },
     {
-      "criterion": "Management permits only reads, evidence focus and derived overlay changes; editing is explicit, session-scoped and expires safely.",
+      "criterion": "The local worker resumes, retries with exact delays, reconciles tombstones and stops cleanly.",
       "status": "passed",
-      "evidence": ["permission matrix", "15-minute in-memory grant", "read-only rollback gate"]
+      "evidence": ["16/16 focused tests", "src/stores/canvas-index.ts"]
     },
     {
-      "criterion": "Delete, source overwrite and deterministic large geometry changes require confirmation with impact shown before approval.",
+      "criterion": "AI tags, relations and semantic suppression remain outside CanvasDocument and use exact confidence thresholds.",
       "status": "passed",
-      "evidence": ["approval preview ordering", "movement and size thresholds", "11fa74fc"]
+      "evidence": ["src/db/canvas-ai-overlay.ts", "canvas-ai-overlay.test.mjs"]
     },
     {
-      "criterion": "Canvas AI proposals stage a preview, revalidate permission, revision, results and collision, then commit atomically or restore the before snapshot.",
+      "criterion": "Candidate recall precedes controlled classification and never falls back to all-pairs model calls.",
       "status": "passed",
-      "evidence": ["canvas-tools transaction gateway", "SQLite BEGIN IMMEDIATE ledger", "static preview staging"]
+      "evidence": ["src/stores/canvas-ai.ts", "pure overlay planners", "focused source contracts"]
     },
     {
-      "criterion": "Whole AI transactions roll back separately from manual undo and persist no credentials or raw sensitive prompt values.",
+      "criterion": "Overlay display and feedback never mutate source nodes, manual edges or manual history.",
       "status": "passed",
-      "evidence": ["canvas-ai-transactions.ts", "hashed/redacted instruction metadata", "rollback tests"]
-    },
-    {
-      "criterion": "Implementation is committed, independently reviewed and passes regression, production build and exhaustive L2 impact.",
-      "status": "passed",
-      "evidence": ["feda6bf6", "three scoped independent re-reviews", "176/176 Canvas", "53-page build", "impact_report.json"]
+      "evidence": ["canvas-ai-overlay.tsx", "Canvas 193/193", "independent review remediation"]
     }
   ],
   "passed": [
-    "All Task 14 acceptance criteria",
+    "All Task 15 acceptance criteria",
     "All Critical and Important independent findings fixed",
     "Exhaustive L2 post-edit impact gate"
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Hands-on approval interruption, restart expiry and whole-transaction rollback remain in the Task 21 Windows checklist.",
-    "Existing Node module-type, Turbopack and working-tree line-ending notices remain non-blocking."
+    "Hands-on crash/restart, configured-model and visual interaction scenarios remain in Task 21 Windows acceptance."
   ]
 }

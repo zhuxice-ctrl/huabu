@@ -1,78 +1,57 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-14-ai-permission-transaction",
+  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
   "status": "verified",
-  "revision": 11,
+  "revision": 15,
   "done": [
-    "Implemented strict all-or-nothing parsing and the management/editing permission matrix with an expiring in-memory editing grant.",
-    "Added preview-first atomic SQLite transactions, separate overlay-operation persistence and whole-transaction rollback outside manual undo.",
-    "Revalidated permission, document revision, operation results and geometry inside the SQL transaction and removed direct agent-path updateDocument mutation.",
-    "Closed all independent review findings, including preview cleanup, read-only rollback, stale editor snapshots and approval impact ordering.",
-    "Moved the shared SQLite handle to a leaf client module so the AI ledger initializer is statically imported without an index initialization cycle.",
-    "Moved preview baseline staging behind a statically imported store-module boundary while preserving stale-save cancellation and durable-write ordering.",
-    "Passed focused tests, the 176-test Canvas suite, TypeScript, production build and scoped independent re-reviews.",
-    "Passed exhaustive post-edit L2 impact after reconciling baseline/current file-level propagation with 358 predicted and observed consumers."
+    "Accepted the immutable leaf data-contract L2 preflight at f52bb0c32307d2bd8af04049 before implementation.",
+    "Implemented transactional canvas index jobs, resumable serial processing, separate derived overlay storage and candidate-first classification.",
+    "Resolved one Critical and three Important independent review findings covering production triggering, restore tombstones, semantic suppression races and clean shutdown.",
+    "Removed all L2 dynamic-dispatch findings through static planners, named worker boundaries and explicit overlay node inputs.",
+    "Passed focused 16/16, Canvas 193/193, TypeScript, 53-page production build and exhaustive L2 impact."
   ],
   "changed_files": [
-    "scripts/tests/canvas-ai-permission.test.mjs",
-    "scripts/tests/canvas-ai-transaction.test.mjs",
+    "scripts/tests/canvas-ai-overlay.test.mjs",
+    "scripts/tests/canvas-index-lifecycle.test.mjs",
+    "src/app/core/main/canvas/canvas-ai-overlay.tsx",
     "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/chat/agent-permission-mode.tsx",
+    "src/app/core/main/canvas/canvas-startup-controller.tsx",
+    "src/db/canvas-ai-overlay.ts",
     "src/db/canvas-ai-transactions.ts",
-    "src/db/client.ts",
+    "src/db/canvas-index.ts",
+    "src/db/canvases.ts",
     "src/db/index.ts",
-    "src/lib/agent/permission-engine.ts",
-    "src/lib/agent/runtime.ts",
-    "src/lib/agent/tool-confirmation-display.ts",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/lib/agent/types.ts",
-    "src/lib/canvas/ai-permission.ts",
-    "src/lib/canvas/ai-transaction.ts",
-    "src/lib/canvas/operations.ts",
-    "src/lib/emitter.ts",
-    "src/stores/canvas.ts",
-    "src/stores/setting.ts"
+    "src/lib/canvas/ai-overlay-runtime.ts",
+    "src/lib/canvas/ai-overlay.ts",
+    "src/lib/canvas/canvas-index-jobs.ts",
+    "src/stores/canvas-ai.ts",
+    "src/stores/canvas-index.ts",
+    "src/stores/canvas.ts"
   ],
   "current_problem": null,
-  "next_action": "Start Task 15 with a fresh task specification and accepted L2 preflight.",
+  "next_action": "Configure and execute Task 16 current-canvas knowledge retrieval.",
   "must_keep_context": [
-    ".adworkflow/context_preflight.json accepted the immutable Task 14 baseline graph 441c25ca1711d38f8e374c4d.",
-    "Task 14 product commits span a1f9a7fb through feda6bf6.",
-    "The AI overlay-operation table is a Task 14 transaction boundary; Task 15 owns the durable derived-overlay lifecycle."
+    "Task 15 product commits span e3443bd3 through dc3e3e08 from workflow base 8e0c5ac1.",
+    "The accepted immutable L2 baseline is f52bb0c32307d2bd8af04049.",
+    "Final L2 predicted and observed impact are 350/350 with zero unexpected or critical edges."
   ],
-  "discarded_context": [
-    "The first Task 14 post-edit report used stale Task 13 declared files and pre-fix dynamic edges, so it is diagnostic only.",
-    "Previously reported editor setters, permission setters, tool.authorize and editing-session listener dynamic edges were removed before the final run."
-  ],
+  "discarded_context": [],
   "remaining_risks": [
-    "Hands-on management/editing approval and rollback behavior remains in the Task 21 Windows checklist.",
-    "Hands-on approval interruption, restart expiry and transaction rollback remain in the Task 21 Windows checklist."
+    "Real Tauri SQLite crash/restart timing, configured-model generation and visual feedback remain in Task 21 Windows acceptance."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": [
-    {
-      "relation": "callees",
-      "targets": [
-        "typescript:src.lib.agent.tools.canvas-tools:applyCanvasOperationsTool:variable",
-        "typescript:src.lib.canvas.operations:applyCanvasOperations:function"
-      ],
-      "depth": 10,
-      "budget": 5000,
-      "reason": "The initial slice reached its item/depth budget inside deterministic AI sizing helpers; Task 14 needed a complete mutation and validation callee frontier before editing the atomic gateway.",
-      "requested_by": "main-solo-executor",
-      "graph_revision": "441c25ca1711d38f8e374c4d",
-      "preflight_status": "accepted"
-    }
+    "Expanded the reviewed predicted impact set to the complete 350-file observed propagation frontier after critical edges reached zero."
   ],
-  "source_revision": "feda6bf6ef4a8625d90efbc3316a8958f7604ad5",
+  "source_revision": "dc3e3e08907e23097600e3123afce68a2c61cae9",
   "context_preflight": {
     "status": "accepted",
-    "graph_revision": "441c25ca1711d38f8e374c4d"
+    "graph_revision": "f52bb0c32307d2bd8af04049"
   },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "f52bb0c32307d2bd8af04049",
+    "graph_revision": "4f864e025596fa43603480a9",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }
