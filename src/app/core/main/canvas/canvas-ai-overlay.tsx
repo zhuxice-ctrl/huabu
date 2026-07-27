@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Check, RefreshCw, Sparkles, X } from 'lucide-react'
-import { Panel, ViewportPortal, useReactFlow } from '@xyflow/react'
+import { Panel, ViewportPortal, type Node } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { useCanvasAiStore } from '@/stores/canvas-ai'
@@ -53,8 +53,11 @@ function OverlayFeedback({ kind, record }: {
   )
 }
 
-export function CanvasAiOverlay({ canvasId }: { canvasId: string }) {
-  const { getNode } = useReactFlow()
+export function CanvasAiOverlay({ canvasId, nodes }: {
+  canvasId: string
+  nodes: readonly Node[]
+}) {
+  const nodesById = useMemo(() => new Map(nodes.map(node => [node.id, node])), [nodes])
   const visible = useCanvasAiStore(state => state.visible)
   const tags = useCanvasAiStore(state => state.tags)
   const relations = useCanvasAiStore(state => state.relations)
@@ -100,8 +103,8 @@ export function CanvasAiOverlay({ canvasId }: { canvasId: string }) {
       <ViewportPortal>
         <div className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible">
           {displayRelations.map(relation => {
-            const source = getNode(relation.sourceNodeId)
-            const target = getNode(relation.targetNodeId)
+            const source = nodesById.get(relation.sourceNodeId)
+            const target = nodesById.get(relation.targetNodeId)
             if (!source || !target) return null
             const sourceX = source.position.x + (source.measured?.width ?? source.width ?? 160) / 2
             const sourceY = source.position.y + (source.measured?.height ?? source.height ?? 80) / 2
@@ -146,7 +149,7 @@ export function CanvasAiOverlay({ canvasId }: { canvasId: string }) {
             )
           })}
           {displayTags.map(tag => {
-            const node = getNode(tag.nodeId)
+            const node = nodesById.get(tag.nodeId)
             if (!node) return null
             return (
               <span

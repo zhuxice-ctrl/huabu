@@ -10,7 +10,11 @@ import {
   markOverlayRecordsStale,
   normalizeSemanticIdentity,
 } from '../../src/lib/canvas/ai-overlay.ts'
-import { runCanvasAiOverlayClassification } from '../../src/lib/canvas/ai-overlay-runtime.ts'
+import {
+  filterCanvasAiOverlayCandidates,
+  parseCanvasAiClassificationResponse,
+  planCanvasAiOverlayRecords,
+} from '../../src/lib/canvas/ai-overlay-runtime.ts'
 
 test('overlay confidence uses exact active, candidate and retrieval-only thresholds', () => {
   assert.equal(aiOverlayStateForConfidence(1), 'active')
@@ -74,68 +78,35 @@ test('source revision changes make prior overlay stale and semantic rejection is
   )
 })
 
-test('indexed source runs candidate-first classification and persists overlay records', async () => {
+test('indexed source planning filters candidates and builds valid overlay records', () => {
   const source = {
     canvasId: 'c1', nodeId: 'n1', contentRevision: 'r1', excerpt: 'Alpha', score: 1, matchedBy: ['vector'],
   }
   const target = {
     canvasId: 'c1', nodeId: 'n2', contentRevision: 'r2', excerpt: 'Beta', score: 0.8, matchedBy: ['entity'],
   }
-  const persisted = []
-  let refreshed = 0
-  const result = await runCanvasAiOverlayClassification({
-    canvasId: 'c1', source, text: 'Alpha', model: 'configured-model',
-    classifier: async ({ candidates }) => {
-      assert.deepEqual(candidates.map(candidate => candidate.nodeId), ['n2'])
-      return [
-        { kind: 'tag', label: 'Project', reason: 'topic', confidence: 0.9 },
-        { kind: 'relation', targetNodeId: 'n2', type: 'same_topic', reason: 'match', confidence: 0.8 },
-      ]
-    },
-  }, {
-    recall: async () => [source, target, target],
-    persistTag: async input => {
-      const record = createAiTagRecord(input)
-      persisted.push(record)
-      return record
-    },
-    persistRelation: async input => {
-      const record = createAiRelationRecord(input)
-      persisted.push(record)
-      return record
-    },
-    markStale: async () => assert.fail('successful classification must not mark stale'),
-    refresh: async () => { refreshed += 1 },
+  assert.deepEqual(
+    filterCanvasAiOverlayCandidates('n1', [source, target, target]).map(candidate => candidate.nodeId),
+    ['n2'],
+  )
+  const plan = planCanvasAiOverlayRecords({
+    canvasId: 'c1', source, model: 'configured-model', candidates: [source, target, target],
+    classified: [
+      { kind: 'tag', label: 'Project', reason: 'topic', confidence: 0.9 },
+      { kind: 'relation', targetNodeId: 'n2', type: 'same_topic', reason: 'match', confidence: 0.8 },
+    ],
   })
-  assert.equal(result.status, 'complete')
-  assert.equal(result.records.length, 2)
-  assert.equal(persisted.length, 2)
-  assert.equal(refreshed, 1)
+  assert.equal(createAiTagRecord({ ...plan.tags[0], id: 'tag-1' }).state, 'active')
+  assert.equal(createAiRelationRecord({ ...plan.relations[0], id: 'relation-1' }).state, 'candidate')
 })
 
-test('unavailable recall and classifier failure stay non-blocking and mark stale', async () => {
-  const source = {
-    canvasId: 'c1', nodeId: 'n1', contentRevision: 'r1', excerpt: 'Alpha', score: 1, matchedBy: ['vector'],
-  }
-  let stale = 0
-  let persisted = 0
-  const dependencies = {
-    persistTag: async () => { persisted += 1; return null },
-    persistRelation: async () => { persisted += 1; return null },
-    markStale: async () => { stale += 1 },
-    refresh: async () => undefined,
-  }
-  const unavailable = await runCanvasAiOverlayClassification({
-    canvasId: 'c1', source, text: 'Alpha', model: 'configured-model', classifier: async () => [],
-  }, { ...dependencies, recall: async () => { throw new Error('offline') } })
-  const failed = await runCanvasAiOverlayClassification({
-    canvasId: 'c1', source, text: 'Alpha', model: 'configured-model',
-    classifier: async () => { throw new Error('model failed') },
-  }, { ...dependencies, recall: async () => [] })
-  assert.equal(unavailable.status, 'index-unavailable')
-  assert.equal(failed.status, 'classifier-failed')
-  assert.equal(stale, 2)
-  assert.equal(persisted, 0)
+test('classifier response parsing rejects invalid confidence and keeps approved shapes', () => {
+  const parsed = parseCanvasAiClassificationResponse(JSON.stringify({ results: [
+    { kind: 'tag', label: 'Project', reason: 'topic', confidence: 0.9 },
+    { kind: 'relation', targetNodeId: 'n2', type: 'same_topic', reason: 'match', confidence: 0.8 },
+    { kind: 'tag', label: 'Bad', reason: 'invalid', confidence: 2 },
+  ] }))
+  assert.equal(parsed.length, 2)
 })
 
 test('overlay storage, recall and rendering stay separate from authoritative edges and all-pairs calls', async () => {
@@ -156,12 +127,18 @@ test('overlay storage, recall and rendering stay separate from authoritative edg
   assert.match(overlayDb, /where semanticIdentity = \$2/)
   assert.match(aiStore, /queryCanvasIndexCandidates/)
   assert.match(aiStore, /markCanvasOverlayStale/)
-  assert.match(aiStore, /queueCanvasIndexRetry/)
+  assert.match(aiStore, /queryCanvasIndexCandidates[\s\S]*requestCanvasAiClassification/)
+  assert.match(aiStore, /classifier configuration failed:[\s\S]*markCanvasOverlayStale/)
+  assert.match(aiStore, /candidate query failed:[\s\S]*markCanvasOverlayStale[\s\S]*persistCanvasIndexRebuild/)
+  assert.match(aiStore, /classifier failed:[\s\S]*markCanvasOverlayStale/)
   assert.doesNotMatch(aiStore, /allPairs|all-pairs/)
   assert.match(component, /rejectCanvasAiOverlayRecord/)
   assert.match(component, /candidate/)
-  assert.match(editor, /<CanvasAiOverlay canvasId=\{canvasId\}/)
-  assert.match(startup, /initializeCanvasAiOverlayClassification\(\)[\s\S]*startCanvasIndexWorker\(\)/)
+  assert.match(component, /nodes: readonly Node\[\]/)
+  assert.doesNotMatch(component, /useReactFlow|\bgetNode\s*\(/)
+  assert.match(editor, /<CanvasAiOverlay canvasId=\{canvasId\} nodes=\{displayNodes\}/)
+  assert.match(startup, /initOpenTabs\(\)[\s\S]*loadProjects\(\)[\s\S]*startCanvasIndexWorker\(\)/)
+  assert.doesNotMatch(startup, /initializeCanvasAiOverlayClassification/)
   assert.doesNotMatch(overlayDb, /update canvases set content/)
   assert.doesNotMatch(component, /updateDocument|updateHistory/)
 })

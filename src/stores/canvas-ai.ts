@@ -7,24 +7,24 @@ import {
   upsertCanvasAiRelation,
   upsertCanvasAiTag,
 } from '@/db/canvas-ai-overlay'
-import { getCanvasIndexSourceCandidate } from '@/db/canvas-index'
-import { queueCanvasIndexRebuild, queueCanvasIndexRetry } from '@/stores/canvas-index'
-import { type AiRelationRecord, type AiTagRecord } from '@/lib/canvas/ai-overlay'
+import {
+  getCanvasIndexSourceCandidate,
+  queueCanvasIndexRebuild as persistCanvasIndexRebuild,
+} from '@/db/canvas-index'
+import type { AiRelationRecord, AiTagRecord } from '@/lib/canvas/ai-overlay'
 import {
   queryCanvasIndexCandidates,
-  registerCanvasIndexJobProcessedHandler,
   type CanvasIndexCandidate,
+  type CanvasIndexJob,
 } from '@/lib/canvas/canvas-index-jobs'
 import {
-  runCanvasAiOverlayClassification,
-  type CanvasAiClassification,
-  type CanvasAiClassifier,
+  filterCanvasAiOverlayCandidates,
+  parseCanvasAiClassificationResponse,
+  planCanvasAiOverlayRecords,
+  type CanvasAiClassifierInput,
 } from '@/lib/canvas/ai-overlay-runtime'
-import {
-  createOpenAIClient,
-  getAISettings,
-  withFastAiRequestOptions,
-} from '@/lib/ai/utils'
+import { getAISettings, withFastAiRequestOptions } from '@/lib/ai/utils'
+import { invokeAiJson, resolveAiRequestConfig } from '@/lib/ai/tauri-client'
 
 interface CanvasAiState {
   canvasId: string | null
@@ -39,22 +39,29 @@ interface CanvasAiState {
   rebuild: (canvasId: string) => Promise<void>
 }
 
-export const useCanvasAiStore = create<CanvasAiState>((set, get) => ({
+let activeCanvasAiOverlayId: string | null = null
+
+export async function loadCanvasAiOverlay(canvasId: string) {
+  activeCanvasAiOverlayId = canvasId
+  useCanvasAiStore.setState({ canvasId, loading: true })
+  try {
+    const records = await getCanvasAiOverlayRecords(canvasId)
+    if (activeCanvasAiOverlayId === canvasId) {
+      useCanvasAiStore.setState({ ...records, loading: false })
+    }
+  } catch (error) {
+    if (activeCanvasAiOverlayId === canvasId) useCanvasAiStore.setState({ loading: false })
+    throw error
+  }
+}
+
+export const useCanvasAiStore = create<CanvasAiState>((set) => ({
   canvasId: null,
   visible: true,
   loading: false,
   tags: [],
   relations: [],
-  load: async canvasId => {
-    set({ canvasId, loading: true })
-    try {
-      const records = await getCanvasAiOverlayRecords(canvasId)
-      if (get().canvasId === canvasId) set({ ...records, loading: false })
-    } catch (error) {
-      if (get().canvasId === canvasId) set({ loading: false })
-      throw error
-    }
-  },
+  load: loadCanvasAiOverlay,
   setVisible: visible => set({ visible }),
   accept: async (kind, id) => {
     await setCanvasAiOverlayRecordState(kind, id, 'active')
@@ -64,119 +71,115 @@ export const useCanvasAiStore = create<CanvasAiState>((set, get) => ({
   },
   reject: async (kind, id) => {
     await rejectCanvasAiOverlayRecord(kind, id)
-    const canvasId = get().canvasId
-    if (canvasId) await get().load(canvasId)
+    if (activeCanvasAiOverlayId) await loadCanvasAiOverlay(activeCanvasAiOverlayId)
   },
   rebuild: async canvasId => {
     await markCanvasOverlayStale(canvasId)
-    await queueCanvasIndexRebuild(canvasId)
-    await get().load(canvasId)
+    await persistCanvasIndexRebuild(canvasId)
+    await loadCanvasAiOverlay(canvasId)
   },
 }))
 
-function parseClassifierResponse(value: string): CanvasAiClassification[] {
-  const parsed: unknown = JSON.parse(value)
-  const values = Array.isArray(parsed)
-    ? parsed
-    : parsed && typeof parsed === 'object' && Array.isArray((parsed as { results?: unknown }).results)
-      ? (parsed as { results: unknown[] }).results
-      : []
-  return values.filter((item): item is CanvasAiClassification => {
-    if (!item || typeof item !== 'object') return false
-    const record = item as Partial<CanvasAiClassification>
-    return (record.kind === 'tag' || record.kind === 'relation')
-      && typeof record.reason === 'string'
-      && typeof record.confidence === 'number'
-      && Number.isFinite(record.confidence)
-      && record.confidence >= 0
-      && record.confidence <= 1
+type ConfiguredAiModel = NonNullable<Awaited<ReturnType<typeof getAISettings>>>
+
+interface ChatCompletionResponse {
+  choices: Array<{ message?: { content?: string | null } }>
+}
+
+async function requestCanvasAiClassification(
+  config: ConfiguredAiModel,
+  input: CanvasAiClassifierInput,
+) {
+  const response = await invokeAiJson<ChatCompletionResponse>({
+    config: await resolveAiRequestConfig(config),
+    path: '/chat/completions',
+    method: 'POST',
+    body: withFastAiRequestOptions({
+      model: config.model!,
+      stream: false,
+      temperature: 0,
+      messages: [
+        {
+          role: 'system',
+          content: 'Return JSON only as {"results": [...]} using tag or relation entries. Relations must use one approved type and one supplied targetNodeId. Never invent nodes.',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify(input),
+        },
+      ],
+    }, config),
   })
+  const content = response.choices[0]?.message?.content
+  if (typeof content !== 'string') throw new Error('Canvas overlay classifier returned no JSON')
+  return parseCanvasAiClassificationResponse(content)
 }
 
-async function getConfiguredCanvasAiClassifier(): Promise<{
-  model: string
-  classifier: CanvasAiClassifier
-} | null> {
-  const config = await getAISettings()
-  if (!config?.model) return null
-  const client = await createOpenAIClient(config)
-  return {
-    model: config.model,
-    classifier: async input => {
-      const response = await client.chat.completions.create(withFastAiRequestOptions({
-        model: config.model!,
-        stream: false,
-        temperature: 0,
-        messages: [
-          {
-            role: 'system',
-            content: 'Return JSON only as {"results": [...]} using tag or relation entries. Relations must use one approved type and one supplied targetNodeId. Never invent nodes.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              source: input.source,
-              candidates: input.candidates,
-              approvedRelationTypes: input.approvedRelationTypes,
-            }),
-          },
-        ],
-      }, config))
-      const content = response.choices[0]?.message?.content
-      if (typeof content !== 'string') throw new Error('Canvas overlay classifier returned no JSON')
-      return parseClassifierResponse(content)
-    },
+async function loadOverlayCandidates(source: CanvasIndexCandidate, text: string) {
+  return filterCanvasAiOverlayCandidates(source.nodeId, await queryCanvasIndexCandidates({
+    canvasId: source.canvasId,
+    nodeId: source.nodeId,
+    text,
+    kinds: ['vector', 'entity', 'time'],
+    limit: 30,
+  }))
+}
+
+export async function classifyIndexedCanvasOverlay(job: CanvasIndexJob) {
+  if (job.operation !== 'upsert') return
+  const source = await getCanvasIndexSourceCandidate(job.canvasId, job.nodeId)
+  if (!source || source.contentRevision !== job.contentRevision) return
+  let config: Awaited<ReturnType<typeof getAISettings>>
+  try {
+    config = await getAISettings()
+  } catch (error) {
+    console.error('Canvas overlay classifier configuration failed:', error)
+    await markCanvasOverlayStale(job.canvasId, job.nodeId)
+    return
   }
-}
+  if (!config?.model) return
 
-export async function recallAndClassifyCanvasOverlay(input: {
-  canvasId: string
-  source: CanvasIndexCandidate
-  text: string
-  model: string
-  classifier: CanvasAiClassifier
-}) {
-  const result = await runCanvasAiOverlayClassification(input, {
-    recall: request => queryCanvasIndexCandidates({
-      ...request,
-      kinds: ['vector', 'entity', 'time'],
-    }),
-    persistTag: upsertCanvasAiTag,
-    persistRelation: upsertCanvasAiRelation,
-    markStale: (canvasId, nodeId) => markCanvasOverlayStale(canvasId, nodeId),
-    refresh: async canvasId => {
-      if (useCanvasAiStore.getState().canvasId === canvasId) {
-        await useCanvasAiStore.getState().load(canvasId)
-      }
-    },
-  })
-  if (result.status === 'index-unavailable') {
-    await queueCanvasIndexRetry(input.canvasId, input.source.nodeId)
+  let candidates: CanvasIndexCandidate[]
+  try {
+    candidates = await loadOverlayCandidates(source, source.text)
+  } catch (error) {
+    console.error('Canvas index candidate query failed:', error)
+    await markCanvasOverlayStale(job.canvasId, job.nodeId)
+    await persistCanvasIndexRebuild(job.canvasId)
+    return
   }
-  return result
-}
 
-export function initializeCanvasAiOverlayClassification() {
-  registerCanvasIndexJobProcessedHandler(async job => {
-    if (job.operation !== 'upsert') return
-    const source = await getCanvasIndexSourceCandidate(job.canvasId, job.nodeId)
-    if (!source || source.contentRevision !== job.contentRevision) return
-    let configured: Awaited<ReturnType<typeof getConfiguredCanvasAiClassifier>>
-    try {
-      configured = await getConfiguredCanvasAiClassifier()
-    } catch (error) {
-      console.error('Canvas overlay classifier configuration failed:', error)
-      await markCanvasOverlayStale(job.canvasId, job.nodeId)
-      return
-    }
-    if (!configured) return
-    await recallAndClassifyCanvasOverlay({
-      canvasId: job.canvasId,
+  let classified
+  try {
+    classified = await requestCanvasAiClassification(config, {
       source,
-      text: source.text,
-      model: configured.model,
-      classifier: configured.classifier,
+      candidates,
+      approvedRelationTypes: [
+        'same_topic', 'supplement', 'time_continuation', 'plan_execution',
+        'problem_solution', 'person_or_place', 'citation_or_source',
+        'possible_duplicate', 'credential_ownership',
+      ],
     })
+  } catch (error) {
+    console.error('Canvas overlay classifier failed:', error)
+    await markCanvasOverlayStale(job.canvasId, job.nodeId)
+    return
+  }
+
+  const plan = planCanvasAiOverlayRecords({
+    canvasId: job.canvasId,
+    source,
+    model: config.model,
+    candidates,
+    classified,
   })
-  return () => registerCanvasIndexJobProcessedHandler(null)
+  for (const tag of plan.tags) {
+    await upsertCanvasAiTag({ ...tag, id: crypto.randomUUID() })
+  }
+  for (const relation of plan.relations) {
+    await upsertCanvasAiRelation({ ...relation, id: crypto.randomUUID() })
+  }
+  if (activeCanvasAiOverlayId === job.canvasId) await loadCanvasAiOverlay(job.canvasId)
 }
+
+export default useCanvasAiStore

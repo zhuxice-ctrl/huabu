@@ -3409,7 +3409,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             />
           )}
           <CanvasGeometryOverlays guides={snapGuides} />
-          <CanvasAiOverlay canvasId={canvasId} />
+          <CanvasAiOverlay canvasId={canvasId} nodes={displayNodes} />
           <MiniMap pannable zoomable />
               </ReactFlow>
               {drawDraft && (

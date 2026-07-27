@@ -8,7 +8,6 @@ import useCanvasStore from '@/stores/canvas'
 import type { CanvasProject } from '@/types/canvas'
 import { initAllDatabases } from '@/db'
 import { startCanvasIndexWorker, stopCanvasIndexWorker } from '@/stores/canvas-index'
-import { initializeCanvasAiOverlayClassification } from '@/stores/canvas-ai'
 
 async function initializeCanvasStartup(projects: CanvasProject[]) {
   const store = await Store.load('store.json')
@@ -22,25 +21,12 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
-    let stopIndexWorker: (() => Promise<void>) | null = null
-    let stopOverlayClassification: (() => void) | null = null
 
     void initAllDatabases()
       .then(() => Promise.all([
         useArticleStore.getState().initOpenTabs(),
         useCanvasStore.getState().loadProjects(),
-        (async () => {
-          if (cancelled) return
-          stopOverlayClassification = initializeCanvasAiOverlayClassification()
-          const stop = await startCanvasIndexWorker()
-          if (cancelled) {
-            stopOverlayClassification?.()
-            stopOverlayClassification = null
-            void stop()
-          } else {
-            stopIndexWorker = stop
-          }
-        })(),
+        startCanvasIndexWorker(),
       ]))
       .then(async () => {
         if (cancelled) return
@@ -68,9 +54,7 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true
-      stopOverlayClassification?.()
-      if (stopIndexWorker) void stopIndexWorker()
-      else void stopCanvasIndexWorker()
+      void stopCanvasIndexWorker()
     }
   }, [])
 

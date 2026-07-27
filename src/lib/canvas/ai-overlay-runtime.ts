@@ -1,8 +1,4 @@
-import {
-  APPROVED_AI_RELATION_TYPES,
-  type AiRelationRecord,
-  type AiTagRecord,
-} from './ai-overlay.ts'
+import { APPROVED_AI_RELATION_TYPES, type AiRelationRecord, type AiTagRecord } from './ai-overlay.ts'
 import type { CanvasIndexCandidate } from './canvas-index-jobs.ts'
 
 export interface CanvasAiClassification {
@@ -20,11 +16,15 @@ export interface CanvasAiClassifierInput {
   approvedRelationTypes: readonly string[]
 }
 
-export type CanvasAiClassifier = (
-  input: CanvasAiClassifierInput,
-) => Promise<CanvasAiClassification[]>
+export interface CanvasAiOverlayPlan {
+  tags: Array<Omit<AiTagRecord, 'id' | 'state' | 'normalizedTagId'>>
+  relations: Array<Omit<AiRelationRecord, 'id' | 'state' | 'type'> & { type: string }>
+}
 
-function deterministicCandidateFilter(sourceNodeId: string, candidates: CanvasIndexCandidate[]) {
+export function filterCanvasAiOverlayCandidates(
+  sourceNodeId: string,
+  candidates: CanvasIndexCandidate[],
+) {
   const seen = new Set<string>()
   return candidates.filter(candidate => {
     if (candidate.nodeId === sourceNodeId || candidate.score <= 0 || seen.has(candidate.nodeId)) return false
@@ -33,77 +33,64 @@ function deterministicCandidateFilter(sourceNodeId: string, candidates: CanvasIn
   }).slice(0, 20)
 }
 
-export async function runCanvasAiOverlayClassification(input: {
+export function parseCanvasAiClassificationResponse(value: string): CanvasAiClassification[] {
+  const parsed: unknown = JSON.parse(value)
+  const values = Array.isArray(parsed)
+    ? parsed
+    : parsed && typeof parsed === 'object' && Array.isArray((parsed as { results?: unknown }).results)
+      ? (parsed as { results: unknown[] }).results
+      : []
+  return values.filter((item): item is CanvasAiClassification => {
+    if (!item || typeof item !== 'object') return false
+    const record = item as Partial<CanvasAiClassification>
+    return (record.kind === 'tag' || record.kind === 'relation')
+      && typeof record.reason === 'string'
+      && typeof record.confidence === 'number'
+      && Number.isFinite(record.confidence)
+      && record.confidence >= 0
+      && record.confidence <= 1
+  })
+}
+
+export function planCanvasAiOverlayRecords(input: {
   canvasId: string
   source: CanvasIndexCandidate
-  text: string
   model: string
-  classifier: CanvasAiClassifier
-}, dependencies: {
-  recall: (input: {
-    canvasId: string
-    nodeId: string
-    text: string
-    limit: number
-  }) => Promise<CanvasIndexCandidate[]>
-  persistTag: (input: Omit<AiTagRecord, 'state' | 'normalizedTagId'>) => Promise<AiTagRecord | null>
-  persistRelation: (
-    input: Omit<AiRelationRecord, 'state' | 'type'> & { type: string },
-  ) => Promise<AiRelationRecord | null>
-  markStale: (canvasId: string, nodeId: string) => Promise<void>
-  refresh: (canvasId: string) => Promise<void>
-}): Promise<{
-  status: 'complete' | 'index-unavailable' | 'classifier-failed'
-  records: Array<AiTagRecord | AiRelationRecord>
-}> {
-  let candidates: CanvasIndexCandidate[]
-  try {
-    candidates = deterministicCandidateFilter(input.source.nodeId, await dependencies.recall({
-      canvasId: input.canvasId,
-      nodeId: input.source.nodeId,
-      text: input.text,
-      limit: 30,
-    }))
-  } catch {
-    await dependencies.markStale(input.canvasId, input.source.nodeId)
-    return { status: 'index-unavailable', records: [] }
-  }
-
-  let classified: CanvasAiClassification[]
-  try {
-    classified = await input.classifier({
-      source: input.source,
-      candidates,
-      approvedRelationTypes: APPROVED_AI_RELATION_TYPES,
-    })
-  } catch {
-    await dependencies.markStale(input.canvasId, input.source.nodeId)
-    return { status: 'classifier-failed', records: [] }
-  }
-
-  const records: Array<AiTagRecord | AiRelationRecord> = []
-  for (const result of classified) {
+  candidates: CanvasIndexCandidate[]
+  classified: CanvasAiClassification[]
+}): CanvasAiOverlayPlan {
+  const candidates = filterCanvasAiOverlayCandidates(input.source.nodeId, input.candidates)
+  const tags: CanvasAiOverlayPlan['tags'] = []
+  const relations: CanvasAiOverlayPlan['relations'] = []
+  for (const result of input.classified) {
     if (result.kind === 'tag' && result.label) {
-      const record = await dependencies.persistTag({
-        id: crypto.randomUUID(), canvasId: input.canvasId, nodeId: input.source.nodeId,
-        label: result.label, confidence: result.confidence, reason: result.reason,
-        model: input.model, sourceRevision: input.source.contentRevision,
+      tags.push({
+        canvasId: input.canvasId,
+        nodeId: input.source.nodeId,
+        label: result.label,
+        confidence: result.confidence,
+        reason: result.reason,
+        model: input.model,
+        sourceRevision: input.source.contentRevision,
       })
-      if (record) records.push(record)
       continue
     }
     if (result.kind !== 'relation' || !result.targetNodeId || !result.type) continue
     const target = candidates.find(candidate => candidate.nodeId === result.targetNodeId)
     if (!target || !APPROVED_AI_RELATION_TYPES.includes(result.type as never)) continue
-    const record = await dependencies.persistRelation({
-      id: crypto.randomUUID(), canvasId: input.canvasId,
-      sourceNodeId: input.source.nodeId, targetNodeId: target.nodeId, type: result.type,
-      sourceExcerpt: input.source.excerpt, targetExcerpt: target.excerpt,
-      confidence: result.confidence, reason: result.reason, model: input.model,
-      sourceRevision: input.source.contentRevision, targetRevision: target.contentRevision,
+    relations.push({
+      canvasId: input.canvasId,
+      sourceNodeId: input.source.nodeId,
+      targetNodeId: target.nodeId,
+      type: result.type,
+      sourceExcerpt: input.source.excerpt,
+      targetExcerpt: target.excerpt,
+      confidence: result.confidence,
+      reason: result.reason,
+      model: input.model,
+      sourceRevision: input.source.contentRevision,
+      targetRevision: target.contentRevision,
     })
-    if (record) records.push(record)
   }
-  await dependencies.refresh(input.canvasId)
-  return { status: 'complete', records }
+  return { tags, relations }
 }

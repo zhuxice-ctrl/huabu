@@ -6,11 +6,11 @@ import {
   canvasNodeContentRevision,
   buildLocalCanvasIndexFeatures,
   diffCanvasIndexJobs,
-  drainCanvasIndexJobQueue,
   planCanvasIndexDelete,
   planCanvasIndexRebuild,
   resumeAbandonedCanvasIndexJob,
   retryDelayMs,
+  shouldClaimCanvasIndexJob,
 } from '../../src/lib/canvas/canvas-index-jobs.ts'
 
 const document = nodes => ({
@@ -94,24 +94,9 @@ test('delete tombstone preserves and re-enqueues a node restored before drain', 
   assert.deepEqual(planCanvasIndexDelete(document([]), 'n1'), { remove: true })
 })
 
-test('worker stop during one job prevents a second claim', async () => {
-  let claims = 0
-  let stopped = false
-  const jobs = [
-    { id: 'j1', canvasId: 'c1', nodeId: 'n1', contentRevision: 'r1', operation: 'upsert', state: 'running', attempts: 1, nextAttemptAt: 0 },
-    { id: 'j2', canvasId: 'c1', nodeId: 'n2', contentRevision: 'r2', operation: 'upsert', state: 'running', attempts: 1, nextAttemptAt: 0 },
-  ]
-  const processed = await drainCanvasIndexJobQueue({
-    claim: async () => {
-      claims += 1
-      return jobs.shift() ?? null
-    },
-    process: async () => { stopped = true },
-    retry: async () => assert.fail('successful jobs must not retry'),
-    shouldStop: () => stopped,
-  })
-  assert.equal(processed, 1)
-  assert.equal(claims, 1)
+test('worker stop planner prevents the next claim', () => {
+  assert.equal(shouldClaimCanvasIndexJob(false), true)
+  assert.equal(shouldClaimCanvasIndexJob(true), false)
 })
 
 test('offline index features support vector, entity and time recall without a model', () => {
@@ -140,11 +125,12 @@ test('persistence and worker source preserve atomic save and resumable tombstone
   assert.match(indexDb, /planCanvasIndexDelete[\s\S]*enqueueCanvasIndexJobDrafts[\s\S]*completeCanvasIndexJob/)
   assert.match(indexDb, /removeAbsentCanvasIndexNodes/)
   assert.match(indexStore, /drainReadyCanvasIndexJobs/)
-  assert.match(indexStore, /shouldStop:[\s\S]*activeWorkerShouldStop/)
-  assert.match(indexStore, /await drainPromise/)
+  assert.match(indexStore, /while \(shouldClaimCanvasIndexJob\(workerStopped\)\)/)
+  assert.match(indexStore, /await drainPromise\?\.catch/)
   assert.match(indexStore, /queueCanvasIndexRebuild/)
   assert.match(startup, /startCanvasIndexWorker\(\)/)
-  assert.match(startup, /stopCanvasIndexWorker/)
+  assert.match(startup, /initAllDatabases\(\)[\s\S]*\.then\(\(\) => Promise\.all\(\[[\s\S]*initOpenTabs\(\)[\s\S]*loadProjects\(\)[\s\S]*startCanvasIndexWorker\(\)/)
+  assert.match(startup, /void stopCanvasIndexWorker\(\)/)
 })
 
 test('saved canvas acknowledgement is independent from later extraction failure', async () => {
