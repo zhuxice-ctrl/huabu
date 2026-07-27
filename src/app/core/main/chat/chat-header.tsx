@@ -19,7 +19,6 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
 import 'dayjs/locale/en'
 import useSettingStore from '@/stores/setting'
-import { getGenerationConfirmationMessage } from '@/lib/chat/generation-transaction'
 
 dayjs.extend(relativeTime)
 
@@ -52,10 +51,6 @@ export function ChatHeader() {
     ? chats.length > 0
     : conversations.some(c => c.id === currentConversationId && c.messageCount > 0)
   const isDisabled = !hasCurrentMessages && !isTemporaryConversation
-
-  const confirmGenerationAction = (action: 'switch' | 'delete' | 'create' | 'temporary') => (
-    !loading || window.confirm(getGenerationConfirmationMessage(action))
-  )
 
   // 过滤并排序会话（排除空会话）
   const filteredConversations = useMemo(() => {
@@ -127,9 +122,7 @@ export function ChatHeader() {
                     >
                       <div
                         className="flex-1 min-w-0"
-                        onClick={() => {
-                          if (confirmGenerationAction('switch')) void switchConversation(conv.id)
-                        }}
+                        onClick={() => void switchConversation(conv.id)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -144,12 +137,7 @@ export function ChatHeader() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (
-                                  conv.id !== currentConversationId
-                                  || confirmGenerationAction('delete')
-                                ) {
-                                  void deleteConversation(conv.id)
-                                }
+                                void deleteConversation(conv.id)
                               }}
                               className="flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out hover:text-destructive hover:bg-destructive/10 active:scale-95"
                               title={tEmpty('deleteConversation')}
@@ -174,9 +162,7 @@ export function ChatHeader() {
           icon={<MessageSquareDashed />}
           tooltipText={t('record.chat.input.temporaryChat')}
           side="bottom"
-          onClick={() => {
-            if (confirmGenerationAction('temporary')) void startTemporaryConversation()
-          }}
+          onClick={() => void startTemporaryConversation()}
           disabled={isTemporaryConversation}
           variant={isTemporaryConversation ? 'secondary' : 'ghost'}
         />
@@ -184,9 +170,7 @@ export function ChatHeader() {
           icon={<MessageSquarePlus />}
           tooltipText={t('record.chat.input.newChat')}
           side="bottom"
-          onClick={() => {
-            if (confirmGenerationAction('create')) void startNewConversation()
-          }}
+          onClick={() => void startNewConversation()}
           disabled={isDisabled}
         />
       </div>

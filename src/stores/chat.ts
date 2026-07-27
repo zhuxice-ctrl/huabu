@@ -16,7 +16,9 @@ import type { Conversation } from '@/db/conversations'
 import { S3Config, WebDAVConfig } from '@/types/sync'
 import {
   createGenerationTransactionCoordinator,
+  getGenerationConfirmationMessage,
   type ActiveGeneration,
+  type GenerationProtectedAction,
 } from '@/lib/chat/generation-transaction'
 
 export interface PendingQuote {
@@ -182,6 +184,19 @@ function getGenerationCoordinator() {
     deleteConversation: id => useChatStore.getState()._deleteConversationNow(id),
   })
   return generationCoordinator
+}
+
+function confirmGenerationAction(
+  action: GenerationProtectedAction,
+  targetConversationId?: number,
+) {
+  const active = useChatStore.getState().activeGeneration
+  const needsStop = Boolean(active) && (
+    action !== 'delete' || active?.conversationId === targetConversationId
+  )
+  if (!needsStop) return true
+  return typeof window !== 'undefined'
+    && window.confirm(getGenerationConfirmationMessage(action))
 }
 
 const useChatStore = create<ChatState>((set, get) => ({
@@ -820,7 +835,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     return id
   },
 
-  switchConversation: (id: number) => getGenerationCoordinator().stopAndSwitch(id),
+  switchConversation: (id: number) => confirmGenerationAction('switch')
+    ? getGenerationCoordinator().stopAndSwitch(id)
+    : Promise.resolve(),
 
   _switchConversationNow: async (id: number) => {
     // 先同步消息数量，确保 messageCount 与实际消息数量一致
@@ -847,7 +864,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     await get().initConversations()
   },
 
-  deleteConversation: (id: number) => getGenerationCoordinator().stopAndDelete(id),
+  deleteConversation: (id: number) => confirmGenerationAction('delete', id)
+    ? getGenerationCoordinator().stopAndDelete(id)
+    : Promise.resolve(),
 
   _deleteConversationNow: async (id: number) => {
     const { deleteConversation: deleteConv } = await import('@/db/conversations')
@@ -888,7 +907,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     return isPinned
   },
 
-  startNewConversation: () => getGenerationCoordinator().stopAndCreate({ temporary: false }),
+  startNewConversation: () => confirmGenerationAction('create')
+    ? getGenerationCoordinator().stopAndCreate({ temporary: false })
+    : Promise.resolve(),
 
   _startNewConversationNow: async () => {
     const { currentConversationId } = get()
@@ -922,7 +943,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     get().clearMcpToolCalls()
   },
 
-  startTemporaryConversation: () => getGenerationCoordinator().stopAndCreate({ temporary: true }),
+  startTemporaryConversation: () => confirmGenerationAction('temporary')
+    ? getGenerationCoordinator().stopAndCreate({ temporary: true })
+    : Promise.resolve(),
 
   _startTemporaryConversationNow: async () => {
     set({
