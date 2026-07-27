@@ -17,6 +17,7 @@ import { CANVAS_THUMBNAIL_VERSION, generateCanvasThumbnail, removeCanvasThumbnai
 import { purgeCanvas, uploadCanvas } from '@/lib/sync/canvas-sync'
 import { enqueueAutoDataSync, isAutoDataSyncProviderConfigured } from '@/lib/sync/auto-data-sync-queue'
 import type { CanvasDocument, CanvasHistoryState, CanvasProject, CanvasProjectType } from '@/types/canvas'
+import { drainReadyCanvasIndexJobs } from '@/stores/canvas-index'
 
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const thumbnailTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -218,6 +219,7 @@ const useCanvasStore = create<CanvasState>((set, get) => ({
         .map(project => project.id === id ? { ...project, document, updatedAt } : project)
         .sort((left, right) => right.updatedAt - left.updatedAt),
     }))
+    void drainReadyCanvasIndexJobs()
     const previousThumbnailTimer = thumbnailTimers.get(id)
     if (previousThumbnailTimer) clearTimeout(previousThumbnailTimer)
     thumbnailTimers.set(id, setTimeout(() => {

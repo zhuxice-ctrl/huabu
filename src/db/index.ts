@@ -1,5 +1,7 @@
 
 import { initCanvasAiTransactionsDb } from './canvas-ai-transactions'
+import { initCanvasIndexDb } from './canvas-index'
+import { initCanvasAiOverlayDb } from './canvas-ai-overlay'
 
 export { db, getDb } from './client'
 
@@ -28,6 +30,8 @@ async function runDatabaseInitialization() {
   await initActivityDb();
   await initCanvasesDb();
   await initCanvasAiTransactionsDb();
+  await initCanvasIndexDb();
+  await initCanvasAiOverlayDb();
 }
 
 // 初始化所有数据库。父布局与画布首屏可能同时触发初始化，必须复用同一个 Promise，

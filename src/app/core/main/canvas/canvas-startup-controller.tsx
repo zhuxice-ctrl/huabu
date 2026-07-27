@@ -7,6 +7,7 @@ import useArticleStore from '@/stores/article'
 import useCanvasStore from '@/stores/canvas'
 import type { CanvasProject } from '@/types/canvas'
 import { initAllDatabases } from '@/db'
+import { startCanvasIndexWorker, stopCanvasIndexWorker } from '@/stores/canvas-index'
 
 async function initializeCanvasStartup(projects: CanvasProject[]) {
   const store = await Store.load('store.json')
@@ -20,11 +21,16 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
+    let stopIndexWorker: (() => void) | null = null
 
     void initAllDatabases()
       .then(() => Promise.all([
         useArticleStore.getState().initOpenTabs(),
         useCanvasStore.getState().loadProjects(),
+        startCanvasIndexWorker().then(stop => {
+          if (cancelled) stop()
+          else stopIndexWorker = stop
+        }),
       ]))
       .then(async () => {
         const projects = useCanvasStore.getState().projects
@@ -51,6 +57,8 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true
+      stopIndexWorker?.()
+      stopCanvasIndexWorker()
     }
   }, [])
 

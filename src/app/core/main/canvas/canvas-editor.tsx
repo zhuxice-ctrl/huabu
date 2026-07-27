@@ -143,6 +143,7 @@ import { WebPreviewCanvasNode } from './nodes/web-preview-canvas-node'
 import { CanvasFooter } from './canvas-footer'
 import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { CanvasGeometryOverlays } from './canvas-geometry-overlays'
+import { CanvasAiOverlay } from './canvas-ai-overlay'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
@@ -3408,6 +3409,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             />
           )}
           <CanvasGeometryOverlays guides={snapGuides} />
+          <CanvasAiOverlay canvasId={canvasId} />
           <MiniMap pannable zoomable />
               </ReactFlow>
               {drawDraft && (

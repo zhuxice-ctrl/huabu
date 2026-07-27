@@ -15,7 +15,10 @@ import {
 } from '@/lib/canvas/ai-permission'
 import { applyValidatedCanvasOperations } from '@/lib/canvas/operations'
 import type { ViewportSnapshot } from '@/lib/canvas/viewport-sizing'
+import { diffCanvasIndexJobs } from '@/lib/canvas/canvas-index-jobs'
 import { getDb } from './client'
+import { enqueueCanvasIndexJobDrafts } from './canvas-index'
+import { markCanvasOverlayStale } from './canvas-ai-overlay'
 
 interface CanvasAiTransactionRow {
   transactionId: string
@@ -240,10 +243,19 @@ export async function commitCanvasAiTransaction(input: {
     )
     const appliedAt = Date.now()
     if (result.applied > 0) {
+      const indexDrafts = diffCanvasIndexJobs(current, result.document)
       await db.execute(
         'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
         [JSON.stringify(result.document), result.document.schemaVersion, appliedAt, input.canvasId],
       )
+      await enqueueCanvasIndexJobDrafts(input.canvasId, indexDrafts, db)
+      for (const draft of indexDrafts) {
+        await markCanvasOverlayStale(
+          input.canvasId,
+          draft.nodeId,
+          draft.operation === 'upsert' ? draft.contentRevision : undefined,
+        )
+      }
     }
     for (const [operationIndex, operation] of overlayOperations.entries()) {
       await db.execute(
@@ -308,10 +320,19 @@ export async function rollbackCanvasAiTransaction(transactionId: string): Promis
     const document = documentChanged ? structuredClone(replacement) : current
     const rolledBackAt = Date.now()
     if (documentChanged) {
+      const indexDrafts = diffCanvasIndexJobs(current, document)
       await db.execute(
         'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
         [JSON.stringify(document), document.schemaVersion, rolledBackAt, row.canvasId],
       )
+      await enqueueCanvasIndexJobDrafts(row.canvasId, indexDrafts, db)
+      for (const draft of indexDrafts) {
+        await markCanvasOverlayStale(
+          row.canvasId,
+          draft.nodeId,
+          draft.operation === 'upsert' ? draft.contentRevision : undefined,
+        )
+      }
     }
     await db.execute(
       `update canvas_ai_overlay_operations

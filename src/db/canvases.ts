@@ -1,4 +1,9 @@
-import { getDb } from './index'
+import { getDb } from './client'
+import {
+  enqueueCanvasDeleteTombstones,
+  enqueueCanvasIndexJobDrafts,
+} from './canvas-index'
+import { markCanvasOverlayStale } from './canvas-ai-overlay'
 import { enqueueAutoDataSync } from '@/lib/sync/auto-data-sync-queue'
 import {
   DEFAULT_CANVAS_DOCUMENT,
@@ -10,6 +15,7 @@ import {
   type CanvasProjectRow,
   type CanvasProjectType,
 } from '@/types/canvas'
+import { diffCanvasIndexJobs } from '@/lib/canvas/canvas-index-jobs'
 
 function parseHistoryStack(value?: string | null): CanvasHistorySnapshot[] {
   if (!value) return []
@@ -119,20 +125,25 @@ export async function insertCanvasProject(input: {
   const now = Date.now()
   const createdAt = input.createdAt ?? now
   const updatedAt = input.updatedAt ?? now
-  await db.execute(
-    `insert into canvases
-      (id, title, canvasType, schemaVersion, content, createdAt, updatedAt)
-     values ($1, $2, $3, $4, $5, $6, $7)`,
-    [
+  const document = input.document || DEFAULT_CANVAS_DOCUMENT
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    await db.execute(
+      `insert into canvases
+        (id, title, canvasType, schemaVersion, content, createdAt, updatedAt)
+       values ($1, $2, $3, $4, $5, $6, $7)`,
+      [input.id, input.title, input.canvasType, 1, JSON.stringify(document), createdAt, updatedAt]
+    )
+    await enqueueCanvasIndexJobDrafts(
       input.id,
-      input.title,
-      input.canvasType,
-      1,
-      JSON.stringify(input.document || DEFAULT_CANVAS_DOCUMENT),
-      createdAt,
-      updatedAt,
-    ]
-  )
+      diffCanvasIndexJobs(DEFAULT_CANVAS_DOCUMENT, document),
+      db,
+    )
+    await db.execute('COMMIT')
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
   enqueueCanvasSync('canvas-created')
   return getCanvasProject(input.id)
 }
@@ -141,10 +152,29 @@ export async function updateCanvasDocument(id: string, document: CanvasDocument)
   const db = await getDb()
   const updatedAt = Date.now()
   const content = JSON.stringify(document)
-  await db.execute(
-    'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
-    [content, document.schemaVersion, updatedAt, id]
-  )
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    const rows = await db.select<Array<{ content: string }>>(
+      'select content from canvases where id = $1 and deletedAt is null limit 1',
+      [id],
+    )
+    if (!rows[0]) throw new Error('Canvas does not exist or is deleted')
+    let before = DEFAULT_CANVAS_DOCUMENT
+    try { before = normalizeCanvasDocument(JSON.parse(rows[0].content)) } catch { /* rebuild from empty */ }
+    const drafts = diffCanvasIndexJobs(before, document)
+    await db.execute(
+      'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
+      [content, document.schemaVersion, updatedAt, id]
+    )
+    await enqueueCanvasIndexJobDrafts(id, drafts, db)
+    for (const draft of drafts) {
+      await markCanvasOverlayStale(id, draft.nodeId, draft.operation === 'upsert' ? draft.contentRevision : undefined)
+    }
+    await db.execute('COMMIT')
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
   enqueueCanvasSync('canvas-updated')
   return updatedAt
 }
@@ -190,10 +220,26 @@ export async function softDeleteCanvasProject(
 ) {
   const db = await getDb()
   const deletedAt = Date.now()
-  await db.execute(
-    'update canvases set deletedAt = $1, updatedAt = $1 where id = $2',
-    [deletedAt, id]
-  )
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    const rows = await db.select<Array<{ content: string }>>(
+      'select content from canvases where id = $1 limit 1',
+      [id],
+    )
+    const document = rows[0]
+      ? normalizeCanvasDocument(JSON.parse(rows[0].content))
+      : DEFAULT_CANVAS_DOCUMENT
+    await db.execute(
+      'update canvases set deletedAt = $1, updatedAt = $1 where id = $2',
+      [deletedAt, id]
+    )
+    await enqueueCanvasDeleteTombstones(id, document, db)
+    await markCanvasOverlayStale(id)
+    await db.execute('COMMIT')
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
   if (options.enqueueSync !== false) enqueueCanvasSync('canvas-deleted')
   return deletedAt
 }
@@ -201,10 +247,24 @@ export async function softDeleteCanvasProject(
 export async function restoreCanvasProject(id: string) {
   const db = await getDb()
   const updatedAt = Date.now()
-  await db.execute(
-    'update canvases set deletedAt = null, updatedAt = $1 where id = $2',
-    [updatedAt, id]
-  )
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    const rows = await db.select<Array<{ content: string }>>(
+      'select content from canvases where id = $1 limit 1',
+      [id],
+    )
+    if (!rows[0]) throw new Error('Canvas does not exist')
+    const document = normalizeCanvasDocument(JSON.parse(rows[0].content))
+    await db.execute(
+      'update canvases set deletedAt = null, updatedAt = $1 where id = $2',
+      [updatedAt, id]
+    )
+    await enqueueCanvasIndexJobDrafts(id, diffCanvasIndexJobs(DEFAULT_CANVAS_DOCUMENT, document), db)
+    await db.execute('COMMIT')
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
   enqueueCanvasSync('canvas-restored')
   return getCanvasProject(id)
 }
