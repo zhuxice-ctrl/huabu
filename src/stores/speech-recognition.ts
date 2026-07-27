@@ -163,6 +163,7 @@ export function resetSpeechRecognition() {
     isRecognizing: false,
     transcript: '',
     interimTranscript: '',
+    lastError: null,
     recognition: null,
   })
   recognition?.abort()

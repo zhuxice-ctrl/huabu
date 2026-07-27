@@ -31,6 +31,7 @@ import {
   type GenerationTransactionAction,
 } from '@/lib/chat/generation-transaction'
 import { renewChatHudTemporarySession } from '@/stores/chat-hud'
+import { stopCurrentAudio } from '@/lib/audio'
 
 export interface PendingQuote {
   quote: string
@@ -188,6 +189,7 @@ function confirmGenerationAction(
 }
 
 function resetConversationRuntime(isTemporaryConversation: boolean) {
+  stopCurrentAudio()
   useChatStore.setState(state => ({
     currentConversationId: null,
     chats: [],
@@ -231,6 +233,7 @@ async function refreshConversationsNow() {
 }
 
 async function switchConversationNow(id: number) {
+  stopCurrentAudio()
   await syncConversationMessageCount(id)
   const chats = await getChatsByConversation(id)
   useChatStore.setState({

@@ -18,8 +18,8 @@ export interface AgentHandlerConfig {
   onThought?: (thought: string) => void
   onAction?: (action: string, params: Record<string, any>) => void
   onObservation?: (observation: string) => void
-  onComplete?: (result: string, steps?: AgentStep[], stopped?: boolean) => void
-  onError?: (error: string) => void
+  onComplete?: (result: string, steps?: AgentStep[], stopped?: boolean) => void | Promise<void>
+  onError?: (error: string) => void | Promise<void>
   onFinalAnswerRender?: (markdownContent: string) => void
   formatAutoFinalAnswer?: (key: string, values?: Record<string, string>) => string
   requestConfirmation?: (
@@ -94,7 +94,7 @@ export class AgentHandler {
         isThinking: false,
         status: 'stopped',
       })
-      this.config.onComplete?.('', [], true)
+      await this.config.onComplete?.('', [], true)
       return ''
     }
 
@@ -174,7 +174,7 @@ export class AgentHandler {
       })
 
       this.finishRun(result)
-      this.config.onComplete?.(result.content, result.steps, result.stopped)
+      await this.config.onComplete?.(result.content, result.steps, result.stopped)
       return result.content
     } catch (error) {
       if (this.stopped || isRequestAbortError(error)) {
@@ -192,7 +192,7 @@ export class AgentHandler {
           isThinking: false,
           status: 'stopped',
         })
-        this.config.onComplete?.(partialContent, agentState.completedSteps, true)
+        await this.config.onComplete?.(partialContent, agentState.completedSteps, true)
         return partialContent
       }
 
@@ -202,7 +202,7 @@ export class AgentHandler {
         status: 'failed',
       })
       const errorMessage = error instanceof Error ? error.message : String(error)
-      this.config.onError?.(errorMessage)
+      await this.config.onError?.(errorMessage)
       throw error
     }
   }

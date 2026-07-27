@@ -213,6 +213,7 @@ export const ChatInput = React.memo(function ChatInput() {
 
   useEffect(() => () => {
     saveChatHudDraft(activeDraftKeyRef.current, draftSnapshotRef.current)
+    resetSpeechRecognition()
   }, [])
 
   const applyTypedText = useCallback((value: string) => {
@@ -302,8 +303,10 @@ export const ChatInput = React.memo(function ChatInput() {
 
     if (newIndex === -1) {
       // 恢复到原本输入的内容
+      promptOriginRef.current = 'keyboard'
       setText(tempInput)
     } else {
+      promptOriginRef.current = 'keyboard'
       setText(inputHistory[newIndex])
     }
   }
@@ -849,6 +852,7 @@ export const ChatInput = React.memo(function ChatInput() {
   // 插入占位符
   function insertPlaceholder() {
     if (placeholder.includes('[Tab]')) {
+      promptOriginRef.current = 'keyboard'
       setText(placeholder.replace('[Tab]', ''))
       placeholderRequestIdRef.current += 1
       setPlaceholder(defaultPlaceholder)
@@ -866,6 +870,7 @@ export const ChatInput = React.memo(function ChatInput() {
 
   useEffect(() => {
     emitter.on('revertChat', (event: unknown) => {
+      promptOriginRef.current = 'keyboard'
       setText(event as string)
     })
     emitter.on('fileSelected', (event: unknown) => {
@@ -887,6 +892,7 @@ export const ChatInput = React.memo(function ChatInput() {
       debouncedGenPlaceholder()
     })
     emitter.on('quick-prompt-insert', (prompt: string) => {
+      promptOriginRef.current = 'keyboard'
       setText(prompt)
       textareaRef.current?.focus()
     })
@@ -915,6 +921,7 @@ export const ChatInput = React.memo(function ChatInput() {
     }
 
     onboardingAgentPromptArmedRef.current = true
+    promptOriginRef.current = 'keyboard'
     onboardingTypingTimerRefs.current.forEach((timerId) => window.clearTimeout(timerId))
     onboardingTypingTimerRefs.current = []
     setText('')
@@ -1305,7 +1312,7 @@ ${previewLines.join('\n')}
             <CanvasAiBreath state={breathState} />
             <TooltipButton
               icon={isRecognizing ? <Square className="size-4" /> : <Mic className="size-4" />}
-              tooltipText={isRecognizing ? '停止语音输入' : '语音输入'}
+              tooltipText={isRecognizing ? t('recording.cancel') : t('recording.title')}
               onClick={() => void handleToggleSpeechRecognition()}
               variant={isRecognizing ? 'destructive' : 'ghost'}
               size="sm"

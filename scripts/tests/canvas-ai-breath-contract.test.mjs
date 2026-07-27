@@ -17,7 +17,10 @@ test('speech recognition fills the composer and freezes microphone origin only o
 })
 
 test('automatic speech is claimed only after the final answer has been persisted', async () => {
-  const send = await readFile(new URL('src/app/core/main/chat/chat-send.tsx', root), 'utf8')
+  const [send, handler] = await Promise.all([
+    readFile(new URL('src/app/core/main/chat/chat-send.tsx', root), 'utf8'),
+    readFile(new URL('src/lib/agent/agent-handler.ts', root), 'utf8'),
+  ])
   assert.match(send, /promptOrigin: PromptOrigin/)
   assert.match(send, /createVoiceSession/)
   assert.match(send, /completeVoiceSession/)
@@ -29,6 +32,10 @@ test('automatic speech is claimed only after the final answer has been persisted
   const saveIndex = send.indexOf('await saveChat({', completionStart)
   const claimIndex = send.indexOf('completeVoiceSession(', saveIndex)
   assert.ok(saveIndex >= 0 && claimIndex > saveIndex)
+  assert.match(send, /const completionVoiceSession = activeVoiceSessionRef\.current/)
+  assert.ok(send.indexOf('completionVoiceSession', completionStart) < saveIndex)
+  assert.match(handler, /await this\.config\.onComplete\?\.\(result\.content/)
+  assert.match(handler, /await this\.config\.onError\?\.\(errorMessage\)/)
 })
 
 test('manual and automatic speech share one observable playback owner', async () => {
@@ -39,6 +46,9 @@ test('manual and automatic speech share one observable playback owner', async ()
   assert.match(audio, /AudioPlaybackSnapshot/)
   assert.match(audio, /subscribeAudioPlayback/)
   assert.match(audio, /ownerId/)
+  assert.match(audio, /systemSpeechOwnership = new WeakMap/)
+  assert.match(audio, /getSystemSpeechOwnership\(event\)/)
+  assert.doesNotMatch(audio, /currentSystemPlaybackEpoch|currentSystemPlaybackOwner/)
   assert.match(audio, /stopCurrentAudio\(\)/)
   assert.match(readAloud, /useSyncExternalStore/)
   assert.match(readAloud, /stopCurrentAudio/)
@@ -46,11 +56,34 @@ test('manual and automatic speech share one observable playback owner', async ()
 })
 
 test('HUD context changes and collapse use the shared stop path', async () => {
-  const hud = await readFile(new URL('src/app/core/main/chat/canvas-chat-hud.tsx', root), 'utf8')
+  const [hud, input, chatStore] = await Promise.all([
+    readFile(new URL('src/app/core/main/chat/canvas-chat-hud.tsx', root), 'utf8'),
+    readFile(new URL('src/app/core/main/chat/chat-input.tsx', root), 'utf8'),
+    readFile(new URL('src/stores/chat.ts', root), 'utf8'),
+  ])
   assert.match(hud, /stopCurrentAudio/)
   assert.match(hud, /conversationKey/)
   assert.match(hud, /previousConversationKeyRef/)
   assert.match(hud, /previousExpandedRef/)
+  assert.match(input, /saveChatHudDraft[\s\S]{0,160}resetSpeechRecognition\(\)/)
+  assert.match(chatStore, /async function switchConversationNow[\s\S]{0,120}stopCurrentAudio\(\)/)
+  assert.match(chatStore, /function resetConversationRuntime[\s\S]{0,120}stopCurrentAudio\(\)/)
+})
+
+test('programmatic composer replacements reset microphone origin to keyboard', async () => {
+  const input = await readFile(new URL('src/app/core/main/chat/chat-input.tsx', root), 'utf8')
+  for (const anchor of [
+    "setText(tempInput)",
+    "setText(inputHistory[newIndex])",
+    "setText(placeholder.replace('[Tab]', ''))",
+    "setText(event as string)",
+    "setText(prompt)",
+  ]) {
+    const index = input.indexOf(anchor)
+    assert.ok(index > 0, anchor)
+    assert.match(input.slice(Math.max(0, index - 100), index), /promptOriginRef\.current = 'keyboard'/)
+  }
+  assert.match(input, /tooltipText=\{isRecognizing \? t\('recording\.cancel'\) : t\('recording\.title'\)\}/)
 })
 
 test('the dock breath indicator animates only transform, opacity and blur', async () => {

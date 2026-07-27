@@ -10,6 +10,8 @@ import { blobToBytes, invokeAiBinary, invokeAiMultipart, resolveAiRequestConfig 
 export function speakWithSystemVoice(
   text: string, 
   speed: number = 1,
+  playbackEpoch?: number,
+  ownerId?: string,
 ): void {
   if (!text.trim()) {
     throw new Error('文本内容为空')
@@ -29,6 +31,10 @@ export function speakWithSystemVoice(
   utterance.rate = Math.max(0.1, Math.min(10, speed)) // 限制速度范围
   utterance.volume = 1
   utterance.pitch = 1
+
+  if (playbackEpoch !== undefined && ownerId) {
+    systemSpeechOwnership.set(utterance, { epoch: playbackEpoch, ownerId })
+  }
 
   // 所有系统朗读都通过共享播放所有者更新状态。
   utterance.onstart = handleSystemSpeechStart
@@ -148,8 +154,10 @@ export async function fetchAudioSpeech(text: string, customVoice?: string, custo
 // 手动朗读和麦克风请求的自动朗读共享一个播放所有者。
 let currentAudioController: AudioController | null = null
 let audioPlaybackEpoch = 0
-let currentSystemPlaybackEpoch: number | null = null
-let currentSystemPlaybackOwner: string | null = null
+const systemSpeechOwnership = new WeakMap<SpeechSynthesisUtterance, {
+  epoch: number
+  ownerId: string
+}>()
 
 export type AudioPlaybackPhase = 'idle' | 'loading' | 'playing' | 'failed'
 
@@ -189,28 +197,39 @@ function beginAudioPlayback(ownerId: string) {
   return epoch
 }
 
-function handleSystemSpeechStart() {
-  if (currentSystemPlaybackEpoch === null || !currentSystemPlaybackOwner) return
-  updateOwnedAudioPlayback(currentSystemPlaybackEpoch, currentSystemPlaybackOwner, 'playing')
+function getSystemSpeechOwnership(event: Event) {
+  return event.currentTarget instanceof SpeechSynthesisUtterance
+    ? systemSpeechOwnership.get(event.currentTarget)
+    : undefined
 }
 
-function handleSystemSpeechEnd() {
-  if (currentSystemPlaybackEpoch === null || !currentSystemPlaybackOwner) return
-  updateOwnedAudioPlayback(currentSystemPlaybackEpoch, currentSystemPlaybackOwner, 'idle')
-  currentSystemPlaybackEpoch = null
-  currentSystemPlaybackOwner = null
+function handleSystemSpeechStart(event: SpeechSynthesisEvent) {
+  const ownership = getSystemSpeechOwnership(event)
+  if (!ownership) return
+  updateOwnedAudioPlayback(ownership.epoch, ownership.ownerId, 'playing')
+}
+
+function handleSystemSpeechEnd(event: SpeechSynthesisEvent) {
+  const ownership = getSystemSpeechOwnership(event)
+  if (!ownership) return
+  updateOwnedAudioPlayback(ownership.epoch, ownership.ownerId, 'idle')
+  if (event.currentTarget instanceof SpeechSynthesisUtterance) {
+    systemSpeechOwnership.delete(event.currentTarget)
+  }
 }
 
 function handleSystemSpeechError(event: SpeechSynthesisErrorEvent) {
-  if (currentSystemPlaybackEpoch === null || !currentSystemPlaybackOwner) return
+  const ownership = getSystemSpeechOwnership(event)
+  if (!ownership) return
   updateOwnedAudioPlayback(
-    currentSystemPlaybackEpoch,
-    currentSystemPlaybackOwner,
+    ownership.epoch,
+    ownership.ownerId,
     'failed',
     event.error || 'system-speech-error',
   )
-  currentSystemPlaybackEpoch = null
-  currentSystemPlaybackOwner = null
+  if (event.currentTarget instanceof SpeechSynthesisUtterance) {
+    systemSpeechOwnership.delete(event.currentTarget)
+  }
 }
 
 export function subscribeAudioPlayback(listener: () => void) {
@@ -323,9 +342,7 @@ export async function textToSpeechAndPlay(
     }
 
     if (resolution.engine === 'local') {
-      currentSystemPlaybackEpoch = playbackEpoch
-      currentSystemPlaybackOwner = ownerId
-      speakWithSystemVoice(text, customSpeed ?? 1)
+      speakWithSystemVoice(text, customSpeed ?? 1, playbackEpoch, ownerId)
       return
     }
 
@@ -352,8 +369,6 @@ export function stopCurrentAudio(): void {
     currentAudioController.stop()
     currentAudioController = null
   }
-  currentSystemPlaybackEpoch = null
-  currentSystemPlaybackOwner = null
   stopSystemVoice()
   publishAudioPlayback(IDLE_AUDIO_PLAYBACK)
 }

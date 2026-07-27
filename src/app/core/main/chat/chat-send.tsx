@@ -447,6 +447,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
       },
       formatAutoFinalAnswer: (key, values) => t(key as any, values),
       onComplete: async (result, steps, stopped) => {
+        const completionVoiceSession = activeVoiceSessionRef.current
         // 获取 Agent 执行历史，保存结构化运行轨迹
         const { agentState } = useChatStore.getState()
         const effectivelyStopped = Boolean(stopped)
@@ -526,13 +527,14 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
           agentHistory: JSON.stringify(agentHistory),
         }, !transactionStopRequested)
 
-        const activeVoiceSession = activeVoiceSessionRef.current
-        if (activeVoiceSession) {
-          const voiceCompletion = completeVoiceSession(activeVoiceSession, {
+        if (completionVoiceSession) {
+          const voiceCompletion = completeVoiceSession(completionVoiceSession, {
             completionState: effectivelyStopped ? 'interrupted' : 'complete',
             content: finalContent,
           })
-          activeVoiceSessionRef.current = voiceCompletion.session
+          if (activeVoiceSessionRef.current?.id === completionVoiceSession.id) {
+            activeVoiceSessionRef.current = voiceCompletion.session
+          }
           if (voiceCompletion.playback) playAutomaticVoiceFinal(voiceCompletion.playback)
         }
 
