@@ -86,9 +86,11 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
     setAgentState,
     maybeCondense,
     linkedResourcePreview,
+    registerActiveGeneration,
+    finishActiveGeneration,
+    stopActiveGeneration,
   } = useChatStore()
   const { isRagEnabled } = useVectorStore()
-  const abortControllerRef = useRef<AbortController | null>(null)
   const agentHandlerRef = useRef<AgentHandler | null>(null)
   const manualStopRequestedRef = useRef(false)
   const steeringSequenceRef = useRef(0)
@@ -368,6 +370,21 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
 
     if (!placeholderMessage) return
 
+    let resolveClosed!: () => void
+    let generationClosed = false
+    let transactionStopRequested = false
+    const closed = new Promise<void>(resolve => {
+      resolveClosed = resolve
+    })
+    const settleGeneration = () => {
+      if (generationClosed) return
+      generationClosed = true
+      if (!transactionStopRequested) {
+        finishActiveGeneration(placeholderMessage.id)
+      }
+      resolveClosed()
+    }
+
     setAgentState({
       activeChatId: placeholderMessage.id,
     })
@@ -481,7 +498,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
           // 设置新的内容
           content: finalContent,
           agentHistory: JSON.stringify(agentHistory),
-        }, true)
+        }, !transactionStopRequested)
 
         // 清空 Final Answer 模式状态
         setAgentState({
@@ -493,6 +510,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
 
         // 清空 ref
         agentHandlerRef.current = null
+        settleGeneration()
       },
       onError: async (error) => {
         // 获取当前消息状态，保留 ragSources 和 ragSourceDetails
@@ -546,7 +564,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
             ? preservedContent || t('record.chat.input.stopped')
             : `Error: ${error}`,
           agentHistory: JSON.stringify(agentHistory),
-        }, true)
+        }, !transactionStopRequested)
 
         // 清空 Final Answer 模式状态
         setAgentState({
@@ -561,11 +579,26 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
 
         // 清空 ref
         agentHandlerRef.current = null
+        settleGeneration()
       },
     })
 
     // 保存到 ref
     agentHandlerRef.current = agentHandler
+    registerActiveGeneration({
+      conversationId: placeholderMessage.conversationId ?? null,
+      assistantChatId: placeholderMessage.id,
+      abort: async () => {
+        transactionStopRequested = true
+        manualStopRequestedRef.current = true
+        activeRunRef.current = false
+        pendingSteeringRef.current = []
+        if (agentHandlerRef.current === agentHandler) {
+          agentHandler.stop()
+        }
+      },
+      closed,
+    })
     for (const payload of pendingSteeringRef.current.splice(0)) {
       agentHandler.steer(payload)
     }
@@ -830,6 +863,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
     } finally {
       // 清空 ref
       agentHandlerRef.current = null
+      settleGeneration()
     }
   }
 
@@ -912,24 +946,12 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
   }
 
   const handleStop = async () => {
-    manualStopRequestedRef.current = true
-    activeRunRef.current = false
-    pendingSteeringRef.current = []
-
-    // 停止普通对话的流式输出
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-      abortControllerRef.current = null
+    try {
+      await stopActiveGeneration()
+      setLoading(false)
+    } catch (error) {
+      console.error('Failed to stop active generation:', error)
     }
-
-    // 停止 Agent 执行
-    if (agentHandlerRef.current) {
-      agentHandlerRef.current.stop()
-      // 不立即清空 ref，等待 Agent 的错误处理完成并调用 onComplete
-    }
-
-    // 重置 loading 状态
-    setLoading(false)
   }
 
   const hasInput = Boolean(inputValue.trim() || attachedImages.length > 0 || fileAttachments.length > 0)

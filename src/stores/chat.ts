@@ -14,6 +14,10 @@ import { AgentState, ToolCall } from '@/lib/agent/types'
 import { LinkedResource } from '@/lib/files'
 import type { Conversation } from '@/db/conversations'
 import { S3Config, WebDAVConfig } from '@/types/sync'
+import {
+  createGenerationTransactionCoordinator,
+  type ActiveGeneration,
+} from '@/lib/chat/generation-transaction'
 
 export interface PendingQuote {
   quote: string
@@ -57,6 +61,10 @@ export interface McpToolCall {
 interface ChatState {
   loading: boolean
   setLoading: (loading: boolean) => void
+  activeGeneration: ActiveGeneration | null
+  registerActiveGeneration: (generation: ActiveGeneration) => void
+  finishActiveGeneration: (assistantChatId: number) => void
+  stopActiveGeneration: () => Promise<void>
 
   isCondensing: boolean // 压缩状态
   _condenseLock: boolean // 内部锁，防止并发压缩
@@ -140,10 +148,41 @@ interface ChatState {
   deleteConversation: (id: number) => Promise<void> // 删除会话
   toggleConversationPin: (id: number) => Promise<boolean> // 切换会话置顶状态
   startNewConversation: () => Promise<void> // 开始新对话（保存当前会话后创建新会话）
-  startTemporaryConversation: () => void // 开始不保存记录的临时会话
+  startTemporaryConversation: () => Promise<void> // 开始不保存记录的临时会话
+
+  // 事务协调器使用的原子目标动作；UI 不直接调用。
+  _switchConversationNow: (id: number) => Promise<void>
+  _deleteConversationNow: (id: number) => Promise<void>
+  _startNewConversationNow: () => Promise<void>
+  _startTemporaryConversationNow: () => Promise<void>
 }
 
 let nextTemporaryChatId = -1
+
+let generationCoordinator: ReturnType<typeof createGenerationTransactionCoordinator> | null = null
+
+function getGenerationCoordinator() {
+  if (generationCoordinator) return generationCoordinator
+
+  generationCoordinator = createGenerationTransactionCoordinator({
+    getActive: () => useChatStore.getState().activeGeneration,
+    persistInterrupted: async (generation) => {
+      const state = useChatStore.getState()
+      const chat = state.chats.find(item => item.id === generation.assistantChatId)
+      if (!chat) return
+      await state.saveChat({ ...chat, completionState: 'interrupted' }, true)
+    },
+    clearActive: generation => {
+      useChatStore.getState().finishActiveGeneration(generation.assistantChatId)
+    },
+    switchConversation: id => useChatStore.getState()._switchConversationNow(id),
+    createConversation: options => options.temporary
+      ? useChatStore.getState()._startTemporaryConversationNow()
+      : useChatStore.getState()._startNewConversationNow(),
+    deleteConversation: id => useChatStore.getState()._deleteConversationNow(id),
+  })
+  return generationCoordinator
+}
 
 const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
@@ -151,6 +190,15 @@ const useChatStore = create<ChatState>((set, get) => ({
   setLoading: (loading: boolean) => {
     set({ loading })
   },
+
+  activeGeneration: null,
+  registerActiveGeneration: (activeGeneration) => set({ activeGeneration }),
+  finishActiveGeneration: (assistantChatId) => set(state => (
+    state.activeGeneration?.assistantChatId === assistantChatId
+      ? { activeGeneration: null }
+      : state
+  )),
+  stopActiveGeneration: () => getGenerationCoordinator().stopActive(),
 
   isCondensing: false,
   _condenseLock: false,
@@ -772,7 +820,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     return id
   },
 
-  switchConversation: async (id: number) => {
+  switchConversation: (id: number) => getGenerationCoordinator().stopAndSwitch(id),
+
+  _switchConversationNow: async (id: number) => {
     // 先同步消息数量，确保 messageCount 与实际消息数量一致
     const { syncConversationMessageCount } = await import('@/db/conversations')
     await syncConversationMessageCount(id)
@@ -797,17 +847,19 @@ const useChatStore = create<ChatState>((set, get) => ({
     await get().initConversations()
   },
 
-  deleteConversation: async (id: number) => {
+  deleteConversation: (id: number) => getGenerationCoordinator().stopAndDelete(id),
+
+  _deleteConversationNow: async (id: number) => {
     const { deleteConversation: deleteConv } = await import('@/db/conversations')
     await deleteConv(id)
 
-    const { currentConversationId, conversations, switchConversation } = get()
+    const { currentConversationId, conversations, _switchConversationNow } = get()
 
     // 如果删除的是当前会话，切换到另一个会话
     if (id === currentConversationId) {
       const remainingConversations = conversations.filter(c => c.id !== id)
       if (remainingConversations.length > 0) {
-        await switchConversation(remainingConversations[0].id)
+        await _switchConversationNow(remainingConversations[0].id)
       } else {
         // 没有其他会话了，清空状态，不创建新会话
         set({
@@ -836,7 +888,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     return isPinned
   },
 
-  startNewConversation: async () => {
+  startNewConversation: () => getGenerationCoordinator().stopAndCreate({ temporary: false }),
+
+  _startNewConversationNow: async () => {
     const { currentConversationId } = get()
 
     // 如果当前会话无消息，删除它（从数据库查询最新状态）
@@ -868,7 +922,9 @@ const useChatStore = create<ChatState>((set, get) => ({
     get().clearMcpToolCalls()
   },
 
-  startTemporaryConversation: () => {
+  startTemporaryConversation: () => getGenerationCoordinator().stopAndCreate({ temporary: true }),
+
+  _startTemporaryConversationNow: async () => {
     set({
       currentConversationId: null,
       chats: [],
