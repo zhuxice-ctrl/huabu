@@ -40,3 +40,12 @@ Covering verification:
 - `node_modules/.bin/tsc.cmd --noEmit`: PASS.
 - `node_modules/.bin/next.cmd build --turbopack`: PASS, 53/53 static pages.
 - `git diff --check -- src scripts/tests`: PASS; existing CRLF notices are informational.
+
+## L2 structural fix round 2
+
+- Replaced the pure retrieval module's dynamic DB import with a named store boundary that statically loads persisted anchors and then calls the pure scorer.
+- Replaced callback-based reranking with a pure ordered-anchor-ID contract, eliminating dynamic dispatch while preserving optional deterministic reranking and the current-canvas allowlist.
+- Replaced the newly surfaced destructured `setAgentState` call with a named static chat-store boundary.
+- Routed both production ChatSend and the explicit canvas search tool through the same static persisted-evidence entry point.
+
+Focused Task 15/16 tests passed 25/25 and TypeScript completed without diagnostics after the structural correction.

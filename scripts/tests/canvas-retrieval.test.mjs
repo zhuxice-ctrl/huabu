@@ -27,7 +27,7 @@ test('retrieval fuses keyword, semantic, entity and time evidence inside only th
       anchor(),
       anchor({ id: 'other-canvas', canvasId: 'canvas-b', plainText: 'Alice will fly instead.' }),
     ],
-    rerank: evidence => evidence.map(item => ({ ...item, score: item.score + 0.01 })),
+    rerankedAnchorIds: ['anchor-1'],
   })
 
   assert.equal(result.evidence.length, 1)
@@ -55,17 +55,13 @@ test('retrieval remains useful offline and returns no-result language when evide
   assert.match(missing.context, /没有找到/)
 })
 
-test('reranking cannot inject or rewrite evidence outside the requested canvas', async () => {
+test('reranking accepts only original allowed anchor identities', async () => {
   const result = await retrieveCanvasEvidence({
     canvasId: 'canvas-a',
     query: 'train',
     anchors: [anchor()],
-    rerank: evidence => [
-      { ...evidence[0], anchor: anchor({ plainText: 'rewritten leak' }) },
-      { ...evidence[0], anchor: anchor({ id: 'foreign', canvasId: 'canvas-b', plainText: 'foreign leak' }) },
-    ],
+    rerankedAnchorIds: ['foreign', 'anchor-1', 'anchor-1'],
   })
   assert.equal(result.evidence.length, 1)
-  assert.equal(result.evidence[0].anchor.plainText.includes('rewritten leak'), false)
-  assert.equal(result.context.includes('foreign leak'), false)
+  assert.equal(result.evidence[0].anchor.id, 'anchor-1')
 })

@@ -13,7 +13,7 @@ export interface RetrieveCanvasEvidenceInput {
   query: string
   anchors?: CanvasKnowledgeAnchor[]
   limit?: number
-  rerank?: (evidence: CanvasEvidence[]) => CanvasEvidence[] | Promise<CanvasEvidence[]>
+  rerankedAnchorIds?: string[]
 }
 
 export interface CanvasEvidenceResult {
@@ -57,15 +57,25 @@ function formatEvidence(evidence: CanvasEvidence[]) {
   )).join('\n\n')
 }
 
-async function loadPersistedAnchors(canvasId: string): Promise<CanvasKnowledgeAnchor[]> {
-  const { queryPersistedCanvasKnowledgeAnchors } = await import('@/db/canvas-index')
-  return queryPersistedCanvasKnowledgeAnchors(canvasId)
+export function applyCanvasEvidenceRerank(
+  evidence: CanvasEvidence[],
+  orderedAnchorIds: string[] | undefined,
+): CanvasEvidence[] {
+  if (!orderedAnchorIds?.length) return evidence
+  const allowedById = new Map(evidence.map(item => [item.anchor.id, item]))
+  const seen = new Set<string>()
+  return orderedAnchorIds.flatMap(id => {
+    const item = allowedById.get(id)
+    if (!item || seen.has(id)) return []
+    seen.add(id)
+    return [item]
+  })
 }
 
 export async function retrieveCanvasEvidence(input: RetrieveCanvasEvidenceInput): Promise<CanvasEvidenceResult> {
   const canvasId = input.canvasId?.trim() || null
   if (!canvasId) return { canvasId: null, evidence: [], context: '没有找到与当前画布相关的证据。' }
-  const anchors = (input.anchors ?? await loadPersistedAnchors(canvasId))
+  const anchors = (input.anchors ?? [])
     // This is the retrieval boundary: no caller can smuggle another canvas into default evidence.
     .filter(anchor => anchor.canvasId === canvasId)
   const queryTerms = terms(input.query)
@@ -94,16 +104,7 @@ export async function retrieveCanvasEvidence(input: RetrieveCanvasEvidenceInput)
   }).filter(item => item.matchedBy.length > 0 && item.score >= 0.12)
 
   evidence.sort((left, right) => right.score - left.score || left.anchor.id.localeCompare(right.anchor.id))
-  if (input.rerank && evidence.length) {
-    const allowedById = new Map(evidence.map(item => [item.anchor.id, item.anchor]))
-    const seen = new Set<string>()
-    evidence = (await input.rerank(evidence)).flatMap(item => {
-      const anchor = allowedById.get(item.anchor.id)
-      if (!anchor || anchor.canvasId !== canvasId || seen.has(anchor.id)) return []
-      seen.add(anchor.id)
-      return [{ ...item, anchor }]
-    })
-  }
+  evidence = applyCanvasEvidenceRerank(evidence, input.rerankedAnchorIds)
   evidence = evidence.slice(0, Math.max(1, Math.min(input.limit ?? 8, 30)))
   return { canvasId, evidence, context: formatEvidence(evidence) }
 }

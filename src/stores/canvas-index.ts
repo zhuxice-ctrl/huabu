@@ -1,6 +1,7 @@
 import {
   claimReadyCanvasIndexJob,
   processCanvasIndexJob,
+  queryPersistedCanvasKnowledgeAnchors,
   queryPersistedCanvasIndexCandidates,
   queueCanvasIndexRebuild as persistCanvasIndexRebuild,
   queueCanvasIndexRetry as persistCanvasIndexRetry,
@@ -12,12 +13,23 @@ import {
   shouldClaimCanvasIndexJob,
 } from '@/lib/canvas/canvas-index-jobs'
 import { classifyIndexedCanvasOverlay } from '@/stores/canvas-ai'
+import { retrieveCanvasEvidence, type CanvasEvidenceResult } from '@/lib/canvas/canvas-retrieval'
 
 const WORKER_IDLE_DELAY_MS = 1_000
 let workerRunning = false
 let workerStopped = true
 let workerTimer: ReturnType<typeof setTimeout> | null = null
 let drainPromise: Promise<number> | null = null
+
+export async function retrievePersistedCanvasEvidence(input: {
+  canvasId: string
+  query: string
+  limit?: number
+  rerankedAnchorIds?: string[]
+}): Promise<CanvasEvidenceResult> {
+  const anchors = await queryPersistedCanvasKnowledgeAnchors(input.canvasId)
+  return retrieveCanvasEvidence({ ...input, anchors })
+}
 
 async function drainCanvasIndexJobsSerially(): Promise<number> {
   let processed = 0

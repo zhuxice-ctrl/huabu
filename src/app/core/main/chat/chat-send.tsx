@@ -4,6 +4,7 @@ import useSettingStore from "@/stores/setting"
 import useChatStore, {
   finishActiveChatGeneration,
   registerActiveChatGeneration,
+  setActiveChatAgentRun,
   stopActiveChatGeneration,
 } from "@/stores/chat"
 import useTagStore from "@/stores/tag"
@@ -30,7 +31,7 @@ import { serializeChatAttachments, type RuntimeChatAttachment } from '@/lib/chat
 import { retainCompletedAgentTraceEvents } from '@/lib/agent/trace-retention'
 import useCanvasStore from '@/stores/canvas'
 import { createCanvasChatContext, parseCanvasChatContext } from '@/lib/chat/canvas-context'
-import { retrieveCanvasEvidence } from '@/lib/canvas/canvas-retrieval'
+import { retrievePersistedCanvasEvidence } from '@/stores/canvas-index'
 import { prepareCanvasEvidenceForRequest } from '@/lib/canvas/sensitive-content'
 import {
   canAcceptVoiceSteering,
@@ -173,7 +174,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
   }
 
   const retrieveProtectedCanvasContext = async (canvasId: string, query: string) => {
-    const evidenceResult = await retrieveCanvasEvidence({ canvasId, query })
+    const evidenceResult = await retrievePersistedCanvasEvidence({ canvasId, query })
     const provider = aiModelList.find(config => config.key === primaryModel)
     const protectedEvidence = prepareCanvasEvidenceForRequest(
       evidenceResult.evidence.map(item => item.anchor),
@@ -435,9 +436,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
       resolveClosed()
     }
 
-    setAgentState({
-      activeChatId: placeholderMessage.id,
-    })
+    setActiveChatAgentRun(placeholderMessage.id)
 
     const useArticleStore = (await import('@/stores/article')).default
     const articleStore = useArticleStore.getState()

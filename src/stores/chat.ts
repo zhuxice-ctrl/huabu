@@ -1043,3 +1043,9 @@ const useChatStore = create<ChatState>((set, get) => ({
 }))
 
 export default useChatStore
+
+export function setActiveChatAgentRun(activeChatId: number) {
+  useChatStore.setState(state => ({
+    agentState: { ...state.agentState, activeChatId },
+  }))
+}

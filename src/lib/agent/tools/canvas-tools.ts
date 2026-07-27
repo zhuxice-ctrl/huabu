@@ -24,7 +24,7 @@ import {
 import { applyValidatedCanvasOperations } from '@/lib/canvas/operations'
 import type { ViewportSnapshot } from '@/lib/canvas/viewport-sizing'
 import { stageCanvasDocumentForAiPreview } from '@/stores/canvas'
-import { retrieveCanvasEvidence } from '@/lib/canvas/canvas-retrieval'
+import { retrievePersistedCanvasEvidence } from '@/stores/canvas-index'
 import { prepareCanvasEvidenceForRequest } from '@/lib/canvas/sensitive-content'
 import type { CanvasDocument } from '@/types/canvas'
 import type {
@@ -284,7 +284,7 @@ const searchOtherCanvasEvidenceTool: AgentTool = {
     if (canvasId === context.context.activeCanvasId) {
       return { ok: false, message: '当前画布由默认检索边界处理；此工具仅用于其他画布。', error: 'NOT_CROSS_CANVAS' }
     }
-    const result = await retrieveCanvasEvidence({ canvasId, query })
+    const result = await retrievePersistedCanvasEvidence({ canvasId, query })
     // Tool output may enter a cloud model turn, so unknown endpoint state remains fail-closed.
     const protectedEvidence = prepareCanvasEvidenceForRequest(
       result.evidence.map(item => item.anchor),
