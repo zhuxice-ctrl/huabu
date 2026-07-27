@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 
-// 浏览器语音识别 API 类型定义
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList
   resultIndex: number
@@ -32,7 +31,7 @@ interface SpeechRecognition extends EventTarget {
   start(): void
   stop(): void
   abort(): void
-  onerror: ((event: any) => void) | null
+  onerror: ((event: { error?: string }) => void) | null
   onresult: ((event: SpeechRecognitionEvent) => void) | null
   onend: (() => void) | null
   onstart: (() => void) | null
@@ -46,200 +45,148 @@ declare global {
 }
 
 interface SpeechRecognitionState {
-  // 识别状态
   isRecognizing: boolean
-  transcript: string // 识别的文本
-  interimTranscript: string // 临时文本（实时）
-  lastError: string | null // 最后的错误类型
-  
-  // 识别实例
+  transcript: string
+  interimTranscript: string
+  lastError: string | null
   recognition: SpeechRecognition | null
-  
-  // 控制方法
-  startRecognition: (language?: string) => Promise<void>
-  stopRecognition: () => Promise<string>
-  
-  // 内部方法
-  resetState: () => void
-  
-  // 检查浏览器支持
-  isSupported: () => boolean
 }
 
 export function composeSpeechRecognitionText(transcript: string, interimTranscript: string) {
   return `${transcript}${interimTranscript}`.trim()
 }
 
-const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => ({
+const useSpeechRecognitionStore = create<SpeechRecognitionState>(() => ({
   isRecognizing: false,
   transcript: '',
   interimTranscript: '',
   lastError: null,
   recognition: null,
-
-  isSupported: () => {
-    return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
-  },
-
-  startRecognition: async (language = 'zh-CN') => {
-    try {
-      // 检查浏览器支持
-      if (!get().isSupported()) {
-        throw new Error('当前浏览器不支持语音识别功能，请使用 Chrome、Edge 或 Safari')
-      }
-
-      // 创建识别实例
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
-      const recognition = new SpeechRecognitionAPI()
-
-      // 配置识别选项
-      recognition.continuous = true // 持续识别
-      recognition.interimResults = true // 实时结果
-      recognition.lang = language // 语言设置
-      recognition.maxAlternatives = 1 // 最多返回1个结果
-
-      let startupPending = true
-
-      // 识别结果处理
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interimTranscript = ''
-        let finalTranscript = ''
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i]
-          const transcript = result[0].transcript
-
-          if (result.isFinal) {
-            finalTranscript += transcript
-          } else {
-            interimTranscript += transcript
-          }
-        }
-
-        set({
-          transcript: get().transcript + finalTranscript,
-          interimTranscript
-        })
-      }
-
-      // 错误处理
-      recognition.onerror = (event: any) => {
-        console.error('语音识别错误:', event.error, event)
-        if (get().recognition !== recognition) return
-        set({
-          recognition: null,
-          isRecognizing: false,
-          lastError: event.error,
-        })
-      }
-
-      // 识别结束处理
-      recognition.onend = () => {
-        if (get().recognition === recognition) {
-          set({ recognition: null, isRecognizing: false })
-        }
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        set({
-          recognition,
-          isRecognizing: true,
-          transcript: '',
-          interimTranscript: '',
-          lastError: null,
-        })
-
-        recognition.onstart = () => {
-          startupPending = false
-          resolve()
-        }
-
-        recognition.onerror = (event: any) => {
-          console.error('语音识别错误:', event.error, event)
-          if (get().recognition === recognition) {
-            set({
-              recognition: null,
-              isRecognizing: false,
-              lastError: event.error,
-            })
-          }
-
-          if (startupPending) {
-            reject(new Error(event.error || 'speech-recognition-error'))
-            return
-          }
-        }
-
-        try {
-          recognition.start()
-        } catch (startError) {
-          console.error('启动识别失败:', startError)
-          reject(startError)
-        }
-      })
-
-    } catch (error) {
-      console.error('启动语音识别失败:', error)
-      throw error
-    }
-  },
-
-  stopRecognition: async () => {
-    const { recognition } = get()
-
-    if (!recognition) {
-      return composeSpeechRecognitionText(get().transcript, get().interimTranscript)
-    }
-
-    return new Promise((resolve) => {
-      const originalOnEnd = recognition.onend
-
-      recognition.onend = () => {
-        originalOnEnd?.()
-
-        const finalTranscript = composeSpeechRecognitionText(
-          get().transcript,
-          get().interimTranscript,
-        )
-
-        set({
-          isRecognizing: false,
-          interimTranscript: ''
-        })
-
-        resolve(finalTranscript)
-      }
-
-      recognition.stop()
-    })
-  },
-
-  resetState: () => {
-    const { recognition } = get()
-    
-    if (recognition) {
-      recognition.abort()
-    }
-    
-    set({
-      isRecognizing: false,
-      transcript: '',
-      interimTranscript: '',
-      recognition: null
-    })
-  }
 }))
 
-export function startRecognition(language?: string) {
-  return useSpeechRecognitionStore.getState().startRecognition(language)
+export function isSpeechRecognitionSupported() {
+  return typeof window !== 'undefined'
+    && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 }
 
-export function stopRecognition() {
-  return useSpeechRecognitionStore.getState().stopRecognition()
+export async function startRecognition(language = 'zh-CN') {
+  if (!isSpeechRecognitionSupported()) {
+    throw new Error('当前浏览器不支持语音识别功能，请使用 Chrome、Edge 或 Safari')
+  }
+
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
+  const recognition = new SpeechRecognitionAPI()
+  recognition.continuous = true
+  recognition.interimResults = true
+  recognition.lang = language
+  recognition.maxAlternatives = 1
+  let startupPending = true
+
+  recognition.onresult = (event: SpeechRecognitionEvent) => {
+    if (useSpeechRecognitionStore.getState().recognition !== recognition) return
+    let interimTranscript = ''
+    let finalTranscript = ''
+
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const result = event.results[index]
+      const recognizedText = result[0].transcript
+      if (result.isFinal) finalTranscript += recognizedText
+      else interimTranscript += recognizedText
+    }
+
+    const previousTranscript = useSpeechRecognitionStore.getState().transcript
+    useSpeechRecognitionStore.setState({
+      transcript: previousTranscript + finalTranscript,
+      interimTranscript,
+    })
+  }
+
+  recognition.onend = () => {
+    if (useSpeechRecognitionStore.getState().recognition === recognition) {
+      useSpeechRecognitionStore.setState({ recognition: null, isRecognizing: false })
+    }
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    recognition.onstart = () => {
+      startupPending = false
+      resolve()
+    }
+
+    recognition.onerror = (event) => {
+      console.error('语音识别错误:', event.error)
+      if (useSpeechRecognitionStore.getState().recognition === recognition) {
+        useSpeechRecognitionStore.setState({
+          recognition: null,
+          isRecognizing: false,
+          lastError: event.error || 'speech-recognition-error',
+        })
+      }
+      if (startupPending) reject(new Error(event.error || 'speech-recognition-error'))
+    }
+
+    useSpeechRecognitionStore.setState({
+      recognition,
+      isRecognizing: true,
+      transcript: '',
+      interimTranscript: '',
+      lastError: null,
+    })
+
+    try {
+      recognition.start()
+    } catch (error) {
+      useSpeechRecognitionStore.setState({ recognition: null, isRecognizing: false })
+      reject(error)
+    }
+  })
+}
+
+export async function stopRecognition() {
+  const state = useSpeechRecognitionStore.getState()
+  const recognition = state.recognition
+  if (!recognition) {
+    return composeSpeechRecognitionText(state.transcript, state.interimTranscript)
+  }
+
+  return new Promise<string>((resolve) => {
+    const originalOnEnd = recognition.onend
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      originalOnEnd?.()
+      const current = useSpeechRecognitionStore.getState()
+      const finalTranscript = composeSpeechRecognitionText(
+        current.transcript,
+        current.interimTranscript,
+      )
+      useSpeechRecognitionStore.setState({
+        recognition: null,
+        isRecognizing: false,
+        interimTranscript: '',
+      })
+      resolve(finalTranscript)
+    }
+
+    recognition.onend = finish
+    try {
+      recognition.stop()
+    } catch {
+      finish()
+    }
+  })
 }
 
 export function resetSpeechRecognition() {
-  useSpeechRecognitionStore.getState().resetState()
+  const recognition = useSpeechRecognitionStore.getState().recognition
+  useSpeechRecognitionStore.setState({
+    isRecognizing: false,
+    transcript: '',
+    interimTranscript: '',
+    recognition: null,
+  })
+  recognition?.abort()
 }
 
 export default useSpeechRecognitionStore
