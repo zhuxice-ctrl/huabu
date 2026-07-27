@@ -8,6 +8,7 @@ import useCanvasStore from '@/stores/canvas'
 import type { CanvasProject } from '@/types/canvas'
 import { initAllDatabases } from '@/db'
 import { startCanvasIndexWorker, stopCanvasIndexWorker } from '@/stores/canvas-index'
+import { initializeCanvasAiOverlayClassification } from '@/stores/canvas-ai'
 
 async function initializeCanvasStartup(projects: CanvasProject[]) {
   const store = await Store.load('store.json')
@@ -21,18 +22,28 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
-    let stopIndexWorker: (() => void) | null = null
+    let stopIndexWorker: (() => Promise<void>) | null = null
+    let stopOverlayClassification: (() => void) | null = null
 
     void initAllDatabases()
       .then(() => Promise.all([
         useArticleStore.getState().initOpenTabs(),
         useCanvasStore.getState().loadProjects(),
-        startCanvasIndexWorker().then(stop => {
-          if (cancelled) stop()
-          else stopIndexWorker = stop
-        }),
+        (async () => {
+          if (cancelled) return
+          stopOverlayClassification = initializeCanvasAiOverlayClassification()
+          const stop = await startCanvasIndexWorker()
+          if (cancelled) {
+            stopOverlayClassification?.()
+            stopOverlayClassification = null
+            void stop()
+          } else {
+            stopIndexWorker = stop
+          }
+        })(),
       ]))
       .then(async () => {
+        if (cancelled) return
         const projects = useCanvasStore.getState().projects
         const { store, startupCanvasId } = await initializeCanvasStartup(projects)
         let project = projects.find(item => item.id === startupCanvasId) || null
@@ -57,8 +68,9 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true
-      stopIndexWorker?.()
-      stopCanvasIndexWorker()
+      stopOverlayClassification?.()
+      if (stopIndexWorker) void stopIndexWorker()
+      else void stopCanvasIndexWorker()
     }
   }, [])
 

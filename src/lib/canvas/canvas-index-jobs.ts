@@ -25,6 +25,11 @@ export interface CanvasIndexRebuildPlan {
   upserts: CanvasIndexJobDraft[]
 }
 
+export interface CanvasIndexDeletePlan {
+  remove: boolean
+  ensureUpsert?: CanvasIndexJobDraft
+}
+
 export type CanvasIndexRecallKind = 'vector' | 'entity' | 'time'
 
 export interface CandidateQuery {
@@ -196,8 +201,48 @@ export function planCanvasIndexRebuild(
   }
 }
 
+export function planCanvasIndexDelete(
+  document: CanvasDocument,
+  nodeId: string,
+): CanvasIndexDeletePlan {
+  const node = document.nodes.find(candidate => candidate.id === nodeId)
+  if (!node) return { remove: true }
+  return {
+    remove: false,
+    ensureUpsert: {
+      nodeId,
+      contentRevision: canvasNodeContentRevision(node),
+      operation: 'upsert',
+    },
+  }
+}
+
+export async function drainCanvasIndexJobQueue(input: {
+  claim: () => Promise<CanvasIndexJob | null>
+  process: (job: CanvasIndexJob) => Promise<void>
+  retry: (job: CanvasIndexJob, error: unknown) => Promise<void>
+  shouldStop?: () => boolean
+  onProcessed?: (job: CanvasIndexJob) => Promise<void>
+}): Promise<number> {
+  let processed = 0
+  while (!input.shouldStop?.()) {
+    const job = await input.claim()
+    if (!job) break
+    try {
+      await input.process(job)
+      await input.onProcessed?.(job)
+    } catch (error) {
+      await input.retry(job, error)
+    }
+    processed += 1
+  }
+  return processed
+}
+
 type CandidateQueryProvider = (input: CandidateQuery) => Promise<CanvasIndexCandidate[]>
 let candidateQueryProvider: CandidateQueryProvider | null = null
+type JobProcessedHandler = (job: CanvasIndexJob) => Promise<void>
+let jobProcessedHandler: JobProcessedHandler | null = null
 
 export function registerCanvasIndexCandidateQueryProvider(provider: CandidateQueryProvider | null) {
   candidateQueryProvider = provider
@@ -206,4 +251,12 @@ export function registerCanvasIndexCandidateQueryProvider(provider: CandidateQue
 export function queryCanvasIndexCandidates(input: CandidateQuery): Promise<CanvasIndexCandidate[]> {
   if (!candidateQueryProvider) throw new CanvasIndexUnavailableError()
   return candidateQueryProvider(input)
+}
+
+export function registerCanvasIndexJobProcessedHandler(handler: JobProcessedHandler | null) {
+  jobProcessedHandler = handler
+}
+
+export async function notifyCanvasIndexJobProcessed(job: CanvasIndexJob) {
+  await jobProcessedHandler?.(job)
 }

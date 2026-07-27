@@ -7,34 +7,24 @@ import {
   upsertCanvasAiRelation,
   upsertCanvasAiTag,
 } from '@/db/canvas-ai-overlay'
+import { getCanvasIndexSourceCandidate } from '@/db/canvas-index'
 import { queueCanvasIndexRebuild, queueCanvasIndexRetry } from '@/stores/canvas-index'
+import { type AiRelationRecord, type AiTagRecord } from '@/lib/canvas/ai-overlay'
 import {
-  APPROVED_AI_RELATION_TYPES,
-  type AiRelationRecord,
-  type AiTagRecord,
-} from '@/lib/canvas/ai-overlay'
-import {
-  CanvasIndexUnavailableError,
   queryCanvasIndexCandidates,
+  registerCanvasIndexJobProcessedHandler,
   type CanvasIndexCandidate,
 } from '@/lib/canvas/canvas-index-jobs'
-
-export interface CanvasAiClassification {
-  kind: 'tag' | 'relation'
-  label?: string
-  targetNodeId?: string
-  type?: string
-  reason: string
-  confidence: number
-}
-
-export interface CanvasAiClassifierInput {
-  source: CanvasIndexCandidate
-  candidates: CanvasIndexCandidate[]
-  approvedRelationTypes: readonly string[]
-}
-
-type CanvasAiClassifier = (input: CanvasAiClassifierInput) => Promise<CanvasAiClassification[]>
+import {
+  runCanvasAiOverlayClassification,
+  type CanvasAiClassification,
+  type CanvasAiClassifier,
+} from '@/lib/canvas/ai-overlay-runtime'
+import {
+  createOpenAIClient,
+  getAISettings,
+  withFastAiRequestOptions,
+} from '@/lib/ai/utils'
 
 interface CanvasAiState {
   canvasId: string | null
@@ -74,9 +64,8 @@ export const useCanvasAiStore = create<CanvasAiState>((set, get) => ({
   },
   reject: async (kind, id) => {
     await rejectCanvasAiOverlayRecord(kind, id)
-    set(state => kind === 'tag'
-      ? { tags: state.tags.filter(record => record.id !== id) }
-      : { relations: state.relations.filter(record => record.id !== id) })
+    const canvasId = get().canvasId
+    if (canvasId) await get().load(canvasId)
   },
   rebuild: async canvasId => {
     await markCanvasOverlayStale(canvasId)
@@ -85,13 +74,59 @@ export const useCanvasAiStore = create<CanvasAiState>((set, get) => ({
   },
 }))
 
-function deterministicCandidateFilter(sourceNodeId: string, candidates: CanvasIndexCandidate[]) {
-  const seen = new Set<string>()
-  return candidates.filter(candidate => {
-    if (candidate.nodeId === sourceNodeId || candidate.score <= 0 || seen.has(candidate.nodeId)) return false
-    seen.add(candidate.nodeId)
-    return true
-  }).slice(0, 20)
+function parseClassifierResponse(value: string): CanvasAiClassification[] {
+  const parsed: unknown = JSON.parse(value)
+  const values = Array.isArray(parsed)
+    ? parsed
+    : parsed && typeof parsed === 'object' && Array.isArray((parsed as { results?: unknown }).results)
+      ? (parsed as { results: unknown[] }).results
+      : []
+  return values.filter((item): item is CanvasAiClassification => {
+    if (!item || typeof item !== 'object') return false
+    const record = item as Partial<CanvasAiClassification>
+    return (record.kind === 'tag' || record.kind === 'relation')
+      && typeof record.reason === 'string'
+      && typeof record.confidence === 'number'
+      && Number.isFinite(record.confidence)
+      && record.confidence >= 0
+      && record.confidence <= 1
+  })
+}
+
+async function getConfiguredCanvasAiClassifier(): Promise<{
+  model: string
+  classifier: CanvasAiClassifier
+} | null> {
+  const config = await getAISettings()
+  if (!config?.model) return null
+  const client = await createOpenAIClient(config)
+  return {
+    model: config.model,
+    classifier: async input => {
+      const response = await client.chat.completions.create(withFastAiRequestOptions({
+        model: config.model!,
+        stream: false,
+        temperature: 0,
+        messages: [
+          {
+            role: 'system',
+            content: 'Return JSON only as {"results": [...]} using tag or relation entries. Relations must use one approved type and one supplied targetNodeId. Never invent nodes.',
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              source: input.source,
+              candidates: input.candidates,
+              approvedRelationTypes: input.approvedRelationTypes,
+            }),
+          },
+        ],
+      }, config))
+      const content = response.choices[0]?.message?.content
+      if (typeof content !== 'string') throw new Error('Canvas overlay classifier returned no JSON')
+      return parseClassifierResponse(content)
+    },
+  }
 }
 
 export async function recallAndClassifyCanvasOverlay(input: {
@@ -101,52 +136,47 @@ export async function recallAndClassifyCanvasOverlay(input: {
   model: string
   classifier: CanvasAiClassifier
 }) {
-  let candidates: CanvasIndexCandidate[]
-  try {
-    candidates = deterministicCandidateFilter(input.source.nodeId, await queryCanvasIndexCandidates({
-      canvasId: input.canvasId,
-      nodeId: input.source.nodeId,
-      text: input.text,
+  const result = await runCanvasAiOverlayClassification(input, {
+    recall: request => queryCanvasIndexCandidates({
+      ...request,
       kinds: ['vector', 'entity', 'time'],
-      limit: 30,
-    }))
-  } catch (error) {
-    if (!(error instanceof CanvasIndexUnavailableError)) {
-      console.error('Canvas index candidate query failed:', error)
-    }
-    await markCanvasOverlayStale(input.canvasId, input.source.nodeId)
-    await queueCanvasIndexRetry(input.canvasId, input.source.nodeId)
-    return { status: 'index-unavailable' as const, records: [] }
-  }
-
-  const classified = await input.classifier({
-    source: input.source,
-    candidates,
-    approvedRelationTypes: APPROVED_AI_RELATION_TYPES,
+    }),
+    persistTag: upsertCanvasAiTag,
+    persistRelation: upsertCanvasAiRelation,
+    markStale: (canvasId, nodeId) => markCanvasOverlayStale(canvasId, nodeId),
+    refresh: async canvasId => {
+      if (useCanvasAiStore.getState().canvasId === canvasId) {
+        await useCanvasAiStore.getState().load(canvasId)
+      }
+    },
   })
-  const records: Array<AiTagRecord | AiRelationRecord> = []
-  for (const result of classified) {
-    if (result.kind === 'tag' && result.label) {
-      const record = await upsertCanvasAiTag({
-        id: crypto.randomUUID(), canvasId: input.canvasId, nodeId: input.source.nodeId,
-        label: result.label, confidence: result.confidence, reason: result.reason,
-        model: input.model, sourceRevision: input.source.contentRevision,
-      })
-      if (record) records.push(record)
-      continue
-    }
-    if (result.kind !== 'relation' || !result.targetNodeId || !result.type) continue
-    const target = candidates.find(candidate => candidate.nodeId === result.targetNodeId)
-    if (!target || !APPROVED_AI_RELATION_TYPES.includes(result.type as never)) continue
-    const record = await upsertCanvasAiRelation({
-      id: crypto.randomUUID(), canvasId: input.canvasId,
-      sourceNodeId: input.source.nodeId, targetNodeId: target.nodeId, type: result.type,
-      sourceExcerpt: input.source.excerpt, targetExcerpt: target.excerpt,
-      confidence: result.confidence, reason: result.reason, model: input.model,
-      sourceRevision: input.source.contentRevision, targetRevision: target.contentRevision,
-    })
-    if (record) records.push(record)
+  if (result.status === 'index-unavailable') {
+    await queueCanvasIndexRetry(input.canvasId, input.source.nodeId)
   }
-  await useCanvasAiStore.getState().load(input.canvasId)
-  return { status: 'complete' as const, records }
+  return result
+}
+
+export function initializeCanvasAiOverlayClassification() {
+  registerCanvasIndexJobProcessedHandler(async job => {
+    if (job.operation !== 'upsert') return
+    const source = await getCanvasIndexSourceCandidate(job.canvasId, job.nodeId)
+    if (!source || source.contentRevision !== job.contentRevision) return
+    let configured: Awaited<ReturnType<typeof getConfiguredCanvasAiClassifier>>
+    try {
+      configured = await getConfiguredCanvasAiClassifier()
+    } catch (error) {
+      console.error('Canvas overlay classifier configuration failed:', error)
+      await markCanvasOverlayStale(job.canvasId, job.nodeId)
+      return
+    }
+    if (!configured) return
+    await recallAndClassifyCanvasOverlay({
+      canvasId: job.canvasId,
+      source,
+      text: source.text,
+      model: configured.model,
+      classifier: configured.classifier,
+    })
+  })
+  return () => registerCanvasIndexJobProcessedHandler(null)
 }

@@ -12,7 +12,11 @@ import {
 import type { AiRelationType } from '@/lib/canvas/ai-permission'
 
 interface AiTagRow extends AiTagRecord { createdAt: number; updatedAt: number }
-interface AiRelationRow extends AiRelationRecord { createdAt: number; updatedAt: number }
+interface AiRelationRow extends AiRelationRecord {
+  semanticIdentity?: string | null
+  createdAt: number
+  updatedAt: number
+}
 
 export async function initCanvasAiOverlayDb() {
   const db = await getDb()
@@ -44,6 +48,7 @@ export async function initCanvasAiOverlayDb() {
         'problem_solution', 'person_or_place', 'citation_or_source',
         'possible_duplicate', 'credential_ownership'
       )),
+      semanticIdentity text,
       sourceExcerpt text not null,
       targetExcerpt text not null,
       confidence real not null check (confidence >= 0 and confidence <= 1),
@@ -55,6 +60,32 @@ export async function initCanvasAiOverlayDb() {
       createdAt integer not null,
       updatedAt integer not null
     )
+  `)
+  const relationColumns = await db.select<Array<{ name: string }>>(
+    'pragma table_info(canvas_ai_relation_records)',
+  )
+  if (!relationColumns.some(column => column.name === 'semanticIdentity')) {
+    await db.execute('alter table canvas_ai_relation_records add column semanticIdentity text')
+  }
+  const legacyRelations = await db.select<AiRelationRow[]>(
+    `select * from canvas_ai_relation_records
+     where semanticIdentity is null or semanticIdentity = ''`,
+  )
+  for (const relation of legacyRelations) {
+    await db.execute(
+      'update canvas_ai_relation_records set semanticIdentity = $1 where id = $2',
+      [semanticIdentityForOverlayRecord(relation), relation.id],
+    )
+  }
+  await db.execute(`
+    delete from canvas_ai_relation_records
+    where semanticIdentity is not null and rowid not in (
+      select max(rowid) from canvas_ai_relation_records group by semanticIdentity
+    )
+  `)
+  await db.execute(`
+    create unique index if not exists canvas_ai_relations_semantic_identity
+    on canvas_ai_relation_records(semanticIdentity)
   `)
   await db.execute(`
     create index if not exists canvas_ai_relations_canvas_state
@@ -93,8 +124,8 @@ export async function getCanvasAiOverlayRecords(canvasId: string): Promise<{
   return { tags, relations }
 }
 
-async function isSuppressed(record: AiOverlayRecord): Promise<boolean> {
-  const db = await getDb()
+async function isSuppressed(record: AiOverlayRecord, executor?: typeof import('./client')['db']): Promise<boolean> {
+  const db = executor ?? await getDb()
   const rows = await db.select<Array<{ semanticIdentity: string }>>(
     'select semanticIdentity from canvas_ai_overlay_suppressions where semanticIdentity = $1 limit 1',
     [semanticIdentityForOverlayRecord(record)],
@@ -107,49 +138,72 @@ export async function upsertCanvasAiTag(input: Omit<AiTagRecord, 'state' | 'norm
   state?: AiOverlayState
 }): Promise<AiTagRecord | null> {
   const record = createAiTagRecord(input)
-  if (await isSuppressed(record)) return null
   const db = await getDb()
   const now = Date.now()
-  await db.execute(
-    `insert into canvas_ai_tag_records (
-      id, canvasId, nodeId, normalizedTagId, label, confidence, reason, model,
-      sourceRevision, state, createdAt, updatedAt
-    ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
-    on conflict(canvasId, nodeId, normalizedTagId) do update set
-      id = excluded.id, label = excluded.label, confidence = excluded.confidence,
-      reason = excluded.reason, model = excluded.model,
-      sourceRevision = excluded.sourceRevision, state = excluded.state,
-      updatedAt = excluded.updatedAt`,
-    [record.id, record.canvasId, record.nodeId, record.normalizedTagId, record.label,
-      record.confidence, record.reason, record.model, record.sourceRevision, record.state, now],
-  )
-  return record
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    if (await isSuppressed(record, db)) {
+      await db.execute('COMMIT')
+      return null
+    }
+    await db.execute(
+      `insert into canvas_ai_tag_records (
+        id, canvasId, nodeId, normalizedTagId, label, confidence, reason, model,
+        sourceRevision, state, createdAt, updatedAt
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+      on conflict(canvasId, nodeId, normalizedTagId) do update set
+        id = excluded.id, label = excluded.label, confidence = excluded.confidence,
+        reason = excluded.reason, model = excluded.model,
+        sourceRevision = excluded.sourceRevision, state = excluded.state,
+        updatedAt = excluded.updatedAt`,
+      [record.id, record.canvasId, record.nodeId, record.normalizedTagId, record.label,
+        record.confidence, record.reason, record.model, record.sourceRevision, record.state, now],
+    )
+    await db.execute('COMMIT')
+    return record
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
 }
 
 export async function upsertCanvasAiRelation(
   input: Omit<AiRelationRecord, 'state' | 'type'> & { type: string; state?: AiOverlayState },
 ): Promise<AiRelationRecord | null> {
   const record = createAiRelationRecord(input)
-  if (await isSuppressed(record)) return null
   const db = await getDb()
   const now = Date.now()
-  await db.execute(
-    `insert into canvas_ai_relation_records (
-      id, canvasId, sourceNodeId, targetNodeId, type, sourceExcerpt, targetExcerpt,
-      confidence, reason, model, sourceRevision, targetRevision, state, createdAt, updatedAt
-    ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $14)
-    on conflict(id) do update set
-      sourceNodeId = excluded.sourceNodeId, targetNodeId = excluded.targetNodeId,
-      type = excluded.type, sourceExcerpt = excluded.sourceExcerpt,
-      targetExcerpt = excluded.targetExcerpt, confidence = excluded.confidence,
-      reason = excluded.reason, model = excluded.model,
-      sourceRevision = excluded.sourceRevision, targetRevision = excluded.targetRevision,
-      state = excluded.state, updatedAt = excluded.updatedAt`,
-    [record.id, record.canvasId, record.sourceNodeId, record.targetNodeId, record.type,
-      record.sourceExcerpt, record.targetExcerpt, record.confidence, record.reason,
-      record.model, record.sourceRevision, record.targetRevision, record.state, now],
-  )
-  return record
+  const semanticIdentity = semanticIdentityForOverlayRecord(record)
+  await db.execute('BEGIN IMMEDIATE')
+  try {
+    if (await isSuppressed(record, db)) {
+      await db.execute('COMMIT')
+      return null
+    }
+    await db.execute(
+      `insert into canvas_ai_relation_records (
+        id, canvasId, sourceNodeId, targetNodeId, type, semanticIdentity,
+        sourceExcerpt, targetExcerpt, confidence, reason, model, sourceRevision,
+        targetRevision, state, createdAt, updatedAt
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $15)
+      on conflict(semanticIdentity) do update set
+        id = excluded.id, sourceNodeId = excluded.sourceNodeId,
+        targetNodeId = excluded.targetNodeId, type = excluded.type,
+        sourceExcerpt = excluded.sourceExcerpt, targetExcerpt = excluded.targetExcerpt,
+        confidence = excluded.confidence, reason = excluded.reason, model = excluded.model,
+        sourceRevision = excluded.sourceRevision, targetRevision = excluded.targetRevision,
+        state = excluded.state, updatedAt = excluded.updatedAt`,
+      [record.id, record.canvasId, record.sourceNodeId, record.targetNodeId, record.type,
+        semanticIdentity, record.sourceExcerpt, record.targetExcerpt, record.confidence,
+        record.reason, record.model, record.sourceRevision, record.targetRevision,
+        record.state, now],
+    )
+    await db.execute('COMMIT')
+    return record
+  } catch (error) {
+    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
+    throw error
+  }
 }
 
 export async function setCanvasAiOverlayRecordState(
@@ -165,21 +219,37 @@ export async function setCanvasAiOverlayRecordState(
 export async function rejectCanvasAiOverlayRecord(kind: 'tag' | 'relation', id: string) {
   const db = await getDb()
   const table = kind === 'tag' ? 'canvas_ai_tag_records' : 'canvas_ai_relation_records'
-  const records = kind === 'tag'
-    ? await db.select<AiTagRow[]>(`select * from ${table} where id = $1 limit 1`, [id])
-    : await db.select<AiRelationRow[]>(`select * from ${table} where id = $1 limit 1`, [id])
-  const record = records[0]
-  if (!record) return
-  const semanticIdentity = semanticIdentityForOverlayRecord(record)
-  const now = Date.now()
   await db.execute('BEGIN IMMEDIATE')
   try {
+    const records = kind === 'tag'
+      ? await db.select<AiTagRow[]>(`select * from ${table} where id = $1 limit 1`, [id])
+      : await db.select<AiRelationRow[]>(`select * from ${table} where id = $1 limit 1`, [id])
+    const record = records[0]
+    if (!record) {
+      await db.execute('COMMIT')
+      return
+    }
+    const semanticIdentity = semanticIdentityForOverlayRecord(record)
+    const now = Date.now()
     await db.execute(
       `insert into canvas_ai_overlay_suppressions (semanticIdentity, canvasId, kind, rejectedAt)
        values ($1, $2, $3, $4) on conflict(semanticIdentity) do nothing`,
       [semanticIdentity, record.canvasId, kind, now],
     )
-    await db.execute(`update ${table} set state = 'hidden', updatedAt = $1 where id = $2`, [now, id])
+    if (kind === 'tag') {
+      const tag = record as AiTagRow
+      await db.execute(
+        `update canvas_ai_tag_records set state = 'hidden', updatedAt = $1
+         where canvasId = $2 and nodeId = $3 and normalizedTagId = $4`,
+        [now, tag.canvasId, tag.nodeId, tag.normalizedTagId],
+      )
+    } else {
+      await db.execute(
+        `update canvas_ai_relation_records set state = 'hidden', updatedAt = $1
+         where semanticIdentity = $2`,
+        [now, semanticIdentity],
+      )
+    }
     await db.execute('COMMIT')
   } catch (error) {
     try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }

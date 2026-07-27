@@ -6,6 +6,8 @@ import {
   canvasNodeContentRevision,
   buildLocalCanvasIndexFeatures,
   diffCanvasIndexJobs,
+  drainCanvasIndexJobQueue,
+  planCanvasIndexDelete,
   planCanvasIndexRebuild,
   resumeAbandonedCanvasIndexJob,
   retryDelayMs,
@@ -79,6 +81,39 @@ test('full rebuild removes absent anchors and enumerates every authoritative nod
   ])
 })
 
+test('delete tombstone preserves and re-enqueues a node restored before drain', () => {
+  const restored = document([node('n1', 'Alpha')])
+  assert.deepEqual(planCanvasIndexDelete(restored, 'n1'), {
+    remove: false,
+    ensureUpsert: {
+      nodeId: 'n1',
+      contentRevision: canvasNodeContentRevision(restored.nodes[0]),
+      operation: 'upsert',
+    },
+  })
+  assert.deepEqual(planCanvasIndexDelete(document([]), 'n1'), { remove: true })
+})
+
+test('worker stop during one job prevents a second claim', async () => {
+  let claims = 0
+  let stopped = false
+  const jobs = [
+    { id: 'j1', canvasId: 'c1', nodeId: 'n1', contentRevision: 'r1', operation: 'upsert', state: 'running', attempts: 1, nextAttemptAt: 0 },
+    { id: 'j2', canvasId: 'c1', nodeId: 'n2', contentRevision: 'r2', operation: 'upsert', state: 'running', attempts: 1, nextAttemptAt: 0 },
+  ]
+  const processed = await drainCanvasIndexJobQueue({
+    claim: async () => {
+      claims += 1
+      return jobs.shift() ?? null
+    },
+    process: async () => { stopped = true },
+    retry: async () => assert.fail('successful jobs must not retry'),
+    shouldStop: () => stopped,
+  })
+  assert.equal(processed, 1)
+  assert.equal(claims, 1)
+})
+
 test('offline index features support vector, entity and time recall without a model', () => {
   const features = buildLocalCanvasIndexFeatures('Project Alpha #Travel @Alice 2026-08-12 明天')
   assert.ok(features.vector.project > 0)
@@ -102,8 +137,11 @@ test('persistence and worker source preserve atomic save and resumable tombstone
   assert.match(indexDb, /on conflict\(canvasId, nodeId, contentRevision, operation\) do update set/)
   assert.match(indexDb, /state = 'running'[\s\S]*state = 'retry'/)
   assert.match(indexDb, /delete from canvas_index_anchors[\s\S]*delete from canvas_index_embeddings/)
+  assert.match(indexDb, /planCanvasIndexDelete[\s\S]*enqueueCanvasIndexJobDrafts[\s\S]*completeCanvasIndexJob/)
   assert.match(indexDb, /removeAbsentCanvasIndexNodes/)
   assert.match(indexStore, /drainReadyCanvasIndexJobs/)
+  assert.match(indexStore, /shouldStop:[\s\S]*activeWorkerShouldStop/)
+  assert.match(indexStore, /await drainPromise/)
   assert.match(indexStore, /queueCanvasIndexRebuild/)
   assert.match(startup, /startCanvasIndexWorker\(\)/)
   assert.match(startup, /stopCanvasIndexWorker/)

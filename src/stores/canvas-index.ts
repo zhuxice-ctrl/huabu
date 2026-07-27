@@ -7,27 +7,32 @@ import {
   resetAbandonedCanvasIndexJobs,
   retryCanvasIndexJob,
 } from '@/db/canvas-index'
-import { registerCanvasIndexCandidateQueryProvider } from '@/lib/canvas/canvas-index-jobs'
+import {
+  drainCanvasIndexJobQueue,
+  notifyCanvasIndexJobProcessed,
+  registerCanvasIndexCandidateQueryProvider,
+} from '@/lib/canvas/canvas-index-jobs'
 
 const WORKER_IDLE_DELAY_MS = 1_000
-let workerStop: (() => void) | null = null
+let workerStop: (() => Promise<void>) | null = null
 let drainPromise: Promise<number> | null = null
+let activeWorkerShouldStop: (() => boolean) | null = null
 
 export async function drainReadyCanvasIndexJobs(): Promise<number> {
   if (drainPromise) return drainPromise
-  drainPromise = (async () => {
-    let processed = 0
-    for (;;) {
-      const job = await claimReadyCanvasIndexJob()
-      if (!job) return processed
+  drainPromise = drainCanvasIndexJobQueue({
+    claim: claimReadyCanvasIndexJob,
+    process: processCanvasIndexJob,
+    retry: retryCanvasIndexJob,
+    shouldStop: () => activeWorkerShouldStop?.() ?? false,
+    onProcessed: async job => {
       try {
-        await processCanvasIndexJob(job)
+        await notifyCanvasIndexJobProcessed(job)
       } catch (error) {
-        await retryCanvasIndexJob(job, error)
+        console.error('Canvas overlay classification failed:', error)
       }
-      processed += 1
-    }
-  })().finally(() => {
+    },
+  }).finally(() => {
     drainPromise = null
   })
   return drainPromise
@@ -43,15 +48,18 @@ export async function queueCanvasIndexRetry(canvasId: string, nodeId?: string) {
   await persistCanvasIndexRebuild(canvasId)
 }
 
-export async function startCanvasIndexWorker(): Promise<() => void> {
+export async function startCanvasIndexWorker(): Promise<() => Promise<void>> {
   if (workerStop) return workerStop
   let stopped = false
   let timer: ReturnType<typeof setTimeout> | null = null
-  const stop = () => {
+  activeWorkerShouldStop = () => stopped
+  const stop = async () => {
     stopped = true
     if (timer) clearTimeout(timer)
     timer = null
     registerCanvasIndexCandidateQueryProvider(null)
+    await drainPromise?.catch(() => undefined)
+    if (activeWorkerShouldStop?.()) activeWorkerShouldStop = null
     if (workerStop === stop) workerStop = null
   }
   workerStop = stop
@@ -71,6 +79,6 @@ export async function startCanvasIndexWorker(): Promise<() => void> {
   return stop
 }
 
-export function stopCanvasIndexWorker() {
-  workerStop?.()
+export async function stopCanvasIndexWorker() {
+  await workerStop?.()
 }

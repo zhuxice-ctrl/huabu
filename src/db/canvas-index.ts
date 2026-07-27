@@ -3,6 +3,7 @@ import {
   canvasNodeContentRevision,
   buildLocalCanvasIndexFeatures,
   extractCanvasNodeIndexText,
+  planCanvasIndexDelete,
   planCanvasIndexRebuild,
   retryDelayMs,
   type CandidateQuery,
@@ -182,8 +183,8 @@ export async function claimReadyCanvasIndexJob(now = Date.now()): Promise<Canvas
   }
 }
 
-export async function completeCanvasIndexJob(id: string) {
-  const db = await getDb()
+export async function completeCanvasIndexJob(id: string, executor?: SqlExecutor) {
+  const db = executor ?? await getDb()
   await db.execute(
     `update canvas_index_jobs set state = 'complete', updatedAt = $1, lastError = null where id = $2`,
     [Date.now(), id],
@@ -235,8 +236,20 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
   if (job.operation === 'delete') {
     await db.execute('BEGIN IMMEDIATE')
     try {
-      await removeCanvasIndexNode(job.canvasId, job.nodeId, db)
-      await completeCanvasIndexJob(job.id)
+      const rows = await db.select<Array<{ content: string }>>(
+        'select content from canvases where id = $1 and deletedAt is null limit 1',
+        [job.canvasId],
+      )
+      const document = rows[0]
+        ? normalizeCanvasDocument(JSON.parse(rows[0].content))
+        : DEFAULT_CANVAS_DOCUMENT
+      const plan = planCanvasIndexDelete(document, job.nodeId)
+      if (plan.remove) {
+        await removeCanvasIndexNode(job.canvasId, job.nodeId, db)
+      } else if (plan.ensureUpsert) {
+        await enqueueCanvasIndexJobDrafts(job.canvasId, [plan.ensureUpsert], db)
+      }
+      await completeCanvasIndexJob(job.id, db)
       await db.execute('COMMIT')
     } catch (error) {
       try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
@@ -305,6 +318,32 @@ export async function processCanvasIndexJob(job: CanvasIndexJob) {
     [job.canvasId, job.nodeId, currentRevision, JSON.stringify(features.vector), now],
   )
   await completeCanvasIndexJob(job.id)
+}
+
+export async function getCanvasIndexSourceCandidate(canvasId: string, nodeId: string): Promise<(
+  CanvasIndexCandidate & { text: string }
+) | null> {
+  const db = await getDb()
+  const rows = await db.select<CanvasIndexAnchorRow[]>(
+    `select a.canvasId, a.nodeId, a.contentRevision, a.content, a.entities, a.timeTerms,
+       e.embedding
+     from canvas_index_anchors a
+     left join canvas_index_embeddings e
+       on e.canvasId = a.canvasId and e.nodeId = a.nodeId and e.model = 'local-sparse-v1'
+     where a.canvasId = $1 and a.nodeId = $2 limit 1`,
+    [canvasId, nodeId],
+  )
+  const row = rows[0]
+  if (!row) return null
+  return {
+    canvasId: row.canvasId,
+    nodeId: row.nodeId,
+    contentRevision: row.contentRevision,
+    excerpt: row.content.slice(0, 500),
+    text: row.content,
+    score: 1,
+    matchedBy: ['vector'],
+  }
 }
 
 function tokenize(value: string): string[] {
