@@ -137,6 +137,17 @@ test('database commit revalidates revision, permission and collision inside the 
   assert.match(commitBody, /isDerivedOverlayCanvasOperation/)
 })
 
+test('AI ledger initializer is statically imported without an index initialization cycle', async () => {
+  const [indexSource, ledgerSource] = await Promise.all([
+    readFile(new URL('../../src/db/index.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/db/canvas-ai-transactions.ts', import.meta.url), 'utf8'),
+  ])
+  assert.match(indexSource, /import\s*\{\s*initCanvasAiTransactionsDb\s*\}\s*from\s*['"]\.\/canvas-ai-transactions['"]/)
+  assert.doesNotMatch(indexSource, /await import\(['"]\.\/canvas-ai-transactions['"]\)/)
+  assert.match(ledgerSource, /import\s*\{\s*getDb\s*\}\s*from\s*['"]\.\/client['"]/)
+  assert.doesNotMatch(ledgerSource, /from\s*['"]\.\/index['"]/)
+})
+
 test('editor publishes the live revision in a layout effect before paint', async () => {
   const source = await readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8')
   assert.match(source, /useLayoutEffect\(\(\) => \{[\s\S]*publishCanvasAiRuntimeSnapshot/)

@@ -15,7 +15,7 @@ import {
 } from '@/lib/canvas/ai-permission'
 import { applyValidatedCanvasOperations } from '@/lib/canvas/operations'
 import type { ViewportSnapshot } from '@/lib/canvas/viewport-sizing'
-import { getDb } from './index'
+import { getDb } from './client'
 
 interface CanvasAiTransactionRow {
   transactionId: string

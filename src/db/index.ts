@@ -1,13 +1,7 @@
 
-import Database from '@tauri-apps/plugin-sql';
+import { initCanvasAiTransactionsDb } from './canvas-ai-transactions'
 
-// 导出数据库实例
-export const db = await Database.load('sqlite:note.db');
-
-// 获取数据库实例(兼容旧代码)
-export async function getDb() {
-  return db;
-}
+export { db, getDb } from './client'
 
 let initAllDatabasesPromise: Promise<void> | null = null
 
@@ -22,7 +16,6 @@ async function runDatabaseInitialization() {
   const { initMemoriesDb } = await import('./memories');
   const { initActivityDb } = await import('./activity');
   const { initCanvasesDb } = await import('./canvases');
-  const { initCanvasAiTransactionsDb } = await import('./canvas-ai-transactions');
 
   // 执行初始化：先确保基础表存在，再做 conversations 对 chats 的迁移/补列。
   await initChatsDb();
