@@ -106,40 +106,36 @@ export async function startRecognition(language = 'zh-CN') {
       useSpeechRecognitionStore.setState({ recognition: null, isRecognizing: false })
     }
   }
-
-  await new Promise<void>((resolve, reject) => {
-    recognition.onstart = () => {
-      startupPending = false
-      resolve()
+  recognition.onstart = () => {
+    startupPending = false
+  }
+  recognition.onerror = (event) => {
+    console.error('语音识别错误:', event.error)
+    if (useSpeechRecognitionStore.getState().recognition === recognition) {
+      useSpeechRecognitionStore.setState({
+        recognition: null,
+        isRecognizing: false,
+        lastError: event.error || (startupPending
+          ? 'speech-recognition-start-error'
+          : 'speech-recognition-error'),
+      })
     }
+  }
 
-    recognition.onerror = (event) => {
-      console.error('语音识别错误:', event.error)
-      if (useSpeechRecognitionStore.getState().recognition === recognition) {
-        useSpeechRecognitionStore.setState({
-          recognition: null,
-          isRecognizing: false,
-          lastError: event.error || 'speech-recognition-error',
-        })
-      }
-      if (startupPending) reject(new Error(event.error || 'speech-recognition-error'))
-    }
-
-    useSpeechRecognitionStore.setState({
-      recognition,
-      isRecognizing: true,
-      transcript: '',
-      interimTranscript: '',
-      lastError: null,
-    })
-
-    try {
-      recognition.start()
-    } catch (error) {
-      useSpeechRecognitionStore.setState({ recognition: null, isRecognizing: false })
-      reject(error)
-    }
+  useSpeechRecognitionStore.setState({
+    recognition,
+    isRecognizing: true,
+    transcript: '',
+    interimTranscript: '',
+    lastError: null,
   })
+
+  try {
+    recognition.start()
+  } catch (error) {
+    useSpeechRecognitionStore.setState({ recognition: null, isRecognizing: false })
+    throw error
+  }
 }
 
 export async function stopRecognition() {
@@ -149,33 +145,16 @@ export async function stopRecognition() {
     return composeSpeechRecognitionText(state.transcript, state.interimTranscript)
   }
 
-  return new Promise<string>((resolve) => {
-    const originalOnEnd = recognition.onend
-    let settled = false
-    const finish = () => {
-      if (settled) return
-      settled = true
-      originalOnEnd?.()
-      const current = useSpeechRecognitionStore.getState()
-      const finalTranscript = composeSpeechRecognitionText(
-        current.transcript,
-        current.interimTranscript,
-      )
-      useSpeechRecognitionStore.setState({
-        recognition: null,
-        isRecognizing: false,
-        interimTranscript: '',
-      })
-      resolve(finalTranscript)
-    }
-
-    recognition.onend = finish
-    try {
-      recognition.stop()
-    } catch {
-      finish()
-    }
-  })
+  const recognizedText = composeSpeechRecognitionText(
+    state.transcript,
+    state.interimTranscript,
+  )
+  try {
+    recognition.stop()
+  } catch {
+    useSpeechRecognitionStore.setState({ recognition: null, isRecognizing: false })
+  }
+  return recognizedText
 }
 
 export function resetSpeechRecognition() {
