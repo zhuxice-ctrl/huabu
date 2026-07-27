@@ -301,7 +301,7 @@ interface PlacementPreview {
 }
 
 interface GeometryUiState {
-  drawDraft: DrawGeometrySession | null
+  drawDraft: DrawDraft | null
   snapGuides: CanvasSnapGuide[]
   legacyConflictIds: Set<string>
   nodeVisualStates: Map<string, CanvasNodeVisualState>

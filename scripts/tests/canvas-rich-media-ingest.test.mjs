@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   draftsFromTransfer,
+  getNativeVideoPlaybackUrl,
   transferUrlChoice,
 } from '../../src/lib/canvas/content-ingest.ts'
 
@@ -43,6 +44,41 @@ test('URL paste requests a lightweight link-versus-preview or link-versus-video 
     { url: 'https://cdn.example.com/demo.mp4', mediaKind: 'video' },
   )
   assert.equal(transferUrlChoice({ files: [new File(['x'], 'x.txt')], html: '', text: 'https://example.com' }), null)
+})
+
+test('Windows video files fall back to a constrained extension set for blank or generic MIME', () => {
+  const files = [
+    new File(['video'], 'walkthrough.MP4'),
+    new File(['video'], 'screen-recording.webm', { type: 'application/octet-stream' }),
+    new File(['video'], 'legacy.avi'),
+    new File(['text'], 'misleading.mov', { type: 'text/plain' }),
+  ]
+
+  assert.deepEqual(
+    draftsFromTransfer({ files, html: '', text: '' }).map(draft => draft.kind),
+    ['video', 'video', 'file', 'file'],
+  )
+})
+
+test('hosted video pages stay non-native while direct media URLs remain playable', () => {
+  const hostedPages = [
+    'https://www.youtube.com/watch?v=demo',
+    'https://vimeo.com/123456789',
+    'https://player.vimeo.com/video/123456789.mp4',
+    'https://www.bilibili.com/video/BV1demo',
+  ]
+
+  for (const url of hostedPages) {
+    assert.deepEqual(
+      transferUrlChoice({ files: [], html: '', text: url }),
+      { url, mediaKind: 'video' },
+    )
+    assert.equal(draftsFromTransfer({ files: [], html: '', text: url, urlChoice: 'video' })[0].kind, 'video')
+    assert.equal(getNativeVideoPlaybackUrl(url), null)
+  }
+
+  const directUrl = 'https://cdn.example.com/media/demo.mp4?token=example#playback'
+  assert.equal(getNativeVideoPlaybackUrl(directUrl), directUrl)
 })
 
 test('archives remain shallow attachments and videos do not promise transcription', () => {
@@ -100,6 +136,7 @@ test('planned renderers lazy-load local media, isolate failures and keep source 
   assert.match(pdf, /onError=/)
   assert.match(pdf, /openPath/)
   assert.match(video, /IntersectionObserver/)
+  assert.match(video, /getNativeVideoPlaybackUrl\(remoteUrl\)/)
   assert.match(video, /preload="metadata"/)
   assert.match(video, /onError=/)
   assert.match(video, /open(?:Path|Url)/)

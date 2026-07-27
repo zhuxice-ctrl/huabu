@@ -53,6 +53,7 @@ const MARKDOWN_EXTENSIONS = new Set([
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'])
 const ONBOARDING_PROGRESS_STORE_KEY = 'desktopOnboardingProgress'
 export function EditorLayout(_props: { mode?: 'documents-only' } = {}) {
+  void _props
   const {
     activeFilePath,
     fileTree,

@@ -6,6 +6,7 @@ import { ExternalLink, VideoOff } from 'lucide-react'
 import { openPath, openUrl } from '@tauri-apps/plugin-opener'
 import { BaseNode } from '@/components/base-node'
 import { Button } from '@/components/ui/button'
+import { getNativeVideoPlaybackUrl } from '@/lib/canvas/content-ingest'
 import { cn, convertImageByWorkspace } from '@/lib/utils'
 import { getFilePathOptions } from '@/lib/workspace'
 import type { CanvasNodeData } from '@/types/canvas'
@@ -16,13 +17,19 @@ function loadVisibleVideo(
   video: HTMLVideoElement,
   loader: HTMLDivElement,
   failure: HTMLDivElement,
+  hostedPage: HTMLDivElement,
   filePath: string,
   remoteUrl: string,
 ) {
   if (remoteUrl) {
-    video.src = remoteUrl
-    video.hidden = false
     loader.hidden = true
+    const nativePlaybackUrl = getNativeVideoPlaybackUrl(remoteUrl)
+    if (nativePlaybackUrl) {
+      video.src = nativePlaybackUrl
+      video.hidden = false
+    } else {
+      hostedPage.hidden = false
+    }
     return
   }
   if (!filePath) {
@@ -45,6 +52,7 @@ export function VideoCanvasNode({ data, selected }: NodeProps<VideoFlowNode>) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const loaderRef = useRef<HTMLDivElement>(null)
   const brokenRef = useRef<HTMLDivElement>(null)
+  const hostedPageRef = useRef<HTMLDivElement>(null)
   const filePath = data.filePath || ''
   const remoteUrl = data.url || ''
 
@@ -53,18 +61,20 @@ export function VideoCanvasNode({ data, selected }: NodeProps<VideoFlowNode>) {
     const video = videoRef.current
     const loader = loaderRef.current
     const failure = brokenRef.current
-    if (!element || !video || !loader || !failure) return
+    const hostedPage = hostedPageRef.current
+    if (!element || !video || !loader || !failure || !hostedPage) return
     video.hidden = true
     loader.hidden = false
     failure.hidden = true
+    hostedPage.hidden = true
     if (typeof IntersectionObserver === 'undefined') {
-      loadVisibleVideo(video, loader, failure, filePath, remoteUrl)
+      loadVisibleVideo(video, loader, failure, hostedPage, filePath, remoteUrl)
       return
     }
     const observer = new IntersectionObserver(entries => {
       if (entries.some(entry => entry.isIntersecting)) {
         observer.disconnect()
-        loadVisibleVideo(video, loader, failure, filePath, remoteUrl)
+        loadVisibleVideo(video, loader, failure, hostedPage, filePath, remoteUrl)
       }
     }, { rootMargin: '240px' })
     observer.observe(element)
@@ -108,6 +118,10 @@ export function VideoCanvasNode({ data, selected }: NodeProps<VideoFlowNode>) {
         }}
       />
       <div ref={loaderRef} className="h-[calc(100%-2.75rem)] animate-pulse bg-muted" />
+      <div ref={hostedPageRef} hidden className="flex h-[calc(100%-2.75rem)] flex-col items-center justify-center gap-2 bg-muted p-4 text-center text-muted-foreground">
+        <VideoOff className="size-6" />
+        <span className="text-xs">托管视频页面不会自动播放，请打开源内容查看</span>
+      </div>
       <div ref={brokenRef} hidden className="flex h-[calc(100%-2.75rem)] flex-col items-center justify-center gap-2 bg-muted p-4 text-center text-muted-foreground">
         <VideoOff className="size-6" />
         <span className="text-xs">视频无法播放，源内容仍保留</span>

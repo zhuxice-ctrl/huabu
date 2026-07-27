@@ -320,6 +320,7 @@ export const NoteCanvasNode = memo(function ({ id, data, selected }: NodeProps<F
     </BaseNode>
   )
 })
+NoteCanvasNode.displayName = 'NoteCanvasNode'
 
 export const LinkCanvasNode = memo(function LinkCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   return (

@@ -20,7 +20,9 @@ const DEFAULT_SCREEN_FONT_SIZE = 15
 const MIN_CONTENT_SCALE = 0.1667
 const MAX_CONTENT_SCALE = 10
 const CANVAS_ASSET_DIRECTORY = '画布资源'
-const VIDEO_URL_RE = /(?:\.(?:m4v|mov|mp4|ogv|webm)(?:[?#]|$)|(?:bilibili\.com|vimeo\.com|youtu\.be|youtube\.com)\/)/i
+const VIDEO_FILE_EXTENSION_RE = /\.(?:m4v|mov|mp4|ogv|webm)$/i
+const GENERIC_BINARY_MIME_TYPES = new Set(['', 'application/octet-stream', 'binary/octet-stream'])
+const HOSTED_VIDEO_DOMAINS = ['bilibili.com', 'vimeo.com', 'youtu.be', 'youtube.com']
 
 export type CanvasUrlChoice = 'link' | 'video' | 'web-preview'
 
@@ -95,8 +97,43 @@ export interface CanvasTransferInput {
   urlChoice?: CanvasUrlChoice
 }
 
+function isHostedVideoHostname(hostname: string): boolean {
+  const normalizedHostname = hostname.toLowerCase()
+  return HOSTED_VIDEO_DOMAINS.some(domain => (
+    normalizedHostname === domain || normalizedHostname.endsWith(`.${domain}`)
+  ))
+}
+
+export function getNativeVideoPlaybackUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && !isHostedVideoHostname(parsed.hostname)
+      && VIDEO_FILE_EXTENSION_RE.test(parsed.pathname)
+      ? url
+      : null
+  } catch {
+    return null
+  }
+}
+
+function isHostedVideoPageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+    return isHostedVideoHostname(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
 function isVideoUrl(url: string): boolean {
-  return VIDEO_URL_RE.test(url)
+  return getNativeVideoPlaybackUrl(url) !== null || isHostedVideoPageUrl(url)
+}
+
+function isLocalVideoFile(file: File): boolean {
+  return file.type.startsWith('video/')
+    || (GENERIC_BINARY_MIME_TYPES.has(file.type.toLowerCase()) && VIDEO_FILE_EXTENSION_RE.test(file.name))
 }
 
 function webPreviewMetadata(url: string): CanvasWebPreviewMetadata {
@@ -160,7 +197,7 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
           screenSize: { width: 320, height: 220 },
         }
       }
-      if (file.type.startsWith('video/')) {
+      if (isLocalVideoFile(file)) {
         return { kind: 'video' as const, file, label: file.name, metadata: videoMetadata(file.name), screenSize: { width: 360, height: 220 } }
       }
       return {
