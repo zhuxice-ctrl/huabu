@@ -230,4 +230,16 @@ const useSpeechRecognitionStore = create<SpeechRecognitionState>((set, get) => (
   }
 }))
 
+export function startRecognition(language?: string) {
+  return useSpeechRecognitionStore.getState().startRecognition(language)
+}
+
+export function stopRecognition() {
+  return useSpeechRecognitionStore.getState().stopRecognition()
+}
+
+export function resetSpeechRecognition() {
+  useSpeechRecognitionStore.getState().resetState()
+}
+
 export default useSpeechRecognitionStore

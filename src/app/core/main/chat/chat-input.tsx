@@ -49,6 +49,9 @@ import useChatHudStore, {
 } from '@/stores/chat-hud'
 import useSpeechRecognitionStore, {
   composeSpeechRecognitionText,
+  resetSpeechRecognition,
+  startRecognition,
+  stopRecognition,
 } from '@/stores/speech-recognition'
 import { stopCurrentAudio } from '@/lib/audio'
 import {
@@ -133,9 +136,6 @@ export const ChatInput = React.memo(function ChatInput() {
     transcript,
     interimTranscript,
     lastError: speechRecognitionError,
-    startRecognition,
-    stopRecognition,
-    resetState: resetSpeechRecognition,
   } = useSpeechRecognitionStore()
   const { marks, trashState } = useMarkStore()
   const { activeFilePath, activeTabId } = useArticleStore()
@@ -167,9 +167,7 @@ export const ChatInput = React.memo(function ChatInput() {
   ), [activeCanvasId, currentConversationId, temporarySessionId])
   const initialDraftRef = useRef(getChatHudDraft(draftKey))
   const [text, setText] = useState(() => initialDraftRef.current?.text ?? '')
-  const [promptOrigin, setPromptOrigin] = useState<PromptOrigin>(
-    () => initialDraftRef.current?.promptOrigin ?? 'keyboard',
-  )
+  const promptOriginRef = useRef<PromptOrigin>(initialDraftRef.current?.promptOrigin ?? 'keyboard')
   const [linkedResource, setLinkedResource] = useState<LinkedResource | null>(
     () => (initialDraftRef.current?.linkedResource ?? null) as LinkedResource | null,
   )
@@ -193,14 +191,14 @@ export const ChatInput = React.memo(function ChatInput() {
   useEffect(() => {
     draftSnapshotRef.current = {
       text,
-      promptOrigin,
+      promptOrigin: promptOriginRef.current,
       attachedImages,
       fileAttachments,
       linkedResource,
       pendingQuote,
       editorSelectionQuote,
     }
-  }, [attachedImages, editorSelectionQuote, fileAttachments, linkedResource, pendingQuote, promptOrigin, text])
+  }, [attachedImages, editorSelectionQuote, fileAttachments, linkedResource, pendingQuote, text])
 
   useEffect(() => {
     useChatStore.setState({ linkedResource })
@@ -235,7 +233,7 @@ export const ChatInput = React.memo(function ChatInput() {
     if (!isRecognizing) return
     const recognizedText = composeSpeechRecognitionText(transcript, interimTranscript)
     if (!recognizedText) return
-    setPromptOrigin('microphone')
+    promptOriginRef.current = 'microphone'
     applyTypedText(recognizedText)
   }, [applyTypedText, interimTranscript, isRecognizing, transcript])
 
@@ -251,7 +249,7 @@ export const ChatInput = React.memo(function ChatInput() {
     if (isRecognizing) {
       const recognizedText = await stopRecognition()
       if (recognizedText) {
-        setPromptOrigin('microphone')
+        promptOriginRef.current = 'microphone'
         applyTypedText(recognizedText)
         textareaRef.current?.focus()
       }
@@ -770,7 +768,7 @@ export const ChatInput = React.memo(function ChatInput() {
       editorSelectionQuote: null,
     }
     setText('')
-    setPromptOrigin('keyboard')
+    promptOriginRef.current = 'keyboard'
     resetSpeechRecognition()
     setHistoryIndex(-1)
     setAttachedImages([])
@@ -1233,7 +1231,7 @@ ${previewLines.join('\n')}
             value={text}
             onChange={(e) => {
               if (!text.trim() && e.target.value.trim() && !isRecognizing) {
-                setPromptOrigin('keyboard')
+                promptOriginRef.current = 'keyboard'
               }
               applyTypedText(e.target.value)
             }}
@@ -1314,7 +1312,7 @@ ${previewLines.join('\n')}
               disabled={!primaryModel}
             />
             <AgentPermissionModeSelect />
-            <ChatSend inputValue={text} promptOrigin={promptOrigin} onSent={handleSent} linkedResource={linkedResource} attachedImages={attachedImages} fileAttachments={fileAttachments} quoteData={activeQuote} dockStyle={isMobile} ref={chatSendRef} />
+            <ChatSend inputValue={text} promptOrigin={promptOriginRef.current} onSent={handleSent} linkedResource={linkedResource} attachedImages={attachedImages} fileAttachments={fileAttachments} quoteData={activeQuote} dockStyle={isMobile} ref={chatSendRef} />
           </div>
         </div>
 

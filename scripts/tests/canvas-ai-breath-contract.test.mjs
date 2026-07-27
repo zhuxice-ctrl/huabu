@@ -11,7 +11,8 @@ test('speech recognition fills the composer and freezes microphone origin only o
   assert.match(input, /startRecognition/)
   assert.match(input, /stopRecognition/)
   assert.match(input, /applyTypedText\(recognizedText\)/)
-  assert.match(input, /promptOrigin=\{promptOrigin\}/)
+  assert.match(input, /promptOrigin=\{promptOriginRef\.current\}/)
+  assert.doesNotMatch(input, /setPromptOrigin/)
   assert.doesNotMatch(input, /stopRecognition[\s\S]{0,400}sendChat\(\)/)
 })
 
