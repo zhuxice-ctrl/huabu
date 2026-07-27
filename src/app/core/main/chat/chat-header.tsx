@@ -36,7 +36,6 @@ export function ChatHeader() {
     switchConversation,
     deleteConversation,
     chats,
-    loading,
   } = useChatStore()
   const { language } = useSettingStore()
   const t = useTranslations()
