@@ -9,10 +9,11 @@ export type AiOperationDecision =
   | { status: 'allowed'; requiresConfirmation: boolean }
   | { status: 'denied'; reason: string }
 
-const CANVAS_NODE_TYPES = new Set<CanvasNodeType>([
-  'process', 'decision', 'terminator', 'text', 'note', 'image', 'pdf', 'video',
-  'web-preview', 'file', 'link', 'todo', 'group', 'freehand',
-])
+export const AI_CREATABLE_CANVAS_NODE_TYPES: CanvasNodeType[] = [
+  'process', 'decision', 'terminator', 'text', 'note', 'image', 'file', 'link', 'todo',
+]
+
+const AI_CREATABLE_NODE_TYPES = new Set(AI_CREATABLE_CANVAS_NODE_TYPES)
 
 export const AI_RELATION_TYPES = [
   'same_topic',
@@ -140,6 +141,17 @@ export type ValidatedCanvasOperation =
   | DerivedOverlayCanvasOperation
   | SourceCanvasOperation
 
+export function isDerivedOverlayCanvasOperation(
+  operation: ValidatedCanvasOperation,
+): operation is DerivedOverlayCanvasOperation {
+  return [
+    'upsert_ai_tag',
+    'delete_ai_tag',
+    'upsert_ai_relation',
+    'delete_ai_relation',
+  ].includes(operation.type)
+}
+
 export type CanvasOperationParseResult =
   | { ok: true; operations: ValidatedCanvasOperation[] }
   | { ok: false; issues: string[] }
@@ -234,7 +246,7 @@ function validateOperation(value: Record<string, unknown>): string | null {
       : 'upsert_ai_relation 字段无效。'
   }
   if (type === 'add_node') {
-    return CANVAS_NODE_TYPES.has(value.nodeType as CanvasNodeType)
+    return AI_CREATABLE_NODE_TYPES.has(value.nodeType as CanvasNodeType)
       && isOptionalString(value.id)
       && isOptionalString(value.targetNodeId)
       && isOptionalString(value.label)
@@ -410,25 +422,20 @@ export interface CanvasEditingSession {
   reportSecurityFailure(): void
   isActive(now?: number): boolean
   expiresAt(): number | null
-  subscribe(listener: () => void): () => void
 }
 
 export const DEFAULT_CANVAS_EDITING_SESSION_TTL_MS = 15 * 60 * 1000
 
 export function createCanvasEditingSession(): CanvasEditingSession {
   let expiry: number | null = null
-  const listeners = new Set<() => void>()
   let timer: ReturnType<typeof setTimeout> | null = null
-  const notify = () => listeners.forEach(listener => listener())
   const clearTimer = () => {
     if (timer) clearTimeout(timer)
     timer = null
   }
   const revoke = () => {
-    const changed = expiry !== null
     expiry = null
     clearTimer()
-    if (changed) notify()
   }
   return {
     grant(input = {}) {
@@ -443,7 +450,6 @@ export function createCanvasEditingSession(): CanvasEditingSession {
       if (typeof window !== 'undefined' && input.now === undefined) {
         timer = setTimeout(revoke, ttlMs)
       }
-      notify()
     },
     revoke,
     reportSecurityFailure: revoke,
@@ -455,19 +461,27 @@ export function createCanvasEditingSession(): CanvasEditingSession {
       return true
     },
     expiresAt: () => expiry,
-    subscribe(listener) {
-      listeners.add(listener)
-      return () => listeners.delete(listener)
-    },
   }
 }
 
 export const canvasEditingSession = createCanvasEditingSession()
+
+export function resolveEffectiveAgentPermissionMode(
+  requestedMode: AgentPermissionMode | undefined,
+  session: CanvasEditingSession = canvasEditingSession,
+  now = Date.now(),
+): AgentPermissionMode {
+  if (requestedMode === 'read-only') return 'read-only'
+  if (requestedMode === 'auto-edit' && session.isActive(now)) return 'auto-edit'
+  return 'ask'
+}
 
 export function resolveCanvasAiMode(
   requestedMode: AgentPermissionMode | undefined,
   session: CanvasEditingSession = canvasEditingSession,
   now = Date.now(),
 ): CanvasAiMode {
-  return requestedMode === 'auto-edit' && session.isActive(now) ? 'editing' : 'management'
+  return resolveEffectiveAgentPermissionMode(requestedMode, session, now) === 'auto-edit'
+    ? 'editing'
+    : 'management'
 }

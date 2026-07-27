@@ -8,6 +8,11 @@ import { AgentPromptAssembler, hasInlineCurrentEditorSelection, hasInlineCurrent
 import { AgentRecoveryManager } from './recovery-manager'
 import { createAgentId, AgentTraceRecorder } from './trace-recorder'
 import { agentToolRegistry, buildEditorApprovalPreview } from './tool-registry'
+import {
+  authorizeCanvasToolCall,
+  cancelCanvasToolAuthorization,
+} from './tools/canvas-tools'
+import { resolveEffectiveAgentPermissionMode } from '@/lib/canvas/ai-permission'
 import { skillManager } from '@/lib/skills'
 import { buildMcpAgentToolCatalog } from '@/lib/mcp/agent-tools'
 import { agentDebugLog, previewText } from './debug-log'
@@ -790,6 +795,7 @@ export class AgentRuntime {
       selectedMcpServerIds: input.selectedMcpServerIds,
       attachments: input.attachments,
     }
+    const effectivePermissionMode = resolveEffectiveAgentPermissionMode(input.permissionMode)
 
     const mcpToolCatalog = buildMcpAgentToolCatalog(input.selectedMcpServerIds)
 
@@ -810,7 +816,7 @@ export class AgentRuntime {
 
     const allTools = [...agentToolRegistry.listTools(), ...mcpToolCatalog.directTools]
     const toolMap = new Map(allTools.map((tool) => [tool.name, tool]))
-    let tools = selectToolsForContext(context, allTools, input.permissionMode)
+    let tools = selectToolsForContext(context, allTools, effectivePermissionMode)
     const customSystemPrompt = await getSystemPromptContent()
     let systemPrompt = this.promptAssembler.assemble(
       context,
@@ -1042,7 +1048,7 @@ export class AgentRuntime {
       requiredAttachmentListIds = getRequiredAttachmentListIds(context)
       requiredAttachmentListId = requiredAttachmentListIds.shift()
       context.currentEditorState = undefined
-      tools = selectToolsForContext(context, allTools, input.permissionMode)
+      tools = selectToolsForContext(context, allTools, effectivePermissionMode)
       editorStateReadLocked = false
       editorSelectionReadLocked = hasInlineCurrentEditorSelection(context)
       invalidQuotedWriteRepairCount = 0
@@ -1704,13 +1710,29 @@ export class AgentRuntime {
             runId,
             signal: this.abortController?.signal,
             context,
-            permissionMode: input.permissionMode,
+            permissionMode: effectivePermissionMode,
             approved: false,
             modelId: aiConfig?.model,
           }
-          const permission = tool.authorize
-            ? await tool.authorize(args, toolPermissionContext)
-            : this.permissionEngine.evaluate(tool, args, input.permissionMode)
+          const canvasPermission = await authorizeCanvasToolCall(
+            toolName,
+            args,
+            toolPermissionContext,
+          )
+          const permission = canvasPermission
+            ?? this.permissionEngine.evaluate(tool, args, effectivePermissionMode)
+          const cancelToolAuthorization = async (reason: 'denied' | 'steered' | 'stopped') => {
+            try {
+              await cancelCanvasToolAuthorization(toolName, toolPermissionContext, reason)
+            } catch (error) {
+              agentDebugLog('authorization_cancel_cleanup_failed', {
+                runId,
+                toolName,
+                reason,
+                error: error instanceof Error ? error.message : String(error),
+              })
+            }
+          }
           agentDebugLog('permission_decision', {
             runId,
             toolName,
@@ -1758,7 +1780,9 @@ export class AgentRuntime {
             callbacks.onTrace?.(approvalTrace)
 
             const approvalPreview = await buildEditorApprovalPreview(tool.name, args)
+              ?? permission.approvalPreview
             if (this.stopped) {
+              await cancelToolAuthorization('stopped')
               throw new Error('USER_STOPPED')
             }
             let approvalDecision = this.steeringRequested
@@ -1777,6 +1801,7 @@ export class AgentRuntime {
             })
 
             if (this.stopped) {
+              await cancelToolAuthorization('stopped')
               throw new Error('USER_STOPPED')
             }
             if (this.steeringRequested) {
@@ -1784,6 +1809,7 @@ export class AgentRuntime {
             }
 
             if (approvalDecision === 'steered') {
+              await cancelToolAuthorization('steered')
               const supersededResult: AgentToolResult = {
                 ok: false,
                 message: '用户追加了新的引导信息，本次待确认操作已取消。',
@@ -1803,6 +1829,7 @@ export class AgentRuntime {
             }
 
             if (approvalDecision !== 'approved') {
+              await cancelToolAuthorization('denied')
               const deniedResult: AgentToolResult = {
                 ok: false,
                 message: '用户拒绝了这个操作。请不要重复调用同一高风险工具，改用只读回答或询问用户新的处理方式。',
@@ -1921,10 +1948,13 @@ export class AgentRuntime {
                 runId,
                 this.abortController?.signal,
                 context,
-                input.permissionMode,
+                effectivePermissionMode,
                 userApproved,
                 aiConfig?.model,
               )
+          if (repeatedSuccessfulMutation || repeatedFailedMutation) {
+            await cancelToolAuthorization('denied')
+          }
           const folderAttachmentProgress = getFolderAttachmentProgress(tool.name, args, result)
           const duration = Date.now() - startedAt
           agentDebugLog('tool_execute_end', {

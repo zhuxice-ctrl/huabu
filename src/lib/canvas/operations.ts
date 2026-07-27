@@ -1,14 +1,11 @@
 import type { CanvasDocument, CanvasEdge, CanvasNodeType } from '@/types/canvas'
 import { resolveAiNodeContentScale, resolveAiNodeFontSize, resolveAiNodeSize } from './content-ingest.ts'
 import {
+  AI_CREATABLE_CANVAS_NODE_TYPES,
   parseCanvasOperations,
   type SourceCanvasOperation,
   type ValidatedCanvasOperation,
 } from './ai-permission.ts'
-
-const AI_CREATABLE_NODE_TYPES: CanvasNodeType[] = [
-  'process', 'decision', 'terminator', 'text', 'note', 'image', 'file', 'link', 'todo',
-]
 
 function isSourceOperation(operation: ValidatedCanvasOperation): operation is SourceCanvasOperation {
   return ['add_node', 'update_node', 'delete_node', 'add_edge', 'delete_edge', 'layout', 'clear']
@@ -37,9 +34,8 @@ export function applyValidatedCanvasOperations(
 
     if (type === 'add_node') {
       const requestedType = operation.nodeType
-      const nodeType: CanvasNodeType = AI_CREATABLE_NODE_TYPES.includes(requestedType)
-        ? requestedType
-        : 'process'
+      if (!AI_CREATABLE_CANVAS_NODE_TYPES.includes(requestedType)) continue
+      const nodeType: CanvasNodeType = requestedType
       const id = operation.id || crypto.randomUUID()
       if (nodes.some(node => node.id === id)) continue
       const index = nodes.length

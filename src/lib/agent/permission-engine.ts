@@ -8,6 +8,7 @@ export interface PermissionDecision {
   allowed: boolean
   requiresApproval: boolean
   reason?: string
+  approvalPreview?: { previewParams: Record<string, unknown> }
   canApproveForSession?: boolean
   sessionApprovalType?: 'runtime-script'
   sessionApprovalKey?: string

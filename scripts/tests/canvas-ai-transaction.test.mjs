@@ -100,6 +100,11 @@ test('agent mutation path previews and commits through the AI ledger without dir
   assert.match(source, /authorizeCanvasProposal/)
   assert.match(source, /stageDocumentForAiPreview/)
   assert.match(source, /getCanvasAiRuntimeSnapshot/)
+  assert.match(source, /authorizeCanvasToolCall/)
+  assert.match(source, /cancelCanvasToolAuthorization/)
+  assert.match(source, /approvalPreview:[\s\S]*impact:/)
+  assert.match(source, /permissionMode === 'read-only'/)
+  assert.match(source, /canvas-agent-preview-clear/)
   assert.doesNotMatch(source, /store\.updateDocument\s*\(/)
 })
 
@@ -112,4 +117,11 @@ test('database commit revalidates revision, permission and collision inside the 
   assert.match(commitBody, /authorizeCanvasProposal/)
   assert.match(commitBody, /validateCanvasAiGeometry/)
   assert.match(commitBody, /applyValidatedCanvasOperations/)
+  assert.match(commitBody, /canvas_ai_overlay_operations/)
+  assert.match(commitBody, /isDerivedOverlayCanvasOperation/)
+})
+
+test('editor publishes the live revision in a layout effect before paint', async () => {
+  const source = await readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8')
+  assert.match(source, /useLayoutEffect\(\(\) => \{[\s\S]*publishCanvasAiRuntimeSnapshot/)
 })

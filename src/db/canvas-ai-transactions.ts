@@ -9,6 +9,7 @@ import {
 } from '@/lib/canvas/ai-transaction'
 import {
   authorizeCanvasProposal,
+  isDerivedOverlayCanvasOperation,
   type CanvasAiMode,
   type ValidatedCanvasOperation,
 } from '@/lib/canvas/ai-permission'
@@ -68,6 +69,23 @@ export async function initCanvasAiTransactionsDb() {
   await db.execute(`
     create index if not exists canvas_ai_transactions_canvas_created
     on canvas_ai_transactions(canvasId, createdAt desc)
+  `)
+  await db.execute(`
+    create table if not exists canvas_ai_overlay_operations (
+      transactionId text not null,
+      operationIndex integer not null,
+      canvasId text not null,
+      operationType text not null,
+      operationJson text not null,
+      state text not null check (state in ('active', 'rolled_back')),
+      createdAt integer not null,
+      primary key (transactionId, operationIndex),
+      foreign key (transactionId) references canvas_ai_transactions(transactionId)
+    )
+  `)
+  await db.execute(`
+    create index if not exists canvas_ai_overlay_operations_canvas_state
+    on canvas_ai_overlay_operations(canvasId, state, createdAt desc)
   `)
 }
 
@@ -160,7 +178,7 @@ export async function commitCanvasAiTransaction(input: {
   viewport: ViewportSnapshot
   approved: boolean
   approvedAt?: number
-}): Promise<{ appliedAt: number; document: CanvasDocument }> {
+}): Promise<{ appliedAt: number; document: CanvasDocument; documentChanged: boolean }> {
   const db = await getDb()
   const approvedAt = input.approvedAt ?? Date.now()
   try {
@@ -199,13 +217,18 @@ export async function commitCanvasAiTransaction(input: {
       throw new Error('AI 操作需要用户确认，但本次执行没有有效确认。')
     }
     const result = applyValidatedCanvasOperations(current, input.operations)
-    if (result.applied === 0) throw new Error('没有可应用的来源画布操作。')
-    const geometry = validateCanvasAiGeometry({
-      before: current,
-      after: result.document,
-      viewport: input.viewport,
-    })
-    if (!geometry.valid) throw new Error(geometry.reason)
+    const overlayOperations = input.operations.filter(isDerivedOverlayCanvasOperation)
+    if (result.applied === 0 && overlayOperations.length === 0) {
+      throw new Error('没有可应用的画布或派生层操作。')
+    }
+    if (result.applied > 0) {
+      const geometry = validateCanvasAiGeometry({
+        before: current,
+        after: result.document,
+        viewport: input.viewport,
+      })
+      if (!geometry.valid) throw new Error(geometry.reason)
+    }
     if (canvasDocumentRevision(result.document) !== transaction.afterRevision) {
       throw new Error('AI 操作结果与已展示的预览不一致。')
     }
@@ -216,10 +239,27 @@ export async function commitCanvasAiTransaction(input: {
       [approvedAt, input.transactionId],
     )
     const appliedAt = Date.now()
-    await db.execute(
-      'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
-      [JSON.stringify(result.document), result.document.schemaVersion, appliedAt, input.canvasId],
-    )
+    if (result.applied > 0) {
+      await db.execute(
+        'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
+        [JSON.stringify(result.document), result.document.schemaVersion, appliedAt, input.canvasId],
+      )
+    }
+    for (const [operationIndex, operation] of overlayOperations.entries()) {
+      await db.execute(
+        `insert into canvas_ai_overlay_operations (
+          transactionId, operationIndex, canvasId, operationType, operationJson, state, createdAt
+        ) values ($1, $2, $3, $4, $5, 'active', $6)`,
+        [
+          input.transactionId,
+          operationIndex,
+          input.canvasId,
+          operation.type,
+          JSON.stringify(operation),
+          appliedAt,
+        ],
+      )
+    }
     await db.execute(
       `update canvas_ai_transactions
        set state = 'applied', appliedAt = $1
@@ -227,7 +267,7 @@ export async function commitCanvasAiTransaction(input: {
       [appliedAt, input.transactionId],
     )
     await db.execute('COMMIT')
-    return { appliedAt, document: result.document }
+    return { appliedAt, document: result.document, documentChanged: result.applied > 0 }
   } catch (error) {
     try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     await failCanvasAiTransaction(input.transactionId, error)
@@ -239,6 +279,7 @@ export async function rollbackCanvasAiTransaction(transactionId: string): Promis
   canvasId: string
   document: CanvasDocument
   rolledBackAt: number
+  documentChanged: boolean
 }> {
   const db = await getDb()
   try {
@@ -256,17 +297,27 @@ export async function rollbackCanvasAiTransaction(transactionId: string): Promis
     const current = canvasRows[0]
       ? parseJson<CanvasDocument | null>(canvasRows[0].content, null)
       : null
-    if (!current || canvasDocumentRevision(current) !== row.afterRevision) {
+    if (!current) throw new Error('画布不存在或已删除。')
+    const documentChanged = row.beforeRevision !== row.afterRevision
+    if (documentChanged && canvasDocumentRevision(current) !== row.afterRevision) {
       throw new Error('画布在 AI 操作后已变化；为避免覆盖用户修改，本次回滚已取消。')
     }
     const patches = parseJson<CanvasAiPatch[]>(row.inversePatch, [])
     const replacement = patches.findLast(patch => patch.op === 'replace_document')?.document
     if (!replacement) throw new Error('AI 事务缺少完整逆向补丁。')
-    const document = structuredClone(replacement)
+    const document = documentChanged ? structuredClone(replacement) : current
     const rolledBackAt = Date.now()
+    if (documentChanged) {
+      await db.execute(
+        'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
+        [JSON.stringify(document), document.schemaVersion, rolledBackAt, row.canvasId],
+      )
+    }
     await db.execute(
-      'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
-      [JSON.stringify(document), document.schemaVersion, rolledBackAt, row.canvasId],
+      `update canvas_ai_overlay_operations
+       set state = 'rolled_back'
+       where transactionId = $1 and state = 'active'`,
+      [transactionId],
     )
     await db.execute(
       `update canvas_ai_transactions
@@ -275,7 +326,7 @@ export async function rollbackCanvasAiTransaction(transactionId: string): Promis
       [rolledBackAt, transactionId],
     )
     await db.execute('COMMIT')
-    return { canvasId: row.canvasId, document, rolledBackAt }
+    return { canvasId: row.canvasId, document, rolledBackAt, documentChanged }
   } catch (error) {
     try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     throw error

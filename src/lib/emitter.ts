@@ -139,8 +139,6 @@ interface Events {
   'canvas-undo-redo-changed': { canvasId: string; undo: boolean; redo: boolean };
   'canvas-agent-preview': { operations: unknown[] };
   'canvas-agent-preview-clear': void;
-  'canvas-ai-transaction-applied': { canvasId: string; transactionId: string; document: CanvasDocument };
-  'canvas-ai-transaction-rolled-back': { canvasId: string; transactionId: string; document: CanvasDocument };
   'canvas-auto-layout': { recordHistory?: boolean };
   'editor-replace': {
     content?: string;

@@ -6,6 +6,7 @@ import {
   authorizeCanvasProposal,
   createCanvasEditingSession,
   parseCanvasOperations,
+  resolveEffectiveAgentPermissionMode,
   resolveCanvasAiMode,
 } from '../../src/lib/canvas/ai-permission.ts'
 
@@ -54,6 +55,7 @@ test('strictly parses the complete operation batch before authorization', () => 
     [{ type: 'unknown', id: 'n1' }],
     [{ type: 'update_node', id: 'n1' }],
     [{ type: 'add_node', nodeType: 'process', width: -1 }],
+    [{ type: 'add_node', nodeType: 'pdf' }],
     [{ type: 'read_canvas' }, 'not-an-operation'],
   ]) {
     const parsed = parseCanvasOperations(operations)
@@ -100,6 +102,7 @@ test('editing sessions are memory-only and expire on timeout or security failure
   session.grant({ now: 200, ttlMs: 50 })
   session.reportSecurityFailure()
   assert.equal(resolveCanvasAiMode('auto-edit', session, 201), 'management')
+  assert.equal(resolveEffectiveAgentPermissionMode('auto-edit', session, 201), 'ask')
   assert.equal(createCanvasEditingSession().isActive(0), false)
 })
 
