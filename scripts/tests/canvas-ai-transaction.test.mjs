@@ -13,6 +13,7 @@ import {
   redactCanvasAiInstruction,
   validateCanvasAiGeometry,
 } from '../../src/lib/canvas/ai-transaction.ts'
+import { formatConfirmationPreview } from '../../src/lib/agent/tool-confirmation-display.ts'
 
 const viewport = Object.freeze({
   x: 0,
@@ -106,6 +107,21 @@ test('agent mutation path previews and commits through the AI ledger without dir
   assert.match(source, /permissionMode === 'read-only'/)
   assert.match(source, /canvas-agent-preview-clear/)
   assert.doesNotMatch(source, /store\.updateDocument\s*\(/)
+})
+
+test('canvas approval presents transaction, mode and impact before raw operations', () => {
+  const preview = formatConfirmationPreview('canvas_apply_operations', {
+    operations: [{ type: 'delete_node', id: 'n1' }],
+    transactionId: 'tx1',
+    mode: 'editing',
+    impact: { movedSolidNodeCount: 9, maxScreenMovement: 401 },
+  })
+  assert.deepEqual(preview.fields.map(field => field.name), [
+    'transactionId',
+    'mode',
+    'impact',
+    'operations',
+  ])
 })
 
 test('database commit revalidates revision, permission and collision inside the SQL transaction', async () => {
