@@ -1,84 +1,92 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-09-rich-media",
+  "task_id": "zeroxb-integrated-task-10-chat-canvas-context",
   "status": "passed",
-  "source_revision": "449873988d15b24dff55706bcd096a8a453a709e",
+  "source_revision": "08767a0173f2fda6d974fc5da269b3e19b827b0f",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-rich-media-ingest.test.mjs",
+      "command": "node --test scripts/tests/canvas-chat-context.test.mjs scripts/tests/canvas-chat-db-contract.test.mjs",
       "status": "passed",
-      "summary": "Final focused Task 9 tests passed 8/8.",
+      "summary": "Focused Task 10 tests passed 6/6 after both review fixes and the graph-safe navigation correction.",
       "exit_code": 0
     },
     {
-      "command": "npm run test:canvas",
+      "command": "pnpm test:canvas",
       "status": "passed",
-      "summary": "Complete Canvas suite passed 127/127.",
+      "summary": "Complete Canvas suite passed 133/133 at the final source revision.",
       "exit_code": 0
     },
     {
-      "command": "node_modules\\.bin\\tsc.cmd --noEmit",
+      "command": "pnpm exec tsc --noEmit",
       "status": "passed",
       "summary": "TypeScript typecheck completed without diagnostics.",
       "exit_code": 0
     },
     {
-      "command": "$env:pnpm_config_verify_deps_before_run='false'; npm run build",
+      "command": "$env:pnpm_config_verify_deps_before_run='false'; pnpm build",
       "status": "passed",
-      "summary": "Production compile, lint and type validation, 53 static pages, export and source-map pruning passed without changing repository dependency policy.",
+      "summary": "Production compile, lint/type validation, 53 static pages, export and source-map pruning passed at the final source revision.",
       "exit_code": 0
     },
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors were found in the final Task 9 product diff.",
+      "summary": "No whitespace errors were found in the Task 10 product diff.",
       "exit_code": 0
     },
     {
-      "command": "installed l2_codegraph.safety.post_edit_impact against immutable baseline/current SQLite graphs with only in-memory _reverse_impact item budget raised to 50000",
+      "command": "installed l2_codegraph.safety.post_edit_impact with in-memory reverse-impact budget 50000",
       "status": "passed",
-      "summary": "Exhausted the frontier at current graph revision ee97336f148549aa5e742b9c: predicted and observed files 327/327, unexpected impact 0, new production critical edges 0, new test critical edges 0, propagation truncated false, and baseline not reused after declared edits.",
+      "summary": "Final graph revision 6a8a2e3207a3dfe43cfbf2bf: predicted 315, observed 313, unexpected 0, production/test critical 0/0, propagation not truncated and baseline not reused.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Transfer classification distinguishes text, image, PDF, local video, video URL, attachment, web link and explicit web-preview choice.",
+      "criterion": "Local chat rows tolerate nullable canvasContext and completionState migrations without deleting or reordering old chats.",
       "status": "passed",
-      "evidence": ["scripts/tests/canvas-rich-media-ingest.test.mjs", "src/lib/canvas/content-ingest.ts"]
+      "evidence": ["canvas-chat-db-contract.test.mjs", "production build"]
     },
     {
-      "criterion": "PDF, video and web preview metadata and renderers preserve local durability, lazy rendering, source opening and untrusted display isolation.",
+      "criterion": "The user message and assistant placeholder share one source-canvas snapshot captured before asynchronous work.",
       "status": "passed",
-      "evidence": ["src/types/canvas.ts", "src/app/core/main/canvas/nodes/pdf-canvas-node.tsx", "src/app/core/main/canvas/nodes/video-canvas-node.tsx", "src/app/core/main/canvas/nodes/web-preview-canvas-node.tsx"]
+      "evidence": ["canvas-chat-context.test.mjs", "independent review"]
     },
     {
-      "criterion": "Batch ingest remains ordered, collision-safe and cleans only assets created for failed new drafts.",
+      "criterion": "Invalid or historical context parses safely and source chips navigate existing canvases while missing sources remain non-blocking.",
       "status": "passed",
-      "evidence": ["scripts/tests/canvas-rich-media-ingest.test.mjs", "src/app/core/main/canvas/canvas-editor.tsx"]
+      "evidence": ["canvas-chat-context.test.mjs", "focused re-review"]
     },
     {
-      "criterion": "Focused tests, Canvas tests, TypeScript, production build and diff checks pass.",
+      "criterion": "Every sync, backup and restore flow omits local canvas IDs, titles and node IDs while retaining ordinary content and completionState.",
       "status": "passed",
-      "evidence": ["Focused tests 8/8.", "Complete Canvas suite 127/127.", "TypeScript, production build and diff checks passed."]
+      "evidence": ["canvas-chat-db-contract.test.mjs", "independent review"]
     },
     {
-      "criterion": "Implementation is committed and independently reviewed.",
+      "criterion": "Remote restore cannot overwrite or misassociate locally captured canvasContext.",
       "status": "passed",
-      "evidence": ["Source range bbf7d941..44987398.", ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-rereview-1.md", ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-l2-final-rereview.md"]
+      "evidence": ["f7ad05ee restore-identity fix", "focused re-review APPROVED"]
+    },
+    {
+      "criterion": "Focused tests, Canvas regression, TypeScript, production build and diff checks pass.",
+      "status": "passed",
+      "evidence": ["6/6 focused", "133/133 Canvas", "tsc", "pnpm build", "git diff --check"]
+    },
+    {
+      "criterion": "Implementation is committed, independently reviewed and passes the L2 post-edit gate.",
+      "status": "passed",
+      "evidence": ["08767a0173f2fda6d974fc5da269b3e19b827b0f", "review_findings.json", "impact_report.json"]
     }
   ],
   "passed": [
-    "Accepted L2 context preflight at baseline graph revision 32d05f0651ee3919b4379f9b.",
-    "Passed exhaustive L2 post-edit impact at current graph revision ee97336f148549aa5e742b9c.",
-    "Focused Task 9 tests passed 8/8 and complete Canvas suite passed 127/127.",
-    "TypeScript, production build and diff checks passed.",
-    "Independent review findings were resolved and final L2 re-review was clean."
+    "All Task 10 acceptance criteria",
+    "Independent review and focused re-review",
+    "Exhaustive L2 post-edit impact gate"
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Git emits existing line-ending conversion notices; no whitespace or encoding defect was observed.",
-    "The standard 10,000-item propagation budget truncates on this broad UI frontier; the same installed algorithm exhausted it at 50,000 items."
+    "Cross-device restore and source navigation remain part of the Task 21 Windows hands-on checklist.",
+    "Existing Node module-type and Turbopack experimental warnings remain non-blocking."
   ]
 }

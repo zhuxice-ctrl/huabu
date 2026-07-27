@@ -1,392 +1,148 @@
 {
   "schema": "ADworkflo.context_raw.v1",
-  "task_id": "zeroxb-integrated-task-09-rich-media",
+  "task_id": "zeroxb-integrated-task-10-chat-canvas-context",
   "source": "semantic-codegraph-l2",
   "matched_files": [
     {
-      "path": "src/lib/canvas/content-ingest.ts",
-      "sha256": "30eb253ff4163586b2478cd6c5dee7cc0bbd7ef390fb1b0a76a96d8ffceaa169",
+      "path": "src/db/chats.ts",
+      "sha256": "f892be400f73ee81e8cdae1231f55929d07280598df6ed44ef7c5a93d74b627a",
       "reason": "semantic-slice"
+    },
+    {
+      "path": "src/db/index.ts",
+      "sha256": "84c2a90600a99a3bb58b9bf7066c71a78af664ace2b07b98ff94f58ecd357bb8",
+      "reason": "semantic-slice"
+    },
+    {
+      "path": ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-10-brief.md",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/stores/chat.ts",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/app/core/main/chat/chat-send.tsx",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/app/core/main/chat/chat-content.tsx",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/stores/canvas.ts",
+      "reason": "task_spec.context_sources"
+    },
+    {
+      "path": "src/types/canvas.ts",
+      "reason": "task_spec.context_sources"
     }
   ],
   "matched_symbols": [
     {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:classifyTextContent:function",
-      "qualified_name": "src.lib.canvas.content-ingest.classifyTextContent",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 15,
-      "end_line": 20,
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:classifyTextContent.value:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.classifyTextContent.value",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 16,
-      "end_line": 16,
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 22,
-      "end_line": 35,
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.longestLine:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.longestLine",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 23,
-      "end_line": 26,
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.width:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.width",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 27,
-      "end_line": 27,
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.charactersPerLine:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.charactersPerLine",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 28,
+      "stable_id": "typescript:src.db.chats:Chat:interface",
+      "qualified_name": "src.db.chats.Chat",
+      "file": "src/db/chats.ts",
+      "start_line": 8,
       "end_line": 28,
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize.estimatedLines:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.estimateTextBlockSize.estimatedLines",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 29,
-      "end_line": 32,
-      "distance": 2
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:CanvasIngestDraft:type",
-      "qualified_name": "src.lib.canvas.content-ingest.CanvasIngestDraft",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 37,
-      "end_line": 43,
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:CanvasTransferInput:interface",
-      "qualified_name": "src.lib.canvas.content-ingest.CanvasTransferInput",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 78,
-      "end_line": 82,
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "qualified_name": "src.lib.canvas.content-ingest.htmlToPlainText",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 84,
-      "end_line": 94,
-      "distance": 1
-    },
-    {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "qualified_name": "src.lib.canvas.content-ingest.draftsFromTransfer",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 96,
-      "end_line": 120,
+      "stable_id": "typescript:src.db.chats:getAllChats:function",
+      "qualified_name": "src.db.chats.getAllChats",
+      "file": "src/db/chats.ts",
+      "start_line": 217,
+      "end_line": 224,
       "distance": 0
     },
     {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer.content:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.draftsFromTransfer.content",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 112,
-      "end_line": 112,
+      "stable_id": "typescript:src.db.chats:getAllChats.result:variable",
+      "qualified_name": "src.db.chats.getAllChats.result",
+      "file": "src/db/chats.ts",
+      "start_line": 219,
+      "end_line": 222,
       "distance": 1
     },
     {
-      "stable_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer.size:variable",
-      "qualified_name": "src.lib.canvas.content-ingest.draftsFromTransfer.size",
-      "file": "src/lib/canvas/content-ingest.ts",
-      "start_line": 118,
-      "end_line": 118,
+      "stable_id": "typescript:src.db.chats:insertChats:function",
+      "qualified_name": "src.db.chats.insertChats",
+      "file": "src/db/chats.ts",
+      "start_line": 227,
+      "end_line": 243,
+      "distance": 0
+    },
+    {
+      "stable_id": "typescript:src.db.chats:insertChats.error:variable",
+      "qualified_name": "src.db.chats.insertChats.error",
+      "file": "src/db/chats.ts",
+      "start_line": 239,
+      "end_line": 239,
+      "distance": 1
+    },
+    {
+      "stable_id": "typescript:src.db:db:variable",
+      "qualified_name": "src.db.db",
+      "file": "src/db/index.ts",
+      "start_line": 5,
+      "end_line": 5,
+      "distance": 2
+    },
+    {
+      "stable_id": "typescript:src.db:getDb:function",
+      "qualified_name": "src.db.getDb",
+      "file": "src/db/index.ts",
+      "start_line": 8,
+      "end_line": 10,
       "distance": 1
     }
   ],
   "likely_tests": [],
   "warnings": [],
-  "graph_revision": "32d05f0651ee3919b4379f9b",
+  "graph_revision": "ee97336f148549aa5e742b9c",
   "confidence": 1.0,
   "unresolved_edges": [
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:classifyTextContent:function",
+      "file": "src/db/chats.ts",
+      "source_symbol_id": "typescript:src.db.chats:getAllChats:function",
       "kind": "call",
-      "target": "text.trim",
-      "line": 16,
+      "target": "db.select",
+      "line": 219,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:classifyTextContent:function",
+      "file": "src/db/chats.ts",
+      "source_symbol_id": "typescript:src.db.chats:insertChats:function",
       "kind": "call",
-      "target": "/^https?:\\/\\/\\S+$/i.test",
-      "line": 17,
+      "target": "db.execute",
+      "line": 230,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "file": "src/db/chats.ts",
+      "source_symbol_id": "typescript:src.db.chats:insertChats:function",
       "kind": "call",
-      "target": "Math.max",
-      "line": 23,
+      "target": "db.execute",
+      "line": 233,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "file": "src/db/chats.ts",
+      "source_symbol_id": "typescript:src.db.chats:insertChats:function",
       "kind": "call",
-      "target": "text.split(/\\r?\\n/).map",
-      "line": 25,
+      "target": "db.execute",
+      "line": 238,
       "reason": "external-call",
       "critical": 0
     },
     {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
+      "file": "src/db/chats.ts",
+      "source_symbol_id": "typescript:src.db.chats:insertChats:function",
       "kind": "call",
-      "target": "text.split",
-      "line": 25,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Array.from",
-      "line": 25,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 27,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.min",
-      "line": 27,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 28,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.floor",
-      "line": 28,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "text.split(/\\r?\\n/).reduce",
-      "line": 29,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "text.split",
-      "line": 29,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 30,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.ceil",
-      "line": 30,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Array.from",
-      "line": 30,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:estimateTextBlockSize:function",
-      "kind": "call",
-      "target": "Math.max",
-      "line": 34,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p\\s*>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&lt;/gi, '<')\n    .replace(/&gt;/gi, '>')\n    .trim",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p\\s*>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&lt;/gi, '<')\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p\\s*>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p\\s*>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/gi, ' ')\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p\\s*>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p\\s*>/gi, '\\n')\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:htmlToPlainText:function",
-      "kind": "call",
-      "target": "html\n    .replace",
-      "line": 85,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "kind": "call",
-      "target": "input.files.map",
-      "line": 98,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "kind": "call",
-      "target": "file.type.startsWith",
-      "line": 99,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "kind": "call",
-      "target": "file.name.toLowerCase().endsWith",
-      "line": 102,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "kind": "call",
-      "target": "file.name.toLowerCase",
-      "line": 102,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "kind": "call",
-      "target": "file.type.startsWith",
-      "line": 105,
-      "reason": "external-call",
-      "critical": 0
-    },
-    {
-      "file": "src/lib/canvas/content-ingest.ts",
-      "source_symbol_id": "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function",
-      "kind": "call",
-      "target": "input.text.trim",
-      "line": 112,
+      "target": "db.execute",
+      "line": 240,
       "reason": "external-call",
       "critical": 0
     }
@@ -394,15 +150,107 @@
   "boundary_symbols": [],
   "predicted_impact_files": [
     "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/app/core/main/chat/agent-approval-actions.ts",
+    "src/app/core/main/chat/agent-execution-status.tsx",
+    "src/app/core/main/chat/agent-panel-with-rag.tsx",
+    "src/app/core/main/chat/agent-permission-mode.tsx",
+    "src/app/core/main/chat/agent-run-timeline.tsx",
+    "src/app/core/main/chat/chat-clipboard.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/chat/chat-empty.tsx",
+    "src/app/core/main/chat/chat-header.tsx",
+    "src/app/core/main/chat/chat-input.tsx",
     "src/app/core/main/chat/chat-send.tsx",
+    "src/app/core/main/chat/chat-thinking.tsx",
+    "src/app/core/main/chat/clear-chat.tsx",
+    "src/app/core/main/chat/clear-context.tsx",
+    "src/app/core/main/chat/clipboard-listener.tsx",
+    "src/app/core/main/chat/index.tsx",
+    "src/app/core/main/chat/mcp-tool-call.tsx",
+    "src/app/core/main/chat/message-control/condensed-indicator.tsx",
+    "src/app/core/main/chat/message-control/copy-control.tsx",
+    "src/app/core/main/chat/message-control/index.tsx",
+    "src/app/core/main/chat/message-control/mark-text.tsx",
+    "src/app/core/main/chat/message-control/message-info.tsx",
+    "src/app/core/main/chat/message-control/note-output.tsx",
+    "src/app/core/main/chat/message-control/read-aloud-control.tsx",
+    "src/app/core/main/chat/message-control/translate-control.tsx",
+    "src/app/core/main/chat/new-chat.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/app/core/main/editor/markdown/md-editor-wrapper.tsx",
+    "src/app/core/main/editor/markdown/quote-session.ts",
+    "src/app/core/main/editor/markdown/tiptap-editor.tsx",
+    "src/app/core/main/editor/tab-bar.tsx",
+    "src/app/core/main/mark/clipboard.tsx",
+    "src/app/core/main/mark/control-file.tsx",
+    "src/app/core/main/mark/control-image.tsx",
+    "src/app/core/main/mark/control-link.tsx",
+    "src/app/core/main/mark/control-recording.tsx",
+    "src/app/core/main/mark/control-scan.tsx",
+    "src/app/core/main/mark/control-text.tsx",
+    "src/app/core/main/mark/control-todo.tsx",
+    "src/app/core/main/mark/image-gallery.tsx",
+    "src/app/core/main/mark/image-record-status.ts",
+    "src/app/core/main/mark/index.tsx",
+    "src/app/core/main/mark/mark-detail-panel.tsx",
+    "src/app/core/main/mark/mark-filters.ts",
+    "src/app/core/main/mark/mark-header.tsx",
+    "src/app/core/main/mark/mark-item.tsx",
+    "src/app/core/main/mark/mark-list-card-view.tsx",
+    "src/app/core/main/mark/mark-list-compact-view.tsx",
+    "src/app/core/main/mark/mark-list-default-view.tsx",
+    "src/app/core/main/mark/mark-list-item-content.tsx",
+    "src/app/core/main/mark/mark-list.tsx",
+    "src/app/core/main/mark/mark-mobile-actions.tsx",
+    "src/app/core/main/mark/mark-open-path.ts",
+    "src/app/core/main/mark/mark-preview-popover.tsx",
+    "src/app/core/main/mark/mark-record-tab.ts",
+    "src/app/core/main/mark/mark-type-meta.ts",
+    "src/app/core/main/mark/organize-notes.tsx",
+    "src/app/core/main/mark/tag-manage.tsx",
+    "src/app/core/main/mark/todo-edit-button.tsx",
+    "src/app/core/main/mark/todo-edit-dialog.tsx",
+    "src/app/core/main/mark/todo-item-content.tsx",
+    "src/app/core/setting/components/settings-dialog.tsx",
+    "src/app/core/setting/sync/page.tsx",
+    "src/app/mobile/chat/components/chat-attachments-drawer.tsx",
+    "src/app/mobile/chat/components/clear-chat.tsx",
+    "src/app/mobile/chat/components/clear-context.tsx",
+    "src/app/mobile/chat/components/mobile-chat-header.tsx",
+    "src/app/mobile/chat/components/new-chat.tsx",
+    "src/app/mobile/chat/page.tsx",
+    "src/app/mobile/record/mobile-mark-header.tsx",
+    "src/app/mobile/record/mobile-record-detail.tsx",
+    "src/app/mobile/record/mobile-record-stream.tsx",
+    "src/app/mobile/setting/components/mobile-me-page.tsx",
+    "src/app/mobile/setting/components/mobile-me-profile-card.tsx",
+    "src/app/mobile/setting/pages/sync/page.tsx",
+    "src/app/mobile/writing/mobile-editor.tsx",
+    "src/components/activity/activity-drawer.tsx",
+    "src/components/title-bar-toolbars/sync-toggle.tsx",
+    "src/components/title-bar.tsx",
+    "src/db/activity.ts",
+    "src/db/chats.ts",
+    "src/db/marks.ts",
+    "src/lib/activity/index.ts",
     "src/lib/agent/agent-handler.ts",
+    "src/lib/agent/prompt-assembler.ts",
     "src/lib/agent/runtime.ts",
     "src/lib/agent/tool-registry.ts",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/lib/agent/tools/index.ts",
-    "src/lib/canvas/content-ingest.ts",
-    "src/lib/canvas/operations.ts",
-    "src/lib/canvas/placement-policy.ts"
+    "src/lib/agent/tools/chat-tools.ts",
+    "src/lib/agent/tools/mark-tools.ts",
+    "src/lib/agent/tools/note-tools.ts",
+    "src/lib/ai/condense.ts",
+    "src/lib/ai/token-counter.ts",
+    "src/lib/canvas/note-reference.ts",
+    "src/lib/mark-to-markdown.ts",
+    "src/lib/mcp/agent-tools.ts",
+    "src/lib/mcp/result-normalizer.ts",
+    "src/lib/sync/auto-data-sync-queue.ts",
+    "src/stores/article.ts",
+    "src/stores/chat.ts",
+    "src/stores/mark.ts"
   ]
 }
