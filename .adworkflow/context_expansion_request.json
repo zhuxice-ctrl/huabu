@@ -1,15 +1,16 @@
 {
   "schema": "ADworkflo.context_expansion_request.v1",
-  "task_id": "zeroxb-integrated-task-08-note-references",
-  "status": "applied",
-  "relation": "callees",
+  "task_id": "zeroxb-integrated-task-09-rich-media",
+  "status": "rejected",
+  "relation": "callers",
   "targets": [
-    "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
+    "typescript:src.types.canvas:CanvasNodeType:type",
+    "typescript:src.types.canvas:CanvasNodeData:interface"
   ],
-  "depth": 5,
-  "budget": 800,
-  "reason": "Finish the bounded pure placement callee frontier while keeping note UI and React canvas integration as explicit manual context sources.",
+  "depth": 12,
+  "budget": 50000,
+  "reason": "Rejected after the first-party expansion widened the worker slice into unrelated application dynamic-dispatch edges. Exhaustive post-edit propagation is instead recorded as an explicit predicted impact set for review without expanding implementation context.",
   "requested_by": "orchestrator",
-  "source_graph_revision": "7a6d9f539fd8dacb183be9e0",
-  "applied_slice_revision": "7a6d9f539fd8dacb183be9e0"
+  "source_graph_revision": "32d05f0651ee3919b4379f9b",
+  "applied_slice_revision": null
 }

@@ -1,37 +1,37 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-08-note-references",
+  "task_id": "zeroxb-integrated-task-09-rich-media",
   "task_type": "code",
-  "goal": "Add accessible note previews and durable drag-to-canvas reference nodes without copying source note bodies.",
+  "goal": "Complete first-version rich-media ingestion and rendering for PDF, video, attachments and explicit web previews while preserving viewport sizing, collision-safe placement and local durability.",
   "non_goals": [
-    "Do not implement Task 9 rich-media ingestion or later AI, retrieval, credential, recovery or release work.",
-    "Do not change permanent workspace layout or solid collision semantics.",
-    "Do not delete or mutate a source note when a reference node is removed.",
-    "Do not read, print or modify provider credentials."
+    "Do not implement Task 10 chat context or later AI, retrieval, credential, recovery or release work.",
+    "Do not auto-fetch a web preview merely because a URL is pasted.",
+    "Do not deep-extract archives or promise video transcription.",
+    "Do not change permanent workspace layout, solid collision semantics or provider credentials."
   ],
   "acceptance_criteria": [
-    "Reference IDs are stable record:<markId> values and reference metadata never stores the full note body.",
-    "Hover and keyboard focus open an accessible preview after 400ms with a 160ms leave delay, while drag suppresses click/open behavior.",
-    "The custom note-reference MIME is handled before generic text/JSON and placement uses one captured viewport plus collision-safe nearest-free placement.",
-    "Multiple references refresh cached title, excerpt and time in one debounced batch; missing sources retain cache and render a local missing-source state.",
-    "Double-click opens the existing right document panel record tab and deleting a reference never deletes its source.",
-    "Focused note-reference tests, Canvas tests, TypeScript and diff checks pass.",
+    "Transfer classification distinguishes text, image, PDF, local video, video URL, attachment, web link and explicit web-preview choice.",
+    "Node metadata is discriminated for pdf, video and web-preview types and local asset paths remain workspace-relative where possible.",
+    "PDF and video render lazily, isolate broken assets and allow opening the source; web preview content remains untrusted display data.",
+    "All media uses captured viewport sizing, deterministic collision-safe placement, durable persistence and cleanup of only newly-created assets when node creation fails.",
+    "Failed batch items do not reorder successful items and archive files remain shallow attachments.",
+    "Focused rich-media tests, Canvas tests, TypeScript, production build and diff checks pass.",
     "Implementation is committed and independently reviewed."
   ],
   "risk_level": "medium",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/canvas/note-reference.ts",
-    "src/app/core/main/mark/mark-preview-popover.tsx",
-    "src/app/core/main/mark/mark-item.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
     "src/types/canvas.ts",
-    "src/stores/mark.ts",
-    "scripts/tests/canvas-note-reference.test.mjs",
-    "scripts/tests/canvas-note-drag-contract.test.mjs",
+    "src/lib/canvas/content-ingest.ts",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/nodes/pdf-canvas-node.tsx",
+    "src/app/core/main/canvas/nodes/video-canvas-node.tsx",
+    "src/app/core/main/canvas/nodes/web-preview-canvas-node.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "scripts/tests/canvas-rich-media-ingest.test.mjs",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -52,23 +52,27 @@
     "unrelated runtime modules"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
+    "typescript:src.lib.canvas.content-ingest:draftsFromTransfer:function"
   ],
   "context_sources": [
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-brief.md",
-    "src/app/core/main/mark/mark-item.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-brief.md",
     "src/types/canvas.ts",
-    "src/stores/mark.ts",
+    "src/lib/canvas/content-ingest.ts",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
     "src/lib/canvas/placement-policy.ts",
-    "src/lib/canvas/content-ingest.ts"
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/lib/workspace.ts",
+    "src/components/local-image.tsx"
   ],
   "notes": [
-    "Read the Task 8 brief first and use test-first implementation.",
-    "Preserve the permanent canvas and current note/document behavior.",
+    "Read the Task 9 brief first and use test-first implementation.",
+    "Preserve the permanent canvas, captured viewport contract, non-overlap placement and note references.",
     "Use fixed UTF-8 I/O for non-ASCII reads and edits.",
+    "Treat fetched web content as untrusted display data and never executable AI instructions.",
+    "The independent review authorized a minimal editor-layout lint fix solely to make the required production build pass.",
     "Do not expose or change configured provider secrets."
   ],
-  "implementation_owner": "task-08-implementer"
+  "implementation_owner": "task-09-implementer"
 }

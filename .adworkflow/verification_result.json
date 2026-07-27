@@ -1,19 +1,19 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-08-note-references",
+  "task_id": "zeroxb-integrated-task-09-rich-media",
   "status": "passed",
-  "source_revision": "ff1197c61a7bfaf7198d16fb9c625f034748e7bd",
+  "source_revision": "449873988d15b24dff55706bcd096a8a453a709e",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-note-reference.test.mjs scripts/tests/canvas-note-drag-contract.test.mjs",
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-rich-media-ingest.test.mjs",
       "status": "passed",
-      "summary": "Final focused Task 8 tests passed 10/10.",
+      "summary": "Final focused Task 9 tests passed 8/8.",
       "exit_code": 0
     },
     {
       "command": "npm run test:canvas",
       "status": "passed",
-      "summary": "Complete Canvas suite passed 119/119.",
+      "summary": "Complete Canvas suite passed 127/127.",
       "exit_code": 0
     },
     {
@@ -23,99 +23,62 @@
       "exit_code": 0
     },
     {
-      "command": "git diff --check",
+      "command": "$env:pnpm_config_verify_deps_before_run='false'; npm run build",
       "status": "passed",
-      "summary": "No whitespace errors were found in the final Task 8 product diff.",
+      "summary": "Production compile, lint and type validation, 53 static pages, export and source-map pruning passed without changing repository dependency policy.",
       "exit_code": 0
     },
     {
-      "command": "standard installed first-party L2 post-edit impact run with fixed _reverse_impact item budget 10000",
-      "status": "failed",
-      "summary": "Produced zero unexpected files and zero production/test critical edges, but a small remaining reverse-impact frontier left propagation truncated.",
-      "exit_code": null
+      "command": "git diff --check",
+      "status": "passed",
+      "summary": "No whitespace errors were found in the final Task 9 product diff.",
+      "exit_code": 0
     },
     {
       "command": "installed l2_codegraph.safety.post_edit_impact against immutable baseline/current SQLite graphs with only in-memory _reverse_impact item budget raised to 50000",
       "status": "passed",
-      "summary": "Exhausted the frontier and wrote the preserved impact report at current graph revision 32d05f0651ee3919b4379f9b: unexpected impact 0, new production critical edges 0, new test critical edges 0, propagation truncated false, and baseline not reused after declared edits. No graph script, snapshot, baseline, source file, or report field was hand-edited.",
+      "summary": "Exhausted the frontier at current graph revision ee97336f148549aa5e742b9c: predicted and observed files 327/327, unexpected impact 0, new production critical edges 0, new test critical edges 0, propagation truncated false, and baseline not reused after declared edits.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Reference IDs are stable record:<markId> values and reference metadata never stores the full note body.",
+      "criterion": "Transfer classification distinguishes text, image, PDF, local video, video URL, attachment, web link and explicit web-preview choice.",
       "status": "passed",
-      "evidence": [
-        "scripts/tests/canvas-note-reference.test.mjs",
-        "src/lib/canvas/note-reference.ts"
-      ]
+      "evidence": ["scripts/tests/canvas-rich-media-ingest.test.mjs", "src/lib/canvas/content-ingest.ts"]
     },
     {
-      "criterion": "Hover and keyboard focus open an accessible preview after 400ms with a 160ms leave delay, while drag suppresses click/open behavior.",
+      "criterion": "PDF, video and web preview metadata and renderers preserve local durability, lazy rendering, source opening and untrusted display isolation.",
       "status": "passed",
-      "evidence": [
-        "scripts/tests/canvas-note-drag-contract.test.mjs",
-        "src/app/core/main/mark/mark-item.tsx",
-        "src/app/core/main/mark/mark-preview-popover.tsx"
-      ]
+      "evidence": ["src/types/canvas.ts", "src/app/core/main/canvas/nodes/pdf-canvas-node.tsx", "src/app/core/main/canvas/nodes/video-canvas-node.tsx", "src/app/core/main/canvas/nodes/web-preview-canvas-node.tsx"]
     },
     {
-      "criterion": "The custom note-reference MIME is handled before generic text/JSON and placement uses one captured viewport plus collision-safe nearest-free placement.",
+      "criterion": "Batch ingest remains ordered, collision-safe and cleans only assets created for failed new drafts.",
       "status": "passed",
-      "evidence": [
-        "scripts/tests/canvas-note-drag-contract.test.mjs",
-        "src/app/core/main/canvas/canvas-editor.tsx"
-      ]
+      "evidence": ["scripts/tests/canvas-rich-media-ingest.test.mjs", "src/app/core/main/canvas/canvas-editor.tsx"]
     },
     {
-      "criterion": "Multiple references refresh cached title, excerpt and time in one debounced batch; missing sources retain cache and render a local missing-source state.",
+      "criterion": "Focused tests, Canvas tests, TypeScript, production build and diff checks pass.",
       "status": "passed",
-      "evidence": [
-        "scripts/tests/canvas-note-reference.test.mjs",
-        "Fix round 4 added causal empty-identity authority regression coverage."
-      ]
-    },
-    {
-      "criterion": "Double-click opens the existing right document panel record tab and deleting a reference never deletes its source.",
-      "status": "passed",
-      "evidence": [
-        "scripts/tests/canvas-note-reference.test.mjs",
-        "src/app/core/main/canvas/nodes/canvas-nodes.tsx"
-      ]
-    },
-    {
-      "criterion": "Focused note-reference tests, Canvas tests, TypeScript and diff checks pass.",
-      "status": "passed",
-      "evidence": [
-        "Focused tests 10/10.",
-        "Complete Canvas suite 119/119.",
-        "node_modules\\.bin\\tsc.cmd --noEmit passed.",
-        "git diff --check passed."
-      ]
+      "evidence": ["Focused tests 8/8.", "Complete Canvas suite 127/127.", "TypeScript, production build and diff checks passed."]
     },
     {
       "criterion": "Implementation is committed and independently reviewed.",
       "status": "passed",
-      "evidence": [
-        "Source range a8c2a0c..ff1197c.",
-        ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-independent-review.md",
-        ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-fix-round-4-rereview.md",
-        "Round-4 scoped re-review found no new Critical or Important breakage."
-      ]
+      "evidence": ["Source range bbf7d941..44987398.", ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-rereview-1.md", ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-l2-final-rereview.md"]
     }
   ],
   "passed": [
-    "Accepted L2 context preflight at baseline graph revision 7a6d9f539fd8dacb183be9e0.",
-    "Passed exhaustive L2 post-edit impact at current graph revision 32d05f0651ee3919b4379f9b.",
-    "Focused Task 8 tests passed 10/10.",
-    "Complete Canvas suite passed 119/119.",
-    "TypeScript and diff checks passed.",
-    "Independent initial review findings and all Critical/Important fix-round findings were resolved; round-4 scoped re-review was clean."
+    "Accepted L2 context preflight at baseline graph revision 32d05f0651ee3919b4379f9b.",
+    "Passed exhaustive L2 post-edit impact at current graph revision ee97336f148549aa5e742b9c.",
+    "Focused Task 9 tests passed 8/8 and complete Canvas suite passed 127/127.",
+    "TypeScript, production build and diff checks passed.",
+    "Independent review findings were resolved and final L2 re-review was clean."
   ],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Node emits existing MODULE_TYPELESS_PACKAGE_JSON warnings while running direct TypeScript test modules; the warnings do not affect results.",
+    "Git emits existing line-ending conversion notices; no whitespace or encoding defect was observed.",
     "The standard 10,000-item propagation budget truncates on this broad UI frontier; the same installed algorithm exhausted it at 50,000 items."
   ]
 }

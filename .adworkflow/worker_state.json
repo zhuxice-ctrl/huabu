@@ -1,63 +1,52 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-08-note-references",
+  "task_id": "zeroxb-integrated-task-09-rich-media",
   "status": "verified",
-  "revision": 5,
+  "revision": 2,
   "done": [
-    "Implemented and committed accessible note previews and durable drag-to-canvas reference nodes across source revisions ede8a1ad through ff1197c6.",
-    "Resolved both Important findings from the initial independent review and every subsequent Critical or Important graph/re-review finding across fix rounds 1 through 4.",
-    "Passed the final focused Task 8 tests 10/10, complete Canvas suite 119/119, TypeScript typecheck, and diff check.",
-    "Completed exhaustive L2 post-edit impact analysis at graph revision 32d05f0651ee3919b4379f9b with zero unexpected files, zero production or test critical edges, and an exhausted propagation frontier."
+    "Implemented and committed first-version rich-media ingestion and rendering across source revisions 299382cc through 44987398.",
+    "Resolved the independent review build gate and both media-classification and hosted-video findings in fix round 1.",
+    "Passed focused rich-media tests 8/8, the complete Canvas suite 127/127, TypeScript typecheck, production build and diff check.",
+    "Completed exhaustive L2 post-edit impact analysis at graph revision ee97336f148549aa5e742b9c with zero unexpected files, zero production or test critical edges, and an exhausted propagation frontier."
   ],
   "changed_files": [
-    "scripts/tests/canvas-note-drag-contract.test.mjs",
-    "scripts/tests/canvas-note-reference.test.mjs",
+    "scripts/tests/canvas-rich-media-ingest.test.mjs",
     "src/app/core/main/canvas/canvas-editor.tsx",
     "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/app/core/main/mark/mark-item.tsx",
-    "src/app/core/main/mark/mark-preview-popover.tsx",
-    "src/lib/canvas/note-reference.ts",
+    "src/app/core/main/canvas/nodes/pdf-canvas-node.tsx",
+    "src/app/core/main/canvas/nodes/video-canvas-node.tsx",
+    "src/app/core/main/canvas/nodes/web-preview-canvas-node.tsx",
+    "src/app/core/main/editor/editor-layout.tsx",
+    "src/lib/canvas/content-ingest.ts",
     "src/types/canvas.ts"
   ],
   "current_problem": null,
   "next_action": null,
   "must_keep_context": [
-    ".adworkflow/context_preflight.json (accepted baseline graph revision 7a6d9f539fd8dacb183be9e0)",
-    ".adworkflow/impact_report.json (passed current graph revision 32d05f0651ee3919b4379f9b)",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-independent-review.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-fix-round-4-rereview.md"
+    ".adworkflow/context_preflight.json (accepted baseline graph revision 32d05f0651ee3919b4379f9b)",
+    ".adworkflow/impact_report.json (passed current graph revision ee97336f148549aa5e742b9c)",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-rereview-1.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-l2-final-rereview.md"
   ],
   "discarded_context": [
-    "The standard first-party post-edit run at the fixed 10,000-item propagation budget reached zero unexpected files and zero production/test critical edges but was superseded for gate completion because a small reverse-impact frontier remained."
+    "A broad caller expansion was rejected because it admitted unrelated dynamic-dispatch edges; the original bounded accepted semantic slice was restored from the immutable baseline graph.",
+    "The standard first-party post-edit run reached clean impact counts but exhausted its fixed 10,000-item propagation budget before the reverse-impact frontier was empty."
   ],
   "remaining_risks": [
-    "Node's test runner emits the existing MODULE_TYPELESS_PACKAGE_JSON warning for direct TypeScript module imports; all tests pass.",
-    "The standard 10,000-item reverse-impact budget does not exhaust this broad UI dependency frontier; exhaustive verification required the same installed first-party algorithm with only its in-memory _reverse_impact budget raised to 50,000."
+    "Git emits existing working-tree line-ending conversion notices; no whitespace errors or source-encoding defects were found.",
+    "The standard 10,000-item reverse-impact budget does not exhaust this broad UI frontier; exhaustive verification used the identical installed algorithm with only its in-memory _reverse_impact budget raised to 50,000."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": [
-    {
-      "relation": "callees",
-      "targets": [
-        "typescript:src.lib.canvas.placement-policy:findNearestFreePlacement:function"
-      ],
-      "depth": 5,
-      "budget": 800,
-      "reason": "Finish the bounded pure placement callee frontier while keeping note UI and React canvas integration as explicit manual context sources.",
-      "requested_by": "orchestrator",
-      "graph_revision": "7a6d9f539fd8dacb183be9e0",
-      "preflight_status": "accepted"
-    }
-  ],
-  "source_revision": "ff1197c61a7bfaf7198d16fb9c625f034748e7bd",
+  "context_expansion_history": [],
+  "source_revision": "449873988d15b24dff55706bcd096a8a453a709e",
   "context_preflight": {
     "status": "accepted",
-    "graph_revision": "7a6d9f539fd8dacb183be9e0"
+    "graph_revision": "32d05f0651ee3919b4379f9b"
   },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "32d05f0651ee3919b4379f9b",
+    "graph_revision": "ee97336f148549aa5e742b9c",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }

@@ -1,29 +1,34 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-08-note-references",
+  "task_id": "zeroxb-integrated-task-09-rich-media",
   "status": "approved",
-  "reviewer": "independent Task 8 reviewer and scoped fix-round re-reviewers",
-  "source_revision": "ff1197c61a7bfaf7198d16fb9c625f034748e7bd",
+  "reviewer": "independent Task 9 reviewer and final L2 re-reviewer",
+  "source_revision": "449873988d15b24dff55706bcd096a8a453a709e",
   "review_basis": [
     ".adworkflow/task_spec.json",
-    ".adworkflow/context_preflight.json (accepted baseline graph revision 7a6d9f539fd8dacb183be9e0)",
-    ".adworkflow/impact_report.json (passed current graph revision 32d05f0651ee3919b4379f9b)",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-independent-review.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-fix-round-1-rereview.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-fix-round-2-rereview.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-fix-round-3-rereview.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-8-fix-round-4-rereview.md",
-    "Independent review of source range a8c2a0c..ff1197c and final verification results."
+    ".adworkflow/context_preflight.json (accepted baseline graph revision 32d05f0651ee3919b4379f9b)",
+    ".adworkflow/impact_report.json (passed current graph revision ee97336f148549aa5e742b9c)",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-review.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-rereview-1.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-9-l2-final-rereview.md",
+    "Independent review of source range bbf7d941..44987398 and final verification evidence."
   ],
   "blocking_findings": [],
-  "non_blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "id": "git-line-ending-notices",
+      "severity": "non_blocking",
+      "issue": "Git emits working-tree line-ending conversion notices.",
+      "expected_fix": "Defer repository-wide line-ending policy changes outside this task.",
+      "evidence": "Focused tests, production build, TypeScript and git diff --check pass without source-encoding or whitespace defects."
+    }
+  ],
   "suggested_tests": [
-    "Retain browser-level drag, hover/focus timing, and rendered drop coverage as a future UI integration enhancement."
+    "Retain Windows hands-on opening checks for local PDF, local video, hosted video links and explicit web previews in Task 21."
   ],
   "risk_notes": [
-    "The initial independent review found two Important issues; rounds 1 through 4 resolved every Important and critical issue.",
-    "The round-4 scoped re-review found no new Critical or Important breakage.",
-    "The exhaustive L2 report has zero unexpected impact, zero new production/test critical unresolved edges, no truncated propagation, and no reused baseline after declared edits.",
-    "The standard first-party 10,000-item propagation budget left a small frontier; the controller ran the exact same installed algorithm against the same immutable graph pair with only the in-memory reverse-impact budget raised to 50,000 and exhausted it."
+    "The initial independent review found a production-build gate and two media behavior issues; fix round 1 resolved all three.",
+    "The final L2 re-review found no unresolved Critical, Important or Minor product finding.",
+    "The exhaustive L2 report has zero unexpected impact, zero new production/test critical unresolved edges, no truncated propagation, and no reused baseline after declared edits."
   ]
 }
