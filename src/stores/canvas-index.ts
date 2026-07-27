@@ -19,29 +19,31 @@ let workerStopped = true
 let workerTimer: ReturnType<typeof setTimeout> | null = null
 let drainPromise: Promise<number> | null = null
 
+async function drainCanvasIndexJobsSerially(): Promise<number> {
+  let processed = 0
+  while (shouldClaimCanvasIndexJob(workerStopped)) {
+    const job = await claimReadyCanvasIndexJob()
+    if (!job) break
+    try {
+      await processCanvasIndexJob(job)
+    } catch (error) {
+      await retryCanvasIndexJob(job, error)
+      processed += 1
+      continue
+    }
+    try {
+      await classifyIndexedCanvasOverlay(job)
+    } catch (error) {
+      console.error('Canvas overlay classification failed:', error)
+    }
+    processed += 1
+  }
+  return processed
+}
+
 export async function drainReadyCanvasIndexJobs(): Promise<number> {
   if (drainPromise) return drainPromise
-  drainPromise = (async () => {
-    let processed = 0
-    while (shouldClaimCanvasIndexJob(workerStopped)) {
-      const job = await claimReadyCanvasIndexJob()
-      if (!job) break
-      try {
-        await processCanvasIndexJob(job)
-      } catch (error) {
-        await retryCanvasIndexJob(job, error)
-        processed += 1
-        continue
-      }
-      try {
-        await classifyIndexedCanvasOverlay(job)
-      } catch (error) {
-        console.error('Canvas overlay classification failed:', error)
-      }
-      processed += 1
-    }
-    return processed
-  })().finally(() => {
+  drainPromise = drainCanvasIndexJobsSerially().finally(() => {
     drainPromise = null
   })
   return drainPromise

@@ -125,6 +125,8 @@ test('persistence and worker source preserve atomic save and resumable tombstone
   assert.match(indexDb, /planCanvasIndexDelete[\s\S]*enqueueCanvasIndexJobDrafts[\s\S]*completeCanvasIndexJob/)
   assert.match(indexDb, /removeAbsentCanvasIndexNodes/)
   assert.match(indexStore, /drainReadyCanvasIndexJobs/)
+  assert.match(indexStore, /drainPromise = drainCanvasIndexJobsSerially\(\)\.finally/)
+  assert.doesNotMatch(indexStore, /drainPromise = \(async \(\) =>/)
   assert.match(indexStore, /while \(shouldClaimCanvasIndexJob\(workerStopped\)\)/)
   assert.match(indexStore, /await drainPromise\?\.catch/)
   assert.match(indexStore, /queueCanvasIndexRebuild/)

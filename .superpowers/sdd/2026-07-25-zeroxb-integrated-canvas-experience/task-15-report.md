@@ -117,3 +117,13 @@ Verification on the Fix Round 2 candidate:
 - `git diff --check` on the scoped Task 15 changes: PASS; only informational existing CRLF notices.
 
 The controller-owned `.adworkflow/impact_report.json` was not modified in this fix round. Its next post-edit regeneration must confirm zero production critical edges against this committed revision.
+
+## Fix Round 3
+
+The first regenerated L2 report removed 17 of 18 prior production dynamic-dispatch edges. Its single remaining finding was the inline async IIFE wrapping the otherwise static serial index drain. Extracted that body into the named `drainCanvasIndexJobsSerially` function and retained the existing shared `drainPromise` cleanup contract. The lifecycle source test now requires the named function call and rejects reintroducing that IIFE shape.
+
+Covering verification:
+
+- `node --experimental-strip-types --test scripts/tests/canvas-index-lifecycle.test.mjs scripts/tests/canvas-ai-overlay.test.mjs`: PASS, 16/16.
+- `node_modules/.bin/tsc.cmd --noEmit`: PASS, zero diagnostics.
+- `git diff --check -- src/stores/canvas-index.ts scripts/tests/canvas-index-lifecycle.test.mjs`: PASS; existing CRLF notices are informational.
