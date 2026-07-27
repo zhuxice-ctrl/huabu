@@ -58,3 +58,16 @@ test('a failed extractor is isolated and leaves successful anchors recoverable',
   assert.equal(result.failures.length, 1)
   assert.equal(result.failures[0].message.includes('super-secret'), false)
 })
+
+test('worker retries before replacing persisted anchors when extraction is incomplete', async () => {
+  const source = await import('node:fs/promises').then(({ readFile }) => readFile(
+    new URL('../../src/db/canvas-index.ts', import.meta.url), 'utf8',
+  ))
+  const failureGuard = source.indexOf('if (extraction.failures.length > 0)')
+  const transaction = source.indexOf("await db.execute('BEGIN IMMEDIATE')", failureGuard)
+  const replacement = source.indexOf('await replaceCanvasKnowledgeAnchors', failureGuard)
+  assert.ok(failureGuard >= 0)
+  assert.ok(transaction > failureGuard)
+  assert.ok(replacement > failureGuard)
+  assert.match(source.slice(failureGuard, transaction), /retryCanvasIndexJob[\s\S]*return 'retry'/)
+})

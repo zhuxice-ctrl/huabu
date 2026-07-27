@@ -4,6 +4,7 @@ export interface SensitiveEndpointConfig {
   proxyURL?: string | null
   globalProxyURL?: string | null
   redirectUrl?: string | null
+  redirectPolicyVerified?: boolean
 }
 
 export interface SensitiveEvidenceAnchor {
@@ -32,6 +33,7 @@ export function isRawSensitiveContextAllowed(config: SensitiveEndpointConfig): b
   // Unknown proxy state must be treated as cloud-bound; only an explicit disabled mode is direct.
   if (config.proxyMode !== 'disabled' && config.proxyMode !== 'direct') return false
   if (config.proxyURL?.trim() || config.globalProxyURL?.trim()) return false
+  if (config.redirectPolicyVerified !== true) return false
   return isLoopbackUrl(config.baseUrl) && (!config.redirectUrl || isLoopbackUrl(config.redirectUrl))
 }
 
@@ -45,8 +47,11 @@ function stableMarker(kind: string, anchorId: string, value: string) {
 }
 
 const SENSITIVE_PATTERNS: Array<[string, RegExp]> = [
+  ['PRIVATE_KEY', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
+  ['AUTHORIZATION', /\bauthorization\s*:\s*(?:bearer|basic)\s+[^\s,;]+/gi],
   ['API_KEY', /\b(?:sk|rk|pk|AKIA)[-_A-Za-z0-9]{12,}\b/g],
   ['API_KEY', /\b(?:api[_ -]?key|access[_ -]?token|token)\s*[:=]\s*[^\s,;]+/gi],
+  ['CREDENTIAL', /\b(?:client[_ -]?secret|credential|secret[_ -]?key)\s*[:=]\s*[^\s,;]+/gi],
   ['PASSWORD', /\b(?:password|passwd|pwd)\s*[:=]\s*[^\s,;]+/gi],
   ['IDENTITY_NUMBER', /\b\d{17}[\dXx]\b/g],
 ]

@@ -94,7 +94,16 @@ export async function retrieveCanvasEvidence(input: RetrieveCanvasEvidenceInput)
   }).filter(item => item.matchedBy.length > 0 && item.score >= 0.12)
 
   evidence.sort((left, right) => right.score - left.score || left.anchor.id.localeCompare(right.anchor.id))
-  if (input.rerank && evidence.length) evidence = await input.rerank(evidence)
+  if (input.rerank && evidence.length) {
+    const allowedById = new Map(evidence.map(item => [item.anchor.id, item.anchor]))
+    const seen = new Set<string>()
+    evidence = (await input.rerank(evidence)).flatMap(item => {
+      const anchor = allowedById.get(item.anchor.id)
+      if (!anchor || anchor.canvasId !== canvasId || seen.has(anchor.id)) return []
+      seen.add(anchor.id)
+      return [{ ...item, anchor }]
+    })
+  }
   evidence = evidence.slice(0, Math.max(1, Math.min(input.limit ?? 8, 30)))
   return { canvasId, evidence, context: formatEvidence(evidence) }
 }

@@ -10,6 +10,9 @@ import useTagStore from "@/stores/tag"
 import { TooltipButton } from "@/components/tooltip-button"
 import { useImperativeHandle, forwardRef, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import useVectorStore from "@/stores/vector"
+import { getContextForQuery, getContextForQueryInFolder } from '@/lib/rag'
+import { invoke } from "@tauri-apps/api/core"
 import { LinkedResource, isLinkedFolder } from "@/lib/files"
 import { readTextFile } from "@tauri-apps/plugin-fs"
 import { getFilePathOptions, getWorkspacePath } from "@/lib/workspace"
@@ -115,6 +118,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
     maybeCondense,
     linkedResourcePreview,
   } = useChatStore()
+  const { isRagEnabled } = useVectorStore()
   const agentHandlerRef = useRef<AgentHandler | null>(null)
   const manualStopRequestedRef = useRef(false)
   const steeringSequenceRef = useRef(0)
@@ -139,6 +143,56 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
     }
     wasLoadingRef.current = loading
   }, [loading, maybeCondense])
+
+  const filterRAGKeywords = (keywords: { text: string; weight: number }[]) => {
+    const stopWords = new Set([
+      '的', '了', '是', '在', '有', '和', '就', '不', '人', '都', '一', '一个',
+      '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看',
+      '好', '自己', '这', '那', '里', '就是', '为', '与', '之', '用', '可以',
+      '但', '而', '或', '及', '等', '对', '把', '被', '让', '给', '从', '向',
+      '什么', '怎么', '怎样', '如何', '为什么', '哪些', '多少',
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+      'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+      'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those',
+      'what', 'how', 'why', 'where', 'when', 'who', 'which',
+    ])
+    return keywords.filter(keyword => {
+      const text = keyword.text.trim().toLocaleLowerCase()
+      return text.length > 1 && !stopWords.has(text)
+    })
+  }
+
+  const retrieveLegacyRag = async (text: string) => {
+    let keywords = await invoke<{ text: string; weight: number }[]>('rank_keywords', { text, topK: 15 })
+    keywords = filterRAGKeywords(keywords)
+    const result = linkedResource && isLinkedFolder(linkedResource)
+      ? await getContextForQueryInFolder(text, keywords, linkedResource.relativePath)
+      : await getContextForQuery(text, keywords)
+    return { ...result, keywordCount: keywords.length }
+  }
+
+  const retrieveProtectedCanvasContext = async (canvasId: string, query: string) => {
+    const evidenceResult = await retrieveCanvasEvidence({ canvasId, query })
+    const provider = aiModelList.find(config => config.key === primaryModel)
+    const protectedEvidence = prepareCanvasEvidenceForRequest(
+      evidenceResult.evidence.map(item => item.anchor),
+      {
+        baseUrl: provider?.baseURL,
+        proxyMode: provider?.proxyMode === 'direct' ? 'disabled' : provider?.proxyMode,
+        proxyURL: provider?.proxyURL,
+        // The current native transport does not expose redirect verification. Stay fail-closed.
+        redirectPolicyVerified: false,
+      },
+    )
+    const sources = protectedEvidence.anchors.map(anchor => `${anchor.nodeId}:${anchor.startOffset}-${anchor.endOffset}`)
+    const context = protectedEvidence.anchors.length
+      ? protectedEvidence.anchors.map(anchor => (
+        `[画布证据 ${anchor.nodeId}:${anchor.startOffset}-${anchor.endOffset}]\n${anchor.plainText}`
+      )).join('\n\n')
+      : evidenceResult.context
+    return { context, sources, rawSensitiveAllowed: protectedEvidence.rawSensitiveAllowed }
+  }
 
   const buildPartialSuccessContent = (result: string, toolCalls: { result?: { success?: boolean; data?: any; error?: string } }[]) => {
     const generatedOutputFiles = toolCalls.flatMap((toolCall) => {
@@ -189,13 +243,39 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
     return trimmed.slice(0, cutoff).trim()
   }
 
-  const buildSteeringContext = async () => {
+  const buildSteeringContext = async (text: string) => {
     const useArticleStore = (await import('@/stores/article')).default
     const articleStore = useArticleStore.getState()
     let context = ''
 
     if (articleStore.activeFilePath && articleStore.currentArticle) {
       context += `## 当前打开的笔记\n文件路径: ${articleStore.activeFilePath}\n\n内容:\n${articleStore.currentArticle}\n\n`
+    }
+
+    const chatState = useChatStore.getState()
+    const activeChat = chatState.chats.find(chat => chat.id === chatState.agentState.activeChatId)
+    const steeringCanvasId = parseCanvasChatContext(activeChat?.canvasContext)?.sourceCanvasId
+    if (steeringCanvasId) {
+      try {
+        const result = await retrieveProtectedCanvasContext(steeringCanvasId, text)
+        context += `## 当前画布检索结果\n\n${result.context}\n\n`
+      } catch (error) {
+        console.error('Failed to retrieve current canvas evidence for steering:', error)
+        context += '## 当前画布检索结果\n\n没有找到与当前画布相关的证据。\n\n'
+      }
+    } else if (isRagEnabled) {
+      try {
+        const result = await retrieveLegacyRag(text)
+        if (result.context) context += `## 知识库检索结果\n\n${result.context}\n\n`
+        const currentSources = chatState.agentState.ragSources || []
+        const currentDetails = chatState.agentState.ragSourceDetails || []
+        setAgentState({
+          ragSources: Array.from(new Set([...currentSources, ...result.sources])),
+          ragSourceDetails: [...currentDetails, ...result.sourceDetails],
+        })
+      } catch (error) {
+        console.error('Failed to get RAG context for steering:', error)
+      }
     }
 
     if (linkedResource && !isLinkedFolder(linkedResource)) {
@@ -619,36 +699,43 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
       // 2. Retrieval is explicitly bounded to the canvas captured when this chat was sent.
       if (capturedContext?.sourceCanvasId) {
         try {
-          const evidenceResult = await retrieveCanvasEvidence({
-            canvasId: capturedContext.sourceCanvasId,
-            query: requestText,
-          })
-          const provider = aiModelList.find(config => config.key === primaryModel)
-          const protectedEvidence = prepareCanvasEvidenceForRequest(
-            evidenceResult.evidence.map(item => item.anchor),
-            {
-              baseUrl: provider?.baseURL,
-              proxyMode: provider?.proxyMode === 'direct' ? 'disabled' : provider?.proxyMode,
-              proxyURL: provider?.proxyURL,
-            },
-          )
-          ragSources = protectedEvidence.anchors.map(anchor => `${anchor.nodeId}:${anchor.startOffset}-${anchor.endOffset}`)
-          const evidenceContext = protectedEvidence.anchors.length
-            ? protectedEvidence.anchors.map(anchor => (
-              `[画布证据 ${anchor.nodeId}:${anchor.startOffset}-${anchor.endOffset}]\n${anchor.plainText}`
-            )).join('\n\n')
-            : evidenceResult.context
-          context += `## 当前画布检索结果\n\n${evidenceContext}\n`
+          const result = await retrieveProtectedCanvasContext(capturedContext.sourceCanvasId, requestText)
+          ragSources = result.sources
+          context += `## 当前画布检索结果\n\n${result.context}\n`
           setAgentState({ ragSources, ragSourceDetails })
           agentDebugLog('chat_context_canvas_retrieval', {
             canvasId: capturedContext.sourceCanvasId,
             sourceCount: ragSources.length,
-            contextLength: evidenceContext.length,
-            rawSensitiveAllowed: protectedEvidence.rawSensitiveAllowed,
+            contextLength: result.context.length,
+            rawSensitiveAllowed: result.rawSensitiveAllowed,
           })
         } catch (error) {
           console.error('Failed to retrieve current canvas evidence in Agent mode:', error)
           context += `## 当前画布检索结果\n\n没有找到与当前画布相关的证据。\n`
+        }
+      } else if (isRagEnabled) {
+        try {
+          const result = await retrieveLegacyRag(requestText)
+          ragSources = result.sources
+          ragSourceDetails.push(...result.sourceDetails)
+          setAgentState({ ragSources, ragSourceDetails })
+          if (result.context) {
+            context += `## 知识库检索结果\n\n已在知识库中找到与用户问题相关的笔记内容。请优先使用以下信息回答用户问题：\n\n${result.context}\n`
+          } else {
+            const searchScope = linkedResource && isLinkedFolder(linkedResource)
+              ? `在关联文件夹"${linkedResource.name}"中`
+              : '在知识库中'
+            context += `## 知识库检索结果\n\n${searchScope}未找到与用户问题相关的笔记内容。\n`
+          }
+          agentDebugLog('chat_context_rag_result', {
+            enabled: true,
+            keywordCount: result.keywordCount,
+            sources: ragSources,
+            contextLength: result.context.length,
+          })
+        } catch (error) {
+          console.error('Failed to get RAG context in Agent mode:', error)
+          context += '## 知识库检索结果\n\n知识库检索过程中出现错误。\n'
         }
       }
 
@@ -875,7 +962,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
         if (manualStopRequestedRef.current) return
         let additionalContext = ''
         try {
-          additionalContext = await buildSteeringContext()
+          additionalContext = await buildSteeringContext(text)
         } catch (error) {
           console.error('Failed to build steering context:', error)
         }

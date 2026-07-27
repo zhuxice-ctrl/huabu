@@ -378,6 +378,10 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
     contentRevision: currentRevision,
     node,
   })
+  if (extraction.failures.length > 0) {
+    await retryCanvasIndexJob(job, new Error(extraction.failures.map(failure => failure.message).join('; ')))
+    return 'retry'
+  }
   const now = Date.now()
   await db.execute('BEGIN IMMEDIATE')
   try {
@@ -405,16 +409,11 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
     [job.canvasId, job.nodeId, currentRevision, JSON.stringify(features.vector), now],
     )
     await replaceCanvasKnowledgeAnchors(job.canvasId, job.nodeId, currentRevision, extraction.anchors, db)
-    if (extraction.failures.length === 0) await completeCanvasIndexJob(job.id, db)
+    await completeCanvasIndexJob(job.id, db)
     await db.execute('COMMIT')
   } catch (error) {
     try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     throw error
-  }
-  if (extraction.failures.length > 0) {
-    // Failure messages are already redacted by the extractor; retry does not affect the saved source node.
-    await retryCanvasIndexJob(job, new Error(extraction.failures.map(failure => failure.message).join('; ')))
-    return 'retry'
   }
   return 'complete'
 }

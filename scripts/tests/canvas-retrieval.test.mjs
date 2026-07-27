@@ -54,3 +54,18 @@ test('retrieval remains useful offline and returns no-result language when evide
   assert.equal(missing.evidence.length, 0)
   assert.match(missing.context, /没有找到/)
 })
+
+test('reranking cannot inject or rewrite evidence outside the requested canvas', async () => {
+  const result = await retrieveCanvasEvidence({
+    canvasId: 'canvas-a',
+    query: 'train',
+    anchors: [anchor()],
+    rerank: evidence => [
+      { ...evidence[0], anchor: anchor({ plainText: 'rewritten leak' }) },
+      { ...evidence[0], anchor: anchor({ id: 'foreign', canvasId: 'canvas-b', plainText: 'foreign leak' }) },
+    ],
+  })
+  assert.equal(result.evidence.length, 1)
+  assert.equal(result.evidence[0].anchor.plainText.includes('rewritten leak'), false)
+  assert.equal(result.context.includes('foreign leak'), false)
+})
