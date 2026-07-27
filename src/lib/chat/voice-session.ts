@@ -101,6 +101,10 @@ export function shouldStopVoicePlayback(event: VoicePlaybackStopEvent) {
     || event === 'playback-start'
 }
 
+export function canAcceptVoiceSteering(activeRun: boolean, finalizingRun: boolean) {
+  return activeRun && !finalizingRun
+}
+
 type AgentBreathStatus =
   | 'idle'
   | 'preparing_context'

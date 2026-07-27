@@ -94,7 +94,7 @@ export class AgentHandler {
         isThinking: false,
         status: 'stopped',
       })
-      await this.config.onComplete?.('', [], true)
+      await this.notifyComplete('', [], true)
       return ''
     }
 
@@ -174,7 +174,7 @@ export class AgentHandler {
       })
 
       this.finishRun(result)
-      await this.config.onComplete?.(result.content, result.steps, result.stopped)
+      await this.notifyComplete(result.content, result.steps, result.stopped)
       return result.content
     } catch (error) {
       if (this.stopped || isRequestAbortError(error)) {
@@ -192,7 +192,7 @@ export class AgentHandler {
           isThinking: false,
           status: 'stopped',
         })
-        await this.config.onComplete?.(partialContent, agentState.completedSteps, true)
+        await this.notifyComplete(partialContent, agentState.completedSteps, true)
         return partialContent
       }
 
@@ -202,8 +202,26 @@ export class AgentHandler {
         status: 'failed',
       })
       const errorMessage = error instanceof Error ? error.message : String(error)
-      await this.config.onError?.(errorMessage)
+      await this.notifyError(errorMessage)
       throw error
+    }
+  }
+
+  private async notifyComplete(result: string, steps?: AgentStep[], stopped?: boolean) {
+    try {
+      await this.config.onComplete?.(result, steps, stopped)
+    } catch (error) {
+      // 完成后的持久化/朗读失败不能被重新解释为模型执行失败，
+      // 已生成的最终正文继续保留在内存消息中。
+      console.error('Agent completion callback failed:', error)
+    }
+  }
+
+  private async notifyError(errorMessage: string) {
+    try {
+      await this.config.onError?.(errorMessage)
+    } catch (error) {
+      console.error('Agent error callback failed:', error)
     }
   }
 

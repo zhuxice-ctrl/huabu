@@ -74,6 +74,13 @@ test('all required ownership changes stop active speech', async () => {
   assert.equal(shouldStopVoicePlayback('stream-update'), false)
 })
 
+test('steering closes as soon as final persistence begins', async () => {
+  const { canAcceptVoiceSteering } = await import(moduleUrl.href)
+  assert.equal(canAcceptVoiceSteering(true, false), true)
+  assert.equal(canAcceptVoiceSteering(true, true), false)
+  assert.equal(canAcceptVoiceSteering(false, false), false)
+})
+
 test('AI breath state is explicit and prioritizes listening and confirmation', async () => {
   const { resolveAiBreathState } = await import(moduleUrl.href)
   assert.equal(resolveAiBreathState({ isRecognizing: true }), 'listening')

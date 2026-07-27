@@ -34,8 +34,15 @@ test('automatic speech is claimed only after the final answer has been persisted
   assert.ok(saveIndex >= 0 && claimIndex > saveIndex)
   assert.match(send, /const completionVoiceSession = activeVoiceSessionRef\.current/)
   assert.ok(send.indexOf('completionVoiceSession', completionStart) < saveIndex)
-  assert.match(handler, /await this\.config\.onComplete\?\.\(result\.content/)
-  assert.match(handler, /await this\.config\.onError\?\.\(errorMessage\)/)
+  assert.match(handler, /await this\.notifyComplete\(result\.content/)
+  assert.match(handler, /private async notifyComplete/)
+  assert.match(handler, /Agent completion callback failed/)
+  assert.match(handler, /await this\.notifyError\(errorMessage\)/)
+  assert.match(send, /finalizingRunRef\.current = true/)
+  assert.match(send, /canAcceptVoiceSteering\(activeRunRef\.current, finalizingRunRef\.current\)/)
+  assert.match(send, /let finalAnswerPersisted = false/)
+  assert.match(send, /if \(finalAnswerPersisted && completionVoiceSession\)/)
+  assert.match(send, /keeping visible text/)
 })
 
 test('manual and automatic speech share one observable playback owner', async () => {
@@ -83,6 +90,9 @@ test('programmatic composer replacements reset microphone origin to keyboard', a
     assert.ok(index > 0, anchor)
     assert.match(input.slice(Math.max(0, index - 100), index), /promptOriginRef\.current = 'keyboard'/)
   }
+  const onboardingIndex = input.indexOf('onboardingAgentPromptArmedRef.current = true')
+  assert.ok(onboardingIndex > 0)
+  assert.match(input.slice(onboardingIndex, onboardingIndex + 160), /promptOriginRef\.current = 'keyboard'/)
   assert.match(input, /tooltipText=\{isRecognizing \? t\('recording\.cancel'\) : t\('recording\.title'\)\}/)
 })
 

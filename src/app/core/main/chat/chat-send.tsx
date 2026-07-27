@@ -31,6 +31,7 @@ import { retainCompletedAgentTraceEvents } from '@/lib/agent/trace-retention'
 import useCanvasStore from '@/stores/canvas'
 import { createCanvasChatContext, parseCanvasChatContext } from '@/lib/chat/canvas-context'
 import {
+  canAcceptVoiceSteering,
   completeVoiceSession,
   createVoiceSession,
   type PromptOrigin,
@@ -122,6 +123,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
   const steeringChainRef = useRef<Promise<void>>(Promise.resolve())
   const pendingSteeringRef = useRef<AgentSteeringPayload[]>([])
   const activeRunRef = useRef(false)
+  const finalizingRunRef = useRef(false)
   const activeVoiceSessionRef = useRef<VoiceSession | null>(null)
   const repeatedScriptApprovalRef = useRef<{ signature: string; count: number }>({ signature: '', count: 0 })
   const t = useTranslations()
@@ -447,6 +449,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
       },
       formatAutoFinalAnswer: (key, values) => t(key as any, values),
       onComplete: async (result, steps, stopped) => {
+        finalizingRunRef.current = true
         const completionVoiceSession = activeVoiceSessionRef.current
         // 获取 Agent 执行历史，保存结构化运行轨迹
         const { agentState } = useChatStore.getState()
@@ -508,26 +511,31 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
         const currentState = useChatStore.getState()
         const currentMessage = currentState.chats.find(c => c.id === placeholderMessage.id)
 
-        // 更新占位消息，保留 RAG 相关字段
-        await saveChat({
-          id: placeholderMessage.id,
-          tagId: placeholderMessage.tagId,
-          conversationId: placeholderMessage.conversationId,
-          role: placeholderMessage.role,
-          type: placeholderMessage.type,
-          inserted: placeholderMessage.inserted,
-          createdAt: placeholderMessage.createdAt,
-          // 保留来自 currentMessage 的 RAG 相关字段
-          ragSources: currentMessage?.ragSources,
-          ragSourceDetails: currentMessage?.ragSourceDetails,
-          canvasContext: currentMessage?.canvasContext ?? canvasContext,
-          completionState: effectivelyStopped ? 'interrupted' : 'complete',
-          // 设置新的内容
-          content: finalContent,
-          agentHistory: JSON.stringify(agentHistory),
-        }, !transactionStopRequested)
+        // 更新占位消息，保留 RAG 相关字段。持久化失败时 saveChat 已保留
+        // 内存正文，但自动朗读必须等待成功的最终持久化。
+        let finalAnswerPersisted = false
+        try {
+          await saveChat({
+            id: placeholderMessage.id,
+            tagId: placeholderMessage.tagId,
+            conversationId: placeholderMessage.conversationId,
+            role: placeholderMessage.role,
+            type: placeholderMessage.type,
+            inserted: placeholderMessage.inserted,
+            createdAt: placeholderMessage.createdAt,
+            ragSources: currentMessage?.ragSources,
+            ragSourceDetails: currentMessage?.ragSourceDetails,
+            canvasContext: currentMessage?.canvasContext ?? canvasContext,
+            completionState: effectivelyStopped ? 'interrupted' : 'complete',
+            content: finalContent,
+            agentHistory: JSON.stringify(agentHistory),
+          }, !transactionStopRequested)
+          finalAnswerPersisted = true
+        } catch (error) {
+          console.error('Failed to persist final agent answer; keeping visible text:', error)
+        }
 
-        if (completionVoiceSession) {
+        if (finalAnswerPersisted && completionVoiceSession) {
           const voiceCompletion = completeVoiceSession(completionVoiceSession, {
             completionState: effectivelyStopped ? 'interrupted' : 'complete',
             content: finalContent,
@@ -551,6 +559,7 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
         settleGeneration()
       },
       onError: async (error) => {
+        finalizingRunRef.current = true
         // 获取当前消息状态，保留 ragSources 和 ragSourceDetails
         const currentState = useChatStore.getState()
         const currentMessage = currentState.chats.find(c => c.id === placeholderMessage.id)
@@ -585,24 +594,27 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
 
         // SDK 可能把手动终止作为普通错误抛出。此时保留已流式输出的正文，
         // 只有真正的执行错误才写入 Error 信息。
-        await saveChat({
-          id: placeholderMessage.id,
-          tagId: placeholderMessage.tagId,
-          conversationId: placeholderMessage.conversationId,
-          role: placeholderMessage.role,
-          type: placeholderMessage.type,
-          inserted: placeholderMessage.inserted,
-          createdAt: placeholderMessage.createdAt,
-          // 保留来自 currentMessage 的 RAG 相关字段
-          ragSources: currentMessage?.ragSources,
-          ragSourceDetails: currentMessage?.ragSourceDetails,
-          canvasContext: currentMessage?.canvasContext ?? canvasContext,
-          completionState: aborted ? 'interrupted' : 'failed',
-          content: aborted
-            ? preservedContent || t('record.chat.input.stopped')
-            : `Error: ${error}`,
-          agentHistory: JSON.stringify(agentHistory),
-        }, !transactionStopRequested)
+        try {
+          await saveChat({
+            id: placeholderMessage.id,
+            tagId: placeholderMessage.tagId,
+            conversationId: placeholderMessage.conversationId,
+            role: placeholderMessage.role,
+            type: placeholderMessage.type,
+            inserted: placeholderMessage.inserted,
+            createdAt: placeholderMessage.createdAt,
+            ragSources: currentMessage?.ragSources,
+            ragSourceDetails: currentMessage?.ragSourceDetails,
+            canvasContext: currentMessage?.canvasContext ?? canvasContext,
+            completionState: aborted ? 'interrupted' : 'failed',
+            content: aborted
+              ? preservedContent || t('record.chat.input.stopped')
+              : `Error: ${error}`,
+            agentHistory: JSON.stringify(agentHistory),
+          }, !transactionStopRequested)
+        } catch (persistenceError) {
+          console.error('Failed to persist agent error state:', persistenceError)
+        }
 
         // 清空 Final Answer 模式状态
         setAgentState({
@@ -913,6 +925,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
     if (!inputValue.trim() && attachedImages.length === 0 && fileAttachments.length === 0) return
 
     if (activeRunRef.current) {
+      if (!canAcceptVoiceSteering(activeRunRef.current, finalizingRunRef.current)) return
       const sequence = ++steeringSequenceRef.current
       const text = requestText
       const imageUrls = attachedImages.map(img => img.url)
@@ -960,6 +973,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
 
     manualStopRequestedRef.current = false
     activeRunRef.current = true
+    finalizingRunRef.current = false
     repeatedScriptApprovalRef.current = { signature: '', count: 0 }
 
     setLoading(true)
@@ -993,6 +1007,7 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
       await handleAgentMode(imageUrls, canvasContext)
     } finally {
       activeRunRef.current = false
+      finalizingRunRef.current = false
       activeVoiceSessionRef.current = null
       setLoading(false)
     }
@@ -1009,12 +1024,13 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
 
   const hasInput = Boolean(inputValue.trim() || attachedImages.length > 0 || fileAttachments.length > 0)
   const showStop = loading && !hasInput
+  const isFinalizing = finalizingRunRef.current
 
   return <TooltipButton
     variant={dockStyle ? "ghost" : showStop ? "destructive" : "default"}
     size="sm"
     icon={showStop ? <Square /> : <Send />}
-    disabled={!showStop && (!primaryModel || !hasInput)}
+    disabled={!showStop && (!primaryModel || !hasInput || isFinalizing)}
     tooltipText={showStop
       ? t('record.chat.input.stop')
       : loading
