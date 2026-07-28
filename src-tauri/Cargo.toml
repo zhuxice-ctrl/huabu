@@ -44,6 +44,7 @@ tauri-plugin-opener = "2.4.0"
 uuid = { version = "1.10", features = ["v4"] }
 zip = { version = "4", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 
 [dependencies.tauri-plugin-sql]
 features = ["sqlite"]
@@ -64,7 +65,8 @@ font-kit = "0.14"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.59", features = [
-  "Win32_Security_Credentials"
+  "Win32_Security_Credentials",
+  "Win32_Storage_FileSystem"
 ] }
 windows = { version = "0.58", features = [
   "Foundation",

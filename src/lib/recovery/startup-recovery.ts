@@ -1,4 +1,5 @@
 import Database from '@tauri-apps/plugin-sql'
+import { invoke } from '@tauri-apps/api/core'
 import { Store } from '@tauri-apps/plugin-store'
 import {
   copyFile,
@@ -19,9 +20,11 @@ import {
 
 import {
   enableCrashSafeSqlite,
-  enterReadOnlyFallback,
   inspectWorkspaceIntegrity,
+  assertAttachmentWriteAllowed,
+  assertReadOnlyRecoverySafe,
   isDiskFullError,
+  isReadOnlyError,
   probeWorkspaceWritable,
   rebuildCanvasIndexes,
   recoverPendingCanvasAiTransactions,
@@ -31,6 +34,7 @@ import {
 } from '../../db/workspace-recovery'
 import {
   DEFAULT_BACKUP_RETENTION,
+  compactRecoveryTimestamp,
   getSnapshotGenerations,
   isSafeSnapshotFileName,
   parseSnapshotFileName,
@@ -46,6 +50,7 @@ import {
 import {
   configureDatabasePath,
   getDb,
+  openDatabaseReadOnly,
 } from '../../db/client'
 
 const RECOVERY_STORE = 'workspace-recovery.json'
@@ -53,7 +58,7 @@ const ACTIVE_WORKSPACE_KEY = 'active-workspace-v1'
 const PENDING_RESTORE_KEY = 'pending-restore-v1'
 const RECOVERY_SCHEMA_VERSION = 20
 const MIGRATION_SNAPSHOT_PATTERN = /^migration-\d{8}T\d{6}Z\.workspace\.db$/
-const TRASH_FILE_PATTERN = /^(?:(?:daily|weekly)-\d{4}-\d{2}-\d{2}\.workspace\.db|pre-restore-\d{8}T\d{6}Z\.workspace\.db)(?:-(?:wal|shm))?\.trash-\d{8}T\d{6}Z$/
+const TRASH_FILE_PATTERN = /^(?:(?:daily|weekly)-\d{4}-\d{2}-\d{2}\.workspace\.db|pre-restore-\d{8}T\d{6}Z\.workspace\.db)\.trash-\d{8}T\d{6}Z(?:-(?:wal|shm))?$/
 
 interface MigrationSnapshot {
   fileName: string
@@ -74,10 +79,6 @@ export interface StartupRecoveryContext {
 let activeContext: StartupRecoveryContext | null = null
 let activeAccessMode: WorkspaceAccessMode = 'read-write'
 
-function compactTimestamp(date = new Date()): string {
-  return date.toISOString().replace(/[-:]/g, '').replace('.000', '')
-}
-
 function sqliteString(value: string): string {
   return `'${value.replaceAll("'", "''")}'`
 }
@@ -88,6 +89,10 @@ function firstNumber(rows: Array<Record<string, unknown>>, fallback = 0): number
   return Number.isFinite(number) ? number : fallback
 }
 
+async function assertSafeRecoveryPath(path: string, allowMissingLeaf = false): Promise<void> {
+  await invoke('assert_no_reparse_points', { path, allowMissingLeaf })
+}
+
 async function ensureWorkspaceDirectories(layout: WorkspaceLayout): Promise<void> {
   for (const directory of [
     layout.root,
@@ -95,7 +100,12 @@ async function ensureWorkspaceDirectories(layout: WorkspaceLayout): Promise<void
     layout.trashPath,
     ...layout.localDirectories,
   ]) {
+    await assertSafeRecoveryPath(directory, !await exists(directory))
     if (!await exists(directory)) await mkdir(directory, { recursive: true })
+    const metadata = await lstat(directory)
+    if (!metadata.isDirectory || metadata.isSymlink) {
+      throw new Error('Workspace recovery directory must not be a symlink or junction.')
+    }
   }
 }
 
@@ -130,18 +140,23 @@ async function resolveWorkspaceLayout(): Promise<{
 }
 
 async function verifySqliteFile(databasePath: string): Promise<boolean> {
-  const snapshot = await Database.load(`sqlite:${databasePath}`)
+  await assertSafeRecoveryPath(databasePath)
+  const databaseUrl = `sqlite:${databasePath}`
+  const snapshot = await Database.load(databaseUrl)
   try {
     const rows = await snapshot.select<Array<Record<string, unknown>>>('PRAGMA quick_check')
     return rows.length > 0
       && rows.every(row => Object.values(row).every(value => String(value).toLowerCase() === 'ok'))
   } finally {
-    await snapshot.close()
+    await snapshot.close(databaseUrl)
   }
 }
 
 async function removeIfPresent(path: string): Promise<void> {
-  if (await exists(path)) await remove(path)
+  if (await exists(path)) {
+    await assertSafeRecoveryPath(path)
+    await remove(path)
+  }
 }
 
 async function assertRegularRecoveryFile(path: string): Promise<void> {
@@ -165,7 +180,7 @@ async function applyPendingRestore(layout: WorkspaceLayout, store: Store): Promi
     await join(layout.backupsPath, pendingFileName),
   )
   const temporary = `${layout.databasePath}.restore-tmp`
-  const timestamp = compactTimestamp()
+  const timestamp = compactRecoveryTimestamp(new Date())
   const previous = await join(
     layout.trashPath,
     `pre-restore-${timestamp}.workspace.db.trash-${timestamp}`,
@@ -174,6 +189,7 @@ async function applyPendingRestore(layout: WorkspaceLayout, store: Store): Promi
   const movedSidecars: Array<{ previous: string; active: string }> = []
   try {
     if (!await exists(candidate)) throw new Error('Workspace snapshot does not exist.')
+    await assertSafeRecoveryPath(candidate)
     await assertRegularRecoveryFile(candidate)
     if (!await verifySqliteFile(candidate)) {
       throw new Error('Workspace snapshot verification failed.')
@@ -183,6 +199,8 @@ async function applyPendingRestore(layout: WorkspaceLayout, store: Store): Promi
     if (!await verifySqliteFile(temporary)) throw new Error('Restored workspace verification failed.')
 
     if (await exists(layout.databasePath)) {
+      await assertSafeRecoveryPath(layout.databasePath)
+      await assertSafeRecoveryPath(previous, true)
       await rename(layout.databasePath, previous)
       previousMoved = true
     }
@@ -190,10 +208,14 @@ async function applyPendingRestore(layout: WorkspaceLayout, store: Store): Promi
       const sidecar = `${layout.databasePath}${suffix}`
       if (await exists(sidecar)) {
         const previousSidecar = `${previous}${suffix}`
+        await assertSafeRecoveryPath(sidecar)
+        await assertSafeRecoveryPath(previousSidecar, true)
         await rename(sidecar, previousSidecar)
         movedSidecars.push({ previous: previousSidecar, active: sidecar })
       }
     }
+    await assertSafeRecoveryPath(temporary)
+    await assertSafeRecoveryPath(layout.databasePath, true)
     await rename(temporary, layout.databasePath)
     if (!await verifySqliteFile(layout.databasePath)) {
       throw new Error('Activated workspace verification failed.')
@@ -204,10 +226,16 @@ async function applyPendingRestore(layout: WorkspaceLayout, store: Store): Promi
     await removeIfPresent(temporary)
     if (previousMoved && await exists(previous)) {
       await removeIfPresent(layout.databasePath)
+      await assertSafeRecoveryPath(previous)
+      await assertSafeRecoveryPath(layout.databasePath, true)
       await rename(previous, layout.databasePath)
     }
     for (const sidecar of movedSidecars) {
-      if (await exists(sidecar.previous)) await rename(sidecar.previous, sidecar.active)
+      if (await exists(sidecar.previous)) {
+        await assertSafeRecoveryPath(sidecar.previous)
+        await assertSafeRecoveryPath(sidecar.active, true)
+        await rename(sidecar.previous, sidecar.active)
+      }
     }
     await store.delete(PENDING_RESTORE_KEY)
     await store.save()
@@ -225,6 +253,8 @@ async function createVerifiedSqliteSnapshot(
   }
   const finalPath = assertPathInsideWorkspace(backupsPath, await join(backupsPath, fileName))
   const temporaryPath = `${finalPath}.tmp`
+  await assertSafeRecoveryPath(finalPath, !await exists(finalPath))
+  await assertSafeRecoveryPath(temporaryPath, !await exists(temporaryPath))
   await removeIfPresent(temporaryPath)
   await db.execute('PRAGMA wal_checkpoint(FULL)')
   await db.execute(`VACUUM INTO ${sqliteString(temporaryPath)}`)
@@ -260,11 +290,18 @@ export async function prepareStartupRecovery(): Promise<StartupRecoveryContext> 
   const { layout, store } = await resolveWorkspaceLayout()
   await applyPendingRestore(layout, store)
   configureDatabasePath(layout.databasePath)
-  const db = await getDb()
-  await enableCrashSafeSqlite(db)
+  let db: SqlExecutor
+  try {
+    db = await getDb()
+    await enableCrashSafeSqlite(db)
+  } catch (error) {
+    if (!isReadOnlyError(error) && !isDiskFullError(error)) throw error
+    db = await openDatabaseReadOnly()
+    activeAccessMode = 'read-only'
+  }
   const integrity = await inspectWorkspaceIntegrity(db)
   if (!integrity.ok && !integrity.indexCorruption) {
-    await enterReadOnlyFallback(db)
+    db = await openDatabaseReadOnly()
     activeAccessMode = 'read-only'
   }
   const shape = await databaseShape(db)
@@ -277,12 +314,20 @@ export async function prepareStartupRecovery(): Promise<StartupRecoveryContext> 
     hasUserTables: shape.hasUserTables,
     migrationSnapshot: null,
   }
-  await store.set(ACTIVE_WORKSPACE_KEY, {
-    databasePath: layout.databasePath,
-    checkpointVerifiedAt: Date.now(),
-  } satisfies SavedWorkspaceCheckpoint)
-  await store.save()
   activeContext = context
+  try {
+    await store.set(ACTIVE_WORKSPACE_KEY, {
+      databasePath: layout.databasePath,
+      checkpointVerifiedAt: Date.now(),
+    } satisfies SavedWorkspaceCheckpoint)
+    await store.save()
+  } catch (error) {
+    if (!isDiskFullError(error) && !isReadOnlyError(error)) throw error
+    context.db = await openDatabaseReadOnly()
+    context.accessMode = 'read-only'
+    activeAccessMode = 'read-only'
+  }
+  if (context.accessMode === 'read-only') await assertReadOnlyRecoverySafe(context.db)
   return context
 }
 
@@ -293,7 +338,7 @@ export async function createMigrationSnapshotIfNeeded(
   if (context.accessMode === 'read-only'
     || !context.hasUserTables
     || context.schemaVersionBefore >= RECOVERY_SCHEMA_VERSION) return
-  const fileName = `migration-${compactTimestamp(now)}.workspace.db`
+  const fileName = `migration-${compactRecoveryTimestamp(now)}.workspace.db`
   await createVerifiedSqliteSnapshot(context.db, context.layout.backupsPath, fileName)
   context.migrationSnapshot = {
     fileName,
@@ -310,6 +355,7 @@ async function listWorkspaceSnapshots(layout: WorkspaceLayout): Promise<Workspac
     const parsed = parseSnapshotFileName(entry.name)
     if (!parsed) continue
     const path = assertPathInsideWorkspace(layout.backupsPath, await join(layout.backupsPath, entry.name))
+    await assertSafeRecoveryPath(path)
     snapshots.push({
       fileName: entry.name,
       kind: parsed.kind,
@@ -360,6 +406,8 @@ async function createRotatingSnapshots(
       context.layout.trashPath,
       await join(context.layout.trashPath, snapshot.trashFileName),
     )
+    await assertSafeRecoveryPath(source)
+    await assertSafeRecoveryPath(destination, true)
     await rename(source, destination)
     trashed.push(snapshot.fileName)
   }
@@ -371,6 +419,8 @@ export async function completeStartupRecovery(context: StartupRecoveryContext): 
   const recovered = await recoverPendingCanvasAiTransactions(context.db)
   if (context.indexNeedsRebuild) {
     await repairCanvasIndexes(context.db)
+    const repaired = await inspectWorkspaceIntegrity(context.db)
+    if (!repaired.ok) throw new Error(`Workspace integrity repair failed: ${repaired.messages.join('; ')}`)
   }
   if (recovered.rolledBack.length > 0) {
     await rebuildCanvasIndexes(context.db)
@@ -393,14 +443,31 @@ export async function activateReadOnlyFallback(
   context: StartupRecoveryContext,
   error: unknown,
 ): Promise<boolean> {
-  if (!isDiskFullError(error)) return false
-  context.accessMode = await enterReadOnlyFallback(context.db)
+  if (!isDiskFullError(error) && !isReadOnlyError(error)) return false
+  context.db = await openDatabaseReadOnly()
+  context.accessMode = 'read-only'
   activeAccessMode = context.accessMode
+  await assertReadOnlyRecoverySafe(context.db)
   return true
 }
 
 export function getWorkspaceAccessMode(): WorkspaceAccessMode {
   return activeAccessMode
+}
+
+export async function assertWorkspaceAttachmentWriteAllowed(
+  requiredBytes: number,
+  destinationDirectory: string,
+): Promise<void> {
+  const context = requireActiveContext()
+  const availableBytes = await invoke<number>('workspace_available_bytes', {
+    path: destinationDirectory,
+  })
+  assertAttachmentWriteAllowed({
+    mode: context.accessMode,
+    requiredBytes,
+    availableBytes,
+  })
 }
 
 function requireActiveContext(): StartupRecoveryContext {
@@ -414,6 +481,8 @@ export async function checkWorkspaceHealth(): Promise<string> {
   if (integrity.ok) return context.accessMode === 'read-only' ? '工作区完整（只读）' : '工作区完整'
   if (integrity.indexCorruption && context.accessMode === 'read-write') {
     await repairCanvasIndexes(context.db)
+    const repaired = await inspectWorkspaceIntegrity(context.db)
+    if (!repaired.ok) throw new Error(`Workspace integrity repair failed: ${repaired.messages.join('; ')}`)
     return '工作区索引已重建'
   }
   throw new Error(`Workspace integrity check failed: ${integrity.messages.join('; ')}`)
@@ -435,6 +504,9 @@ export async function requestRestoreLatestWorkspaceSnapshot(): Promise<string> {
 
 export async function cleanupOldWorkspaceBackups(now = new Date()): Promise<number> {
   const context = requireActiveContext()
+  if (context.accessMode === 'read-only') {
+    throw new Error('Workspace is read-only; backup cleanup is disabled.')
+  }
   await createRotatingSnapshots(context, now)
   const entries = await readDir(context.layout.trashPath)
   const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1_000
@@ -445,6 +517,7 @@ export async function cleanupOldWorkspaceBackups(now = new Date()): Promise<numb
       context.layout.trashPath,
       await join(context.layout.trashPath, entry.name),
     )
+    await assertSafeRecoveryPath(path)
     const metadata = await stat(path)
     if ((metadata.mtime?.getTime() ?? now.getTime()) >= cutoff) continue
     await remove(path)

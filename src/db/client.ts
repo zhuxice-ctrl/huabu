@@ -21,6 +21,31 @@ export function getConfiguredDatabaseUrl(): string {
   return databaseUrl
 }
 
+export async function openDatabaseReadOnly(): Promise<Database> {
+  if (databasePromise) {
+    try {
+      const current = await databasePromise
+      await current.close(databaseUrl)
+    } catch { /* the read-write pool never opened */ }
+  }
+  if (/([?&])mode=[^&]*/.test(databaseUrl)) {
+    databaseUrl = databaseUrl.replace(/([?&])mode=[^&]*/, '$1mode=ro')
+  } else {
+    const separator = databaseUrl.includes('?') ? '&' : '?'
+    databaseUrl = `${databaseUrl}${separator}mode=ro`
+  }
+  databasePromise = Database.load(databaseUrl)
+    .then(handle => {
+      db = handle
+      return handle
+    })
+    .catch(error => {
+      databasePromise = null
+      throw error
+    })
+  return databasePromise
+}
+
 // Compatibility boundary for existing database modules.
 export async function getDb() {
   if (!databasePromise) {

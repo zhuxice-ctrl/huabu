@@ -4,6 +4,7 @@ import test from 'node:test'
 
 import {
   assertAttachmentWriteAllowed,
+  assertReadOnlyRecoverySafe,
   enableCrashSafeSqlite,
   recoverPendingCanvasAiTransactions,
   repairCanvasIndexes,
@@ -40,11 +41,15 @@ function fakeDb(rows = [], options = {}) {
     },
     async select(query, values = []) {
       calls.push({ kind: 'select', query, values })
+      if (/sqlite_master/i.test(query)) return [{ count: options.ledgerExists === false ? 0 : 1 }]
       if (/canvas_ai_transactions/i.test(query)) return rows
-      if (/sqlite_master/i.test(query)) return [{ count: 1 }]
       return []
     },
   }
+}
+
+async function runRecorded(db, statements) {
+  for (const statement of statements) await db.execute(statement.query, statement.bindValues)
 }
 
 test('SQLite WAL and durable sync are enabled before recovery writes', async () => {
@@ -67,7 +72,7 @@ test('startup finalizes an atomically committed AI transaction without rewriting
     beforePatch: JSON.stringify([{ op: 'replace_document', document: document('before') }]),
     currentContent: JSON.stringify(after),
   }])
-  const result = await recoverPendingCanvasAiTransactions(db, 500)
+  const result = await recoverPendingCanvasAiTransactions(db, 500, statements => runRecorded(db, statements))
   assert.deepEqual(result, { finalized: ['tx-finalize'], rolledBack: [] })
   assert.equal(db.calls.some(call => /update canvases set content/i.test(call.query)), false)
   assert.equal(db.calls.some(call => /set state = 'applied'/i.test(call.query)), true)
@@ -85,15 +90,21 @@ test('startup restores the complete before checkpoint for a partially visible AI
     beforePatch: JSON.stringify([{ op: 'replace_document', document: before }]),
     currentContent: JSON.stringify(partial),
   }])
-  const result = await recoverPendingCanvasAiTransactions(db, 600)
+  let transactionStatements = []
+  const result = await recoverPendingCanvasAiTransactions(db, 600, async (statements) => {
+    transactionStatements = statements
+    await runRecorded(db, statements)
+  })
   assert.deepEqual(result, { finalized: [], rolledBack: ['tx-rollback'] })
   const restore = db.calls.find(call => /update canvases set content/i.test(call.query))
   assert.equal(restore.values[0], JSON.stringify(before))
-  const begin = db.calls.findIndex(call => /BEGIN IMMEDIATE/i.test(call.query))
-  const canvasRestore = db.calls.indexOf(restore)
-  const ledgerRollback = db.calls.findIndex(call => /set state = 'rolled_back'/i.test(call.query))
-  const commit = db.calls.findIndex(call => /COMMIT/i.test(call.query))
-  assert.ok(begin < canvasRestore && canvasRestore < ledgerRollback && ledgerRollback < commit)
+  const canvasRestore = transactionStatements.findIndex(call => /update canvases set content/i.test(call.query))
+  const ledgerRollback = transactionStatements.findIndex(call => (
+    /update canvas_ai_transactions/i.test(call.query)
+      && /set state = 'rolled_back'/i.test(call.query)
+  ))
+  assert.ok(canvasRestore >= 0 && canvasRestore < ledgerRollback)
+  assert.equal(transactionStatements[ledgerRollback].minRowsAffected, 1)
 })
 
 test('startup closes a stale preview without overwriting later manual canvas edits', async () => {
@@ -108,7 +119,7 @@ test('startup closes a stale preview without overwriting later manual canvas edi
     beforePatch: JSON.stringify([{ op: 'replace_document', document: before }]),
     currentContent: JSON.stringify(manual),
   }])
-  const result = await recoverPendingCanvasAiTransactions(db, 650)
+  const result = await recoverPendingCanvasAiTransactions(db, 650, statements => runRecorded(db, statements))
   assert.deepEqual(result, { finalized: [], rolledBack: ['tx-preview'] })
   assert.equal(db.calls.some(call => /update canvases set content/i.test(call.query)), false)
   assert.equal(db.calls.some(call => /Closed stale preview/i.test(call.query)), true)
@@ -124,8 +135,11 @@ test('an approved partial transaction with no valid before checkpoint fails clos
     beforePatch: 'not-json',
     currentContent: JSON.stringify(document('partial')),
   }])
-  await assert.rejects(() => recoverPendingCanvasAiTransactions(db, 675), /no recoverable before checkpoint/i)
-  assert.equal(db.calls.some(call => /ROLLBACK/i.test(call.query)), true)
+  await assert.rejects(
+    () => recoverPendingCanvasAiTransactions(db, 675, statements => runRecorded(db, statements)),
+    /no recoverable before checkpoint/i,
+  )
+  assert.equal(db.calls.some(call => /update canvases/i.test(call.query)), false)
 })
 
 test('corrupt derived indexes are cleared and rebuilt from authoritative canvases', async () => {
@@ -153,10 +167,20 @@ test('disk-full and read-only workspaces reject attachment adoption before any w
   )
 })
 
+test('read-only startup fails closed while AI work is pending', async () => {
+  await assert.rejects(
+    () => assertReadOnlyRecoverySafe(fakeDb([{ count: 1 }])),
+    /read-only startup was stopped/i,
+  )
+  await assert.doesNotReject(() => assertReadOnlyRecoverySafe(fakeDb([{ count: 0 }])))
+  await assert.doesNotReject(() => assertReadOnlyRecoverySafe(fakeDb([], { ledgerExists: false })))
+})
+
 test('startup recovery and migration snapshot precede schema initialization and every store load', async () => {
-  const [database, startup] = await Promise.all([
+  const [database, startup, recovery] = await Promise.all([
     readFile(new URL('../../src/db/index.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../src/app/core/main/canvas/canvas-startup-controller.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/lib/recovery/startup-recovery.ts', import.meta.url), 'utf8'),
   ])
   const initialization = database.slice(
     database.indexOf('async function runDatabaseInitialization()'),
@@ -175,10 +199,32 @@ test('startup recovery and migration snapshot precede schema initialization and 
   }
   assert.match(startup, /async function initializeCanvasStartup[\s\S]*Store\.load\('store\.json'\)/)
   assert.ok(startup.indexOf('initializeCanvasStartup(projects)', init) > init)
+  assert.match(recovery, /snapshot\.close\(databaseUrl\)/)
+  assert.doesNotMatch(recovery, /snapshot\.close\(\s*\)/)
 })
 
 test('settings expose recovery-only database actions and no export, share, or download action', async () => {
   const source = await readFile(new URL('../../src/app/core/setting/file/page.tsx', import.meta.url), 'utf8')
   for (const label of ['检查工作区', '恢复历史状态', '清理旧备份']) assert.match(source, new RegExp(label))
   assert.doesNotMatch(source, /导出数据库|分享数据库|下载数据库|export_app_data|downloadDatabase|shareDatabase/i)
+})
+
+test('runtime recovery checks the actual attachment volume and native reparse points', async () => {
+  const [editor, recovery, native] = await Promise.all([
+    readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/lib/recovery/startup-recovery.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src-tauri/src/sqlite_transaction.rs', import.meta.url), 'utf8'),
+  ])
+  assert.match(editor, /assertWorkspaceAttachmentWriteAllowed\([^,]+,\s*destinationDirectory\)/)
+  const imageAdoption = editor.slice(
+    editor.indexOf('const addImageNode'),
+    editor.indexOf('const persistIngestFile'),
+  )
+  assert.ok(
+    imageAdoption.indexOf('assertWorkspaceAttachmentWriteAllowed')
+      < imageAdoption.indexOf('await writeFile'),
+    'capacity must be checked before the selected image is copied',
+  )
+  assert.match(recovery, /assert_no_reparse_points/)
+  assert.match(native, /FILE_ATTRIBUTE_REPARSE_POINT/)
 })

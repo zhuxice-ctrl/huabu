@@ -10,6 +10,7 @@ import {
   type AiTagRecord,
 } from '@/lib/canvas/ai-overlay'
 import type { AiRelationType } from '@/lib/canvas/ai-permission'
+import type { SqlExecutor } from './workspace-recovery'
 
 interface AiTagRow extends AiTagRecord { createdAt: number; updatedAt: number }
 interface AiRelationRow extends AiRelationRecord {
@@ -261,8 +262,9 @@ export async function markCanvasOverlayStale(
   canvasId: string,
   nodeId?: string,
   currentRevision?: string,
+  executor?: SqlExecutor,
 ) {
-  const db = await getDb()
+  const db = executor ?? await getDb()
   const now = Date.now()
   if (!nodeId) {
     await db.execute(

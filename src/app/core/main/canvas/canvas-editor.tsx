@@ -25,6 +25,8 @@ import ELK from 'elkjs/lib/elk.bundled.js'
 import type { ElkNode } from 'elkjs/lib/elk-api'
 import { open } from '@tauri-apps/plugin-dialog'
 import { mkdir, readFile, readTextFile, remove, writeFile } from '@tauri-apps/plugin-fs'
+import { appDataDir, join } from '@tauri-apps/api/path'
+import { assertWorkspaceAttachmentWriteAllowed } from '@/lib/recovery/startup-recovery'
 import {
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -2493,17 +2495,22 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       filters: [{ name: t('nodes.image'), extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'] }],
     })
     if (!sourcePath || Array.isArray(sourcePath)) return
+    const sourceBytes = await readFile(sourcePath)
     const extension = sourcePath.split('.').pop()?.toLowerCase() || 'png'
     const relativePath = `画布资源/${crypto.randomUUID()}.${extension}`
     const directoryOptions = await getFilePathOptions('画布资源')
+    const destinationDirectory = directoryOptions.baseDir
+      ? await join(await appDataDir(), directoryOptions.path)
+      : directoryOptions.path
     await mkdir(
       directoryOptions.path,
       directoryOptions.baseDir ? { baseDir: directoryOptions.baseDir, recursive: true } : { recursive: true }
     )
+    await assertWorkspaceAttachmentWriteAllowed(sourceBytes.byteLength, destinationDirectory)
     const targetOptions = await getFilePathOptions(relativePath)
     await writeFile(
       targetOptions.path,
-      await readFile(sourcePath),
+      sourceBytes,
       targetOptions.baseDir ? { baseDir: targetOptions.baseDir } : undefined
     )
     const target = screenPointToCanvas(capturedCenter, capturedViewport)
@@ -2542,6 +2549,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     previewNearestFreePlacement, pushHistory, setNodes, t])
 
   const persistIngestFile = useCallback(async (file: File) => {
+    const directoryOptions = await getFilePathOptions('画布资源')
+    const destinationDirectory = directoryOptions.baseDir
+      ? await join(await appDataDir(), directoryOptions.path)
+      : directoryOptions.path
+    await assertWorkspaceAttachmentWriteAllowed(file.size, destinationDirectory)
     const rawExtension = file.name.includes('.')
       ? file.name.split('.').pop()
       : file.type.split('/').pop()?.replace('svg+xml', 'svg')

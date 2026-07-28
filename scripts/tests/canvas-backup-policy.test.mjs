@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   DEFAULT_BACKUP_RETENTION,
+  compactRecoveryTimestamp,
   getSnapshotGenerations,
   isSafeSnapshotFileName,
   planBackupRotation,
@@ -94,6 +95,13 @@ test('daily and weekly generations are deterministic and rotation waits for a ve
     'weekly-2026-07-20.workspace.db.trash-20260728T134000Z',
   ])
   assert.deepEqual(DEFAULT_BACKUP_RETENTION, { daily: 7, weekly: 4 })
+})
+
+test('recovery timestamps always omit milliseconds', () => {
+  assert.equal(
+    compactRecoveryTimestamp(new Date('2026-07-28T10:11:12.345Z')),
+    '20260728T101112Z',
+  )
 })
 
 test('verification gates rotation independently by generation and corrupt files consume no retention slot', () => {

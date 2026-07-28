@@ -8561,6 +8561,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sha2",
+ "sqlx",
  "tauri",
  "tauri-build",
  "tauri-plugin-clipboard",

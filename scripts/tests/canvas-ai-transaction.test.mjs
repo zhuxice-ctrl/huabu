@@ -155,17 +155,26 @@ test('canvas approval presents transaction, mode and impact before raw operation
   ])
 })
 
-test('database commit revalidates revision, permission and collision inside the SQL transaction', async () => {
-  const source = await readFile(new URL('../../src/db/canvas-ai-transactions.ts', import.meta.url), 'utf8')
-  const begin = source.indexOf("BEGIN IMMEDIATE")
-  assert.ok(begin >= 0)
-  const commitBody = source.slice(begin, source.indexOf("COMMIT", begin))
-  assert.match(commitBody, /canvasDocumentRevision/)
-  assert.match(commitBody, /authorizeCanvasProposal/)
-  assert.match(commitBody, /validateCanvasAiGeometry/)
-  assert.match(commitBody, /applyValidatedCanvasOperations/)
-  assert.match(commitBody, /canvas_ai_overlay_operations/)
-  assert.match(commitBody, /isDerivedOverlayCanvasOperation/)
+test('database commit validates first and applies guarded writes on one native SQL transaction', async () => {
+  const [source, native] = await Promise.all([
+    readFile(new URL('../../src/db/canvas-ai-transactions.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src-tauri/src/sqlite_transaction.rs', import.meta.url), 'utf8'),
+  ])
+  const nativeCommit = source.indexOf('executeNativeSqliteTransaction(recorder.statements)')
+  assert.ok(nativeCommit >= 0)
+  for (const boundary of [
+    'canvasDocumentRevision',
+    'authorizeCanvasProposal',
+    'validateCanvasAiGeometry',
+    'applyValidatedCanvasOperations',
+    'canvas_ai_overlay_operations',
+    'isDerivedOverlayCanvasOperation',
+  ]) assert.ok(source.indexOf(boundary) < nativeCommit, `${boundary} must precede the native commit`)
+  assert.match(source, /minRowsAffected:\s*1/)
+  assert.doesNotMatch(source, /db\.execute\(['"]BEGIN/)
+  assert.match(native, /max_connections\(1\)/)
+  assert.match(native, /pool\.begin\(\)/)
+  assert.match(native, /transaction\s*\.commit\(\)/)
 })
 
 test('AI ledger initializer is statically imported without an index initialization cycle', async () => {

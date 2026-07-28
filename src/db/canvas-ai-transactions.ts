@@ -19,6 +19,11 @@ import { diffCanvasIndexJobs } from '@/lib/canvas/canvas-index-jobs'
 import { getDb } from './client'
 import { enqueueCanvasIndexJobDrafts } from './canvas-index'
 import { markCanvasOverlayStale } from './canvas-ai-overlay'
+import {
+  createStatementRecorder,
+  executeNativeSqliteTransaction,
+  type NativeSqliteStatement,
+} from './native-transaction'
 
 interface CanvasAiTransactionRow {
   transactionId: string
@@ -185,7 +190,6 @@ export async function commitCanvasAiTransaction(input: {
   const db = await getDb()
   const approvedAt = input.approvedAt ?? Date.now()
   try {
-    await db.execute('BEGIN IMMEDIATE')
     const canvasRows = await db.select<Array<{ content: string }>>(
       'select content from canvases where id = $1 and deletedAt is null limit 1',
       [input.canvasId],
@@ -235,30 +239,35 @@ export async function commitCanvasAiTransaction(input: {
     if (canvasDocumentRevision(result.document) !== transaction.afterRevision) {
       throw new Error('AI 操作结果与已展示的预览不一致。')
     }
-    await db.execute(
-      `update canvas_ai_transactions
+    const recorder = createStatementRecorder()
+    recorder.statements.push({
+      query: `update canvas_ai_transactions
        set state = 'approved', approvedAt = $1
-       where transactionId = $2`,
-      [approvedAt, input.transactionId],
-    )
+       where transactionId = $2 and canvasId = $3 and state = 'previewed'
+         and beforeRevision = $4 and mode = $5`,
+      bindValues: [approvedAt, input.transactionId, input.canvasId, input.expectedRevision, input.mode],
+      minRowsAffected: 1,
+    })
     const appliedAt = Date.now()
     if (result.applied > 0) {
       const indexDrafts = diffCanvasIndexJobs(current, result.document)
-      await db.execute(
-        'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
-        [JSON.stringify(result.document), result.document.schemaVersion, appliedAt, input.canvasId],
-      )
-      await enqueueCanvasIndexJobDrafts(input.canvasId, indexDrafts, db)
+      recorder.statements.push({
+        query: 'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4 and content = $5 and deletedAt is null',
+        bindValues: [JSON.stringify(result.document), result.document.schemaVersion, appliedAt, input.canvasId, canvasRows[0].content],
+        minRowsAffected: 1,
+      })
+      await enqueueCanvasIndexJobDrafts(input.canvasId, indexDrafts, recorder)
       for (const draft of indexDrafts) {
         await markCanvasOverlayStale(
           input.canvasId,
           draft.nodeId,
           draft.operation === 'upsert' ? draft.contentRevision : undefined,
+          recorder,
         )
       }
     }
     for (const [operationIndex, operation] of overlayOperations.entries()) {
-      await db.execute(
+      await recorder.execute(
         `insert into canvas_ai_overlay_operations (
           transactionId, operationIndex, canvasId, operationType, operationJson, state, createdAt
         ) values ($1, $2, $3, $4, $5, 'active', $6)`,
@@ -272,16 +281,16 @@ export async function commitCanvasAiTransaction(input: {
         ],
       )
     }
-    await db.execute(
-      `update canvas_ai_transactions
+    recorder.statements.push({
+      query: `update canvas_ai_transactions
        set state = 'applied', appliedAt = $1
-       where transactionId = $2`,
-      [appliedAt, input.transactionId],
-    )
-    await db.execute('COMMIT')
+       where transactionId = $2 and state = 'approved'`,
+      bindValues: [appliedAt, input.transactionId],
+      minRowsAffected: 1,
+    })
+    await executeNativeSqliteTransaction(recorder.statements)
     return { appliedAt, document: result.document, documentChanged: result.applied > 0 }
   } catch (error) {
-    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     await failCanvasAiTransaction(input.transactionId, error)
     throw error
   }
@@ -295,7 +304,6 @@ export async function rollbackCanvasAiTransaction(transactionId: string): Promis
 }> {
   const db = await getDb()
   try {
-    await db.execute('BEGIN IMMEDIATE')
     const rows = await db.select<CanvasAiTransactionRow[]>(
       'select * from canvas_ai_transactions where transactionId = $1 limit 1',
       [transactionId],
@@ -319,37 +327,43 @@ export async function rollbackCanvasAiTransaction(transactionId: string): Promis
     if (!replacement) throw new Error('AI 事务缺少完整逆向补丁。')
     const document = documentChanged ? structuredClone(replacement) : current
     const rolledBackAt = Date.now()
+    const statements: NativeSqliteStatement[] = []
+    const recorder = createStatementRecorder()
     if (documentChanged) {
       const indexDrafts = diffCanvasIndexJobs(current, document)
-      await db.execute(
-        'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4',
-        [JSON.stringify(document), document.schemaVersion, rolledBackAt, row.canvasId],
-      )
-      await enqueueCanvasIndexJobDrafts(row.canvasId, indexDrafts, db)
+      statements.push({
+        query: 'update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4 and content = $5 and deletedAt is null',
+        bindValues: [JSON.stringify(document), document.schemaVersion, rolledBackAt, row.canvasId, canvasRows[0].content],
+        minRowsAffected: 1,
+      })
+      await enqueueCanvasIndexJobDrafts(row.canvasId, indexDrafts, recorder)
       for (const draft of indexDrafts) {
         await markCanvasOverlayStale(
           row.canvasId,
           draft.nodeId,
           draft.operation === 'upsert' ? draft.contentRevision : undefined,
+          recorder,
         )
       }
     }
-    await db.execute(
+    statements.push(...recorder.statements)
+    statements.push({
+      query:
       `update canvas_ai_overlay_operations
        set state = 'rolled_back'
        where transactionId = $1 and state = 'active'`,
-      [transactionId],
-    )
-    await db.execute(
-      `update canvas_ai_transactions
+      bindValues: [transactionId],
+    })
+    statements.push({
+      query: `update canvas_ai_transactions
        set state = 'rolled_back', rolledBackAt = $1
-       where transactionId = $2`,
-      [rolledBackAt, transactionId],
-    )
-    await db.execute('COMMIT')
+       where transactionId = $2 and state = 'applied'`,
+      bindValues: [rolledBackAt, transactionId],
+      minRowsAffected: 1,
+    })
+    await executeNativeSqliteTransaction(statements)
     return { canvasId: row.canvasId, document, rolledBackAt, documentChanged }
   } catch (error) {
-    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     throw error
   }
 }

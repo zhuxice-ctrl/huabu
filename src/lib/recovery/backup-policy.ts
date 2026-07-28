@@ -63,8 +63,8 @@ function descendingSnapshotOrder(left: WorkspaceSnapshot, right: WorkspaceSnapsh
   return left.fileName < right.fileName ? -1 : left.fileName > right.fileName ? 1 : 0
 }
 
-function trashTimestamp(now: Date): string {
-  return now.toISOString().replace(/[-:]/g, '').replace('.000', '')
+export function compactRecoveryTimestamp(now: Date): string {
+  return now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
 }
 
 export function planBackupRotation(input: {
@@ -104,7 +104,7 @@ export function planBackupRotation(input: {
     })
   }
 
-  const suffix = trashTimestamp(input.now ?? new Date())
+  const suffix = compactRecoveryTimestamp(input.now ?? new Date())
   return {
     keep: [...keep].sort((left, right) => {
       if (left.kind !== right.kind) return left.kind === 'daily' ? -1 : 1

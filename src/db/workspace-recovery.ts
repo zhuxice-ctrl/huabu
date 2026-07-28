@@ -1,3 +1,5 @@
+import { createStatementRecorder, executeNativeSqliteTransaction } from './native-transaction.ts'
+
 export interface SqlExecutor {
   execute(query: string, bindValues?: unknown[]): Promise<unknown>
   select<T>(query: string, bindValues?: unknown[]): Promise<T>
@@ -45,6 +47,11 @@ function documentRevision(document: unknown): string {
 export function isDiskFullError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
   return /SQLITE_FULL|database or disk is full|disk full|no space left/i.test(message)
+}
+
+export function isReadOnlyError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /SQLITE_READONLY|readonly database|read-only file system|access is denied/i.test(message)
 }
 
 export async function enableCrashSafeSqlite(db: SqlExecutor): Promise<void> {
@@ -114,6 +121,7 @@ export function assertAttachmentWriteAllowed(input: {
 export async function recoverPendingCanvasAiTransactions(
   db: SqlExecutor,
   recoveredAt = Date.now(),
+  runTransaction?: (statements: Array<{ query: string; bindValues?: unknown[] }>) => Promise<unknown>,
 ): Promise<{ finalized: string[]; rolledBack: string[] }> {
   const rows = await db.select<PendingCanvasAiTransactionRow[]>(`
     select tx.transactionId, tx.canvasId, tx.state, tx.beforeRevision, tx.afterRevision,
@@ -128,28 +136,30 @@ export async function recoverPendingCanvasAiTransactions(
   if (rows.length === 0) return { finalized, rolledBack }
 
   try {
-    await db.execute('BEGIN IMMEDIATE')
+    const recorder = createStatementRecorder()
     for (const row of rows) {
       const currentDocument = parseJson<unknown | null>(row.currentContent, null)
       const currentRevision = currentDocument ? documentRevision(currentDocument) : null
       if (row.state === 'previewed') {
-        await db.execute(
-          `update canvas_ai_transactions
+        recorder.statements.push({
+          query: `update canvas_ai_transactions
            set state = 'rolled_back', rolledBackAt = $1,
              errorSummary = 'Closed stale preview before store load.'
            where transactionId = $2 and state = 'previewed'`,
-          [recoveredAt, row.transactionId],
-        )
+          bindValues: [recoveredAt, row.transactionId],
+          minRowsAffected: 1,
+        })
         rolledBack.push(row.transactionId)
         continue
       }
       if (currentRevision === row.afterRevision) {
-        await db.execute(
-          `update canvas_ai_transactions
+        recorder.statements.push({
+          query: `update canvas_ai_transactions
            set state = 'applied', appliedAt = coalesce(appliedAt, $1), errorSummary = null
            where transactionId = $2 and state in ('previewed', 'approved')`,
-          [recoveredAt, row.transactionId],
-        )
+          bindValues: [recoveredAt, row.transactionId],
+          minRowsAffected: 1,
+        })
         finalized.push(row.transactionId)
         continue
       }
@@ -160,34 +170,37 @@ export async function recoverPendingCanvasAiTransactions(
         if (!beforeDocument || row.currentContent === null) {
           throw new Error(`Approved AI transaction ${row.transactionId} has no recoverable before checkpoint.`)
         }
-        await db.execute(
-          `update canvases set content = $1, schemaVersion = $2, updatedAt = $3 where id = $4`,
-          [
+        recorder.statements.push({
+          query: `update canvases set content = $1, schemaVersion = $2, updatedAt = $3
+            where id = $4 and content = $5 and deletedAt is null`,
+          bindValues: [
             JSON.stringify(beforeDocument),
             Number(beforeDocument.schemaVersion) || 1,
             recoveredAt,
             row.canvasId,
+            row.currentContent,
           ],
-        )
+          minRowsAffected: 1,
+        })
       }
-      await db.execute(
+      await recorder.execute(
         `update canvas_ai_overlay_operations set state = 'rolled_back'
          where transactionId = $1 and state = 'active'`,
         [row.transactionId],
       )
-      await db.execute(
-        `update canvas_ai_transactions
+      recorder.statements.push({
+        query: `update canvas_ai_transactions
          set state = 'rolled_back', rolledBackAt = $1,
            errorSummary = 'Recovered interrupted transaction before store load.'
          where transactionId = $2 and state in ('previewed', 'approved')`,
-        [recoveredAt, row.transactionId],
-      )
+        bindValues: [recoveredAt, row.transactionId],
+        minRowsAffected: 1,
+      })
       rolledBack.push(row.transactionId)
     }
-    await db.execute('COMMIT')
+    await (runTransaction ?? executeNativeSqliteTransaction)(recorder.statements)
     return { finalized, rolledBack }
   } catch (error) {
-    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     throw error
   }
 }
@@ -213,6 +226,19 @@ export async function rebuildCanvasIndexes(db: SqlExecutor, now = Date.now()): P
   } catch (error) {
     try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
     throw error
+  }
+}
+
+export async function assertReadOnlyRecoverySafe(db: SqlExecutor): Promise<void> {
+  const tables = await db.select<Array<{ count: number }>>(
+    "select count(*) as count from sqlite_master where type = 'table' and name = 'canvas_ai_transactions'",
+  )
+  if (Number(tables[0]?.count || 0) === 0) return
+  const rows = await db.select<Array<{ count: number }>>(
+    "select count(*) as count from canvas_ai_transactions where state in ('previewed', 'approved')",
+  )
+  if (Number(rows[0]?.count || 0) > 0) {
+    throw new Error('Pending AI work requires writable recovery; read-only startup was stopped.')
   }
 }
 
