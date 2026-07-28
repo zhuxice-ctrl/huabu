@@ -1,22 +1,23 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
+  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
   "status": "approved",
-  "reviewer": "independent controller review of task16-implementer output plus L2 structural review",
-  "source_revision": "8dad2233",
+  "reviewer": "independent scoped Codex reviewer plus L2 structural gate",
+  "source_revision": "e79feffdee0a9451d53aef5b99f62ff0b11fccf8",
   "review_basis": [
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-16-controller-pre-review.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-16-report.md",
-    "Focused 25/25, Canvas 202/202, TypeScript, production build and passed L2 impact."
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-17-independent-review.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-17-fix-round-1-rereview.md",
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-17-fix-round-2-rereview.md",
+    "Focused 27/27, Canvas 220/220, TypeScript, production build and passed exhaustive L2 impact."
   ],
   "blocking_findings": [],
-  "non_blocking_findings": [
-    { "id": "loopback-conservative-redaction", "severity": "non_blocking", "issue": "Native transport cannot yet prove redirect handling, so loopback evidence remains redacted in production.", "expected_fix": "Task 19 native credential/request boundary may safely expose verified redirect policy.", "evidence": "redirectPolicyVerified false is production-wired and source-tested." }
+  "non_blocking_findings": [],
+  "suggested_tests": [
+    "Exercise cross-canvas evidence navigation, exact text selection, origin return and saved linear views in the Task 21 Windows checklist."
   ],
-  "suggested_tests": ["Exercise current-canvas answers, explicit cross-canvas search, offline keyword recall and redirected loopback requests in Task 21."],
   "risk_notes": [
-    "Review found one Critical and four Important privacy/regression issues; all were fixed in 600c7c64.",
-    "L2 found four dynamic edges; all were removed in 8dad2233.",
-    "Final L2 has zero unexpected impact, zero critical edges, complete propagation and no reused baseline."
+    "Initial review found one Critical and four Important issues; all were fixed in 12618fb0.",
+    "Initial L2 found 31 production critical dynamic-dispatch edges; all were removed in e79feffd.",
+    "Final L2 has zero unexpected impact, zero production/test critical edges, complete propagation and no reused baseline."
   ]
 }

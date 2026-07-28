@@ -1,52 +1,55 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
-  "status": "verified",
-  "revision": 16,
+  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
+  "status": "complete",
+  "revision": 18,
   "done": [
-    "Accepted the expanded L2 preflight at 4f864e025596fa43603480a9 before product edits.",
-    "Implemented recoverable knowledge anchors, current-canvas fused retrieval and fail-closed sensitive redaction.",
-    "Resolved five independent controller-review findings covering redirects, non-canvas RAG, partial extraction, rerank isolation and credential patterns.",
-    "Removed four L2 dynamic-dispatch findings through static persisted-retrieval, pure rerank and named chat-store boundaries.",
-    "Passed focused 25/25, Canvas 202/202, TypeScript, 53-page build and exhaustive L2 impact."
+    "Read accepted L2 context manifest and preflight before implementation.",
+    "Implemented confidence-gated evidence navigation, exact range focus, previous/next, cross-canvas focus and origin viewport return.",
+    "Implemented read-only one/two-hop linear projections and saved filter definitions without copying node bodies or geometry.",
+    "Resolved independent review recursion, confidence, anchor, viewport and session findings.",
+    "Replaced L2 dynamic React/callback/ReactFlow boundaries with pure planners, external ephemeral view state and named static executors.",
+    "Passed focused 27/27, Canvas 220/220, TypeScript, production build, independent scoped re-review and exhaustive L2 impact."
   ],
   "changed_files": [
-    "scripts/tests/canvas-knowledge-extraction.test.mjs",
-    "scripts/tests/canvas-retrieval.test.mjs",
-    "scripts/tests/canvas-sensitive-content.test.mjs",
-    "src/app/core/main/chat/chat-send.tsx",
-    "src/db/canvas-index.ts",
+    "scripts/tests/canvas-evidence-navigation.test.mjs",
+    "scripts/tests/canvas-linear-view.test.mjs",
+    "src/lib/canvas/evidence-navigation.ts",
+    "src/lib/canvas/evidence-navigation-runtime.ts",
+    "src/lib/canvas/linear-view.ts",
+    "src/db/canvas-views.ts",
     "src/db/index.ts",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/lib/canvas/canvas-retrieval.ts",
-    "src/lib/canvas/knowledge-extraction.ts",
-    "src/lib/canvas/sensitive-content.ts",
-    "src/stores/canvas-index.ts",
-    "src/stores/chat.ts"
+    "src/app/core/main/canvas/canvas-evidence-navigator.tsx",
+    "src/app/core/main/canvas/canvas-linear-view.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/emitter.ts",
+    "src/stores/canvas-view.ts"
   ],
   "current_problem": null,
-  "next_action": "Configure and execute Task 17 evidence navigation, linear views and saved filters.",
+  "next_action": "Begin Task 18 export-surface removal after accepted L2 preflight.",
   "must_keep_context": [
-    "Task 16 product commits span d884f5cb through 8dad2233 from base ade55618.",
-    "The accepted immutable L2 baseline is 4f864e025596fa43603480a9.",
-    "Final L2 predicted and observed impact are 349/349 with zero unexpected or critical edges."
+    "CanvasDocument remains authoritative for manual content and geometry.",
+    "Evidence navigation and linear browsing state stay outside CanvasDocument and manual history.",
+    "AI relations remain in the overlay store/table and are not merged into manual edges."
   ],
   "discarded_context": [],
-  "remaining_risks": [
-    "Native redirect verification remains unavailable, so production canvas evidence stays conservatively redacted even for loopback endpoints.",
-    "Hands-on configured-model and offline recovery scenarios remain in Task 21."
-  ],
+  "remaining_risks": [],
   "clarification_events": [],
   "timeout_fallbacks": [],
-  "context_expansion_history": [
-    "Expanded the reviewed predicted impact set to the complete 349-file observed propagation frontier after critical edges reached zero."
-  ],
-  "source_revision": "8dad2233",
-  "context_preflight": { "status": "accepted", "graph_revision": "4f864e025596fa43603480a9" },
+  "context_expansion_history": [],
+  "source_revision": "e79feffdee0a9451d53aef5b99f62ff0b11fccf8",
+  "context_preflight": { "status": "accepted", "graph_revision": "ae53efe998d5b2d81aee716f" },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "ae53efe998d5b2d81aee716f",
+    "graph_revision": "f9209ccc9bf3c1c380e4d945",
+    "predicted_files": 382,
+    "observed_files": 355,
+    "unexpected_files": 0,
+    "production_critical_edges": 0,
+    "test_critical_edges": 0,
     "propagation_truncated": false,
-    "baseline_reused_after_declared_edit": false
+    "baseline_reused": false
   }
 }

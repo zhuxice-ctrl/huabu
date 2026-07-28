@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
+  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
   "status": "accepted",
-  "graph_revision": "4f864e025596fa43603480a9",
-  "slice_revision": "4f864e025596fa43603480a9",
+  "graph_revision": "ae53efe998d5b2d81aee716f",
+  "slice_revision": "ae53efe998d5b2d81aee716f",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

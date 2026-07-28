@@ -1,39 +1,37 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
+  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
   "task_type": "code",
-  "goal": "Build recoverable current-canvas knowledge anchors, fused local retrieval and a fail-closed sensitive-content boundary for canvas chat and explicit canvas tools.",
+  "goal": "Add exact evidence navigation, read-only linear graph projections and persisted saved filter definitions without mutating source canvas geometry or content.",
   "non_goals": [
-    "Do not implement Task 17 evidence navigation, linear projections or saved views.",
-    "Do not move credentials to Windows Credential Manager; Task 19 owns credential storage.",
-    "Do not make cross-canvas retrieval the default or include evidence from previous-message source canvases.",
-    "Do not require a model or network for keyword search and evidence listing.",
-    "Do not rewrite authoritative CanvasDocument content when extraction or indexing fails."
+    "Do not implement Task 18 export removal, Task 19 credential migration or Task 20 recovery.",
+    "Do not copy node bodies into saved views or change source node positions.",
+    "Do not make low-confidence evidence auto-navigate without candidate confirmation.",
+    "Do not merge AI-derived relations into CanvasDocument manual edges."
   ],
   "acceptance_criteria": [
-    "Task 15 indexing persists revision-scoped recoverable anchors for supported canvas content and isolates extractor failure with redacted retry errors.",
-    "Current-canvas retrieval fuses keyword, semantic, entity and time evidence, supports optional reranking and returns 没有找到 when evidence is insufficient.",
-    "Canvas chat defaults to the captured sourceCanvasId and never cites nodes from another canvas without an explicit cross-canvas tool call.",
-    "Sensitive values are detected locally and replaced with stable typed placeholders before every cloud-classified request.",
-    "Raw sensitive context is allowed only for direct non-proxied http/https loopback endpoints; malformed, LAN, redirected or proxied destinations fail closed.",
+    "Evidence navigation stores the origin viewport, focuses exact node/range anchors, supports previous/next and returns to the origin viewport.",
+    "Low-confidence results show candidates before navigation while accepted evidence collapses the answer HUD and may switch source canvas explicitly.",
+    "Linear projections traverse one/two hops across selected manual and AI relations with deterministic time/relevance/distance/manual ordering.",
+    "Saved views persist only filter/sort/relation-source definitions and recompute current references on reopen.",
+    "Navigation and linear browsing never copy node bodies, write source positions or create manual history entries.",
     "Focused tests, Canvas regression, TypeScript, production build, independent review and exhaustive L2 impact pass."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/canvas/knowledge-extraction.ts",
-    "src/lib/canvas/canvas-retrieval.ts",
-    "src/lib/canvas/sensitive-content.ts",
-    "src/db/canvas-index.ts",
+    "src/lib/canvas/evidence-navigation.ts",
+    "src/lib/canvas/linear-view.ts",
+    "src/db/canvas-views.ts",
     "src/db/index.ts",
-    "src/stores/canvas-index.ts",
-    "src/app/core/main/chat/chat-send.tsx",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "scripts/tests/canvas-knowledge-extraction.test.mjs",
-    "scripts/tests/canvas-retrieval.test.mjs",
-    "scripts/tests/canvas-sensitive-content.test.mjs",
+    "src/app/core/main/canvas/canvas-evidence-navigator.tsx",
+    "src/app/core/main/canvas/canvas-linear-view.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "scripts/tests/canvas-evidence-navigation.test.mjs",
+    "scripts/tests/canvas-linear-view.test.mjs",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -49,30 +47,30 @@
     "installed zeroxB application",
     "zeroxB user documents",
     "provider credentials",
-    "Task 17-21 product scope"
+    "Task 18-21 product scope"
   ],
   "entrypoints": [
-    "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
-    "typescript:src.lib.chat.canvas-context:createCanvasChatContext:function",
-    "typescript:src.app.core.main.chat.chat-send:ChatSend:variable"
+    "typescript:src.db.canvas-ai-overlay:getCanvasAiOverlayRecords:function",
+    "typescript:src.lib.canvas.canvas-retrieval:CanvasEvidence:interface",
+    "typescript:src.types.canvas:CanvasViewport:interface",
+    "typescript:src.types.canvas:CanvasDocument:interface"
   ],
   "context_sources": [
     "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md",
-    "src/lib/canvas/canvas-index-jobs.ts",
-    "src/db/canvas-index.ts",
-    "src/stores/canvas-index.ts",
-    "src/lib/chat/canvas-context.ts",
-    "src/app/core/main/chat/chat-send.tsx",
-    "src/lib/agent/tools/canvas-tools.ts",
-    "src/lib/ai/tauri-client.ts",
-    "src/lib/ai/utils.ts",
-    "src/types/canvas.ts"
+    "src/types/canvas.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/chat/chat-content.tsx",
+    "src/lib/canvas/canvas-retrieval.ts",
+    "src/lib/canvas/knowledge-extraction.ts",
+    "src/db/canvas-ai-overlay.ts",
+    "src/stores/canvas.ts",
+    "src/stores/chat-hud.ts"
   ],
   "notes": [
     "Use test-first implementation and keep ordinary audit reporting concise.",
-    "Default retrieval is strictly captured current-canvas evidence; cross-canvas access requires explicit user intent and a separate tool call.",
-    "The loopback raw-context policy is fail closed for proxy use, redirects, malformed URLs and every non-loopback host.",
-    "Use fixed UTF-8 I/O for Chinese text such as 没有找到 and other non-ASCII edits."
+    "Evidence focus uses anchor node/range references and state outside CanvasDocument.",
+    "Saved filters store definitions only; reopening recomputes against current data.",
+    "Use fixed UTF-8 I/O for Chinese UI copy and non-ASCII source."
   ],
-  "implementation_owner": "task16-implementer"
+  "implementation_owner": "task17-implementer"
 }

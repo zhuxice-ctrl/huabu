@@ -1,23 +1,70 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
+  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
   "status": "passed",
-  "source_revision": "8dad2233",
+  "source_revision": "e79feffdee0a9451d53aef5b99f62ff0b11fccf8",
   "commands": [
-    { "command": "focused Task 15/16 Node tests", "status": "passed", "summary": "Lifecycle, overlay, extraction, retrieval and sensitive contracts passed 25/25.", "exit_code": 0 },
-    { "command": "node --experimental-strip-types --test --test-reporter=dot scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "Complete Canvas regression passed 202/202.", "exit_code": 0 },
-    { "command": "node_modules/.bin/tsc.cmd --noEmit", "status": "passed", "summary": "TypeScript completed without diagnostics.", "exit_code": 0 },
-    { "command": "node_modules/.bin/next.cmd build --turbopack", "status": "passed", "summary": "Production build generated 53/53 static pages.", "exit_code": 0 },
-    { "command": "expanded L2 codegraph post_edit_impact", "status": "passed", "summary": "Baseline 4f864e025596fa43603480a9 to graph ae53efe998d5b2d81aee716f: predicted/observed 349/349, unexpected 0, production/test critical 0/0, propagation complete and baseline not reused.", "exit_code": 0 }
+    {
+      "command": "node --experimental-strip-types --test --test-reporter=spec scripts/tests/canvas-evidence-navigation.test.mjs scripts/tests/canvas-linear-view.test.mjs scripts/tests/canvas-retrieval.test.mjs scripts/tests/canvas-knowledge-extraction.test.mjs scripts/tests/canvas-sensitive-content.test.mjs",
+      "status": "passed",
+      "summary": "Focused Task 16/17 set passed 27/27.",
+      "exit_code": 0
+    },
+    {
+      "command": "node --experimental-strip-types --test --test-reporter=dot scripts/tests/canvas-*.test.mjs",
+      "status": "passed",
+      "summary": "Complete Canvas regression passed 220/220.",
+      "exit_code": 0
+    },
+    {
+      "command": "node_modules/.bin/tsc.cmd --noEmit",
+      "status": "passed",
+      "summary": "TypeScript completed without diagnostics.",
+      "exit_code": 0
+    },
+    {
+      "command": "node_modules/.bin/next.cmd build --turbopack",
+      "status": "passed",
+      "summary": "Production build compiled and generated 53/53 static pages and 3/3 exports.",
+      "exit_code": 0
+    },
+    {
+      "command": "independent scoped re-review 12618fb0..e79feffd",
+      "status": "passed",
+      "summary": "All five structural/behavior findings addressed with no new Critical or Important breakage.",
+      "exit_code": 0
+    },
+    {
+      "command": "expanded exhaustive L2 post-edit impact",
+      "status": "passed",
+      "summary": "382 predicted, 355 observed, zero unexpected, zero production/test critical edges, complete propagation, fresh baseline comparison.",
+      "exit_code": 0
+    }
   ],
   "acceptance_criteria_coverage": [
-    { "criterion": "Recoverable revision-scoped anchors replace atomically only after successful extraction.", "status": "passed", "evidence": ["canvas-index.ts", "canvas-knowledge-extraction.test.mjs"] },
-    { "criterion": "Current-canvas retrieval fuses local evidence and returns 没有找到 when insufficient.", "status": "passed", "evidence": ["canvas-retrieval.ts", "canvas-retrieval.test.mjs"] },
-    { "criterion": "Canvas chat and steering cannot cite another canvas while non-canvas RAG remains available.", "status": "passed", "evidence": ["chat-send.tsx", "static persisted retrieval boundary"] },
-    { "criterion": "Cloud-classified evidence is locally redacted with fail-closed proxy and redirect handling.", "status": "passed", "evidence": ["sensitive-content.ts", "canvas-sensitive-content.test.mjs"] }
+    {
+      "criterion": "Evidence navigation preserves origin viewport, gates low confidence and focuses exact ranges.",
+      "status": "passed",
+      "evidence": ["evidence-navigation.ts", "evidence-navigation-runtime.ts", "canvas-evidence-navigator.tsx", "canvas-evidence-navigation.test.mjs"]
+    },
+    {
+      "criterion": "Linear projections traverse selected relations without copying bodies or mutating geometry.",
+      "status": "passed",
+      "evidence": ["linear-view.ts", "canvas-linear-view.tsx", "canvas-linear-view.test.mjs"]
+    },
+    {
+      "criterion": "Saved views store filter definitions only and recompute current references.",
+      "status": "passed",
+      "evidence": ["canvas-views.ts", "canvas-linear-view.tsx", "canvas-linear-view.test.mjs"]
+    },
+    {
+      "criterion": "Independent review and L2 structural gates pass.",
+      "status": "passed",
+      "evidence": ["task-17-fix-round-2-rereview.md", ".adworkflow/impact_report.json"]
+    }
   ],
-  "passed": ["All Task 16 acceptance criteria", "Five independent review findings fixed", "Exhaustive L2 impact gate"],
+  "passed": ["All Task 17 acceptance criteria and mandatory gates"],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": ["Production remains intentionally conservative for loopback raw context until native redirect verification exists."]
+  "residual_risk": []
 }
