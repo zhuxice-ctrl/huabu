@@ -3,6 +3,15 @@ import { initCanvasAiTransactionsDb } from './canvas-ai-transactions'
 import { initCanvasIndexDb } from './canvas-index'
 import { initCanvasAiOverlayDb } from './canvas-ai-overlay'
 import { initCanvasViewsDb } from './canvas-views'
+import { initWorkspaceRecoveryDb } from './workspace-recovery'
+import { getDb } from './client'
+import {
+  activateReadOnlyFallback,
+  completeStartupRecovery,
+  createMigrationSnapshotIfNeeded,
+  prepareStartupRecovery,
+  type StartupRecoveryContext,
+} from '@/lib/recovery/startup-recovery'
 
 export { db, getDb } from './client'
 export { queryPersistedCanvasKnowledgeAnchors } from './canvas-index'
@@ -10,6 +19,20 @@ export { queryPersistedCanvasKnowledgeAnchors } from './canvas-index'
 let initAllDatabasesPromise: Promise<void> | null = null
 
 async function runDatabaseInitialization() {
+  let recovery: StartupRecoveryContext | null = null
+  try {
+    recovery = await prepareStartupRecovery()
+    await createMigrationSnapshotIfNeeded(recovery)
+    if (recovery.accessMode === 'read-only') return
+    await runSchemaInitialization()
+    await completeStartupRecovery(recovery)
+  } catch (error) {
+    if (recovery && await activateReadOnlyFallback(recovery, error)) return
+    throw error
+  }
+}
+
+async function runSchemaInitialization() {
   // 引入各数据库初始化函数
   const { initChatsDb } = await import('./chats');
   const { initMarksDb } = await import('./marks');
@@ -22,6 +45,7 @@ async function runDatabaseInitialization() {
   const { initCanvasesDb } = await import('./canvases');
 
   // 执行初始化：先确保基础表存在，再做 conversations 对 chats 的迁移/补列。
+  await initWorkspaceRecoveryDb(await getDb());
   await initChatsDb();
   await initConversationsDb();
   await initMarksDb();

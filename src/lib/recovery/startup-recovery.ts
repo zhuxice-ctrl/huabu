@@ -1,0 +1,454 @@
+import Database from '@tauri-apps/plugin-sql'
+import { Store } from '@tauri-apps/plugin-store'
+import {
+  copyFile,
+  exists,
+  lstat,
+  mkdir,
+  readDir,
+  remove,
+  rename,
+  stat,
+} from '@tauri-apps/plugin-fs'
+import {
+  appConfigDir,
+  documentDir,
+  join,
+  localDataDir,
+} from '@tauri-apps/api/path'
+
+import {
+  enableCrashSafeSqlite,
+  enterReadOnlyFallback,
+  inspectWorkspaceIntegrity,
+  isDiskFullError,
+  probeWorkspaceWritable,
+  rebuildCanvasIndexes,
+  recoverPendingCanvasAiTransactions,
+  repairCanvasIndexes,
+  type SqlExecutor,
+  type WorkspaceAccessMode,
+} from '../../db/workspace-recovery'
+import {
+  DEFAULT_BACKUP_RETENTION,
+  getSnapshotGenerations,
+  isSafeSnapshotFileName,
+  parseSnapshotFileName,
+  planBackupRotation,
+  type WorkspaceSnapshot,
+} from './backup-policy'
+import {
+  assertPathInsideWorkspace,
+  selectWorkspaceLayout,
+  type SavedWorkspaceCheckpoint,
+  type WorkspaceLayout,
+} from './workspace-path'
+import {
+  configureDatabasePath,
+  getDb,
+} from '../../db/client'
+
+const RECOVERY_STORE = 'workspace-recovery.json'
+const ACTIVE_WORKSPACE_KEY = 'active-workspace-v1'
+const PENDING_RESTORE_KEY = 'pending-restore-v1'
+const RECOVERY_SCHEMA_VERSION = 20
+const MIGRATION_SNAPSHOT_PATTERN = /^migration-\d{8}T\d{6}Z\.workspace\.db$/
+const TRASH_FILE_PATTERN = /^(?:(?:daily|weekly)-\d{4}-\d{2}-\d{2}\.workspace\.db|pre-restore-\d{8}T\d{6}Z\.workspace\.db)(?:-(?:wal|shm))?\.trash-\d{8}T\d{6}Z$/
+
+interface MigrationSnapshot {
+  fileName: string
+  createdAt: number
+  sourceRevision: string
+}
+
+export interface StartupRecoveryContext {
+  db: SqlExecutor
+  layout: WorkspaceLayout
+  accessMode: WorkspaceAccessMode
+  indexNeedsRebuild: boolean
+  schemaVersionBefore: number
+  hasUserTables: boolean
+  migrationSnapshot: MigrationSnapshot | null
+}
+
+let activeContext: StartupRecoveryContext | null = null
+let activeAccessMode: WorkspaceAccessMode = 'read-write'
+
+function compactTimestamp(date = new Date()): string {
+  return date.toISOString().replace(/[-:]/g, '').replace('.000', '')
+}
+
+function sqliteString(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`
+}
+
+function firstNumber(rows: Array<Record<string, unknown>>, fallback = 0): number {
+  const value = rows[0] ? Object.values(rows[0])[0] : fallback
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
+}
+
+async function ensureWorkspaceDirectories(layout: WorkspaceLayout): Promise<void> {
+  for (const directory of [
+    layout.root,
+    ...layout.durableDirectories,
+    layout.trashPath,
+    ...layout.localDirectories,
+  ]) {
+    if (!await exists(directory)) await mkdir(directory, { recursive: true })
+  }
+}
+
+async function loadRecoveryStore(localAppDataDir?: string): Promise<Store> {
+  const localRoot = localAppDataDir ?? await localDataDir()
+  const configDirectory = await join(localRoot, 'zeroxB', 'config')
+  if (!await exists(configDirectory)) await mkdir(configDirectory, { recursive: true })
+  return Store.load(await join(configDirectory, RECOVERY_STORE))
+}
+
+async function resolveWorkspaceLayout(): Promise<{
+  layout: WorkspaceLayout
+  store: Store
+}> {
+  const [documentsDir, localAppDataDir, legacyConfigDir] = await Promise.all([
+    documentDir(),
+    localDataDir(),
+    appConfigDir(),
+  ])
+  const store = await loadRecoveryStore(localAppDataDir)
+  const savedWorkspace = await store.get<SavedWorkspaceCheckpoint>(ACTIVE_WORKSPACE_KEY) ?? null
+  const legacyDatabasePath = await join(legacyConfigDir, 'note.db')
+  const layout = selectWorkspaceLayout({
+    documentsDir,
+    localAppDataDir,
+    appConfigDir: legacyConfigDir,
+    legacyDatabaseExists: await exists(legacyDatabasePath),
+    savedWorkspace,
+  })
+  await ensureWorkspaceDirectories(layout)
+  return { layout, store }
+}
+
+async function verifySqliteFile(databasePath: string): Promise<boolean> {
+  const snapshot = await Database.load(`sqlite:${databasePath}`)
+  try {
+    const rows = await snapshot.select<Array<Record<string, unknown>>>('PRAGMA quick_check')
+    return rows.length > 0
+      && rows.every(row => Object.values(row).every(value => String(value).toLowerCase() === 'ok'))
+  } finally {
+    await snapshot.close()
+  }
+}
+
+async function removeIfPresent(path: string): Promise<void> {
+  if (await exists(path)) await remove(path)
+}
+
+async function assertRegularRecoveryFile(path: string): Promise<void> {
+  const metadata = await lstat(path)
+  if (!metadata.isFile || metadata.isSymlink) {
+    throw new Error('Workspace recovery path is not a regular file.')
+  }
+}
+
+async function applyPendingRestore(layout: WorkspaceLayout, store: Store): Promise<void> {
+  const pendingFileName = await store.get<string>(PENDING_RESTORE_KEY)
+  if (!pendingFileName) return
+  if (!isSafeSnapshotFileName(pendingFileName)) {
+    await store.delete(PENDING_RESTORE_KEY)
+    await store.save()
+    throw new Error('Unsafe workspace restore request was rejected.')
+  }
+
+  const candidate = assertPathInsideWorkspace(
+    layout.backupsPath,
+    await join(layout.backupsPath, pendingFileName),
+  )
+  const temporary = `${layout.databasePath}.restore-tmp`
+  const timestamp = compactTimestamp()
+  const previous = await join(
+    layout.trashPath,
+    `pre-restore-${timestamp}.workspace.db.trash-${timestamp}`,
+  )
+  let previousMoved = false
+  const movedSidecars: Array<{ previous: string; active: string }> = []
+  try {
+    if (!await exists(candidate)) throw new Error('Workspace snapshot does not exist.')
+    await assertRegularRecoveryFile(candidate)
+    if (!await verifySqliteFile(candidate)) {
+      throw new Error('Workspace snapshot verification failed.')
+    }
+    await removeIfPresent(temporary)
+    await copyFile(candidate, temporary)
+    if (!await verifySqliteFile(temporary)) throw new Error('Restored workspace verification failed.')
+
+    if (await exists(layout.databasePath)) {
+      await rename(layout.databasePath, previous)
+      previousMoved = true
+    }
+    for (const suffix of ['-wal', '-shm']) {
+      const sidecar = `${layout.databasePath}${suffix}`
+      if (await exists(sidecar)) {
+        const previousSidecar = `${previous}${suffix}`
+        await rename(sidecar, previousSidecar)
+        movedSidecars.push({ previous: previousSidecar, active: sidecar })
+      }
+    }
+    await rename(temporary, layout.databasePath)
+    if (!await verifySqliteFile(layout.databasePath)) {
+      throw new Error('Activated workspace verification failed.')
+    }
+    await store.delete(PENDING_RESTORE_KEY)
+    await store.save()
+  } catch (error) {
+    await removeIfPresent(temporary)
+    if (previousMoved && await exists(previous)) {
+      await removeIfPresent(layout.databasePath)
+      await rename(previous, layout.databasePath)
+    }
+    for (const sidecar of movedSidecars) {
+      if (await exists(sidecar.previous)) await rename(sidecar.previous, sidecar.active)
+    }
+    await store.delete(PENDING_RESTORE_KEY)
+    await store.save()
+    throw error
+  }
+}
+
+async function createVerifiedSqliteSnapshot(
+  db: SqlExecutor,
+  backupsPath: string,
+  fileName: string,
+): Promise<string> {
+  if (!isSafeSnapshotFileName(fileName) && !MIGRATION_SNAPSHOT_PATTERN.test(fileName)) {
+    throw new Error('Unsafe workspace snapshot name was rejected.')
+  }
+  const finalPath = assertPathInsideWorkspace(backupsPath, await join(backupsPath, fileName))
+  const temporaryPath = `${finalPath}.tmp`
+  await removeIfPresent(temporaryPath)
+  await db.execute('PRAGMA wal_checkpoint(FULL)')
+  await db.execute(`VACUUM INTO ${sqliteString(temporaryPath)}`)
+  if (!await verifySqliteFile(temporaryPath)) {
+    await removeIfPresent(temporaryPath)
+    throw new Error('Workspace snapshot verification failed.')
+  }
+  await removeIfPresent(finalPath)
+  await rename(temporaryPath, finalPath)
+  if (!await verifySqliteFile(finalPath)) {
+    throw new Error('Final workspace snapshot verification failed.')
+  }
+  return finalPath
+}
+
+async function databaseShape(db: SqlExecutor): Promise<{
+  schemaVersion: number
+  hasUserTables: boolean
+}> {
+  const [versionRows, tableRows] = await Promise.all([
+    db.select<Array<Record<string, unknown>>>('PRAGMA user_version'),
+    db.select<Array<Record<string, unknown>>>(
+      "select count(*) as count from sqlite_master where type = 'table' and name not like 'sqlite_%'",
+    ),
+  ])
+  return {
+    schemaVersion: firstNumber(versionRows),
+    hasUserTables: firstNumber(tableRows) > 0,
+  }
+}
+
+export async function prepareStartupRecovery(): Promise<StartupRecoveryContext> {
+  const { layout, store } = await resolveWorkspaceLayout()
+  await applyPendingRestore(layout, store)
+  configureDatabasePath(layout.databasePath)
+  const db = await getDb()
+  await enableCrashSafeSqlite(db)
+  const integrity = await inspectWorkspaceIntegrity(db)
+  if (!integrity.ok && !integrity.indexCorruption) {
+    await enterReadOnlyFallback(db)
+    activeAccessMode = 'read-only'
+  }
+  const shape = await databaseShape(db)
+  const context: StartupRecoveryContext = {
+    db,
+    layout,
+    accessMode: activeAccessMode,
+    indexNeedsRebuild: integrity.indexCorruption,
+    schemaVersionBefore: shape.schemaVersion,
+    hasUserTables: shape.hasUserTables,
+    migrationSnapshot: null,
+  }
+  await store.set(ACTIVE_WORKSPACE_KEY, {
+    databasePath: layout.databasePath,
+    checkpointVerifiedAt: Date.now(),
+  } satisfies SavedWorkspaceCheckpoint)
+  await store.save()
+  activeContext = context
+  return context
+}
+
+export async function createMigrationSnapshotIfNeeded(
+  context: StartupRecoveryContext,
+  now = new Date(),
+): Promise<void> {
+  if (context.accessMode === 'read-only'
+    || !context.hasUserTables
+    || context.schemaVersionBefore >= RECOVERY_SCHEMA_VERSION) return
+  const fileName = `migration-${compactTimestamp(now)}.workspace.db`
+  await createVerifiedSqliteSnapshot(context.db, context.layout.backupsPath, fileName)
+  context.migrationSnapshot = {
+    fileName,
+    createdAt: now.getTime(),
+    sourceRevision: String(context.schemaVersionBefore),
+  }
+}
+
+async function listWorkspaceSnapshots(layout: WorkspaceLayout): Promise<WorkspaceSnapshot[]> {
+  const entries = await readDir(layout.backupsPath)
+  const snapshots: WorkspaceSnapshot[] = []
+  for (const entry of entries) {
+    if (!entry.isFile) continue
+    const parsed = parseSnapshotFileName(entry.name)
+    if (!parsed) continue
+    const path = assertPathInsideWorkspace(layout.backupsPath, await join(layout.backupsPath, entry.name))
+    snapshots.push({
+      fileName: entry.name,
+      kind: parsed.kind,
+      createdAt: parsed.createdAt,
+      verified: await verifySqliteFile(path),
+    })
+  }
+  return snapshots
+}
+
+async function createRotatingSnapshots(
+  context: StartupRecoveryContext,
+  now = new Date(),
+): Promise<{ created: string[]; trashed: string[] }> {
+  if (context.accessMode === 'read-only') return { created: [], trashed: [] }
+  const created: string[] = []
+  for (const generation of getSnapshotGenerations(now)) {
+    const path = assertPathInsideWorkspace(
+      context.layout.backupsPath,
+      await join(context.layout.backupsPath, generation.fileName),
+    )
+    if (await exists(path)) continue
+    await createVerifiedSqliteSnapshot(context.db, context.layout.backupsPath, generation.fileName)
+    created.push(generation.fileName)
+  }
+
+  const snapshots = await listWorkspaceSnapshots(context.layout)
+  const generations = getSnapshotGenerations(now)
+  const verifiedNewKinds = generations
+    .filter(generation => snapshots.some(snapshot => (
+      snapshot.fileName === generation.fileName && snapshot.verified
+    )))
+    .map(generation => generation.kind)
+  const rotation = planBackupRotation({
+    snapshots,
+    newSnapshotVerified: verifiedNewKinds.length > 0,
+    verifiedNewKinds,
+    retention: DEFAULT_BACKUP_RETENTION,
+    now,
+  })
+  const trashed: string[] = []
+  for (const snapshot of rotation.moveToTrash) {
+    const source = assertPathInsideWorkspace(
+      context.layout.backupsPath,
+      await join(context.layout.backupsPath, snapshot.fileName),
+    )
+    const destination = assertPathInsideWorkspace(
+      context.layout.trashPath,
+      await join(context.layout.trashPath, snapshot.trashFileName),
+    )
+    await rename(source, destination)
+    trashed.push(snapshot.fileName)
+  }
+  return { created, trashed }
+}
+
+export async function completeStartupRecovery(context: StartupRecoveryContext): Promise<void> {
+  if (context.accessMode === 'read-only') return
+  const recovered = await recoverPendingCanvasAiTransactions(context.db)
+  if (context.indexNeedsRebuild) {
+    await repairCanvasIndexes(context.db)
+  }
+  if (recovered.rolledBack.length > 0) {
+    await rebuildCanvasIndexes(context.db)
+  }
+  await context.db.execute(`PRAGMA user_version = ${RECOVERY_SCHEMA_VERSION}`)
+  if (context.migrationSnapshot) {
+    const snapshot = context.migrationSnapshot
+    await context.db.execute(
+      `insert into workspace_snapshots (fileName, kind, createdAt, verifiedAt, sourceRevision)
+       values ($1, 'migration', $2, $3, $4)
+       on conflict(fileName) do nothing`,
+      [snapshot.fileName, snapshot.createdAt, Date.now(), snapshot.sourceRevision],
+    )
+  }
+  await createRotatingSnapshots(context)
+  await probeWorkspaceWritable(context.db)
+}
+
+export async function activateReadOnlyFallback(
+  context: StartupRecoveryContext,
+  error: unknown,
+): Promise<boolean> {
+  if (!isDiskFullError(error)) return false
+  context.accessMode = await enterReadOnlyFallback(context.db)
+  activeAccessMode = context.accessMode
+  return true
+}
+
+export function getWorkspaceAccessMode(): WorkspaceAccessMode {
+  return activeAccessMode
+}
+
+function requireActiveContext(): StartupRecoveryContext {
+  if (!activeContext) throw new Error('Workspace recovery has not initialized yet.')
+  return activeContext
+}
+
+export async function checkWorkspaceHealth(): Promise<string> {
+  const context = requireActiveContext()
+  const integrity = await inspectWorkspaceIntegrity(context.db)
+  if (integrity.ok) return context.accessMode === 'read-only' ? '工作区完整（只读）' : '工作区完整'
+  if (integrity.indexCorruption && context.accessMode === 'read-write') {
+    await repairCanvasIndexes(context.db)
+    return '工作区索引已重建'
+  }
+  throw new Error(`Workspace integrity check failed: ${integrity.messages.join('; ')}`)
+}
+
+export async function requestRestoreLatestWorkspaceSnapshot(): Promise<string> {
+  const context = requireActiveContext()
+  const snapshots = (await listWorkspaceSnapshots(context.layout))
+    .filter(snapshot => snapshot.verified)
+    .sort((left, right) => right.createdAt - left.createdAt || right.fileName.localeCompare(left.fileName))
+  const latest = snapshots[0]
+  if (!latest) throw new Error('没有可恢复的历史状态。')
+  if (!isSafeSnapshotFileName(latest.fileName)) throw new Error('Unsafe snapshot was rejected.')
+  const store = await loadRecoveryStore()
+  await store.set(PENDING_RESTORE_KEY, latest.fileName)
+  await store.save()
+  return latest.fileName
+}
+
+export async function cleanupOldWorkspaceBackups(now = new Date()): Promise<number> {
+  const context = requireActiveContext()
+  await createRotatingSnapshots(context, now)
+  const entries = await readDir(context.layout.trashPath)
+  const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1_000
+  let removed = 0
+  for (const entry of entries) {
+    if (!entry.isFile || !TRASH_FILE_PATTERN.test(entry.name)) continue
+    const path = assertPathInsideWorkspace(
+      context.layout.trashPath,
+      await join(context.layout.trashPath, entry.name),
+    )
+    const metadata = await stat(path)
+    if ((metadata.mtime?.getTime() ?? now.getTime()) >= cutoff) continue
+    await remove(path)
+    removed += 1
+  }
+  return removed
+}

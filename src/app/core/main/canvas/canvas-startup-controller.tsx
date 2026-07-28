@@ -18,6 +18,7 @@ async function initializeCanvasStartup(projects: CanvasProject[]) {
 
 export function CanvasStartupController({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
+  const [startupError, setStartupError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -47,6 +48,9 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
       })
       .catch((error) => {
         console.error('Failed to initialize canvas startup:', error)
+        if (!cancelled) {
+          setStartupError(error instanceof Error ? error.message : '工作区恢复失败')
+        }
       })
       .finally(() => {
         if (!cancelled) setReady(true)
@@ -58,7 +62,16 @@ export function CanvasStartupController({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return ready
-    ? children
-    : <div className="size-full bg-background" aria-label="正在打开画布" />
+  if (!ready) return <div className="size-full bg-background" aria-label="正在打开画布" />
+  if (startupError) {
+    return (
+      <div className="flex size-full items-center justify-center bg-background p-6" aria-label="工作区恢复失败">
+        <div className="max-w-md text-center">
+          <p className="font-medium">工作区未能安全打开</p>
+          <p className="mt-2 text-sm text-muted-foreground">{startupError}</p>
+        </div>
+      </div>
+    )
+  }
+  return children
 }
