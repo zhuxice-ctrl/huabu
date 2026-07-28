@@ -4,7 +4,7 @@ use reqwest::{
     header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, CONTENT_TYPE},
     multipart::{Form, Part},
     redirect::Policy,
-    Client, Method, Proxy, Url,
+    Client, Method, Proxy, StatusCode, Url,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -198,14 +198,59 @@ fn build_headers(
 }
 
 async fn read_response_json(response: reqwest::Response) -> Result<Value, String> {
-    let status = response.status();
-    if !status.is_success() {
-        return Err(format!("Request failed: {status}"));
+    if !response.status().is_success() {
+        return Err(read_sanitized_http_error(response).await);
     }
     response
         .json::<Value>()
         .await
         .map_err(|error| format!("Failed to parse JSON response: {error}"))
+}
+
+const MAX_PROVIDER_ERROR_BYTES: usize = 64 * 1024;
+
+fn sanitized_http_error(status: StatusCode, response_body: &[u8]) -> String {
+    let body = String::from_utf8_lossy(response_body).to_ascii_lowercase();
+    let mentions_tool_choice = body.contains("tool_choice")
+        || body.contains("tool choice")
+        || body.contains("tool-choice");
+    let reports_unsupported = body.contains("unsupported")
+        || body.contains("not support")
+        || body.contains("unknown parameter")
+        || body.contains("unknown field")
+        || body.contains("invalid parameter")
+        || body.contains("invalid field")
+        || body.contains("does not exist in tools")
+        || body.contains("not found in tools")
+        || body.contains("not available");
+
+    if mentions_tool_choice && reports_unsupported {
+        format!("Request failed: {status}; provider_error=unsupported_tool_choice")
+    } else {
+        format!("Request failed: {status}")
+    }
+}
+
+async fn read_sanitized_http_error(response: reqwest::Response) -> String {
+    let status = response.status();
+    let mut body = Vec::new();
+    let mut stream = response.bytes_stream();
+
+    while let Some(chunk) = stream.next().await {
+        let Ok(chunk) = chunk else {
+            break;
+        };
+        let remaining = MAX_PROVIDER_ERROR_BYTES.saturating_sub(body.len());
+        if remaining == 0 {
+            break;
+        }
+        body.extend_from_slice(&chunk[..chunk.len().min(remaining)]);
+        if body.len() == MAX_PROVIDER_ERROR_BYTES {
+            break;
+        }
+    }
+
+    sanitized_http_error(status, &body)
 }
 
 async fn run_json_request(
@@ -349,12 +394,11 @@ pub async fn ai_binary_request(
             .map_err(|error| format!("Request failed: {error}"))?
     };
 
-    let status = response.status();
-    if !status.is_success() {
+    if !response.status().is_success() {
         if let Some(request_id) = &request.request_id {
             manager.finish(request_id).await;
         }
-        return Err(format!("Request failed: {status}"));
+        return Err(read_sanitized_http_error(response).await);
     }
 
     let bytes = response
@@ -445,9 +489,8 @@ pub async fn ai_chat_completion_stream(
     };
 
     if !response.status().is_success() {
-        let status = response.status();
         manager.finish(&request.request_id).await;
-        return Err(format!("Request failed: {status}"));
+        return Err(read_sanitized_http_error(response).await);
     }
 
     let mut decoder = SseDecoder::new();
@@ -504,7 +547,8 @@ pub async fn cancel_ai_request(
 
 #[cfg(test)]
 mod tests {
-    use super::SseDecoder;
+    use super::{sanitized_http_error, SseDecoder};
+    use reqwest::StatusCode;
 
     #[test]
     fn parses_split_sse_chunks() {
@@ -524,5 +568,27 @@ mod tests {
         let mut decoder = SseDecoder::new();
         let messages = decoder.push(b"data: hello\r\ndata: world\r\n\r\n");
         assert_eq!(messages, vec!["hello\nworld".to_string()]);
+    }
+
+    #[test]
+    fn preserves_only_the_sanitized_unsupported_tool_choice_signal() {
+        let error = sanitized_http_error(
+            StatusCode::BAD_REQUEST,
+            br#"{"error":{"message":"tool_choice is unsupported","secret":"sk-do-not-return"}}"#,
+        );
+
+        assert!(error.contains("provider_error=unsupported_tool_choice"));
+        assert!(!error.contains("sk-do-not-return"));
+        assert!(!error.contains("error.message"));
+    }
+
+    #[test]
+    fn omits_arbitrary_provider_error_bodies() {
+        let error = sanitized_http_error(
+            StatusCode::UNAUTHORIZED,
+            br#"{"error":{"message":"invalid key sk-do-not-return"}}"#,
+        );
+
+        assert_eq!(error, "Request failed: 401 Unauthorized");
     }
 }

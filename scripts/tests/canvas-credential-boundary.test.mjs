@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import vm from 'node:vm'
+import ts from 'typescript'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const read = path => readFileSync(join(root, path), 'utf8')
@@ -14,7 +16,39 @@ const sources = {
   aiTransport: read('src-tauri/src/ai.rs'),
   settingsStore: read('src/stores/setting.ts'),
   aiSettingsPage: read('src/app/core/setting/ai/page.tsx'),
+  aiUtils: read('src/lib/ai/utils.ts'),
   audio: read('src/lib/audio.ts'),
+}
+
+function loadCredentialsModule() {
+  const calls = []
+  const output = ts.transpileModule(sources.credentials, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText
+  const module = { exports: {} }
+  const mocks = {
+    '@tauri-apps/api/core': {
+      invoke: async (command, payload) => {
+        calls.push({ command, payload })
+        return { reference: payload.request.reference, configured: command !== 'credential_delete' }
+      },
+    },
+    '@/hooks/use-toast': { toast: () => undefined },
+  }
+  const context = vm.createContext({
+    console,
+    exports: module.exports,
+    module,
+    require: specifier => {
+      if (specifier in mocks) return mocks[specifier]
+      throw new Error(`Unexpected credentials.ts import in test: ${specifier}`)
+    },
+  })
+  vm.runInContext(output, context, { filename: 'credentials.ts' })
+  return { credentials: module.exports, calls }
 }
 
 test('JavaScript AI request payloads carry opaque references, never resolved model secrets', () => {
@@ -77,4 +111,75 @@ test('Rust transport is the only model-provider boundary that resolves secrets a
   assert.match(sources.aiTransport, /is_secret_header_name/)
   assert.match(sources.audio, /hasCredential/)
   assert.doesNotMatch(sources.audio, /\.apiKey/)
+})
+
+test('renaming a secret header writes a name-bound ref before deleting the old credential', async () => {
+  const { credentials, calls } = loadCredentialsModule()
+  const oldReference = credentials.customHeaderCredentialRef('provider-1', 'X-Api-Key')
+  const newReference = credentials.customHeaderCredentialRef('provider-1', 'Authorization')
+
+  const updated = await credentials.applyCustomHeaderPairs({
+    key: 'provider-1',
+    title: 'Provider',
+    baseURL: 'https://provider.example/v1',
+    models: [],
+    customHeaderRefs: { 'X-Api-Key': oldReference },
+    customHeaderSecrets: { 'X-Api-Key': true },
+  }, [{
+    key: 'Authorization',
+    value: 'replacement-secret',
+    secret: true,
+    credentialRef: oldReference,
+  }])
+
+  assert.equal(updated.customHeaderRefs.Authorization, newReference)
+  assert.deepEqual(calls.map(call => [call.command, call.payload.request.reference]), [
+    ['credential_set', newReference],
+    ['credential_delete', oldReference],
+  ])
+})
+
+test('completed header saves reconcile only an unchanged local draft', () => {
+  const { credentials } = loadCredentialsModule()
+  const submitted = [{ id: 'row-1', key: 'X-Public', value: 'old', secret: false }]
+  const saved = [{ id: 'saved-row', key: 'X-Public', value: 'old', secret: false }]
+  const newerDraft = [{ id: 'row-1', key: 'X-Public', value: 'newer', secret: false }]
+
+  assert.equal(credentials.reconcileSavedHeaderPairs(newerDraft, submitted, saved), newerDraft)
+  assert.equal(credentials.reconcileSavedHeaderPairs(submitted, submitted, saved), saved)
+})
+
+test('legacy upstream providers are filtered before credential migration', () => {
+  const filterIndex = sources.settingsStore.indexOf('const retainedAiModelList = existingAiModelList.filter')
+  const migrationIndex = sources.settingsStore.indexOf('migrateLegacyModelCredentials(retainedAiModelList)')
+
+  assert.notEqual(filterIndex, -1)
+  assert.notEqual(migrationIndex, -1)
+  assert.ok(filterIndex < migrationIndex)
+  assert.doesNotMatch(sources.settingsStore, /migrateLegacyModelCredentials\(existingAiModelList\)/)
+})
+
+test('provider HTTP failures expose only a sanitized tool-choice classification', () => {
+  const transportImplementation = sources.aiTransport.split('#[cfg(test)]')[0]
+  const classifierStart = sources.aiUtils.indexOf('function getAIRequestErrorMessage')
+  const classifierEnd = sources.aiUtils.indexOf('function omitToolChoice')
+  const classifierModule = { exports: {} }
+  const classifierOutput = ts.transpileModule(sources.aiUtils.slice(classifierStart, classifierEnd), {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText
+  vm.runInNewContext(classifierOutput, {
+    exports: classifierModule.exports,
+    module: classifierModule,
+  })
+
+  assert.match(transportImplementation, /provider_error=unsupported_tool_choice/)
+  assert.match(transportImplementation, /fn sanitized_http_error/)
+  assert.match(transportImplementation, /read_sanitized_http_error\(response\)\.await/)
+  assert.doesNotMatch(transportImplementation, /format!\([^\n]*response_body/)
+  assert.equal(classifierModule.exports.isUnsupportedToolChoiceError(
+    'Request failed: 400 Bad Request; provider_error=unsupported_tool_choice',
+  ), true)
 })

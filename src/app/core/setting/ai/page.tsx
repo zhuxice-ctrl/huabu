@@ -39,6 +39,7 @@ import {
   applyCustomHeaderPairs,
   clearProviderCredential,
   isSecretHeaderName,
+  reconcileSavedHeaderPairs,
   setProviderCredential,
 } from "@/lib/security/credentials";
 
@@ -91,6 +92,7 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
   const aiModelListRef = useRef(aiModelList)
   const storeWriteQueueRef = useRef<Promise<void>>(Promise.resolve())
   const isTitleComposingRef = useRef(false)
+  const loadedHeaderProviderRef = useRef<string | null | undefined>(undefined)
 
   useEffect(() => {
     aiModelListRef.current = aiModelList
@@ -145,9 +147,11 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
 
   const saveHeaderPairs = async (pairs: HeaderPair[]) => {
     if (!currentConfig) return
-    const updatedConfig = await applyCustomHeaderPairs(currentConfig, pairs)
+    const submittedPairs = pairs.map(pair => ({ ...pair }))
+    const updatedConfig = await applyCustomHeaderPairs(currentConfig, submittedPairs)
     await updateAiConfig(updatedConfig)
-    setHeaderPairs(parseHeadersToKeyValue(updatedConfig))
+    const savedPairs = parseHeadersToKeyValue(updatedConfig)
+    setHeaderPairs(current => reconcileSavedHeaderPairs(current, submittedPairs, savedPairs))
   }
 
   const replaceProviderCredential = async () => {
@@ -370,6 +374,10 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
 
   // 当选中的配置改变时，更新headers
   useEffect(() => {
+    const providerKey = currentConfig?.key ?? null
+    if (loadedHeaderProviderRef.current === providerKey) return
+    loadedHeaderProviderRef.current = providerKey
+
     if (currentConfig) {
       setHeaderPairs(parseHeadersToKeyValue(currentConfig))
       setApiKeyDraft('')

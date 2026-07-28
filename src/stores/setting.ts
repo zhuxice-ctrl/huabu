@@ -343,6 +343,12 @@ const useSettingStore = create<SettingState>((set, get) => ({
 
     // 独立产品迁移：移除上游内置模型和密钥，只保留用户主动配置的平台。
     const existingAiModelList = (await store.get('aiModelList') as AiConfig[]) || []
+    const isLegacyUpstreamModel = (config: AiConfig) => (
+      config.key.startsWith('note-gen-')
+      || config.title === 'NoteGen Limited'
+      || config.models?.some(model => model.id.startsWith('note-gen-'))
+    )
+    const retainedAiModelList = existingAiModelList.filter(config => !isLegacyUpstreamModel(config))
     try {
       await migrateLegacyGlobalCredential(store)
     } catch (error) {
@@ -358,13 +364,7 @@ const useSettingStore = create<SettingState>((set, get) => ({
     // Global and provider migrations are deliberately isolated: a failed
     // legacy global key must not leave otherwise migratable provider secrets
     // in plaintext.
-    const credentialMigratedAiModelList = await migrateLegacyModelCredentials(existingAiModelList)
-    const isLegacyUpstreamModel = (config: AiConfig) => (
-      config.key.startsWith('note-gen-')
-      || config.title === 'NoteGen Limited'
-      || config.models?.some(model => model.id.startsWith('note-gen-'))
-    )
-    const finalAiModelList = credentialMigratedAiModelList.filter(config => !isLegacyUpstreamModel(config))
+    const finalAiModelList = await migrateLegacyModelCredentials(retainedAiModelList)
     if (JSON.stringify(finalAiModelList) !== JSON.stringify(existingAiModelList)) {
       await store.set('aiModelList', finalAiModelList)
     }

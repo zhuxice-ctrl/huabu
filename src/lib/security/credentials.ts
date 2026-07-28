@@ -15,6 +15,8 @@ export type HeaderPairsInput = Array<{
   value: string
   secret?: boolean
   credentialRef?: string
+  id?: string
+  hasCredential?: boolean
 }>
 
 type LegacyAiConfig = AiConfig & {
@@ -101,12 +103,12 @@ export async function applyCustomHeaderPairs(
       continue
     }
 
-    const reference = pair.credentialRef || config.customHeaderRefs?.[key] || customHeaderCredentialRef(config.key, key)
+    const reference = customHeaderCredentialRef(config.key, key)
     if (pair.value) {
       await setCredential(reference, pair.value, config.baseURL || '')
       customHeaderRefs[key] = reference
       staleRefs.delete(reference)
-    } else if (pair.credentialRef || config.customHeaderRefs?.[key]) {
+    } else if (pair.credentialRef === reference || config.customHeaderRefs?.[key] === reference) {
       customHeaderRefs[key] = reference
       staleRefs.delete(reference)
     }
@@ -123,6 +125,23 @@ export async function applyCustomHeaderPairs(
     customHeaderRefs,
     customHeaderSecrets,
   })
+}
+
+export function reconcileSavedHeaderPairs<T extends HeaderPairsInput[number]>(
+  currentPairs: T[],
+  submittedPairs: T[],
+  savedPairs: T[],
+): T[] {
+  const snapshot = (pairs: T[]) => JSON.stringify(pairs.map(pair => ({
+    id: pair.id,
+    key: pair.key,
+    value: pair.value,
+    secret: Boolean(pair.secret),
+    credentialRef: pair.credentialRef,
+    hasCredential: Boolean(pair.hasCredential),
+  })))
+
+  return snapshot(currentPairs) === snapshot(submittedPairs) ? savedPairs : currentPairs
 }
 
 export async function migrateLegacyGlobalCredential(store: Store): Promise<boolean> {
