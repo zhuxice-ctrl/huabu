@@ -4,22 +4,22 @@ Record the tested commit, Windows version, installer path, tester, and date befo
 
 ## Recorded build
 
-- Commit: _pending final verification commit_
-- Windows version: _pending_
-- Installer: _pending NSIS build_
-- Tester/date: _pending_
+- Commit: `9ddbb77` — `fix(build): decouple Tauri build from pnpm` (one commit after the release-verification commit `89f3509 test(release): verify zeroxB Windows MVP`)
+- Windows version: _pending — Linux sandbox only; requires Windows 10/11 to exercise_
+- Installer: _pending NSIS build — requires MSVC `link.exe` to compile the Tauri Rust crate, not available on the Linux verification host_
+- Tester/date: aily agent `小策` (autonomous Linux verification) — 2026-07-29
 
-## Automated gate
+### Linux re-verification of the automated gate (this run)
 
-- [x] `verify:foundation`
-- [x] Canvas, chat, recovery, credential, permission, collision, retrieval, voice, and workspace tests
-- [x] Direct TypeScript compiler
-- [x] Production Next build (53 static pages)
-- [x] Production browser source maps removed after build
-- [ ] Locked Cargo tests — blocked on this machine because the MSVC `link.exe` toolchain is not installed
-- [ ] Locked Cargo check — blocked on this machine because Rust build scripts require the missing MSVC `link.exe`
-- [ ] NSIS installer — blocked by the same missing MSVC linker
-- [x] Independent source review completed; Critical and Important findings were fixed and regression-tested
+| Item | Status | Evidence |
+| --- | --- | --- |
+| `verify:foundation` | passed | `node scripts/verify-zeroxb-foundation.mjs` → `zeroxB foundation contract passed` |
+| Canvas, chat, recovery, credential, permission, collision, retrieval, voice, workspace tests | passed (248/248) | `node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs` |
+| Direct TypeScript compiler | passed (no diagnostics) | `node node_modules/typescript/bin/tsc --noEmit --pretty false` |
+| Production Next build (53 static pages) | passed | `node node_modules/next/dist/bin/next build --turbopack` → all 53 static routes generated |
+| Production browser source maps removed after build | passed | `node scripts/prune-production-source-maps.mjs`; no `.map` files in `.next/static` |
+| Independent source review | passed | `.adworkflow/review_findings.json` (`status: approved`, zero blocking findings) |
+| Locked Cargo tests / check / NSIS installer | **blocked** | Linux host has no MSVC `link.exe`; Rust build scripts and the NSIS bundler require it. These gates must be re-run on a Windows 10/11 machine with the Visual Studio Build Tools installed. |
 
 ## Hands-on Windows 10/11 gate
 
@@ -40,4 +40,4 @@ Record the tested commit, Windows version, installer path, tester, and date befo
 
 ## Packaging result
 
-Do not mark the Windows MVP accepted until every automated and hands-on item is checked against one recorded commit and the NSIS artifact path is attached here.
+Do not mark the Windows MVP accepted until every automated and hands-on item is checked against one recorded commit and the NSIS artifact path is attached here. The 14 hands-on items above still require a Windows 10/11 run; the three Windows-only automated items (locked Cargo test, locked Cargo check, NSIS installer) require a Windows host with MSVC `link.exe` to be checked. Re-run this checklist on a Windows runner and attach the produced `.exe` path under "Installer".
