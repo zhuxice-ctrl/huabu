@@ -33,6 +33,8 @@ import useCanvasStore from '@/stores/canvas'
 import { createCanvasChatContext, parseCanvasChatContext } from '@/lib/chat/canvas-context'
 import { retrievePersistedCanvasEvidence } from '@/stores/canvas-index'
 import { prepareCanvasEvidenceForRequest } from '@/lib/canvas/sensitive-content'
+import { serializeCanvasEvidenceContext } from '@/lib/canvas/canvas-retrieval'
+import { captureEvidenceQueryOrigin } from '@/lib/canvas/evidence-navigation'
 import {
   canAcceptVoiceSteering,
   completeVoiceSession,
@@ -186,11 +188,14 @@ export const ChatSend = forwardRef<{ sendChat: () => void }, ChatSendProps>(({ i
         redirectPolicyVerified: false,
       },
     )
+    const evidenceByAnchorId = new Map(evidenceResult.evidence.map(item => [item.anchor.id, item]))
+    const navigationEvidence = protectedEvidence.anchors.flatMap(anchor => {
+      const original = evidenceByAnchorId.get(anchor.id)
+      return original ? [{ ...original, anchor }] : []
+    })
     const sources = protectedEvidence.anchors.map(anchor => `${anchor.nodeId}:${anchor.startOffset}-${anchor.endOffset}`)
     const context = protectedEvidence.anchors.length
-      ? protectedEvidence.anchors.map(anchor => (
-        `[画布证据 ${anchor.nodeId}:${anchor.startOffset}-${anchor.endOffset}]\n${anchor.plainText}`
-      )).join('\n\n')
+      ? serializeCanvasEvidenceContext(navigationEvidence)
       : evidenceResult.context
     return { context, sources, rawSensitiveAllowed: protectedEvidence.rawSensitiveAllowed }
   }
@@ -997,6 +1002,9 @@ ${hasValidRange ? `**仅在用户明确要求修改/改写/补充/插入时才�
         canvasState.projects,
         sentAt,
       )
+      if (canvasState.activeCanvasId) {
+        captureEvidenceQueryOrigin(canvasState.activeCanvasId, canvasContext)
+      }
       activeVoiceSessionRef.current = createVoiceSession({
         id: crypto.randomUUID(),
         origin: promptOrigin,

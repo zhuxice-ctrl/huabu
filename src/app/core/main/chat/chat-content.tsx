@@ -26,7 +26,8 @@ import { parseCanvasChatContext, UNKNOWN_CANVAS_SOURCE_LABEL } from '@/lib/chat/
 import useCanvasStore from '@/stores/canvas'
 import emitter from '@/lib/emitter'
 import { CanvasEvidenceNavigator } from '../canvas/canvas-evidence-navigator'
-import type { CanvasEvidence } from '@/lib/canvas/canvas-retrieval'
+import { parseCanvasEvidenceMarkers } from '@/lib/canvas/canvas-retrieval'
+import { getEvidenceQueryOrigin } from '@/lib/canvas/evidence-navigation'
 import { ChatAttachmentSummary } from './chat-file-attachments'
 import {
   MessageScroller,
@@ -301,41 +302,29 @@ function CanvasEvidenceChips({ chat }: { chat: Chat }) {
   const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
   const canvasContext = useMemo(() => parseCanvasChatContext(chat.canvasContext), [chat.canvasContext])
   const canvasId = canvasContext?.sourceCanvasId ?? activeCanvasId
-  const evidence = useMemo<CanvasEvidence[]>(() => {
-    if (!canvasId || !chat.content) return []
-    const markers = [...chat.content.matchAll(/\[画布证据 ([^:\]]+):(\d+)-(\d+)\]/g)]
-    return markers.map((marker, index) => ({
-      anchor: {
-        id: `${canvasId}:${marker[1]}:${marker[2]}:${marker[3]}:${index}`,
-        workspaceId: 'current-workspace',
-        canvasId,
-        nodeId: marker[1],
-        startOffset: Number(marker[2]),
-        endOffset: Number(marker[3]),
-        nodePosition: { x: 0, y: 0 },
-        contentRevision: 'retrieval-marker',
-        plainText: '',
-        entities: [],
-        timeHints: [],
-        contentType: 'text',
-      },
-      score: 1,
-      matchedBy: ['keyword'],
-    }))
+  const evidence = useMemo(() => {
+    if (!canvasId) return []
+    return parseCanvasEvidenceMarkers(chat.content ?? '', canvasId)
   }, [canvasId, chat.content])
+  const originViewport = useMemo(() => (
+    canvasId && chat.canvasContext
+      ? getEvidenceQueryOrigin(canvasId, chat.canvasContext)
+      : null
+  ), [canvasId, chat.canvasContext])
 
-  if (!canvasId || evidence.length === 0) return null
+  if (!canvasId || !originViewport || evidence.length === 0) return null
   return (
     <CanvasEvidenceNavigator
       canvasId={canvasId}
       evidence={evidence}
+      originViewport={originViewport}
       onFocus={focus => {
         // Evidence navigation is view state: collapse the HUD and leave CanvasDocument untouched.
         setChatHudExpanded(false)
         if (activeCanvasId !== focus.canvasId) useCanvasStore.setState({ activeCanvasId: focus.canvasId })
         requestAnimationFrame(() => emitter.emit('canvas-focus-evidence', focus))
       }}
-      onReturn={() => emitter.emit('canvas-evidence-return', { canvasId })}
+      onReturn={viewport => emitter.emit('canvas-evidence-return', { canvasId, viewport })}
     />
   )
 }

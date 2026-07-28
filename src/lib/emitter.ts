@@ -135,7 +135,8 @@ interface Events {
   'canvas-history-checkpoint': void;
   'canvas-focus-node': string;
   'canvas-focus-evidence': EvidenceFocus;
-  'canvas-evidence-return': { canvasId: string };
+  'canvas-select-evidence-range': EvidenceFocus;
+  'canvas-evidence-return': { canvasId: string; viewport: CanvasDocument['viewport'] };
   'canvas-undo': { canvasId: string };
   'canvas-redo': { canvasId: string };
   'canvas-can-undo-redo': { canvasId: string; resolve: (can: { undo: boolean; redo: boolean }) => void };

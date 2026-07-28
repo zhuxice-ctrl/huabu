@@ -6,6 +6,7 @@ export interface CanvasEvidence {
   anchor: CanvasKnowledgeAnchor
   score: number
   matchedBy: CanvasEvidenceMatch[]
+  textFingerprint?: string
 }
 
 export interface RetrieveCanvasEvidenceInput {
@@ -50,11 +51,65 @@ function queryTimeHints(query: string) {
   ].map(value => value.toLocaleLowerCase()))]
 }
 
-function formatEvidence(evidence: CanvasEvidence[]) {
+export function canvasEvidenceTextFingerprint(value: string): string {
+  let hash = 0x811c9dc5
+  for (const byte of new TextEncoder().encode(value)) {
+    hash ^= byte
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+export function serializeCanvasEvidenceMarker(evidence: CanvasEvidence): string {
+  const score = Number.isFinite(evidence.score) ? evidence.score : 0
+  return `[画布证据 ${encodeURIComponent(evidence.anchor.nodeId)}:${evidence.anchor.startOffset}-${evidence.anchor.endOffset}`
+    + ` score=${score} field=${encodeURIComponent(evidence.anchor.contentType)}`
+    + ` text=${evidence.textFingerprint ?? canvasEvidenceTextFingerprint(evidence.anchor.plainText)}]`
+}
+
+export function serializeCanvasEvidenceContext(evidence: readonly CanvasEvidence[]): string {
   if (!evidence.length) return '没有找到与当前画布相关的证据。'
   return evidence.map(item => (
-    `[画布证据 ${item.anchor.nodeId}:${item.anchor.startOffset}-${item.anchor.endOffset}]\n${item.anchor.plainText}`
+    `${serializeCanvasEvidenceMarker(item)}\n${item.anchor.plainText}`
   )).join('\n\n')
+}
+
+export function parseCanvasEvidenceMarkers(content: string, canvasId: string): CanvasEvidence[] {
+  const markerPattern = /\[画布证据 ([^:\]\s]+):(\d+)-(\d+)(?: score=([0-9]+(?:\.[0-9]+)?))?(?: field=([^\]\s]+))?(?: text=([0-9a-f]{8}))?\]/g
+  return [...content.matchAll(markerPattern)].flatMap((marker, index) => {
+    const startOffset = Number(marker[2])
+    const endOffset = Number(marker[3])
+    if (!Number.isSafeInteger(startOffset) || !Number.isSafeInteger(endOffset) || endOffset <= startOffset) return []
+    const parsedScore = marker[4] === undefined ? 0 : Number(marker[4])
+    const score = Number.isFinite(parsedScore) ? Math.min(1, Math.max(0, parsedScore)) : 0
+    let nodeId: string
+    let contentType: string
+    try {
+      nodeId = decodeURIComponent(marker[1])
+      contentType = marker[5] ? decodeURIComponent(marker[5]) : 'unknown'
+    } catch {
+      return []
+    }
+    return [{
+      anchor: {
+        id: `${canvasId}:${nodeId}:${startOffset}:${endOffset}:${index}`,
+        workspaceId: 'current-workspace',
+        canvasId,
+        nodeId,
+        startOffset,
+        endOffset,
+        nodePosition: { x: 0, y: 0 },
+        contentRevision: 'retrieval-marker',
+        plainText: '',
+        entities: [],
+        timeHints: [],
+        contentType,
+      },
+      score,
+      matchedBy: ['keyword'],
+      ...(marker[6] ? { textFingerprint: marker[6] } : {}),
+    } satisfies CanvasEvidence]
+  })
 }
 
 export function applyCanvasEvidenceRerank(
@@ -106,5 +161,5 @@ export async function retrieveCanvasEvidence(input: RetrieveCanvasEvidenceInput)
   evidence.sort((left, right) => right.score - left.score || left.anchor.id.localeCompare(right.anchor.id))
   evidence = applyCanvasEvidenceRerank(evidence, input.rerankedAnchorIds)
   evidence = evidence.slice(0, Math.max(1, Math.min(input.limit ?? 8, 30)))
-  return { canvasId, evidence, context: formatEvidence(evidence) }
+  return { canvasId, evidence, context: serializeCanvasEvidenceContext(evidence) }
 }

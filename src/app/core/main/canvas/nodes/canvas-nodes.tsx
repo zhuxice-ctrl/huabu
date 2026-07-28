@@ -23,6 +23,10 @@ import {
 } from '@/lib/canvas/note-reference'
 import { createRecordTab, getRecordTabPath } from '@/app/core/main/mark/mark-record-tab'
 import { getAllMarks } from '@/db/marks'
+import {
+  isExactEvidenceTextSelection,
+  type EvidenceFocus,
+} from '@/lib/canvas/evidence-navigation'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
 
@@ -181,18 +185,15 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
   }, [id])
 
   useEffect(() => {
-    const focusEvidence = (focus: { nodeId: string; startOffset: number; endOffset: number }) => {
+    const focusEvidence = (focus: EvidenceFocus) => {
       if (focus.nodeId !== id) return
       const textarea = textareaRef.current
-      if (!textarea) return
+      if (!textarea || !isExactEvidenceTextSelection(focus, textarea.value)) return
       textarea.focus()
-      textarea.setSelectionRange(
-        Math.max(0, Math.min(focus.startOffset, textarea.value.length)),
-        Math.max(0, Math.min(focus.endOffset, textarea.value.length)),
-      )
+      textarea.setSelectionRange(focus.startOffset, focus.endOffset)
     }
-    emitter.on('canvas-focus-evidence', focusEvidence)
-    return () => emitter.off('canvas-focus-evidence', focusEvidence)
+    emitter.on('canvas-select-evidence-range', focusEvidence)
+    return () => emitter.off('canvas-select-evidence-range', focusEvidence)
   }, [id])
 
   return (

@@ -147,6 +147,10 @@ import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { CanvasGeometryOverlays } from './canvas-geometry-overlays'
 import { CanvasAiOverlay } from './canvas-ai-overlay'
 import { CanvasLinearView } from './canvas-linear-view'
+import {
+  recordCanvasViewportSnapshot,
+  type EvidenceFocus,
+} from '@/lib/canvas/evidence-navigation'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
@@ -839,7 +843,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const styleHistoryPushedRef = useRef(false)
   const lastViewportSnapshotRef = useRef<ViewportSnapshot | null>(null)
   const { screenToFlowPosition, getViewport, getNodesBounds, fitView, setCenter, setViewport } = useReactFlow()
-  const evidenceNavigationOriginsRef = useRef(new Map<string, CanvasViewport>())
+  const transientEvidenceMoveRef = useRef(false)
+  const transientEvidenceMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const captureCurrentViewport = useCallback(() => {
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return null
@@ -1293,27 +1298,40 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canvasId, fitView, pushHistory, setEdges, updateFlowNodes])
 
   useEffect(() => {
-    const focusNode = (nodeId: string) => {
+    recordCanvasViewportSnapshot(canvasId, getViewport())
+  }, [canvasId, getViewport])
+
+  useEffect(() => {
+    const armTransientEvidenceMove = () => {
+      transientEvidenceMoveRef.current = true
+      if (transientEvidenceMoveTimerRef.current) clearTimeout(transientEvidenceMoveTimerRef.current)
+      transientEvidenceMoveTimerRef.current = setTimeout(() => {
+        transientEvidenceMoveRef.current = false
+        transientEvidenceMoveTimerRef.current = null
+      }, 500)
+    }
+    const focusNode = (nodeId: string, transient = false) => {
       const node = latestNodesRef.current.find(item => item.id === nodeId)
-      if (!node) return
+      if (!node) return false
       const width = node.measured?.width ?? node.width ?? 180
       const height = node.measured?.height ?? node.height ?? 72
       const zoom = Math.max(getViewport().zoom, 0.72)
+      if (transient) armTransientEvidenceMove()
       void setCenter(node.position.x + width / 2, node.position.y + height / 2, { zoom, duration: 260 })
+      return true
     }
-    const focusEvidence = (focus: { canvasId: string; nodeId: string; startOffset: number; endOffset: number }) => {
+    const focusEvidence = (focus: EvidenceFocus) => {
       if (focus.canvasId !== canvasId) return
-      if (!evidenceNavigationOriginsRef.current.has(canvasId)) {
-        evidenceNavigationOriginsRef.current.set(canvasId, { ...getViewport() })
-      }
-      focusNode(focus.nodeId)
-      emitter.emit('canvas-focus-evidence', focus)
+      if (!focusNode(focus.nodeId, true)) return
+      if (focus.field === 'text') emitter.emit('canvas-select-evidence-range', focus)
     }
-    const returnToEvidenceOrigin = ({ canvasId: targetCanvasId }: { canvasId: string }) => {
+    const returnToEvidenceOrigin = ({
+      canvasId: targetCanvasId,
+      viewport: origin,
+    }: { canvasId: string; viewport: CanvasViewport }) => {
       if (targetCanvasId !== canvasId) return
-      const origin = evidenceNavigationOriginsRef.current.get(canvasId)
-      if (origin) void setViewport(origin, { duration: 260 })
-      evidenceNavigationOriginsRef.current.delete(canvasId)
+      armTransientEvidenceMove()
+      void setViewport(origin, { duration: 260 })
     }
     emitter.on('canvas-focus-node', focusNode)
     emitter.on('canvas-focus-evidence', focusEvidence)
@@ -1322,6 +1340,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       emitter.off('canvas-focus-node', focusNode)
       emitter.off('canvas-focus-evidence', focusEvidence)
       emitter.off('canvas-evidence-return', returnToEvidenceOrigin)
+      if (transientEvidenceMoveTimerRef.current) clearTimeout(transientEvidenceMoveTimerRef.current)
     }
   }, [canvasId, getViewport, setCenter, setViewport])
 
@@ -3420,7 +3439,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           setEdgeEditorOpen(true)
         }}
         onPaneContextMenu={() => setContextTarget('pane')}
-        onMoveEnd={(_event, viewport) => persistViewport(viewport)}
+        onInit={instance => recordCanvasViewportSnapshot(canvasId, instance.getViewport())}
+        onMove={(_event, viewport) => recordCanvasViewportSnapshot(canvasId, viewport)}
+        onMoveEnd={(_event, viewport) => {
+          if (transientEvidenceMoveRef.current) {
+            transientEvidenceMoveRef.current = false
+            if (transientEvidenceMoveTimerRef.current) clearTimeout(transientEvidenceMoveTimerRef.current)
+            transientEvidenceMoveTimerRef.current = null
+            return
+          }
+          persistViewport(viewport)
+        }}
         onNodeDragStart={(event, node) => startMoveGeometrySession(event, node)}
         onNodeDrag={(_event, node) => evaluateMoveGeometrySession(node)}
         onNodeDragStop={finalizeMoveGeometrySession}

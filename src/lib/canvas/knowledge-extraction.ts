@@ -94,12 +94,17 @@ function attachmentIdFor(value: Record<string, unknown>, inherited?: string) {
 
 function collectParts(value: unknown, key = '', attachmentId?: string, parts: KnowledgeExtractionPart[] = []): KnowledgeExtractionPart[] {
   if (typeof value === 'string') {
-    const text = value.trim()
-    if (!text) return parts
+    if (!value.trim()) return parts
     const normalized = normalizeKey(key)
     const contentType = KEY_CONTENT_TYPES[normalized]
       || (normalized === 'videometadata' ? 'video-metadata' : 'text')
-    parts.push({ text, contentType, attachmentId })
+    parts.push({
+      text: value,
+      contentType: contentType === 'text' && normalized !== 'text'
+        ? `field:${normalized || 'unknown'}`
+        : contentType,
+      attachmentId,
+    })
     return parts
   }
   if (Array.isArray(value)) {
@@ -145,12 +150,11 @@ export function extractCanvasKnowledgeAnchors(input: KnowledgeExtractionInput): 
     }
   }
 
-  let offset = 0
   const anchors = parts.flatMap((part, index) => {
-    const plainText = part.text.trim().slice(0, 100_000)
+    const textWithoutLeadingSpace = part.text.trimStart()
+    const startOffset = part.text.length - textWithoutLeadingSpace.length
+    const plainText = textWithoutLeadingSpace.trimEnd().slice(0, 100_000)
     if (!plainText) return []
-    const startOffset = offset
-    offset += plainText.length + 1
     const endOffset = startOffset + plainText.length
     return [{
       id: `${input.canvasId}:${input.node.id}:${input.contentRevision}:${index}:${stableId(plainText)}`,

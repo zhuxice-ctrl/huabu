@@ -20,6 +20,20 @@ export interface EvidenceFocus {
   nodeId: string
   startOffset: number
   endOffset: number
+  field: 'text' | null
+  textFingerprint: string
+}
+
+const canvasViewportSnapshots = new Map<string, CanvasViewport>()
+const evidenceQueryOrigins = new Map<string, { canvasId: string; viewport: CanvasViewport }>()
+
+function canvasEvidenceTextFingerprint(value: string): string {
+  let hash = 0x811c9dc5
+  for (const byte of new TextEncoder().encode(value)) {
+    hash ^= byte
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
 function cloneViewport(viewport: CanvasViewport): CanvasViewport {
@@ -39,6 +53,43 @@ export function createEvidenceNavigationSession(
       .map(item => item.anchor.id),
     activeIndex: 0,
   }
+}
+
+export function reconcileEvidenceNavigationSession(
+  session: EvidenceNavigationSession,
+  canvasId: string,
+  originViewport: CanvasViewport,
+  evidence: readonly CanvasEvidence[],
+): EvidenceNavigationSession {
+  const next = createEvidenceNavigationSession(canvasId, originViewport, evidence)
+  if (session.canvasId !== canvasId) return next
+  const activeAnchorId = session.resultAnchorIds[session.activeIndex]
+  const activeIndex = activeAnchorId ? next.resultAnchorIds.indexOf(activeAnchorId) : -1
+  const reconciled = { ...next, activeIndex: activeIndex >= 0 ? activeIndex : 0 }
+  const unchanged = session.activeIndex === reconciled.activeIndex
+    && session.originViewport.x === reconciled.originViewport.x
+    && session.originViewport.y === reconciled.originViewport.y
+    && session.originViewport.zoom === reconciled.originViewport.zoom
+    && session.resultAnchorIds.length === reconciled.resultAnchorIds.length
+    && session.resultAnchorIds.every((id, index) => id === reconciled.resultAnchorIds[index])
+  return unchanged ? session : reconciled
+}
+
+export function recordCanvasViewportSnapshot(canvasId: string, viewport: CanvasViewport): void {
+  canvasViewportSnapshots.set(canvasId, cloneViewport(viewport))
+}
+
+export function captureEvidenceQueryOrigin(canvasId: string, queryKey: string): CanvasViewport | null {
+  const current = canvasViewportSnapshots.get(canvasId)
+  if (!current) return null
+  const viewport = cloneViewport(current)
+  evidenceQueryOrigins.set(queryKey, { canvasId, viewport })
+  return cloneViewport(viewport)
+}
+
+export function getEvidenceQueryOrigin(canvasId: string, queryKey: string): CanvasViewport | null {
+  const origin = evidenceQueryOrigins.get(queryKey)
+  return origin?.canvasId === canvasId ? cloneViewport(origin.viewport) : null
 }
 
 export function canAutoNavigateEvidence(
@@ -74,7 +125,25 @@ export function evidenceFocusFor(
     nodeId: matched.anchor.nodeId,
     startOffset: matched.anchor.startOffset,
     endOffset: matched.anchor.endOffset,
+    field: matched.anchor.contentType === 'text' ? 'text' : null,
+    textFingerprint: matched.textFingerprint
+      ?? canvasEvidenceTextFingerprint(matched.anchor.plainText),
   }
+}
+
+export function isExactEvidenceTextSelection(
+  focus: EvidenceFocus | null | undefined,
+  value: string,
+): boolean {
+  if (!focus || focus.field !== 'text') return false
+  if (
+    !Number.isSafeInteger(focus.startOffset)
+    || !Number.isSafeInteger(focus.endOffset)
+    || focus.startOffset < 0
+    || focus.endOffset <= focus.startOffset
+    || focus.endOffset > value.length
+  ) return false
+  return canvasEvidenceTextFingerprint(value.slice(focus.startOffset, focus.endOffset)) === focus.textFingerprint
 }
 
 export function returnToEvidenceOrigin(session: EvidenceNavigationSession): CanvasViewport {

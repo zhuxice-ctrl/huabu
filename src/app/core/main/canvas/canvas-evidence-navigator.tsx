@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, RotateCcw, SearchCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -8,6 +8,8 @@ import {
   canAutoNavigateEvidence,
   createEvidenceNavigationSession,
   evidenceFocusFor,
+  reconcileEvidenceNavigationSession,
+  returnToEvidenceOrigin,
   type EvidenceFocus,
 } from '@/lib/canvas/evidence-navigation'
 import type { CanvasEvidence } from '@/lib/canvas/canvas-retrieval'
@@ -16,31 +18,45 @@ import type { CanvasViewport } from '@/types/canvas'
 export function CanvasEvidenceNavigator({
   canvasId,
   evidence,
-  originViewport = { x: 0, y: 0, zoom: 1 },
+  originViewport,
   onFocus,
   onReturn,
 }: {
   canvasId: string
   evidence: readonly CanvasEvidence[]
-  originViewport?: CanvasViewport
+  originViewport: CanvasViewport
   onFocus: (focus: EvidenceFocus) => void
-  onReturn?: () => void
+  onReturn?: (viewport: CanvasViewport) => void
 }) {
   const [session, setSession] = useState(() => (
     createEvidenceNavigationSession(canvasId, originViewport, evidence)
   ))
   const [showCandidates, setShowCandidates] = useState(false)
+  const synchronizedSession = useMemo(() => reconcileEvidenceNavigationSession(
+    session,
+    canvasId,
+    originViewport,
+    evidence,
+  ), [canvasId, evidence, originViewport.x, originViewport.y, originViewport.zoom, session])
+  useEffect(() => {
+    setSession(synchronizedSession)
+  }, [synchronizedSession])
+  useEffect(() => {
+    setShowCandidates(false)
+  }, [canvasId, evidence, originViewport.x, originViewport.y, originViewport.zoom])
   const activeEvidence = useMemo(() => {
-    const anchorId = session.resultAnchorIds[session.activeIndex]
-    return evidence.find(item => item.anchor.id === anchorId) ?? null
-  }, [evidence, session])
+    const anchorId = synchronizedSession.resultAnchorIds[synchronizedSession.activeIndex]
+    return evidence.find(item => (
+      item.anchor.id === anchorId && item.anchor.canvasId === synchronizedSession.canvasId
+    )) ?? null
+  }, [evidence, synchronizedSession])
 
   const focusActive = () => {
-    const focus = evidenceFocusFor(session, evidence)
+    const focus = evidenceFocusFor(synchronizedSession, evidence)
     if (focus) onFocus(focus)
   }
   const chooseEvidence = (index: number) => {
-    const next = { ...session, activeIndex: index }
+    const next = { ...synchronizedSession, activeIndex: index }
     setSession(next)
     const selected = evidence.find(item => item.anchor.id === next.resultAnchorIds[index])
     if (selected && canAutoNavigateEvidence(selected)) {
@@ -52,7 +68,7 @@ export function CanvasEvidenceNavigator({
     }
   }
   const move = (direction: 'previous' | 'next') => {
-    const next = advanceEvidenceNavigation(session, direction)
+    const next = advanceEvidenceNavigation(synchronizedSession, direction)
     setSession(next)
     const selected = evidence.find(item => item.anchor.id === next.resultAnchorIds[next.activeIndex])
     if (selected && canAutoNavigateEvidence(selected)) {
@@ -67,8 +83,8 @@ export function CanvasEvidenceNavigator({
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded-md border bg-muted/40 p-1.5 text-xs">
       <SearchCheck className="size-3.5 text-primary" aria-hidden="true" />
-      <Button type="button" size="xs" variant="ghost" onClick={() => chooseEvidence(session.activeIndex)}>
-        证据 {session.activeIndex + 1}/{session.resultAnchorIds.length}
+      <Button type="button" size="xs" variant="ghost" onClick={() => chooseEvidence(synchronizedSession.activeIndex)}>
+        证据 {synchronizedSession.activeIndex + 1}/{synchronizedSession.resultAnchorIds.length}
       </Button>
       <Button type="button" size="icon-xs" variant="ghost" aria-label="上一条证据" onClick={() => move('previous')}>
         <ChevronLeft />
@@ -76,9 +92,17 @@ export function CanvasEvidenceNavigator({
       <Button type="button" size="icon-xs" variant="ghost" aria-label="下一条证据" onClick={() => move('next')}>
         <ChevronRight />
       </Button>
-      <Button type="button" size="icon-xs" variant="ghost" aria-label="返回浏览前的位置" onClick={onReturn}>
-        <RotateCcw />
-      </Button>
+      {onReturn && (
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          aria-label="返回浏览前的位置"
+          onClick={() => onReturn(returnToEvidenceOrigin(synchronizedSession))}
+        >
+          <RotateCcw />
+        </Button>
+      )}
       {showCandidates && (
         <span className="flex items-center gap-1 text-muted-foreground">
           候选证据，确认后定位
