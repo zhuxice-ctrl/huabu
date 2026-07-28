@@ -1,75 +1,23 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
+  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
   "status": "passed",
-  "source_revision": "dc3e3e08907e23097600e3123afce68a2c61cae9",
+  "source_revision": "8dad2233",
   "commands": [
-    {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-index-lifecycle.test.mjs scripts/tests/canvas-ai-overlay.test.mjs",
-      "status": "passed",
-      "summary": "Task 15 lifecycle and overlay contracts passed 16/16.",
-      "exit_code": 0
-    },
-    {
-      "command": "node --experimental-strip-types --test --test-reporter=dot scripts/tests/canvas-*.test.mjs",
-      "status": "passed",
-      "summary": "Complete Canvas regression passed 193/193 at the final source revision.",
-      "exit_code": 0
-    },
-    {
-      "command": "node_modules/.bin/tsc.cmd --noEmit",
-      "status": "passed",
-      "summary": "TypeScript completed without diagnostics.",
-      "exit_code": 0
-    },
-    {
-      "command": "node_modules/.bin/next.cmd build --turbopack",
-      "status": "passed",
-      "summary": "Production build compiled and generated 53/53 static pages.",
-      "exit_code": 0
-    },
-    {
-      "command": "expanded L2 codegraph post_edit_impact",
-      "status": "passed",
-      "summary": "Baseline f52bb0c32307d2bd8af04049 to graph 4f864e025596fa43603480a9: predicted/observed 350/350, unexpected 0, production/test critical 0/0, propagation complete and baseline not reused.",
-      "exit_code": 0
-    }
+    { "command": "focused Task 15/16 Node tests", "status": "passed", "summary": "Lifecycle, overlay, extraction, retrieval and sensitive contracts passed 25/25.", "exit_code": 0 },
+    { "command": "node --experimental-strip-types --test --test-reporter=dot scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "Complete Canvas regression passed 202/202.", "exit_code": 0 },
+    { "command": "node_modules/.bin/tsc.cmd --noEmit", "status": "passed", "summary": "TypeScript completed without diagnostics.", "exit_code": 0 },
+    { "command": "node_modules/.bin/next.cmd build --turbopack", "status": "passed", "summary": "Production build generated 53/53 static pages.", "exit_code": 0 },
+    { "command": "expanded L2 codegraph post_edit_impact", "status": "passed", "summary": "Baseline 4f864e025596fa43603480a9 to graph ae53efe998d5b2d81aee716f: predicted/observed 349/349, unexpected 0, production/test critical 0/0, propagation complete and baseline not reused.", "exit_code": 0 }
   ],
   "acceptance_criteria_coverage": [
-    {
-      "criterion": "Canvas source changes enqueue revision-deduplicated index jobs transactionally.",
-      "status": "passed",
-      "evidence": ["canvas-index-lifecycle.test.mjs", "src/db/canvases.ts", "src/db/canvas-ai-transactions.ts"]
-    },
-    {
-      "criterion": "The local worker resumes, retries with exact delays, reconciles tombstones and stops cleanly.",
-      "status": "passed",
-      "evidence": ["16/16 focused tests", "src/stores/canvas-index.ts"]
-    },
-    {
-      "criterion": "AI tags, relations and semantic suppression remain outside CanvasDocument and use exact confidence thresholds.",
-      "status": "passed",
-      "evidence": ["src/db/canvas-ai-overlay.ts", "canvas-ai-overlay.test.mjs"]
-    },
-    {
-      "criterion": "Candidate recall precedes controlled classification and never falls back to all-pairs model calls.",
-      "status": "passed",
-      "evidence": ["src/stores/canvas-ai.ts", "pure overlay planners", "focused source contracts"]
-    },
-    {
-      "criterion": "Overlay display and feedback never mutate source nodes, manual edges or manual history.",
-      "status": "passed",
-      "evidence": ["canvas-ai-overlay.tsx", "Canvas 193/193", "independent review remediation"]
-    }
+    { "criterion": "Recoverable revision-scoped anchors replace atomically only after successful extraction.", "status": "passed", "evidence": ["canvas-index.ts", "canvas-knowledge-extraction.test.mjs"] },
+    { "criterion": "Current-canvas retrieval fuses local evidence and returns 没有找到 when insufficient.", "status": "passed", "evidence": ["canvas-retrieval.ts", "canvas-retrieval.test.mjs"] },
+    { "criterion": "Canvas chat and steering cannot cite another canvas while non-canvas RAG remains available.", "status": "passed", "evidence": ["chat-send.tsx", "static persisted retrieval boundary"] },
+    { "criterion": "Cloud-classified evidence is locally redacted with fail-closed proxy and redirect handling.", "status": "passed", "evidence": ["sensitive-content.ts", "canvas-sensitive-content.test.mjs"] }
   ],
-  "passed": [
-    "All Task 15 acceptance criteria",
-    "All Critical and Important independent findings fixed",
-    "Exhaustive L2 post-edit impact gate"
-  ],
+  "passed": ["All Task 16 acceptance criteria", "Five independent review findings fixed", "Exhaustive L2 impact gate"],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": [
-    "Hands-on crash/restart, configured-model and visual interaction scenarios remain in Task 21 Windows acceptance."
-  ]
+  "residual_risk": ["Production remains intentionally conservative for loopback raw context until native redirect verification exists."]
 }

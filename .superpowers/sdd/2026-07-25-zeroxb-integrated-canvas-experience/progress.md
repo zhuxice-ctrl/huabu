@@ -61,3 +61,7 @@ Task 15: fix round 1/5 (one Critical production-trigger gap and three Important 
 Task 15: fix round 2/5 (18 L2 dynamic-dispatch edges reduced to one inline drain boundary; commit 374fed7c; focused 16/16, Canvas 193/193, TypeScript and production build passed)
 Task 15: fix round 3/5 (final inline drain IIFE replaced by a named static boundary; commit dc3e3e08; focused 16/16 and TypeScript passed)
 Task 15: complete (commits 8e0c5ac1..dc3e3e08, independent review findings resolved; focused 16/16, Canvas 193/193, TypeScript and 53-page build passed; exhaustive L2 impact passed at 4f864e025596fa43603480a9 with predicted/observed 350/350, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)
+Task 16: started (base ade55618; accepted expanded L2 preflight at 4f864e025596fa43603480a9 with confidence 1.0 and zero critical unresolved edges)
+Task 16: fix round 1/5 (one Critical and four Important retrieval/privacy findings addressed; commit 600c7c64; focused 25/25, Canvas 202/202, TypeScript and production build passed)
+Task 16: fix round 2/5 (four L2 dynamic-dispatch edges replaced with static persisted retrieval, pure rerank and named chat-store boundaries; commit 8dad2233)
+Task 16: complete (commits ade55618..8dad2233, independent findings resolved; focused 25/25, Canvas 202/202, TypeScript and 53-page build passed; exhaustive L2 impact passed at ae53efe998d5b2d81aee716f with predicted/observed 349/349, unexpected 0, production/test critical 0/0, propagation truncated false and baseline not reused)

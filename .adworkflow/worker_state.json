@@ -1,57 +1,51 @@
 {
   "schema": "ADworkflo.worker_state.v1",
-  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
+  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
   "status": "verified",
-  "revision": 15,
+  "revision": 16,
   "done": [
-    "Accepted the immutable leaf data-contract L2 preflight at f52bb0c32307d2bd8af04049 before implementation.",
-    "Implemented transactional canvas index jobs, resumable serial processing, separate derived overlay storage and candidate-first classification.",
-    "Resolved one Critical and three Important independent review findings covering production triggering, restore tombstones, semantic suppression races and clean shutdown.",
-    "Removed all L2 dynamic-dispatch findings through static planners, named worker boundaries and explicit overlay node inputs.",
-    "Passed focused 16/16, Canvas 193/193, TypeScript, 53-page production build and exhaustive L2 impact."
+    "Accepted the expanded L2 preflight at 4f864e025596fa43603480a9 before product edits.",
+    "Implemented recoverable knowledge anchors, current-canvas fused retrieval and fail-closed sensitive redaction.",
+    "Resolved five independent controller-review findings covering redirects, non-canvas RAG, partial extraction, rerank isolation and credential patterns.",
+    "Removed four L2 dynamic-dispatch findings through static persisted-retrieval, pure rerank and named chat-store boundaries.",
+    "Passed focused 25/25, Canvas 202/202, TypeScript, 53-page build and exhaustive L2 impact."
   ],
   "changed_files": [
-    "scripts/tests/canvas-ai-overlay.test.mjs",
-    "scripts/tests/canvas-index-lifecycle.test.mjs",
-    "src/app/core/main/canvas/canvas-ai-overlay.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/canvas-startup-controller.tsx",
-    "src/db/canvas-ai-overlay.ts",
-    "src/db/canvas-ai-transactions.ts",
+    "scripts/tests/canvas-knowledge-extraction.test.mjs",
+    "scripts/tests/canvas-retrieval.test.mjs",
+    "scripts/tests/canvas-sensitive-content.test.mjs",
+    "src/app/core/main/chat/chat-send.tsx",
     "src/db/canvas-index.ts",
-    "src/db/canvases.ts",
     "src/db/index.ts",
-    "src/lib/canvas/ai-overlay-runtime.ts",
-    "src/lib/canvas/ai-overlay.ts",
-    "src/lib/canvas/canvas-index-jobs.ts",
-    "src/stores/canvas-ai.ts",
+    "src/lib/agent/tools/canvas-tools.ts",
+    "src/lib/canvas/canvas-retrieval.ts",
+    "src/lib/canvas/knowledge-extraction.ts",
+    "src/lib/canvas/sensitive-content.ts",
     "src/stores/canvas-index.ts",
-    "src/stores/canvas.ts"
+    "src/stores/chat.ts"
   ],
   "current_problem": null,
-  "next_action": "Configure and execute Task 16 current-canvas knowledge retrieval.",
+  "next_action": "Configure and execute Task 17 evidence navigation, linear views and saved filters.",
   "must_keep_context": [
-    "Task 15 product commits span e3443bd3 through dc3e3e08 from workflow base 8e0c5ac1.",
-    "The accepted immutable L2 baseline is f52bb0c32307d2bd8af04049.",
-    "Final L2 predicted and observed impact are 350/350 with zero unexpected or critical edges."
+    "Task 16 product commits span d884f5cb through 8dad2233 from base ade55618.",
+    "The accepted immutable L2 baseline is 4f864e025596fa43603480a9.",
+    "Final L2 predicted and observed impact are 349/349 with zero unexpected or critical edges."
   ],
   "discarded_context": [],
   "remaining_risks": [
-    "Real Tauri SQLite crash/restart timing, configured-model generation and visual feedback remain in Task 21 Windows acceptance."
+    "Native redirect verification remains unavailable, so production canvas evidence stays conservatively redacted even for loopback endpoints.",
+    "Hands-on configured-model and offline recovery scenarios remain in Task 21."
   ],
   "clarification_events": [],
   "timeout_fallbacks": [],
   "context_expansion_history": [
-    "Expanded the reviewed predicted impact set to the complete 350-file observed propagation frontier after critical edges reached zero."
+    "Expanded the reviewed predicted impact set to the complete 349-file observed propagation frontier after critical edges reached zero."
   ],
-  "source_revision": "dc3e3e08907e23097600e3123afce68a2c61cae9",
-  "context_preflight": {
-    "status": "accepted",
-    "graph_revision": "f52bb0c32307d2bd8af04049"
-  },
+  "source_revision": "8dad2233",
+  "context_preflight": { "status": "accepted", "graph_revision": "4f864e025596fa43603480a9" },
   "post_edit_impact": {
     "status": "passed",
-    "graph_revision": "4f864e025596fa43603480a9",
+    "graph_revision": "ae53efe998d5b2d81aee716f",
     "propagation_truncated": false,
     "baseline_reused_after_declared_edit": false
   }

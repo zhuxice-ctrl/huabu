@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-15-canvas-index-overlay",
+  "task_id": "zeroxb-integrated-task-16-current-canvas-retrieval",
   "status": "accepted",
-  "graph_revision": "f52bb0c32307d2bd8af04049",
-  "slice_revision": "f52bb0c32307d2bd8af04049",
+  "graph_revision": "4f864e025596fa43603480a9",
+  "slice_revision": "4f864e025596fa43603480a9",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

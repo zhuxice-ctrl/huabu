@@ -1,11 +1,31 @@
 {
     "schema":  "ADworkflo.context_raw.v1",
-    "task_id":  "zeroxb-integrated-task-15-canvas-index-overlay",
+    "task_id":  "zeroxb-integrated-task-16-current-canvas-retrieval",
     "source":  "semantic-codegraph-l2",
     "matched_files":  [
                           {
-                              "path":  "src/db/canvases.ts",
-                              "sha256":  "366dfeb1fa32b5455f175a5a593a5761a989ee7a739da8bec2bcf4bed2948f1d",
+                              "path":  "src/app/core/main/chat/chat-send.tsx",
+                              "sha256":  "be903f8083b6b4f47a9d0f719ce372c7d91052db575ace1bf11b20948c5d7621",
+                              "reason":  "semantic-slice"
+                          },
+                          {
+                              "path":  "src/db/canvas-index.ts",
+                              "sha256":  "173873adce296a7a0cfaa77ec80042c15a4b1cd78067ad5ebcd34604a7036559",
+                              "reason":  "semantic-slice"
+                          },
+                          {
+                              "path":  "src/db/client.ts",
+                              "sha256":  "ba096291f9a5c5145cddd72e27494a359469c4d1e74115023f51ec5c9cfa2b8b",
+                              "reason":  "semantic-slice"
+                          },
+                          {
+                              "path":  "src/lib/canvas/canvas-index-jobs.ts",
+                              "sha256":  "befc757b84e3fb9f07c72c96611c32459085e1ec8036fa88abaef5d8f587a751",
+                              "reason":  "semantic-slice"
+                          },
+                          {
+                              "path":  "src/lib/chat/canvas-context.ts",
+                              "sha256":  "975ff2aa9b72fee9112864bffdedf49dc4ac3c231b6f2233870d9a0b37074c76",
                               "reason":  "semantic-slice"
                           },
                           {
@@ -18,37 +38,205 @@
                               "reason":  "task_spec.context_sources"
                           },
                           {
-                              "path":  "src/db/index.ts",
+                              "path":  "src/stores/canvas-index.ts",
                               "reason":  "task_spec.context_sources"
                           },
                           {
-                              "path":  "src/db/client.ts",
+                              "path":  "src/lib/agent/tools/canvas-tools.ts",
                               "reason":  "task_spec.context_sources"
                           },
                           {
-                              "path":  "src/db/canvas-ai-transactions.ts",
+                              "path":  "src/lib/ai/tauri-client.ts",
                               "reason":  "task_spec.context_sources"
                           },
                           {
-                              "path":  "src/stores/canvas.ts",
-                              "reason":  "task_spec.context_sources"
-                          },
-                          {
-                              "path":  "src/app/core/main/canvas/canvas-startup-controller.tsx",
-                              "reason":  "task_spec.context_sources"
-                          },
-                          {
-                              "path":  "src/app/core/main/canvas/canvas-editor.tsx",
+                              "path":  "src/lib/ai/utils.ts",
                               "reason":  "task_spec.context_sources"
                           }
                       ],
     "matched_symbols":  [
                             {
-                                "stable_id":  "typescript:src.db.canvases:updateCanvasDocument.content:variable",
-                                "qualified_name":  "src.db.canvases.updateCanvasDocument.content",
-                                "file":  "src/db/canvases.ts",
-                                "start_line":  143,
+                                "stable_id":  "typescript:src.app.core.main.chat.chat-send:ChatSend:variable",
+                                "qualified_name":  "src.app.core.main.chat.chat-send.ChatSend",
+                                "file":  "src/app/core/main/chat/chat-send.tsx",
+                                "start_line":  107,
+                                "end_line":  1045,
+                                "distance":  0
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:CanvasIndexAnchorRow:interface",
+                                "qualified_name":  "src.db.canvas-index.CanvasIndexAnchorRow",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  21,
+                                "end_line":  29,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:tokenize:function",
+                                "qualified_name":  "src.db.canvas-index.tokenize",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  349,
+                                "end_line":  351,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:parseStringArray:function",
+                                "qualified_name":  "src.db.canvas-index.parseStringArray",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  353,
+                                "end_line":  360,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:parseStringArray.parsed:variable",
+                                "qualified_name":  "src.db.canvas-index.parseStringArray.parsed",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  355,
+                                "end_line":  355,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                "qualified_name":  "src.db.canvas-index.parseSparseVector",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  362,
+                                "end_line":  373,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:parseSparseVector.parsed:variable",
+                                "qualified_name":  "src.db.canvas-index.parseSparseVector.parsed",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  365,
+                                "end_line":  365,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:sparseSimilarity:function",
+                                "qualified_name":  "src.db.canvas-index.sparseSimilarity",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  375,
+                                "end_line":  379,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:sparseSimilarity.score:variable",
+                                "qualified_name":  "src.db.canvas-index.sparseSimilarity.score",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  376,
+                                "end_line":  376,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                "qualified_name":  "src.db.canvas-index.queryPersistedCanvasIndexCandidates",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  381,
+                                "end_line":  421,
+                                "distance":  0
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates.matches:variable",
+                                "qualified_name":  "src.db.canvas-index.queryPersistedCanvasIndexCandidates.matches",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  401,
+                                "end_line":  401,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates.vectorScore:variable",
+                                "qualified_name":  "src.db.canvas-index.queryPersistedCanvasIndexCandidates.vectorScore",
+                                "file":  "src/db/canvas-index.ts",
+                                "start_line":  402,
+                                "end_line":  402,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.client:db:variable",
+                                "qualified_name":  "src.db.client.db",
+                                "file":  "src/db/client.ts",
+                                "start_line":  5,
+                                "end_line":  5,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.db.client:getDb:function",
+                                "qualified_name":  "src.db.client.getDb",
+                                "file":  "src/db/client.ts",
+                                "start_line":  8,
+                                "end_line":  10,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:CandidateQuery:interface",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.CandidateQuery",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  35,
+                                "end_line":  41,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:CanvasIndexCandidate:interface",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.CanvasIndexCandidate",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  43,
+                                "end_line":  50,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:LocalCanvasIndexFeatures:interface",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.LocalCanvasIndexFeatures",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  52,
+                                "end_line":  56,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:recallTokens:function",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.recallTokens",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  134,
+                                "end_line":  136,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.buildLocalCanvasIndexFeatures",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  138,
+                                "end_line":  158,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures.token:variable",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.buildLocalCanvasIndexFeatures.token",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  140,
+                                "end_line":  140,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures.magnitude:variable",
+                                "qualified_name":  "src.lib.canvas.canvas-index-jobs.buildLocalCanvasIndexFeatures.magnitude",
+                                "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                "start_line":  141,
                                 "end_line":  143,
+                                "distance":  2
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.chat.canvas-context:CanvasChatContext:interface",
+                                "qualified_name":  "src.lib.chat.canvas-context.CanvasChatContext",
+                                "file":  "src/lib/chat/canvas-context.ts",
+                                "start_line":  3,
+                                "end_line":  8,
+                                "distance":  1
+                            },
+                            {
+                                "stable_id":  "typescript:src.lib.chat.canvas-context:createCanvasChatContext:function",
+                                "qualified_name":  "src.lib.chat.canvas-context.createCanvasChatContext",
+                                "file":  "src/lib/chat/canvas-context.ts",
+                                "start_line":  12,
+                                "end_line":  26,
                                 "distance":  0
                             },
                             {
@@ -57,7 +245,7 @@
                                 "file":  "src/types/canvas.ts",
                                 "start_line":  192,
                                 "end_line":  205,
-                                "distance":  0
+                                "distance":  1
                             }
                         ],
     "likely_tests":  [
@@ -66,10 +254,522 @@
     "warnings":  [
 
                  ],
-    "graph_revision":  "f52bb0c32307d2bd8af04049",
+    "graph_revision":  "4f864e025596fa43603480a9",
     "confidence":  1.0,
     "unresolved_edges":  [
-
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:tokenize:function",
+                                 "kind":  "call",
+                                 "target":  "Set",
+                                 "line":  350,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:tokenize:function",
+                                 "kind":  "call",
+                                 "target":  "value.toLocaleLowerCase().match",
+                                 "line":  350,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:tokenize:function",
+                                 "kind":  "call",
+                                 "target":  "value.toLocaleLowerCase",
+                                 "line":  350,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseStringArray:function",
+                                 "kind":  "call",
+                                 "target":  "JSON.parse",
+                                 "line":  355,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseStringArray:function",
+                                 "kind":  "call",
+                                 "target":  "Array.isArray",
+                                 "line":  356,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseStringArray:function",
+                                 "kind":  "call",
+                                 "target":  "parsed.filter",
+                                 "line":  356,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                 "kind":  "call",
+                                 "target":  "JSON.parse",
+                                 "line":  365,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                 "kind":  "call",
+                                 "target":  "Array.isArray",
+                                 "line":  366,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                 "kind":  "call",
+                                 "target":  "Object.fromEntries",
+                                 "line":  367,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                 "kind":  "call",
+                                 "target":  "Object.entries(parsed).filter",
+                                 "line":  367,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                 "kind":  "call",
+                                 "target":  "Object.entries",
+                                 "line":  367,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:parseSparseVector:function",
+                                 "kind":  "call",
+                                 "target":  "Number.isFinite",
+                                 "line":  368,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:sparseSimilarity:function",
+                                 "kind":  "call",
+                                 "target":  "Object.entries",
+                                 "line":  377,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:sparseSimilarity:function",
+                                 "kind":  "call",
+                                 "target":  "Math.max",
+                                 "line":  378,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:sparseSimilarity:function",
+                                 "kind":  "call",
+                                 "target":  "Math.min",
+                                 "line":  378,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "db.select",
+                                 "line":  385,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "rows\n    .filter(row =\u003e row.nodeId !== input.nodeId)\n    .map(row =\u003e {\n      const haystack = row.content.toLocaleLowerCase()\n      const matches = terms.filter(term =\u003e haystack.includes(term)).length\n      const vectorScore = sparseSimilarity(queryFeatures.vector, parseSparseVector(row.embedding))\n      const matchedBy = kinds.filter(kind =\u003e {\n        if (kind === \u0027vector\u0027) return vectorScore \u003e 0\n        const values = parseStringArray(kind === \u0027entity\u0027 ? row.entities : row.timeTerms)\n        const queryValues = kind === \u0027entity\u0027 ? queryFeatures.entities : queryFeatures.timeTerms\n        return values.some(value =\u003e queryValues.includes(value))\n      })\n      return {\n        canvasId: row.canvasId,\n        nodeId: row.nodeId,\n        contentRevision: row.contentRevision,\n        excerpt: row.content.slice(0, 500),\n        score: Math.max(vectorScore, terms.length \u003e 0 ? matches / terms.length : 0),\n        matchedBy,\n      } satisfies CanvasIndexCandidate\n    })\n    .filter(candidate =\u003e candidate.matchedBy.length \u003e 0)\n    .sort((left, right) =\u003e right.score - left.score || left.nodeId.localeCompare(right.nodeId))\n    .slice",
+                                 "line":  397,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "rows\n    .filter(row =\u003e row.nodeId !== input.nodeId)\n    .map(row =\u003e {\n      const haystack = row.content.toLocaleLowerCase()\n      const matches = terms.filter(term =\u003e haystack.includes(term)).length\n      const vectorScore = sparseSimilarity(queryFeatures.vector, parseSparseVector(row.embedding))\n      const matchedBy = kinds.filter(kind =\u003e {\n        if (kind === \u0027vector\u0027) return vectorScore \u003e 0\n        const values = parseStringArray(kind === \u0027entity\u0027 ? row.entities : row.timeTerms)\n        const queryValues = kind === \u0027entity\u0027 ? queryFeatures.entities : queryFeatures.timeTerms\n        return values.some(value =\u003e queryValues.includes(value))\n      })\n      return {\n        canvasId: row.canvasId,\n        nodeId: row.nodeId,\n        contentRevision: row.contentRevision,\n        excerpt: row.content.slice(0, 500),\n        score: Math.max(vectorScore, terms.length \u003e 0 ? matches / terms.length : 0),\n        matchedBy,\n      } satisfies CanvasIndexCandidate\n    })\n    .filter(candidate =\u003e candidate.matchedBy.length \u003e 0)\n    .sort",
+                                 "line":  397,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "rows\n    .filter(row =\u003e row.nodeId !== input.nodeId)\n    .map(row =\u003e {\n      const haystack = row.content.toLocaleLowerCase()\n      const matches = terms.filter(term =\u003e haystack.includes(term)).length\n      const vectorScore = sparseSimilarity(queryFeatures.vector, parseSparseVector(row.embedding))\n      const matchedBy = kinds.filter(kind =\u003e {\n        if (kind === \u0027vector\u0027) return vectorScore \u003e 0\n        const values = parseStringArray(kind === \u0027entity\u0027 ? row.entities : row.timeTerms)\n        const queryValues = kind === \u0027entity\u0027 ? queryFeatures.entities : queryFeatures.timeTerms\n        return values.some(value =\u003e queryValues.includes(value))\n      })\n      return {\n        canvasId: row.canvasId,\n        nodeId: row.nodeId,\n        contentRevision: row.contentRevision,\n        excerpt: row.content.slice(0, 500),\n        score: Math.max(vectorScore, terms.length \u003e 0 ? matches / terms.length : 0),\n        matchedBy,\n      } satisfies CanvasIndexCandidate\n    })\n    .filter",
+                                 "line":  397,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "rows\n    .filter(row =\u003e row.nodeId !== input.nodeId)\n    .map",
+                                 "line":  397,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "rows\n    .filter",
+                                 "line":  397,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "row.content.toLocaleLowerCase",
+                                 "line":  400,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "terms.filter",
+                                 "line":  401,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "haystack.includes",
+                                 "line":  401,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "kinds.filter",
+                                 "line":  403,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "values.some",
+                                 "line":  407,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "queryValues.includes",
+                                 "line":  407,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "row.content.slice",
+                                 "line":  413,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "Math.max",
+                                 "line":  414,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "left.nodeId.localeCompare",
+                                 "line":  419,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "Math.max",
+                                 "line":  420,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/db/canvas-index.ts",
+                                 "source_symbol_id":  "typescript:src.db.canvas-index:queryPersistedCanvasIndexCandidates:function",
+                                 "kind":  "call",
+                                 "target":  "Math.min",
+                                 "line":  420,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:recallTokens:function",
+                                 "kind":  "call",
+                                 "target":  "value.toLocaleLowerCase().match",
+                                 "line":  135,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:recallTokens:function",
+                                 "kind":  "call",
+                                 "target":  "value.toLocaleLowerCase",
+                                 "line":  135,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "Map",
+                                 "line":  139,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "counts.set",
+                                 "line":  140,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "counts.get",
+                                 "line":  140,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "Math.sqrt",
+                                 "line":  141,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "[...counts.values()].reduce",
+                                 "line":  142,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "counts.values",
+                                 "line":  142,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "Object.fromEntries",
+                                 "line":  144,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "[...counts.entries()]\n      .sort(([left], [right]) =\u003e left.localeCompare(right))\n      .map",
+                                 "line":  145,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "[...counts.entries()]\n      .sort",
+                                 "line":  145,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "counts.entries",
+                                 "line":  145,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "left.localeCompare",
+                                 "line":  146,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "[...new Set(\n    (content.match(/[#@][\\p{L}\\p{N}_-]{2,}/gu) || []).map(value =\u003e value.toLocaleLowerCase()),\n  )].sort",
+                                 "line":  149,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "Set",
+                                 "line":  149,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "(content.match(/[#@][\\p{L}\\p{N}_-]{2,}/gu) || []).map",
+                                 "line":  150,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "content.match",
+                                 "line":  150,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "value.toLocaleLowerCase",
+                                 "line":  150,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "[...new Set([\n    ...(content.match(/\\b\\d{4}[-/]\\d{1,2}(?:[-/]\\d{1,2})?\\b/g) || []),\n    ...(content.match(/\\d{4}年\\d{1,2}月(?:\\d{1,2}日)?/g) || []),\n    ...(content.match(/今天|明天|昨天|本周|下周|本月|下月/g) || []),\n  ])].sort",
+                                 "line":  152,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "Set",
+                                 "line":  152,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "content.match",
+                                 "line":  153,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "content.match",
+                                 "line":  154,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/canvas/canvas-index-jobs.ts",
+                                 "source_symbol_id":  "typescript:src.lib.canvas.canvas-index-jobs:buildLocalCanvasIndexFeatures:function",
+                                 "kind":  "call",
+                                 "target":  "content.match",
+                                 "line":  155,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/chat/canvas-context.ts",
+                                 "source_symbol_id":  "typescript:src.lib.chat.canvas-context:createCanvasChatContext:function",
+                                 "kind":  "call",
+                                 "target":  "projects.find",
+                                 "line":  18,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             },
+                             {
+                                 "file":  "src/lib/chat/canvas-context.ts",
+                                 "source_symbol_id":  "typescript:src.lib.chat.canvas-context:createCanvasChatContext:function",
+                                 "kind":  "call",
+                                 "target":  "JSON.stringify",
+                                 "line":  21,
+                                 "reason":  "external-call",
+                                 "critical":  0
+                             }
                          ],
     "boundary_symbols":  [
 
@@ -341,7 +1041,6 @@
                                    "src/components/ui/enhanced-context-menu.tsx",
                                    "src/contexts/text-size-context.tsx",
                                    "src/db/activity.ts",
-                                   "src/db/canvas-ai-overlay.ts",
                                    "src/db/canvas-ai-transactions.ts",
                                    "src/db/canvases.ts",
                                    "src/db/canvas-index.ts",
@@ -385,10 +1084,10 @@
                                    "src/lib/ai/translate.ts",
                                    "src/lib/ai/utils.ts",
                                    "src/lib/audio.ts",
-                                   "src/lib/canvas/ai-overlay.ts",
-                                   "src/lib/canvas/ai-overlay-runtime.ts",
-                                   "src/lib/canvas/canvas-index-jobs.ts",
+                                   "src/lib/canvas/canvas-retrieval.ts",
+                                   "src/lib/canvas/knowledge-extraction.ts",
                                    "src/lib/canvas/note-reference.ts",
+                                   "src/lib/canvas/sensitive-content.ts",
                                    "src/lib/context/loader.ts",
                                    "src/lib/emitter.ts",
                                    "src/lib/folder-vector.ts",
