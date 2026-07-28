@@ -25,6 +25,8 @@ import { parsePersistedChatAttachments } from '@/lib/chat-attachments'
 import { parseCanvasChatContext, UNKNOWN_CANVAS_SOURCE_LABEL } from '@/lib/chat/canvas-context'
 import useCanvasStore from '@/stores/canvas'
 import emitter from '@/lib/emitter'
+import { CanvasEvidenceNavigator } from '../canvas/canvas-evidence-navigator'
+import type { CanvasEvidence } from '@/lib/canvas/canvas-retrieval'
 import { ChatAttachmentSummary } from './chat-file-attachments'
 import {
   MessageScroller,
@@ -43,6 +45,7 @@ import useChatHudStore, {
   prependChatHudMessageWindow,
   saveChatHudScrollPosition,
   syncChatHudMessageWindow,
+  setChatHudExpanded,
 } from '@/stores/chat-hud'
 
 interface ChatContentProps {
@@ -294,6 +297,49 @@ function CanvasSourceChip({ chat }: { chat: Chat }) {
   )
 }
 
+function CanvasEvidenceChips({ chat }: { chat: Chat }) {
+  const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
+  const canvasContext = useMemo(() => parseCanvasChatContext(chat.canvasContext), [chat.canvasContext])
+  const canvasId = canvasContext?.sourceCanvasId ?? activeCanvasId
+  const evidence = useMemo<CanvasEvidence[]>(() => {
+    if (!canvasId || !chat.content) return []
+    const markers = [...chat.content.matchAll(/\[画布证据 ([^:\]]+):(\d+)-(\d+)\]/g)]
+    return markers.map((marker, index) => ({
+      anchor: {
+        id: `${canvasId}:${marker[1]}:${marker[2]}:${marker[3]}:${index}`,
+        workspaceId: 'current-workspace',
+        canvasId,
+        nodeId: marker[1],
+        startOffset: Number(marker[2]),
+        endOffset: Number(marker[3]),
+        nodePosition: { x: 0, y: 0 },
+        contentRevision: 'retrieval-marker',
+        plainText: '',
+        entities: [],
+        timeHints: [],
+        contentType: 'text',
+      },
+      score: 1,
+      matchedBy: ['keyword'],
+    }))
+  }, [canvasId, chat.content])
+
+  if (!canvasId || evidence.length === 0) return null
+  return (
+    <CanvasEvidenceNavigator
+      canvasId={canvasId}
+      evidence={evidence}
+      onFocus={focus => {
+        // Evidence navigation is view state: collapse the HUD and leave CanvasDocument untouched.
+        setChatHudExpanded(false)
+        if (activeCanvasId !== focus.canvasId) useCanvasStore.setState({ activeCanvasId: focus.canvasId })
+        requestAnimationFrame(() => emitter.emit('canvas-focus-evidence', focus))
+      }}
+      onReturn={() => emitter.emit('canvas-evidence-return', { canvasId })}
+    />
+  )
+}
+
 const Message = React.memo(function Message({ chat }: { chat: Chat }) {
   const t = useTranslations()
   const { chats, deleteChat, getMcpToolCallsByChatId, loading, agentState } = useChatStore()
@@ -440,6 +486,7 @@ const Message = React.memo(function Message({ chat }: { chat: Chat }) {
           // AI 消息：所有内容放在一个容器中
           <div className="w-full space-y-4">
             <CanvasSourceChip chat={chat} />
+            <CanvasEvidenceChips chat={chat} />
             {/* 合并的 RAG 和 Agent 面板 - 只在有 agentHistory 时显示（历史模式） */}
             {/* 实时执行时，RAG 和 Agent 步骤在 AgentExecutionStatusWrapper 中统一显示 */}
             {chat.agentHistory && (

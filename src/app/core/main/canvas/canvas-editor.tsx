@@ -19,6 +19,7 @@ import {
   type NodeChange,
   type NodeTypes,
   MarkerType,
+  Panel,
   SelectionMode,
 } from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled.js'
@@ -108,6 +109,7 @@ import type {
   CanvasTool,
   CanvasRelationData,
   CanvasRelationWaypoint,
+  CanvasViewport,
 } from '@/types/canvas'
 import { flattenFileTree } from '@/app/core/main/file/file-selection'
 import { applyCanvasOperations } from '@/lib/canvas/operations'
@@ -144,6 +146,7 @@ import { CanvasFooter } from './canvas-footer'
 import { CanvasNodeStyleMenu } from './canvas-node-style-menu'
 import { CanvasGeometryOverlays } from './canvas-geometry-overlays'
 import { CanvasAiOverlay } from './canvas-ai-overlay'
+import { CanvasLinearView } from './canvas-linear-view'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
@@ -835,7 +838,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const lastStoreDocumentRef = useRef(document)
   const styleHistoryPushedRef = useRef(false)
   const lastViewportSnapshotRef = useRef<ViewportSnapshot | null>(null)
-  const { screenToFlowPosition, getViewport, getNodesBounds, fitView, setViewport } = useReactFlow()
+  const { screenToFlowPosition, getViewport, getNodesBounds, fitView, setCenter, setViewport } = useReactFlow()
+  const evidenceNavigationOriginsRef = useRef(new Map<string, CanvasViewport>())
   const captureCurrentViewport = useCallback(() => {
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return null
@@ -1287,6 +1291,39 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     emitter.on('canvas-document-replace', replaceDocument)
     return () => emitter.off('canvas-document-replace', replaceDocument)
   }, [canvasId, fitView, pushHistory, setEdges, updateFlowNodes])
+
+  useEffect(() => {
+    const focusNode = (nodeId: string) => {
+      const node = latestNodesRef.current.find(item => item.id === nodeId)
+      if (!node) return
+      const width = node.measured?.width ?? node.width ?? 180
+      const height = node.measured?.height ?? node.height ?? 72
+      const zoom = Math.max(getViewport().zoom, 0.72)
+      void setCenter(node.position.x + width / 2, node.position.y + height / 2, { zoom, duration: 260 })
+    }
+    const focusEvidence = (focus: { canvasId: string; nodeId: string; startOffset: number; endOffset: number }) => {
+      if (focus.canvasId !== canvasId) return
+      if (!evidenceNavigationOriginsRef.current.has(canvasId)) {
+        evidenceNavigationOriginsRef.current.set(canvasId, { ...getViewport() })
+      }
+      focusNode(focus.nodeId)
+      emitter.emit('canvas-focus-evidence', focus)
+    }
+    const returnToEvidenceOrigin = ({ canvasId: targetCanvasId }: { canvasId: string }) => {
+      if (targetCanvasId !== canvasId) return
+      const origin = evidenceNavigationOriginsRef.current.get(canvasId)
+      if (origin) void setViewport(origin, { duration: 260 })
+      evidenceNavigationOriginsRef.current.delete(canvasId)
+    }
+    emitter.on('canvas-focus-node', focusNode)
+    emitter.on('canvas-focus-evidence', focusEvidence)
+    emitter.on('canvas-evidence-return', returnToEvidenceOrigin)
+    return () => {
+      emitter.off('canvas-focus-node', focusNode)
+      emitter.off('canvas-focus-evidence', focusEvidence)
+      emitter.off('canvas-evidence-return', returnToEvidenceOrigin)
+    }
+  }, [canvasId, getViewport, setCenter, setViewport])
 
   const undo = useCallback(() => {
     const snapshot = historyRef.current.pop()
@@ -3410,6 +3447,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           )}
           <CanvasGeometryOverlays guides={snapGuides} />
           <CanvasAiOverlay canvasId={canvasId} nodes={displayNodes} />
+          <Panel position="top-left" className="!m-3">
+            <CanvasLinearView
+              canvasId={canvasId}
+              nodes={nodes as CanvasNode[]}
+              manualRelations={edges as CanvasEdge[]}
+            />
+          </Panel>
           <MiniMap pannable zoomable />
               </ReactFlow>
               {drawDraft && (

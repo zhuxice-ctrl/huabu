@@ -2,6 +2,7 @@ import mitt from 'mitt'
 import type { QuickPrompt } from '@/lib/ai/placeholder'
 import type { OnboardingStepId } from '@/app/core/main/editor/onboarding-state'
 import type { CanvasDocument } from '@/types/canvas'
+import type { EvidenceFocus } from '@/lib/canvas/evidence-navigation'
 
 // 定义事件类型
 interface Events {
@@ -133,6 +134,8 @@ interface Events {
   'canvas-document-replace': { canvasId: string; document: CanvasDocument };
   'canvas-history-checkpoint': void;
   'canvas-focus-node': string;
+  'canvas-focus-evidence': EvidenceFocus;
+  'canvas-evidence-return': { canvasId: string };
   'canvas-undo': { canvasId: string };
   'canvas-redo': { canvasId: string };
   'canvas-can-undo-redo': { canvasId: string; resolve: (can: { undo: boolean; redo: boolean }) => void };

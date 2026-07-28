@@ -2,6 +2,7 @@
 import { initCanvasAiTransactionsDb } from './canvas-ai-transactions'
 import { initCanvasIndexDb } from './canvas-index'
 import { initCanvasAiOverlayDb } from './canvas-ai-overlay'
+import { initCanvasViewsDb } from './canvas-views'
 
 export { db, getDb } from './client'
 export { queryPersistedCanvasKnowledgeAnchors } from './canvas-index'
@@ -33,6 +34,7 @@ async function runDatabaseInitialization() {
   await initCanvasAiTransactionsDb();
   await initCanvasIndexDb();
   await initCanvasAiOverlayDb();
+  await initCanvasViewsDb();
 }
 
 // 初始化所有数据库。父布局与画布首屏可能同时触发初始化，必须复用同一个 Promise，

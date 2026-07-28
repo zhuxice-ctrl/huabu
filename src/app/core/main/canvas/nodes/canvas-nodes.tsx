@@ -180,6 +180,21 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
     return () => emitter.off('canvas-focus-node', focusNode)
   }, [id])
 
+  useEffect(() => {
+    const focusEvidence = (focus: { nodeId: string; startOffset: number; endOffset: number }) => {
+      if (focus.nodeId !== id) return
+      const textarea = textareaRef.current
+      if (!textarea) return
+      textarea.focus()
+      textarea.setSelectionRange(
+        Math.max(0, Math.min(focus.startOffset, textarea.value.length)),
+        Math.max(0, Math.min(focus.endOffset, textarea.value.length)),
+      )
+    }
+    emitter.on('canvas-focus-evidence', focusEvidence)
+    return () => emitter.off('canvas-focus-evidence', focusEvidence)
+  }, [id])
+
   return (
     <div
       style={{
