@@ -22,6 +22,7 @@ const sources = {
 
 function loadCredentialsModule() {
   const calls = []
+  const toasts = []
   const output = ts.transpileModule(sources.credentials, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
@@ -36,7 +37,7 @@ function loadCredentialsModule() {
         return { reference: payload.request.reference, configured: command !== 'credential_delete' }
       },
     },
-    '@/hooks/use-toast': { toast: () => undefined },
+    '@/hooks/use-toast': { toast: options => toasts.push(options) },
   }
   const context = vm.createContext({
     console,
@@ -48,7 +49,7 @@ function loadCredentialsModule() {
     },
   })
   vm.runInContext(output, context, { filename: 'credentials.ts' })
-  return { credentials: module.exports, calls }
+  return { credentials: module.exports, calls, toasts }
 }
 
 test('JavaScript AI request payloads carry opaque references, never resolved model secrets', () => {
@@ -139,6 +140,40 @@ test('renaming a secret header writes a name-bound ref before deleting the old c
   ])
 })
 
+test('empty write-only secret renames are rejected before any credential mutation', async () => {
+  for (const renamedKey of ['Authorization', 'x-api-key']) {
+    const { credentials, calls, toasts } = loadCredentialsModule()
+    const oldHeaderName = 'X-Api-Key'
+    const oldReference = credentials.customHeaderCredentialRef('provider-1', oldHeaderName)
+    const original = {
+      key: 'provider-1',
+      title: 'Provider',
+      baseURL: 'https://provider.example/v1',
+      models: [],
+      customHeaderRefs: { [oldHeaderName]: oldReference },
+      customHeaderSecrets: { [oldHeaderName]: true },
+    }
+
+    const updated = await credentials.applyCustomHeaderPairs(original, [{
+      key: 'X-New-Secret',
+      value: 'synthetic-replacement-value',
+      secret: true,
+    }, {
+      key: renamedKey,
+      value: '',
+      secret: true,
+      credentialRef: oldReference,
+      hasCredential: true,
+    }])
+
+    assert.equal(updated, original)
+    assert.deepEqual(updated.customHeaderRefs, { [oldHeaderName]: oldReference })
+    assert.deepEqual(calls, [])
+    assert.equal(toasts.length, 1)
+    assert.doesNotMatch(JSON.stringify(toasts), /X-Api-Key|Authorization|synthetic-replacement-value/i)
+  }
+})
+
 test('completed header saves reconcile only an unchanged local draft', () => {
   const { credentials } = loadCredentialsModule()
   const submitted = [{ id: 'row-1', key: 'X-Public', value: 'old', secret: false }]
@@ -178,6 +213,8 @@ test('provider HTTP failures expose only a sanitized tool-choice classification'
   assert.match(transportImplementation, /provider_error=unsupported_tool_choice/)
   assert.match(transportImplementation, /fn sanitized_http_error/)
   assert.match(transportImplementation, /read_sanitized_http_error\(response\)\.await/)
+  assert.match(transportImplementation, /read_sanitized_http_error_with_timeout\(response, PROVIDER_ERROR_READ_TIMEOUT\)/)
+  assert.match(transportImplementation, /tokio::time::timeout\(read_timeout,/)
   assert.doesNotMatch(transportImplementation, /format!\([^\n]*response_body/)
   assert.equal(classifierModule.exports.isUnsupportedToolChoiceError(
     'Request failed: 400 Bad Request; provider_error=unsupported_tool_choice',

@@ -88,6 +88,27 @@ export async function applyCustomHeaderPairs(
   config: AiConfig,
   pairs: HeaderPairsInput,
 ): Promise<AiConfig> {
+  const configuredHeaderByRef = new Map(
+    Object.entries(config.customHeaderRefs || {}).map(([headerName, reference]) => [reference, headerName]),
+  )
+  const hasEmptyConfiguredRename = pairs.some(pair => {
+    const configuredHeaderName = pair.credentialRef
+      ? configuredHeaderByRef.get(pair.credentialRef)
+      : undefined
+    return configuredHeaderName !== undefined
+      && pair.value.length === 0
+      && pair.key.trim() !== configuredHeaderName
+  })
+
+  if (hasEmptyConfiguredRename) {
+    toast({
+      title: '凭据未更改',
+      description: '重命名已配置的密钥请求头前，请输入替换值。',
+      variant: 'destructive',
+    })
+    return config
+  }
+
   const customHeaders: Record<string, string> = {}
   const customHeaderRefs: Record<string, string> = {}
   const customHeaderSecrets: Record<string, boolean> = {}

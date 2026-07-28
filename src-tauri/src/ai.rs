@@ -8,7 +8,7 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, str::FromStr, time::Duration};
 use tauri::{ipc::Channel, State};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
@@ -208,6 +208,7 @@ async fn read_response_json(response: reqwest::Response) -> Result<Value, String
 }
 
 const MAX_PROVIDER_ERROR_BYTES: usize = 64 * 1024;
+const PROVIDER_ERROR_READ_TIMEOUT: Duration = Duration::from_secs(2);
 
 fn sanitized_http_error(status: StatusCode, response_body: &[u8]) -> String {
     let body = String::from_utf8_lossy(response_body).to_ascii_lowercase();
@@ -232,23 +233,33 @@ fn sanitized_http_error(status: StatusCode, response_body: &[u8]) -> String {
 }
 
 async fn read_sanitized_http_error(response: reqwest::Response) -> String {
+    read_sanitized_http_error_with_timeout(response, PROVIDER_ERROR_READ_TIMEOUT).await
+}
+
+async fn read_sanitized_http_error_with_timeout(
+    response: reqwest::Response,
+    read_timeout: Duration,
+) -> String {
     let status = response.status();
     let mut body = Vec::new();
     let mut stream = response.bytes_stream();
 
-    while let Some(chunk) = stream.next().await {
-        let Ok(chunk) = chunk else {
-            break;
-        };
-        let remaining = MAX_PROVIDER_ERROR_BYTES.saturating_sub(body.len());
-        if remaining == 0 {
-            break;
+    let _ = tokio::time::timeout(read_timeout, async {
+        while let Some(chunk) = stream.next().await {
+            let Ok(chunk) = chunk else {
+                break;
+            };
+            let remaining = MAX_PROVIDER_ERROR_BYTES.saturating_sub(body.len());
+            if remaining == 0 {
+                break;
+            }
+            body.extend_from_slice(&chunk[..chunk.len().min(remaining)]);
+            if body.len() == MAX_PROVIDER_ERROR_BYTES {
+                break;
+            }
         }
-        body.extend_from_slice(&chunk[..chunk.len().min(remaining)]);
-        if body.len() == MAX_PROVIDER_ERROR_BYTES {
-            break;
-        }
-    }
+    })
+    .await;
 
     sanitized_http_error(status, &body)
 }
@@ -547,8 +558,10 @@ pub async fn cancel_ai_request(
 
 #[cfg(test)]
 mod tests {
-    use super::{sanitized_http_error, SseDecoder};
+    use super::{read_sanitized_http_error_with_timeout, sanitized_http_error, SseDecoder};
     use reqwest::StatusCode;
+    use std::time::{Duration, Instant};
+    use tokio::io::AsyncWriteExt;
 
     #[test]
     fn parses_split_sse_chunks() {
@@ -590,5 +603,38 @@ mod tests {
         );
 
         assert_eq!(error, "Request failed: 401 Unauthorized");
+    }
+
+    #[tokio::test]
+    async fn bounds_slow_provider_error_bodies_without_leaking_them() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind stalled response server");
+        let address = listener.local_addr().expect("read server address");
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.expect("accept request");
+            socket
+                .write_all(
+                    b"HTTP/1.1 400 Bad Request\r\nContent-Length: 65536\r\n\r\n\
+                      {\"message\":\"tool_choice is unsupported\",\"secret\":\"synthetic-private-fragment\"}",
+                )
+                .await
+                .expect("write partial response");
+            tokio::time::sleep(Duration::from_secs(30)).await;
+        });
+        let response = reqwest::Client::new()
+            .get(format!("http://{address}"))
+            .send()
+            .await
+            .expect("receive response headers");
+
+        let started = Instant::now();
+        let error =
+            read_sanitized_http_error_with_timeout(response, Duration::from_millis(50)).await;
+        server.abort();
+
+        assert!(started.elapsed() < Duration::from_secs(1));
+        assert!(error.contains("provider_error=unsupported_tool_choice"));
+        assert!(!error.contains("synthetic-private-fragment"));
     }
 }
