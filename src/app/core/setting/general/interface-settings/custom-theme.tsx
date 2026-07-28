@@ -5,14 +5,14 @@ import { Store } from '@tauri-apps/plugin-store'
 import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { Item, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions } from '@/components/ui/item'
-import { Palette, Download, Upload } from 'lucide-react'
+import { Palette, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import useSettingStore from '@/stores/setting'
 import { HSLValue } from '@/types/theme'
-import { applyThemeColors, hslToHex } from '@/lib/theme-utils'
+import { applyThemeColors } from '@/lib/theme-utils'
 import { ThemeColorPicker } from './theme-color-picker'
 import { ThemePresets } from './theme-presets'
 
@@ -44,9 +44,8 @@ export function CustomThemeSettings() {
   const { customThemeColors } = useSettingStore()
   const { setTheme } = useTheme()
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'custom' | 'presets' | 'import-export'>('custom')
+  const [activeTab, setActiveTab] = useState<'custom' | 'presets' | 'import'>('custom')
   const [importCode, setImportCode] = useState('')
-  const [exportCode, setExportCode] = useState('')
 
   // 实时保存颜色变化
   const handleColorChange = async (colorKey: string, value: HSLValue | null) => {
@@ -157,32 +156,6 @@ export function CustomThemeSettings() {
     await useSettingStore.getState().resetCustomThemeColors()
   }
 
-  // 生成导出代码
-  const handleExport = () => {
-    const exportData = {
-      name: 'Custom Theme',
-      colors: {
-        background: hslToHex(customThemeColors.light.background || [0, 0, 100]),
-        foreground: hslToHex(customThemeColors.light.foreground || [0, 0, 0]),
-        card: hslToHex(customThemeColors.light.card || [0, 0, 100]),
-        cardForeground: hslToHex(customThemeColors.light.cardForeground || [0, 0, 0]),
-        primary: hslToHex(customThemeColors.light.primary || [0, 0, 0]),
-        primaryForeground: hslToHex(customThemeColors.light.primaryForeground || [0, 0, 100]),
-        secondary: hslToHex(customThemeColors.light.secondary || [0, 0, 100]),
-        secondaryForeground: hslToHex(customThemeColors.light.secondaryForeground || [0, 0, 0]),
-        third: hslToHex(customThemeColors.light.third || [240, 4.8, 90.9]),
-        thirdForeground: hslToHex(customThemeColors.light.thirdForeground || [240, 5.9, 15]),
-        muted: hslToHex(customThemeColors.light.muted || [0, 0, 100]),
-        mutedForeground: hslToHex(customThemeColors.light.mutedForeground || [0, 0, 50]),
-        accent: hslToHex(customThemeColors.light.accent || [0, 0, 100]),
-        accentForeground: hslToHex(customThemeColors.light.accentForeground || [0, 0, 0]),
-        border: hslToHex(customThemeColors.light.border || [0, 0, 90]),
-        shadow: hslToHex(customThemeColors.light.shadow || [0, 0, 0]),
-      },
-    }
-    setExportCode(JSON.stringify(exportData, null, 2))
-  }
-
   // 导入配色方案
   const handleImport = async () => {
     try {
@@ -219,11 +192,11 @@ export function CustomThemeSettings() {
             <DialogDescription>{t('dialogDesc')}</DialogDescription>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'custom' | 'presets' | 'import-export')} className="mt-4">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'custom' | 'presets' | 'import')} className="mt-4">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="custom">{t('tabs.custom')}</TabsTrigger>
               <TabsTrigger value="presets">{t('tabs.presets')}</TabsTrigger>
-              <TabsTrigger value="import-export">{t('tabs.importExport')}</TabsTrigger>
+              <TabsTrigger value="import">{t('import.title')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="custom" className="mt-4">
@@ -238,28 +211,7 @@ export function CustomThemeSettings() {
               <ThemePresets onApplyPreset={applyPreset} onResetDefault={handleResetDefault} t={t} />
             </TabsContent>
 
-            <TabsContent value="import-export" className="mt-4 space-y-4">
-              {/* 导出 */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold">{t('export.title')}</h3>
-                  <Button variant="outline" size="sm" onClick={handleExport}>
-                    <Download className="h-4 w-4 mr-1" />
-                    {t('export.button')}
-                  </Button>
-                </div>
-                <Textarea
-                  value={exportCode}
-                  onChange={(e) => setExportCode(e.target.value)}
-                  placeholder={t('export.placeholder')}
-                  className="font-mono text-xs"
-                  rows={8}
-                  maxRows={16}
-                  readOnly
-                />
-              </div>
-
-              {/* 导入 */}
+            <TabsContent value="import" className="mt-4 space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold">{t('import.title')}</h3>

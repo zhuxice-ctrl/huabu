@@ -1,12 +1,11 @@
 'use client'
 
 import { relaunch } from '@tauri-apps/plugin-process'
-import { open, save } from '@tauri-apps/plugin-dialog'
-import { BaseDirectory, copyFile, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { open } from '@tauri-apps/plugin-dialog'
+import { BaseDirectory, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { Store } from '@tauri-apps/plugin-store'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
 import {
   Item,
   ItemActions,
@@ -50,17 +49,6 @@ export function ConfigFileActions() {
     }
   }
 
-  async function handleExport() {
-    const file = await save({
-      title: t('exportConfigTitle'),
-      defaultPath: 'store.json',
-    })
-    if (!file) return
-
-    await copyFile('store.json', file, { fromPathBaseDir: BaseDirectory.AppData })
-    toast({ title: t('exportConfigSuccess') })
-  }
-
   return (
     <Item variant="outline">
       <ItemMedia variant="icon"><FileJson /></ItemMedia>
@@ -69,10 +57,7 @@ export function ConfigFileActions() {
         <ItemDescription>{t('configFileDesc')}</ItemDescription>
       </ItemContent>
       <ItemActions>
-        <ButtonGroup>
-          <Button variant="outline" onClick={handleImport}>{t('importButton')}</Button>
-          <Button variant="outline" onClick={handleExport}>{t('exportButton')}</Button>
-        </ButtonGroup>
+        <Button variant="outline" onClick={handleImport}>{t('importButton')}</Button>
       </ItemActions>
     </Item>
   )

@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
 import * as React from "react"
-import { DownloadCloud, Loader2, UploadCloud, CloudSync, Download, Upload } from "lucide-react"
+import { DownloadCloud, Loader2, UploadCloud, CloudSync, Upload } from "lucide-react"
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
@@ -96,7 +96,7 @@ import { s3Upload, s3Download, s3HeadObject, s3Delete, testS3Connection } from "
 import { webdavUpload, webdavDownload, webdavHeadObject, webdavDelete, testWebDAVConnection } from "@/lib/sync/webdav"
 import { S3Config, WebDAVConfig, SyncPlatform } from "@/types/sync"
 import { filterSyncData, mergeSyncData } from "@/config/sync-exclusions"
-import { confirm, save, open as openDialog } from "@tauri-apps/plugin-dialog"
+import { confirm, open as openDialog } from "@tauri-apps/plugin-dialog"
 import { invoke } from "@tauri-apps/api/core"
 import { SyncStateEnum } from "@/lib/sync/github.types"
 import dayjs from "dayjs"
@@ -326,7 +326,6 @@ export function SyncToggle({ presentation = 'popover' }: SyncToggleProps) {
   const router = useRouter()
   const { openSettings } = useSettingsDialogStore()
   const [syncing, setSyncing] = useState(false)
-  const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [open, setOpen] = useState(false)
   const [providers, setProviders] = useState<ProviderInfo[]>(DEFAULT_PROVIDER_LIST)
@@ -351,7 +350,7 @@ export function SyncToggle({ presentation = 'popover' }: SyncToggleProps) {
 
   const isMobile = isMobileDevice()
   const cloudSyncing = syncing || autoDataSyncState.isSyncing
-  const busy = cloudSyncing || exporting || importing
+  const busy = cloudSyncing || importing
   const currentProvider = providers.find((provider) => provider.platform === primaryBackupMethod)
   const currentProviderStatus = currentProvider?.status || 'unconfigured'
   const shouldShowWaitingProvider = autoDataSyncEnabled && currentProviderStatus === 'unconfigured'
@@ -698,52 +697,6 @@ export function SyncToggle({ presentation = 'popover' }: SyncToggleProps) {
     }
   }
 
-  // 导出本地备份
-  async function handleExport() {
-    try {
-      setExporting(true);
-
-      let filePath: string;
-
-      if (isMobile) {
-        filePath = `note-gen-backup-${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.zip`;
-      } else {
-        const selectedPath = await save({
-          title: t('settings.backupSync.localBackup.exportDialog.title'),
-          defaultPath: `note-gen-backup-${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.zip`,
-          filters: [{
-            name: 'ZIP Files',
-            extensions: ['zip']
-          }]
-        });
-
-        if (!selectedPath) {
-          setExporting(false);
-          return;
-        }
-        filePath = selectedPath;
-      }
-
-      const savedPath = await invoke<string>('export_app_data', { outputPath: filePath });
-
-      toast({
-        title: t('settings.backupSync.localBackup.exportSuccess'),
-        description: isMobile
-          ? `文件已保存到: ${savedPath}\n请在 Files App 中查看`
-          : savedPath,
-      });
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast({
-        title: t('settings.backupSync.localBackup.exportError'),
-        description: (error as Error).message,
-        variant: "destructive",
-      });
-    } finally {
-      setExporting(false);
-    }
-  }
-
   // 导入本地备份
   async function handleImport() {
     try {
@@ -923,15 +876,6 @@ export function SyncToggle({ presentation = 'popover' }: SyncToggleProps) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExport}
-          disabled={exporting}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {t('settings.backupSync.localBackup.export.button')}
-        </Button>
         <Button
           variant="outline"
           size="sm"
