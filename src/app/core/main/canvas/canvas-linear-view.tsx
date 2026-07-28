@@ -14,27 +14,25 @@ import { useCanvasAiStore } from '@/stores/canvas-ai'
 import { deleteSavedCanvasView, getSavedCanvasViews, saveCanvasView, type SavedCanvasView } from '@/db/canvas-views'
 import {
   buildLinearProjection,
+  planLinearViewControls,
+  type LinearViewControlCommand,
   type LinearSortMode,
-  type LinearViewFilters,
 } from '@/lib/canvas/linear-view'
 import emitter from '@/lib/emitter'
+import {
+  replaceCanvasLinearViewControls,
+  replaceCanvasSavedViews,
+  useCanvasLinearViewControls,
+  useCanvasSavedViews,
+} from '@/stores/canvas-view'
 import type { CanvasEdge, CanvasNode } from '@/types/canvas'
 
-const EMPTY_FILTERS: LinearViewFilters = {}
-
-function filterValues(value: string) {
-  return value.split(',').map(item => item.trim()).filter(Boolean)
-}
-
-function withTimeBoundary(
-  filters: LinearViewFilters,
-  boundary: 'from' | 'to',
-  value: string,
-): LinearViewFilters {
-  const time = { ...(filters.time || {}) }
-  if (value) time[boundary] = Number(value)
-  else delete time[boundary]
-  return { ...filters, time: Object.keys(time).length ? time : null }
+function executeLinearViewControlCommand(
+  canvasId: string,
+  controls: ReturnType<typeof useCanvasLinearViewControls>,
+  command: LinearViewControlCommand,
+) {
+  replaceCanvasLinearViewControls(canvasId, planLinearViewControls(controls, command))
 }
 
 export function CanvasLinearView({
@@ -48,12 +46,15 @@ export function CanvasLinearView({
 }) {
   const aiRelations = useCanvasAiStore(state => state.relations)
   const [open, setOpen] = useState(false)
-  const [savedViews, setSavedViews] = useState<SavedCanvasView[]>([])
-  const [filters, setFilters] = useState<LinearViewFilters>(EMPTY_FILTERS)
-  const [relationDepth, setRelationDepth] = useState<0 | 1 | 2>(1)
-  const [includeManualRelations, setIncludeManualRelations] = useState(true)
-  const [includeAiRelations, setIncludeAiRelations] = useState(true)
-  const [sortMode, setSortMode] = useState<LinearSortMode>('manual')
+  const controls = useCanvasLinearViewControls(canvasId)
+  const savedViews = useCanvasSavedViews(canvasId)
+  const {
+    filters,
+    relationDepth,
+    includeManualRelations,
+    includeAiRelations,
+    sortMode,
+  } = controls
   const projection = useMemo(() => buildLinearProjection({
     nodes,
     manualRelations,
@@ -66,17 +67,18 @@ export function CanvasLinearView({
   }), [aiRelations, canvasId, filters, includeAiRelations, includeManualRelations, manualRelations, nodes, relationDepth, sortMode])
   const nodesById = useMemo(() => new Map(nodes.map(node => [node.id, node])), [nodes])
 
-  const refreshSavedViews = async () => setSavedViews(await getSavedCanvasViews(canvasId))
+  const refreshSavedViews = async () => {
+    replaceCanvasSavedViews(canvasId, await getSavedCanvasViews(canvasId))
+  }
   useEffect(() => {
     if (open) void refreshSavedViews()
   }, [canvasId, open])
 
   const applySavedView = (view: SavedCanvasView) => {
-    setFilters(view.filters)
-    setRelationDepth(view.relationDepth)
-    setIncludeManualRelations(view.includeManualRelations)
-    setIncludeAiRelations(view.includeAiRelations)
-    setSortMode(view.sortMode)
+    executeLinearViewControlCommand(canvasId, controls, {
+      type: 'apply-saved-view',
+      value: view,
+    })
   }
   const saveCurrentView = async () => {
     const name = globalThis.prompt('保存视图名称')?.trim()
@@ -106,21 +108,27 @@ export function CanvasLinearView({
             aria-label="按标签筛选"
             placeholder="标签（逗号分隔）"
             value={(filters.tags || []).join(', ')}
-            onChange={event => setFilters(current => ({ ...current, tags: filterValues(event.target.value) }))}
+            onChange={event => executeLinearViewControlCommand(canvasId, controls, {
+              type: 'set-filter-values', field: 'tags', value: event.target.value,
+            })}
           />
           <input
             className="h-7 min-w-28 rounded border bg-background px-2 text-xs"
             aria-label="按人物筛选"
             placeholder="人物（逗号分隔）"
             value={(filters.people || []).join(', ')}
-            onChange={event => setFilters(current => ({ ...current, people: filterValues(event.target.value) }))}
+            onChange={event => executeLinearViewControlCommand(canvasId, controls, {
+              type: 'set-filter-values', field: 'people', value: event.target.value,
+            })}
           />
           <input
             className="h-7 min-w-28 rounded border bg-background px-2 text-xs"
             aria-label="按项目筛选"
             placeholder="项目（逗号分隔）"
             value={(filters.projects || []).join(', ')}
-            onChange={event => setFilters(current => ({ ...current, projects: filterValues(event.target.value) }))}
+            onChange={event => executeLinearViewControlCommand(canvasId, controls, {
+              type: 'set-filter-values', field: 'projects', value: event.target.value,
+            })}
           />
           <input
             className="h-7 w-28 rounded border bg-background px-2 text-xs"
@@ -128,7 +136,9 @@ export function CanvasLinearView({
             type="number"
             placeholder="开始时间"
             value={filters.time?.from ?? ''}
-            onChange={event => setFilters(current => withTimeBoundary(current, 'from', event.target.value))}
+            onChange={event => executeLinearViewControlCommand(canvasId, controls, {
+              type: 'set-time-boundary', boundary: 'from', value: event.target.value,
+            })}
           />
           <input
             className="h-7 w-28 rounded border bg-background px-2 text-xs"
@@ -136,20 +146,22 @@ export function CanvasLinearView({
             type="number"
             placeholder="结束时间"
             value={filters.time?.to ?? ''}
-            onChange={event => setFilters(current => withTimeBoundary(current, 'to', event.target.value))}
+            onChange={event => executeLinearViewControlCommand(canvasId, controls, {
+              type: 'set-time-boundary', boundary: 'to', value: event.target.value,
+            })}
           />
           <label className="text-xs">关系深度
-            <select className="ml-1 rounded border bg-background p-1" value={relationDepth} onChange={event => setRelationDepth(Number(event.target.value) as 0 | 1 | 2)}>
+            <select className="ml-1 rounded border bg-background p-1" value={relationDepth} onChange={event => executeLinearViewControlCommand(canvasId, controls, { type: 'set-relation-depth', value: Number(event.target.value) as 0 | 1 | 2 })}>
               <option value={0}>0</option><option value={1}>1</option><option value={2}>2</option>
             </select>
           </label>
           <label className="text-xs">排序
-            <select className="ml-1 rounded border bg-background p-1" value={sortMode} onChange={event => setSortMode(event.target.value as LinearSortMode)}>
+            <select className="ml-1 rounded border bg-background p-1" value={sortMode} onChange={event => executeLinearViewControlCommand(canvasId, controls, { type: 'set-sort-mode', value: event.target.value as LinearSortMode })}>
               <option value="manual">手动</option><option value="time">时间</option><option value="relevance">相关性</option><option value="distance">关系距离</option>
             </select>
           </label>
-          <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={includeManualRelations} onChange={event => setIncludeManualRelations(event.target.checked)} /> 手动关系</label>
-          <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={includeAiRelations} onChange={event => setIncludeAiRelations(event.target.checked)} /> AI 关系</label>
+          <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={includeManualRelations} onChange={event => executeLinearViewControlCommand(canvasId, controls, { type: 'set-relation-source', source: 'manual', value: event.target.checked })} /> 手动关系</label>
+          <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={includeAiRelations} onChange={event => executeLinearViewControlCommand(canvasId, controls, { type: 'set-relation-source', source: 'ai', value: event.target.checked })} /> AI 关系</label>
           <Button type="button" size="xs" variant="secondary" onClick={() => void saveCurrentView()}><Save /> 保存筛选</Button>
         </div>
         {savedViews.length > 0 && (

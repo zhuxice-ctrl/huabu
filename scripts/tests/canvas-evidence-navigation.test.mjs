@@ -11,6 +11,10 @@ import {
   evidenceFocusFor,
   getEvidenceQueryOrigin,
   isExactEvidenceTextSelection,
+  planEvidenceCandidateConfirmation,
+  planEvidenceFocusViewport,
+  planEvidenceMove,
+  planEvidenceSelection,
   reconcileEvidenceNavigationSession,
   recordCanvasViewportSnapshot,
   returnToEvidenceOrigin,
@@ -60,6 +64,36 @@ test('evidence navigation stores an immutable pre-query viewport and exact resul
 test('only confident evidence auto-navigates; lower-confidence matches require the candidate strip', () => {
   assert.equal(canAutoNavigateEvidence(evidence('accepted', EVIDENCE_AUTO_NAVIGATION_CONFIDENCE)), true)
   assert.equal(canAutoNavigateEvidence(evidence('candidate', EVIDENCE_AUTO_NAVIGATION_CONFIDENCE - 0.001)), false)
+})
+
+test('pure navigation commands gate candidates and plan exact focus without injected callbacks', () => {
+  const results = [evidence('candidate', 0.42), evidence('accepted', 0.9)]
+  const session = createEvidenceNavigationSession('canvas-a', viewport, results)
+  const candidate = planEvidenceSelection(session, results, 0)
+  const confirmed = planEvidenceCandidateConfirmation(candidate.session, results)
+  const moved = planEvidenceMove(candidate.session, results, 'next')
+
+  assert.equal(candidate.showCandidates, true)
+  assert.equal(candidate.focus, null)
+  assert.equal(confirmed.showCandidates, false)
+  assert.equal(confirmed.focus?.nodeId, 'node-candidate')
+  assert.equal(moved.showCandidates, false)
+  assert.equal(moved.focus?.nodeId, 'node-accepted')
+})
+
+test('focus viewport planning centers the source node without mutating its position', () => {
+  const nodePosition = { x: 400, y: 220 }
+  const planned = planEvidenceFocusViewport({
+    nodePosition,
+    nodeWidth: 180,
+    nodeHeight: 80,
+    viewportWidth: 1000,
+    viewportHeight: 700,
+    currentZoom: 0.5,
+  })
+
+  assert.deepEqual(planned, { x: 147.2, y: 162.8, zoom: 0.72 })
+  assert.deepEqual(nodePosition, { x: 400, y: 220 })
 })
 
 test('serialized evidence preserves a real low confidence score through the chat navigation parser', async () => {
@@ -198,4 +232,27 @@ test('editor routes evidence range selection to a distinct event without recursi
   assert.doesNotMatch(handler, /emit\('canvas-focus-evidence'/)
   assert.match(handler, /emit\('canvas-select-evidence-range'/)
   assert.match(nodesSource, /on\('canvas-select-evidence-range'/)
+})
+
+test('evidence navigation uses pure commands and static store/runtime boundaries', async () => {
+  const [navigatorSource, editorSource, viewStoreSource, runtimeSource] = await Promise.all([
+    readFile(new URL('../../src/app/core/main/canvas/canvas-evidence-navigator.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/stores/canvas-view.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/lib/canvas/evidence-navigation-runtime.ts', import.meta.url), 'utf8'),
+  ])
+
+  assert.match(navigatorSource, /planEvidenceSelection/)
+  assert.match(navigatorSource, /applyEvidenceNavigationCommand/)
+  assert.match(navigatorSource, /executeCanvasEvidenceFocus/)
+  assert.doesNotMatch(navigatorSource, /\bsetSession\b|\bsetShowCandidates\b|\bonFocus\b|\bonReturn\b/)
+
+  assert.match(editorSource, /viewport=\{viewport\}/)
+  assert.match(editorSource, /animateCanvasViewportState\(canvasId, targetViewport, 260\)/)
+  assert.match(editorSource, /animateCanvasViewportState\(canvasId, origin, 260\)/)
+  assert.doesNotMatch(editorSource, /\bgetViewport\s*\(|\bsetCenter\s*\(|\bsetViewport\s*\(/)
+
+  assert.match(viewStoreSource, /useCanvasViewStore\.setState/)
+  assert.match(runtimeSource, /useCanvasStore\.setState\(\{ activeCanvasId: focus\.canvasId \}\)/)
+  assert.doesNotMatch(viewStoreSource, /updateDocument|updateHistory|pushHistory/)
 })

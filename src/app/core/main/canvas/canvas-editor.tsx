@@ -11,7 +11,6 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
-  useViewport,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -148,9 +147,16 @@ import { CanvasGeometryOverlays } from './canvas-geometry-overlays'
 import { CanvasAiOverlay } from './canvas-ai-overlay'
 import { CanvasLinearView } from './canvas-linear-view'
 import {
+  planEvidenceFocusViewport,
   recordCanvasViewportSnapshot,
   type EvidenceFocus,
 } from '@/lib/canvas/evidence-navigation'
+import {
+  animateCanvasViewportState,
+  initializeCanvasViewportState,
+  publishCanvasViewportState,
+  useCanvasViewportState,
+} from '@/stores/canvas-view'
 import { mermaidToCanvasDocument } from '@/lib/canvas/mermaid'
 import { parseCanvasProjectFile } from '@/lib/canvas/file-format'
 import { cn } from '@/lib/utils'
@@ -758,6 +764,10 @@ function DrawGeometryPreview({
 function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const t = useTranslations('canvas')
   const document = useCanvasStore(state => state.documents[canvasId])
+  const viewport = useCanvasViewportState(
+    canvasId,
+    document?.viewport ?? { x: 0, y: 0, zoom: 0.65 },
+  )
   const updateDocument = useCanvasStore(state => state.updateDocument)
   const updateHistory = useCanvasStore(state => state.updateHistory)
   const openProject = useCanvasStore(state => state.openProject)
@@ -842,20 +852,20 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const lastStoreDocumentRef = useRef(document)
   const styleHistoryPushedRef = useRef(false)
   const lastViewportSnapshotRef = useRef<ViewportSnapshot | null>(null)
-  const { screenToFlowPosition, getViewport, getNodesBounds, fitView, setCenter, setViewport } = useReactFlow()
+  const { screenToFlowPosition, getNodesBounds, fitView } = useReactFlow()
   const transientEvidenceMoveRef = useRef(false)
   const transientEvidenceMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const captureCurrentViewport = useCallback(() => {
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return null
     const snapshot = captureViewportSnapshot({
-      viewport: getViewport(),
+      viewport,
       containerRect: bounds,
       lastValid: lastViewportSnapshotRef.current,
     })
     if (snapshot) lastViewportSnapshotRef.current = snapshot
     return snapshot
-  }, [getViewport])
+  }, [viewport])
   const rebuildSpatialIndex = useCallback((nextNodes: FlowCanvasNode[]) => {
     documentRevisionRef.current += 1
     const geometryVersion = documentRevisionRef.current
@@ -889,7 +899,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       }
     }
   }, [])
-  const viewport = useViewport()
   useEffect(() => {
     if (!Number.isFinite(viewport.x) || !Number.isFinite(viewport.y) || !Number.isFinite(viewport.zoom)) return
     const bounds = containerRef.current?.getBoundingClientRect()
@@ -913,6 +922,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     })
   }, [canvasId, captureCurrentViewport, document, edges, nodes, viewport])
   useEffect(() => () => clearCanvasAiRuntimeSnapshot(canvasId), [canvasId])
+  useEffect(() => {
+    if (document) initializeCanvasViewportState(canvasId, document.viewport)
+  }, [canvasId, document])
   const activeBrushColor = tool === 'highlighter' ? highlighterColor : penColor
   const activeBrushSize = tool === 'highlighter' ? highlighterSize : penSize
   const activeBrushStyle = useMemo(() => ({
@@ -1148,7 +1160,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       ...document,
       nodes: serializeNodes(geometrySessionRef.current ? authoritativeNodesRef.current : nodes),
       edges: serializeEdges(edges),
-      viewport: getViewport(),
+      viewport,
     }
     pendingDocumentRef.current = nextDocument
     if (pendingDocumentTimerRef.current) clearTimeout(pendingDocumentTimerRef.current)
@@ -1160,7 +1172,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       lastStoreDocumentRef.current = pendingDocument
       updateDocument(canvasId, pendingDocument)
     }, 180)
-  }, [canvasId, document, edges, getViewport, nodes, placementPreview, updateDocument])
+  }, [canvasId, document, edges, nodes, placementPreview, updateDocument, viewport])
 
   useEffect(() => {
     const initialStore = useMarkStore.getState()
@@ -1298,8 +1310,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canvasId, fitView, pushHistory, setEdges, updateFlowNodes])
 
   useEffect(() => {
-    recordCanvasViewportSnapshot(canvasId, getViewport())
-  }, [canvasId, getViewport])
+    recordCanvasViewportSnapshot(canvasId, viewport)
+  }, [canvasId, viewport])
 
   useEffect(() => {
     const armTransientEvidenceMove = () => {
@@ -1313,11 +1325,20 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const focusNode = (nodeId: string, transient = false) => {
       const node = latestNodesRef.current.find(item => item.id === nodeId)
       if (!node) return false
+      const bounds = containerRef.current?.getBoundingClientRect()
+      if (!bounds) return false
       const width = node.measured?.width ?? node.width ?? 180
       const height = node.measured?.height ?? node.height ?? 72
-      const zoom = Math.max(getViewport().zoom, 0.72)
+      const targetViewport = planEvidenceFocusViewport({
+        nodePosition: node.position,
+        nodeWidth: width,
+        nodeHeight: height,
+        viewportWidth: bounds.width,
+        viewportHeight: bounds.height,
+        currentZoom: viewport.zoom,
+      })
       if (transient) armTransientEvidenceMove()
-      void setCenter(node.position.x + width / 2, node.position.y + height / 2, { zoom, duration: 260 })
+      animateCanvasViewportState(canvasId, targetViewport, 260)
       return true
     }
     const focusEvidence = (focus: EvidenceFocus) => {
@@ -1331,7 +1352,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }: { canvasId: string; viewport: CanvasViewport }) => {
       if (targetCanvasId !== canvasId) return
       armTransientEvidenceMove()
-      void setViewport(origin, { duration: 260 })
+      animateCanvasViewportState(canvasId, origin, 260)
     }
     emitter.on('canvas-focus-node', focusNode)
     emitter.on('canvas-focus-evidence', focusEvidence)
@@ -1342,7 +1363,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       emitter.off('canvas-evidence-return', returnToEvidenceOrigin)
       if (transientEvidenceMoveTimerRef.current) clearTimeout(transientEvidenceMoveTimerRef.current)
     }
-  }, [canvasId, getViewport, setCenter, setViewport])
+  }, [canvasId, viewport.zoom])
 
   const undo = useCallback(() => {
     const snapshot = historyRef.current.pop()
@@ -3166,12 +3187,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       ...document,
       nodes: serializeNodes(geometrySessionRef.current ? authoritativeNodesRef.current : nodes),
       edges: serializeEdges(edges),
-      viewport: getViewport(),
+      viewport,
       settings: { ...document.settings, ...settings },
     }
     lastStoreDocumentRef.current = nextDocument
     updateDocument(canvasId, nextDocument)
-  }, [canvasId, document, edges, getViewport, nodes, updateDocument])
+  }, [canvasId, document, edges, nodes, updateDocument, viewport])
 
   const applyImportedContent = useCallback((source: string) => {
     const trimmedSource = source.trim()
@@ -3439,7 +3460,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           setEdgeEditorOpen(true)
         }}
         onPaneContextMenu={() => setContextTarget('pane')}
-        onInit={instance => recordCanvasViewportSnapshot(canvasId, instance.getViewport())}
+        onInit={() => recordCanvasViewportSnapshot(canvasId, viewport)}
+        onViewportChange={nextViewport => publishCanvasViewportState(canvasId, nextViewport)}
         onMove={(_event, viewport) => recordCanvasViewportSnapshot(canvasId, viewport)}
         onMoveEnd={(_event, viewport) => {
           if (transientEvidenceMoveRef.current) {
@@ -3462,7 +3484,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         selectionMode={SelectionMode.Partial}
         snapToGrid={document.settings.snapToGrid}
         snapGrid={[20, 20]}
-        defaultViewport={document.viewport}
+        viewport={viewport}
         onlyRenderVisibleElements={nodes.length >= 150}
         colorMode="system"
         >
@@ -3931,7 +3953,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         zoom={viewport.zoom}
         onToggleGrid={() => updateCanvasSettings({ showGrid: !document.settings.showGrid })}
         onToggleSnap={() => updateCanvasSettings({ snapToGrid: !document.settings.snapToGrid })}
-        onZoomChange={zoom => void setViewport({ ...getViewport(), zoom }, { duration: 120 })}
+        onZoomChange={zoom => animateCanvasViewportState(canvasId, { ...viewport, zoom }, 120)}
         onFitView={() => void fitView({ padding: 0.2, duration: 300 })}
         onLayout={() => void layoutNodes()}
         onImportFile={() => void importCanvasFile()}

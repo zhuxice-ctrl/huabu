@@ -21,6 +21,30 @@ export interface LinearProjectionInput {
   sortMode: LinearSortMode
 }
 
+export interface LinearViewControls {
+  filters: LinearViewFilters
+  relationDepth: 0 | 1 | 2
+  includeManualRelations: boolean
+  includeAiRelations: boolean
+  sortMode: LinearSortMode
+}
+
+export type LinearViewControlCommand =
+  | { type: 'set-filter-values'; field: 'tags' | 'people' | 'projects'; value: string }
+  | { type: 'set-time-boundary'; boundary: 'from' | 'to'; value: string }
+  | { type: 'set-relation-depth'; value: 0 | 1 | 2 }
+  | { type: 'set-relation-source'; source: 'manual' | 'ai'; value: boolean }
+  | { type: 'set-sort-mode'; value: LinearSortMode }
+  | { type: 'apply-saved-view'; value: LinearViewControls }
+
+export const DEFAULT_LINEAR_VIEW_CONTROLS: LinearViewControls = {
+  filters: {},
+  relationDepth: 1,
+  includeManualRelations: true,
+  includeAiRelations: true,
+  sortMode: 'manual',
+}
+
 /** A reference only: source node bodies and geometry remain authoritative elsewhere. */
 export interface LinearProjectionReference {
   nodeId: string
@@ -32,6 +56,55 @@ interface TraversalRelation {
   id: string
   sourceNodeId: string
   targetNodeId: string
+}
+
+function filterValues(value: string) {
+  return value.split(',').map(item => item.trim()).filter(Boolean)
+}
+
+function withTimeBoundary(
+  filters: LinearViewFilters,
+  boundary: 'from' | 'to',
+  value: string,
+): LinearViewFilters {
+  const time = { ...(filters.time || {}) }
+  if (value) time[boundary] = Number(value)
+  else delete time[boundary]
+  return { ...filters, time: Object.keys(time).length ? time : null }
+}
+
+export function planLinearViewControls(
+  current: LinearViewControls,
+  command: LinearViewControlCommand,
+): LinearViewControls {
+  if (command.type === 'set-filter-values') {
+    return {
+      ...current,
+      filters: { ...current.filters, [command.field]: filterValues(command.value) },
+    }
+  }
+  if (command.type === 'set-time-boundary') {
+    return {
+      ...current,
+      filters: withTimeBoundary(current.filters, command.boundary, command.value),
+    }
+  }
+  if (command.type === 'set-relation-depth') {
+    return { ...current, relationDepth: command.value }
+  }
+  if (command.type === 'set-relation-source') {
+    return command.source === 'manual'
+      ? { ...current, includeManualRelations: command.value }
+      : { ...current, includeAiRelations: command.value }
+  }
+  if (command.type === 'set-sort-mode') return { ...current, sortMode: command.value }
+  return {
+    filters: { ...command.value.filters },
+    relationDepth: command.value.relationDepth,
+    includeManualRelations: command.value.includeManualRelations,
+    includeAiRelations: command.value.includeAiRelations,
+    sortMode: command.value.sortMode,
+  }
 }
 
 function normalizedValues(value: unknown): string[] {

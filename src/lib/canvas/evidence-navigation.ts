@@ -24,6 +24,21 @@ export interface EvidenceFocus {
   textFingerprint: string
 }
 
+export interface EvidenceNavigationCommand {
+  session: EvidenceNavigationSession
+  showCandidates: boolean
+  focus: EvidenceFocus | null
+}
+
+export interface EvidenceFocusViewportInput {
+  nodePosition: { x: number; y: number }
+  nodeWidth: number
+  nodeHeight: number
+  viewportWidth: number
+  viewportHeight: number
+  currentZoom: number
+}
+
 const canvasViewportSnapshots = new Map<string, CanvasViewport>()
 const evidenceQueryOrigins = new Map<string, { canvasId: string; viewport: CanvasViewport }>()
 
@@ -128,6 +143,75 @@ export function evidenceFocusFor(
     field: matched.anchor.contentType === 'text' ? 'text' : null,
     textFingerprint: matched.textFingerprint
       ?? canvasEvidenceTextFingerprint(matched.anchor.plainText),
+  }
+}
+
+function evidenceNavigationCommand(
+  session: EvidenceNavigationSession,
+  evidence: readonly CanvasEvidence[],
+): EvidenceNavigationCommand {
+  const selected = evidence.find(item => (
+    item.anchor.id === session.resultAnchorIds[session.activeIndex]
+      && item.anchor.canvasId === session.canvasId
+  ))
+  const canFocus = selected ? canAutoNavigateEvidence(selected) : false
+  return {
+    session,
+    showCandidates: !canFocus,
+    focus: canFocus ? evidenceFocusFor(session, evidence) : null,
+  }
+}
+
+export function planEvidenceNavigationReconciliation(
+  session: EvidenceNavigationSession,
+  canvasId: string,
+  originViewport: CanvasViewport,
+  evidence: readonly CanvasEvidence[],
+): EvidenceNavigationCommand {
+  return {
+    session: reconcileEvidenceNavigationSession(session, canvasId, originViewport, evidence),
+    showCandidates: false,
+    focus: null,
+  }
+}
+
+export function planEvidenceSelection(
+  session: EvidenceNavigationSession,
+  evidence: readonly CanvasEvidence[],
+  index: number,
+): EvidenceNavigationCommand {
+  const maximumIndex = Math.max(0, session.resultAnchorIds.length - 1)
+  const activeIndex = Math.min(maximumIndex, Math.max(0, index))
+  return evidenceNavigationCommand({ ...session, activeIndex }, evidence)
+}
+
+export function planEvidenceMove(
+  session: EvidenceNavigationSession,
+  evidence: readonly CanvasEvidence[],
+  direction: 'previous' | 'next',
+): EvidenceNavigationCommand {
+  return evidenceNavigationCommand(advanceEvidenceNavigation(session, direction), evidence)
+}
+
+export function planEvidenceCandidateConfirmation(
+  session: EvidenceNavigationSession,
+  evidence: readonly CanvasEvidence[],
+): EvidenceNavigationCommand {
+  return {
+    session,
+    showCandidates: false,
+    focus: evidenceFocusFor(session, evidence),
+  }
+}
+
+export function planEvidenceFocusViewport(input: EvidenceFocusViewportInput): CanvasViewport {
+  const zoom = Math.max(input.currentZoom, 0.72)
+  const centerX = input.nodePosition.x + input.nodeWidth / 2
+  const centerY = input.nodePosition.y + input.nodeHeight / 2
+  return {
+    x: input.viewportWidth / 2 - centerX * zoom,
+    y: input.viewportHeight / 2 - centerY * zoom,
+    zoom,
   }
 }
 

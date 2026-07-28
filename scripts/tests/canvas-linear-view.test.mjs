@@ -2,7 +2,11 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import { buildLinearProjection } from '../../src/lib/canvas/linear-view.ts'
+import {
+  DEFAULT_LINEAR_VIEW_CONTROLS,
+  buildLinearProjection,
+  planLinearViewControls,
+} from '../../src/lib/canvas/linear-view.ts'
 
 const nodes = [
   { id: 'a', type: 'text', position: { x: 600, y: 0 }, data: { label: 'Alpha', timestamp: 30, relevance: 0.2, tags: ['work'] } },
@@ -74,6 +78,31 @@ test('filters and relation-source toggles recompute references from current sour
   assert.deepEqual(byProjectAndTime.map(item => item.nodeId), ['c'])
 })
 
+test('pure linear-view commands replace controls without copying projected node content', () => {
+  const tagged = planLinearViewControls(DEFAULT_LINEAR_VIEW_CONTROLS, {
+    type: 'set-filter-values', field: 'tags', value: 'work, urgent',
+  })
+  const timed = planLinearViewControls(tagged, {
+    type: 'set-time-boundary', boundary: 'from', value: '15',
+  })
+  const saved = planLinearViewControls(timed, {
+    type: 'apply-saved-view',
+    value: {
+      filters: { people: ['alice'] }, relationDepth: 2,
+      includeManualRelations: false, includeAiRelations: true, sortMode: 'distance',
+    },
+  })
+
+  assert.deepEqual(tagged.filters.tags, ['work', 'urgent'])
+  assert.deepEqual(timed.filters.time, { from: 15 })
+  assert.deepEqual(saved, {
+    filters: { people: ['alice'] }, relationDepth: 2,
+    includeManualRelations: false, includeAiRelations: true, sortMode: 'distance',
+  })
+  assert.equal('nodes' in saved, false)
+  assert.equal('position' in saved, false)
+})
+
 test('saved views persist filter definitions and relation choices, never copied projection content', async () => {
   const storage = await readFile(new URL('../../src/db/canvas-views.ts', import.meta.url), 'utf8')
   assert.match(storage, /canvas_saved_views/)
@@ -84,4 +113,22 @@ test('saved views persist filter definitions and relation choices, never copied 
   assert.match(storage, /sortMode/)
   assert.doesNotMatch(storage, /insert into canvas_saved_views[\s\S]*nodeBody/i)
   assert.doesNotMatch(storage, /insert into canvas_saved_views[\s\S]*position/i)
+})
+
+test('linear-view UI executes planner results through a static external store boundary', async () => {
+  const [component, viewStore] = await Promise.all([
+    readFile(new URL('../../src/app/core/main/canvas/canvas-linear-view.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/stores/canvas-view.ts', import.meta.url), 'utf8'),
+  ])
+
+  assert.match(component, /planLinearViewControls\(controls, command\)/)
+  assert.match(component, /replaceCanvasLinearViewControls/)
+  assert.match(component, /replaceCanvasSavedViews/)
+  assert.doesNotMatch(
+    component,
+    /\bsetFilters\b|\bsetRelationDepth\b|\bsetIncludeManualRelations\b|\bsetIncludeAiRelations\b|\bsetSortMode\b|\bsetSavedViews\b/,
+  )
+  assert.match(viewStore, /linearControls: Record<string, LinearViewControls>/)
+  assert.match(viewStore, /savedViews: Record<string, SavedCanvasView\[\]>/)
+  assert.doesNotMatch(viewStore, /CanvasDocument|nodeBody|position:/)
 })

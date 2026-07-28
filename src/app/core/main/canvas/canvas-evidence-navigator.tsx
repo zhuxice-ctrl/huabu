@@ -1,49 +1,69 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, RotateCcw, SearchCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
-  advanceEvidenceNavigation,
-  canAutoNavigateEvidence,
   createEvidenceNavigationSession,
-  evidenceFocusFor,
+  planEvidenceCandidateConfirmation,
+  planEvidenceMove,
+  planEvidenceNavigationReconciliation,
+  planEvidenceSelection,
   reconcileEvidenceNavigationSession,
   returnToEvidenceOrigin,
-  type EvidenceFocus,
+  type EvidenceNavigationCommand,
 } from '@/lib/canvas/evidence-navigation'
+import {
+  executeCanvasEvidenceFocus,
+  executeCanvasEvidenceReturn,
+} from '@/lib/canvas/evidence-navigation-runtime'
 import type { CanvasEvidence } from '@/lib/canvas/canvas-retrieval'
+import {
+  applyEvidenceNavigationCommand,
+  releaseEvidenceNavigationState,
+  useEvidenceNavigationViewState,
+} from '@/stores/canvas-view'
 import type { CanvasViewport } from '@/types/canvas'
 
+function executeEvidenceNavigationCommand(
+  navigationId: string,
+  command: EvidenceNavigationCommand,
+) {
+  applyEvidenceNavigationCommand(navigationId, command)
+  if (command.focus) executeCanvasEvidenceFocus(command.focus)
+}
+
 export function CanvasEvidenceNavigator({
+  navigationId,
   canvasId,
   evidence,
   originViewport,
-  onFocus,
-  onReturn,
 }: {
+  navigationId: string
   canvasId: string
   evidence: readonly CanvasEvidence[]
   originViewport: CanvasViewport
-  onFocus: (focus: EvidenceFocus) => void
-  onReturn?: (viewport: CanvasViewport) => void
 }) {
-  const [session, setSession] = useState(() => (
-    createEvidenceNavigationSession(canvasId, originViewport, evidence)
-  ))
-  const [showCandidates, setShowCandidates] = useState(false)
+  const initialState = useMemo(() => ({
+    session: createEvidenceNavigationSession(canvasId, originViewport, evidence),
+    showCandidates: false,
+  }), [canvasId, evidence, originViewport])
+  const navigation = useEvidenceNavigationViewState(navigationId, initialState)
   const synchronizedSession = useMemo(() => reconcileEvidenceNavigationSession(
-    session,
+    navigation.session,
     canvasId,
     originViewport,
     evidence,
-  ), [canvasId, evidence, originViewport.x, originViewport.y, originViewport.zoom, session])
+  ), [canvasId, evidence, navigation.session, originViewport.x, originViewport.y, originViewport.zoom])
   useEffect(() => {
-    setSession(synchronizedSession)
-  }, [synchronizedSession])
-  useEffect(() => {
-    setShowCandidates(false)
-  }, [canvasId, evidence, originViewport.x, originViewport.y, originViewport.zoom])
+    applyEvidenceNavigationCommand(navigationId, planEvidenceNavigationReconciliation(
+      navigation.session,
+      canvasId,
+      originViewport,
+      evidence,
+    ))
+  }, [canvasId, evidence, navigation.session, navigationId, originViewport])
+  useEffect(() => () => releaseEvidenceNavigationState(navigationId), [navigationId])
   const activeEvidence = useMemo(() => {
     const anchorId = synchronizedSession.resultAnchorIds[synchronizedSession.activeIndex]
     return evidence.find(item => (
@@ -51,32 +71,17 @@ export function CanvasEvidenceNavigator({
     )) ?? null
   }, [evidence, synchronizedSession])
 
-  const focusActive = () => {
-    const focus = evidenceFocusFor(synchronizedSession, evidence)
-    if (focus) onFocus(focus)
-  }
   const chooseEvidence = (index: number) => {
-    const next = { ...synchronizedSession, activeIndex: index }
-    setSession(next)
-    const selected = evidence.find(item => item.anchor.id === next.resultAnchorIds[index])
-    if (selected && canAutoNavigateEvidence(selected)) {
-      setShowCandidates(false)
-      const focus = evidenceFocusFor(next, evidence)
-      if (focus) onFocus(focus)
-    } else {
-      setShowCandidates(true)
-    }
+    executeEvidenceNavigationCommand(
+      navigationId,
+      planEvidenceSelection(synchronizedSession, evidence, index),
+    )
   }
   const move = (direction: 'previous' | 'next') => {
-    const next = advanceEvidenceNavigation(synchronizedSession, direction)
-    setSession(next)
-    const selected = evidence.find(item => item.anchor.id === next.resultAnchorIds[next.activeIndex])
-    if (selected && canAutoNavigateEvidence(selected)) {
-      const focus = evidenceFocusFor(next, evidence)
-      if (focus) onFocus(focus)
-    } else {
-      setShowCandidates(true)
-    }
+    executeEvidenceNavigationCommand(
+      navigationId,
+      planEvidenceMove(synchronizedSession, evidence, direction),
+    )
   }
 
   if (!activeEvidence) return null
@@ -92,21 +97,30 @@ export function CanvasEvidenceNavigator({
       <Button type="button" size="icon-xs" variant="ghost" aria-label="下一条证据" onClick={() => move('next')}>
         <ChevronRight />
       </Button>
-      {onReturn && (
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          aria-label="返回浏览前的位置"
-          onClick={() => onReturn(returnToEvidenceOrigin(synchronizedSession))}
-        >
-          <RotateCcw />
-        </Button>
-      )}
-      {showCandidates && (
+      <Button
+        type="button"
+        size="icon-xs"
+        variant="ghost"
+        aria-label="返回浏览前的位置"
+        onClick={() => executeCanvasEvidenceReturn(
+          canvasId,
+          returnToEvidenceOrigin(synchronizedSession),
+        )}
+      >
+        <RotateCcw />
+      </Button>
+      {navigation.showCandidates && (
         <span className="flex items-center gap-1 text-muted-foreground">
           候选证据，确认后定位
-          <Button type="button" size="xs" variant="secondary" onClick={() => { setShowCandidates(false); focusActive() }}>
+          <Button
+            type="button"
+            size="xs"
+            variant="secondary"
+            onClick={() => executeEvidenceNavigationCommand(
+              navigationId,
+              planEvidenceCandidateConfirmation(synchronizedSession, evidence),
+            )}
+          >
             定位
           </Button>
         </span>

@@ -46,7 +46,6 @@ import useChatHudStore, {
   prependChatHudMessageWindow,
   saveChatHudScrollPosition,
   syncChatHudMessageWindow,
-  setChatHudExpanded,
 } from '@/stores/chat-hud'
 
 interface ChatContentProps {
@@ -315,16 +314,10 @@ function CanvasEvidenceChips({ chat }: { chat: Chat }) {
   if (!canvasId || !originViewport || evidence.length === 0) return null
   return (
     <CanvasEvidenceNavigator
+      navigationId={String(chat.id)}
       canvasId={canvasId}
       evidence={evidence}
       originViewport={originViewport}
-      onFocus={focus => {
-        // Evidence navigation is view state: collapse the HUD and leave CanvasDocument untouched.
-        setChatHudExpanded(false)
-        if (activeCanvasId !== focus.canvasId) useCanvasStore.setState({ activeCanvasId: focus.canvasId })
-        requestAnimationFrame(() => emitter.emit('canvas-focus-evidence', focus))
-      }}
-      onReturn={viewport => emitter.emit('canvas-evidence-return', { canvasId, viewport })}
     />
   )
 }
