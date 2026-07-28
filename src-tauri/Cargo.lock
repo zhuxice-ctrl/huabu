@@ -2423,57 +2423,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
-name = "zeroxb"
-version = "0.1.0"
-dependencies = [
- "core-graphics 0.23.2",
- "font-kit",
- "futures-util",
- "fuzzy-matcher",
- "jieba-rs",
- "machine-uid",
- "objc2 0.6.1",
- "objc2-app-kit",
- "objc2-foundation 0.3.1",
- "objc2-web-kit",
- "openssl",
- "percent-encoding",
- "rayon",
- "regex",
- "reqwest",
- "reqwest_dav",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-clipboard",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-http",
- "tauri-plugin-opener",
- "tauri-plugin-os",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "tauri-plugin-sql",
- "tauri-plugin-store",
- "tauri-plugin-updater",
- "tauri-plugin-window-state",
- "tauri-utils",
- "tokio",
- "tokio-util",
- "url",
- "urlencoding",
- "uuid",
- "windows 0.58.0",
- "xcap",
- "zip",
-]
-
-[[package]]
 name = "hyper"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8586,6 +8535,58 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.104",
+]
+
+[[package]]
+name = "zeroxb"
+version = "0.1.0"
+dependencies = [
+ "core-graphics 0.23.2",
+ "font-kit",
+ "futures-util",
+ "fuzzy-matcher",
+ "jieba-rs",
+ "machine-uid",
+ "objc2 0.6.1",
+ "objc2-app-kit",
+ "objc2-foundation 0.3.1",
+ "objc2-web-kit",
+ "openssl",
+ "percent-encoding",
+ "rayon",
+ "regex",
+ "reqwest",
+ "reqwest_dav",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-clipboard",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-http",
+ "tauri-plugin-opener",
+ "tauri-plugin-os",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-sql",
+ "tauri-plugin-store",
+ "tauri-plugin-updater",
+ "tauri-plugin-window-state",
+ "tauri-utils",
+ "tokio",
+ "tokio-util",
+ "url",
+ "urlencoding",
+ "uuid",
+ "windows 0.58.0",
+ "windows-sys 0.59.0",
+ "xcap",
+ "zip",
 ]
 
 [[package]]

@@ -122,7 +122,7 @@ export async function fetchAudioSpeech(text: string, customVoice?: string, custo
     throw new Error('未找到音频模型配置')
   }
 
-  if (!audioConfig.baseURL || !audioConfig.apiKey) {
+  if (!audioConfig.baseURL || audioConfig.hasCredential === false || !audioConfig.credentialRef) {
     throw new Error('音频模型配置不完整')
   }
 
@@ -459,7 +459,7 @@ export async function fetchAudioTranscription(audioBlob: Blob): Promise<string> 
     throw new Error('未找到语音识别模型配置')
   }
 
-  if (!sttConfig.baseURL || !sttConfig.apiKey) {
+  if (!sttConfig.baseURL || sttConfig.hasCredential === false || !sttConfig.credentialRef) {
     throw new Error('语音识别模型配置不完整')
   }
 

@@ -14,6 +14,11 @@ import { shouldExcludeFromSync } from '@/config/sync-exclusions'
 import { DEFAULT_SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
 import { APP_FONT_SYSTEM_VALUE, applyAppFontFamily } from '@/lib/font-settings'
 import type { AgentPermissionMode } from '@/lib/agent/types'
+import {
+  migrateLegacyGlobalCredential,
+  migrateLegacyModelCredentials,
+} from '@/lib/security/credentials'
+import { toast } from '@/hooks/use-toast'
 
 export enum GenTemplateRange {
   All = 'all',
@@ -338,12 +343,28 @@ const useSettingStore = create<SettingState>((set, get) => ({
 
     // 独立产品迁移：移除上游内置模型和密钥，只保留用户主动配置的平台。
     const existingAiModelList = (await store.get('aiModelList') as AiConfig[]) || []
+    try {
+      await migrateLegacyGlobalCredential(store)
+    } catch (error) {
+      console.error('[credential-migration] global model credential left unchanged', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      toast({
+        title: '凭据迁移失败',
+        description: '旧的全局模型密钥保持不变，请在模型设置中重新保存凭据。',
+        variant: 'destructive',
+      })
+    }
+    // Global and provider migrations are deliberately isolated: a failed
+    // legacy global key must not leave otherwise migratable provider secrets
+    // in plaintext.
+    const credentialMigratedAiModelList = await migrateLegacyModelCredentials(existingAiModelList)
     const isLegacyUpstreamModel = (config: AiConfig) => (
       config.key.startsWith('note-gen-')
       || config.title === 'NoteGen Limited'
       || config.models?.some(model => model.id.startsWith('note-gen-'))
     )
-    const finalAiModelList = existingAiModelList.filter(config => !isLegacyUpstreamModel(config))
+    const finalAiModelList = credentialMigratedAiModelList.filter(config => !isLegacyUpstreamModel(config))
     if (JSON.stringify(finalAiModelList) !== JSON.stringify(existingAiModelList)) {
       await store.set('aiModelList', finalAiModelList)
     }

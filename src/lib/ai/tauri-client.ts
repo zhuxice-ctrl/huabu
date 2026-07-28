@@ -3,13 +3,15 @@ import type OpenAI from 'openai'
 import type { ModelsPage } from 'openai/resources/models'
 import { Store } from '@tauri-apps/plugin-store'
 import type { AiConfig } from '@/app/core/setting/config'
+import { isSecretHeaderName } from '@/lib/security/credentials'
 
 type JsonValue = Record<string, unknown>
 
 export interface AiRequestConfig {
   baseUrl: string
-  apiKey?: string
   customHeaders?: Record<string, string>
+  credentialRef?: string
+  customHeaderRefs?: Record<string, string>
   proxy?: AiProxyConfig
 }
 
@@ -126,6 +128,16 @@ function createRequestId() {
     : `${Date.now()}-${Math.random()}`
 }
 
+function filterNonSecretCustomHeaders(config?: AiConfig): Record<string, string> | undefined {
+  if (!config?.customHeaders) return undefined
+
+  const customHeaders = Object.entries(config.customHeaders).filter(([headerName]) => (
+    !isSecretHeaderName(headerName, config.customHeaderSecrets?.[headerName] === true)
+  ))
+
+  return customHeaders.length ? Object.fromEntries(customHeaders) : undefined
+}
+
 export async function resolveAiRequestConfig(aiConfig?: AiConfig): Promise<AiRequestConfig> {
   const proxyMode = aiConfig?.proxyMode || 'inherit'
   let proxy: AiProxyConfig = { mode: 'direct' }
@@ -146,8 +158,9 @@ export async function resolveAiRequestConfig(aiConfig?: AiConfig): Promise<AiReq
 
   return {
     baseUrl: aiConfig?.baseURL || '',
-    apiKey: aiConfig?.apiKey,
-    customHeaders: aiConfig?.customHeaders,
+    customHeaders: filterNonSecretCustomHeaders(aiConfig),
+    credentialRef: aiConfig?.hasCredential === false ? undefined : aiConfig?.credentialRef,
+    customHeaderRefs: aiConfig?.customHeaderRefs,
     proxy,
   }
 }

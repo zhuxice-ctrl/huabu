@@ -117,13 +117,16 @@ export interface ModelConfig {
 export interface AiConfig {
   key: string
   title: string
-  apiKey?: string
+  credentialRef?: string
+  hasCredential?: boolean
   baseURL?: string
   templateKey?: string
   templateSource?: 'builtin' | 'remote' | 'custom'
   icon?: string
   apiKeyUrl?: string
   customHeaders?: Record<string, string>
+  customHeaderRefs?: Record<string, string>
+  customHeaderSecrets?: Record<string, boolean>
   proxyMode?: ProxyMode
   proxyURL?: string
   models?: ModelConfig[]

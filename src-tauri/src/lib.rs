@@ -2,6 +2,7 @@ mod ai;
 #[cfg(target_os = "android")]
 mod android_ocr;
 mod backup;
+mod credential_store;
 mod device;
 mod fonts;
 #[cfg(target_os = "ios")]
@@ -20,6 +21,7 @@ use ai::{
     cancel_ai_request, AiRequestManager,
 };
 use backup::{export_app_data, import_app_data, import_app_data_from_file};
+use credential_store::{credential_delete, credential_get, credential_set};
 use device::get_device_id;
 use fonts::list_system_fonts;
 use mcp::{
@@ -92,6 +94,9 @@ pub fn run() {
             ai_multipart_request,
             ai_chat_completion_stream,
             cancel_ai_request,
+            credential_set,
+            credential_get,
+            credential_delete,
             list_ocr_providers,
             run_ocr_provider,
             printing::print_webview,

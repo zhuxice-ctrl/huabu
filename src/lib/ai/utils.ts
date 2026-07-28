@@ -291,13 +291,15 @@ export async function createOpenAIClient(AiConfig?: AiConfig): Promise<OpenAICom
   }
 
   const baseURL = await store.get<string>('baseURL')
-  const apiKey = await store.get<string>('apiKey')
+  const credentialRef = await store.get<string>('credentialRef')
+  const hasCredential = await store.get<boolean>('hasCredential')
 
   return createTauriOpenAIClient({
     key: 'runtime',
     title: 'Runtime',
     baseURL,
-    apiKey,
+    credentialRef,
+    hasCredential,
   })
 }
 

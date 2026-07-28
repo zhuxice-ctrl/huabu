@@ -18,7 +18,7 @@ import {
 import { SettingType } from "../components/setting-base";
 import { AiConfig, ModelConfig, ProxyMode, builtinProviderTemplates } from "../config";
 import useSettingStore from "@/stores/setting";
-import { BotMessageSquare, Copy, Eye, EyeOff, KeyRound, LoaderCircle, Network, Plus, Server, Settings2, Trash2, X } from "lucide-react";
+import { BotMessageSquare, Copy, KeyRound, LoaderCircle, Network, Plus, Server, Settings2, Trash2, X } from "lucide-react";
 import { OpenBroswer } from "@/components/open-broswer";
 import DefaultModelsSection from "./default-models";
 import ModelCard from "./model-card";
@@ -34,6 +34,22 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import {
+  applyCustomHeaderPairs,
+  clearProviderCredential,
+  isSecretHeaderName,
+  setProviderCredential,
+} from "@/lib/security/credentials";
+
+type HeaderPair = {
+  key: string
+  value: string
+  id: string
+  secret: boolean
+  hasCredential?: boolean
+  credentialRef?: string
+}
 
 function getPlatformAvatarFallback(config: AiConfig) {
   const characterCount = config.templateSource === 'custom' ? 1 : 2
@@ -64,8 +80,9 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
   } = useSettingStore()
 
   const userCustomModels = aiModelList
-  const [apiKeyVisible, setApiKeyVisible] = useState<boolean>(false)
-  const [headerPairs, setHeaderPairs] = useState<Array<{key: string, value: string, id: string}>>([])
+  const [apiKeyDraft, setApiKeyDraft] = useState('')
+  const [apiKeySaving, setApiKeySaving] = useState(false)
+  const [headerPairs, setHeaderPairs] = useState<HeaderPair[]>([])
   const [expandedModels, setExpandedModels] = useState<string[]>([])
   const [providerTemplates, setProviderTemplates] = useState<AiConfig[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(true)
@@ -104,16 +121,57 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
     !configuredTemplateKeys.has(template.templateKey || template.key)
   ))
   
-  const parseHeadersToKeyValue = (headers: Record<string, string> = {}) => {
-    return Object.entries(headers).map(([key, value]) => ({
-      key, value: String(value), id: Math.random().toString(36).substr(2, 9)
-    }))
+  const parseHeadersToKeyValue = (config: AiConfig): HeaderPair[] => {
+    const headerNames = new Set([
+      ...Object.keys(config.customHeaders || {}),
+      ...Object.keys(config.customHeaderSecrets || {}),
+      ...Object.keys(config.customHeaderRefs || {}),
+    ])
+    return Array.from(headerNames).map(key => {
+      const explicitlySecret = config.customHeaderSecrets?.[key] === true
+        || Boolean(config.customHeaderRefs?.[key])
+      const secret = isSecretHeaderName(key, explicitlySecret)
+
+      return {
+      key,
+      value: secret ? '' : String(config.customHeaders?.[key] ?? ''),
+      id: Math.random().toString(36).substr(2, 9),
+      secret,
+      hasCredential: Boolean(config.customHeaderRefs?.[key]),
+      credentialRef: config.customHeaderRefs?.[key],
+      }
+    })
   }
 
-  const convertKeyValueToJson = (pairs: Array<{key: string, value: string}>) => {
-    const obj: Record<string, string> = {}
-    pairs.forEach(pair => { if (pair.key.trim()) obj[pair.key.trim()] = pair.value })
-    return obj
+  const saveHeaderPairs = async (pairs: HeaderPair[]) => {
+    if (!currentConfig) return
+    const updatedConfig = await applyCustomHeaderPairs(currentConfig, pairs)
+    await updateAiConfig(updatedConfig)
+    setHeaderPairs(parseHeadersToKeyValue(updatedConfig))
+  }
+
+  const replaceProviderCredential = async () => {
+    if (!currentConfig || !apiKeyDraft) return
+    setApiKeySaving(true)
+    try {
+      const updatedConfig = await setProviderCredential(currentConfig, apiKeyDraft)
+      setApiKeyDraft('')
+      await updateAiConfig(updatedConfig)
+    } finally {
+      setApiKeySaving(false)
+    }
+  }
+
+  const removeProviderCredential = async () => {
+    if (!currentConfig) return
+    setApiKeySaving(true)
+    try {
+      const updatedConfig = await clearProviderCredential(currentConfig)
+      setApiKeyDraft('')
+      await updateAiConfig(updatedConfig)
+    } finally {
+      setApiKeySaving(false)
+    }
   }
 
   // 添加新模型
@@ -234,6 +292,10 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
       ...currentConfig,
       key: id,
       title: `${currentConfig.title || 'Copy'} (Copy)`,
+      hasCredential: false,
+      credentialRef: undefined,
+      customHeaderRefs: undefined,
+      customHeaderSecrets: undefined,
       // 复制models数组
       models: currentConfig.models?.map(model => ({
         ...model,
@@ -258,6 +320,8 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
     if (!confirmed) return
 
     const store = await Store.load('store.json')
+    await clearProviderCredential(currentConfig)
+    await applyCustomHeaderPairs(currentConfig, [])
     const aiModelList = await store.get<AiConfig[]>('aiModelList') || []
     const updatedList = aiModelList.filter(item => item.key !== currentConfig.key)
     
@@ -307,10 +371,11 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
   // 当选中的配置改变时，更新headers
   useEffect(() => {
     if (currentConfig) {
-      setHeaderPairs(parseHeadersToKeyValue(currentConfig.customHeaders))
-      setApiKeyVisible(false)
+      setHeaderPairs(parseHeadersToKeyValue(currentConfig))
+      setApiKeyDraft('')
     } else {
       setHeaderPairs([])
+      setApiKeyDraft('')
     }
   }, [currentConfig])
 
@@ -589,21 +654,35 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
                               <InputGroupAddon><KeyRound /></InputGroupAddon>
                               <InputGroupInput
                                 id={`provider-key-${currentConfig.key}`}
-                                value={currentConfig.apiKey || ''}
-                                type={apiKeyVisible ? 'text' : 'password'}
+                                value={apiKeyDraft}
+                                type="password"
                                 placeholder={t('apiKeyPlaceholder')}
-                                onChange={event => void updateAiConfig({ ...currentConfig, apiKey: event.target.value })}
+                                autoComplete="new-password"
+                                onChange={event => setApiKeyDraft(event.target.value)}
+                                onBlur={() => void replaceProviderCredential()}
                               />
                               <InputGroupAddon align="inline-end">
                                 <InputGroupButton
-                                  size="icon-xs"
-                                  aria-label={apiKeyVisible ? t('hideApiKey') : t('showApiKey')}
-                                  onClick={() => setApiKeyVisible(current => !current)}
+                                  size="xs"
+                                  disabled={apiKeySaving || !apiKeyDraft}
+                                  onClick={() => void replaceProviderCredential()}
                                 >
-                                  {apiKeyVisible ? <EyeOff /> : <Eye />}
+                                  {currentConfig.hasCredential ? '替换' : '保存'}
                                 </InputGroupButton>
+                                {currentConfig.hasCredential ? (
+                                  <InputGroupButton
+                                    size="xs"
+                                    disabled={apiKeySaving}
+                                    onClick={() => void removeProviderCredential()}
+                                  >
+                                    {t('clear')}
+                                  </InputGroupButton>
+                                ) : null}
                               </InputGroupAddon>
                             </InputGroup>
+                            {currentConfig.hasCredential ? (
+                              <FieldDescription>{t('providerReady')}</FieldDescription>
+                            ) : null}
                             {currentProviderTemplate?.apiKeyUrl ? (
                               <FieldDescription><OpenBroswer url={currentProviderTemplate.apiKeyUrl} title={t('apiKeyUrl')} /></FieldDescription>
                             ) : null}
@@ -661,21 +740,34 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
                                             value={pair.key}
                                             onChange={event => {
                                               const pairs = [...headerPairs]
-                                              pairs[index] = { ...pairs[index], key: event.target.value }
+                                              const key = event.target.value
+                                              pairs[index] = { ...pairs[index], key, secret: isSecretHeaderName(key, pairs[index].secret) }
                                               setHeaderPairs(pairs)
                                             }}
-                                            onBlur={() => void updateAiConfig({ ...currentConfig, customHeaders: convertKeyValueToJson(headerPairs) })}
+                                            onBlur={() => void saveHeaderPairs(headerPairs)}
                                           />
                                           <Input
                                             aria-label={t('headerValue')}
                                             placeholder={t('headerValue')}
                                             value={pair.value}
+                                            type={pair.secret ? 'password' : 'text'}
+                                            autoComplete={pair.secret ? 'new-password' : undefined}
                                             onChange={event => {
                                               const pairs = [...headerPairs]
                                               pairs[index] = { ...pairs[index], value: event.target.value }
                                               setHeaderPairs(pairs)
                                             }}
-                                            onBlur={() => void updateAiConfig({ ...currentConfig, customHeaders: convertKeyValueToJson(headerPairs) })}
+                                            onBlur={() => void saveHeaderPairs(headerPairs)}
+                                          />
+                                          <Switch
+                                            checked={pair.secret}
+                                            aria-label="Secret"
+                                            onCheckedChange={checked => {
+                                              const pairs = [...headerPairs]
+                                              pairs[index] = { ...pairs[index], secret: checked || isSecretHeaderName(pairs[index].key) }
+                                              setHeaderPairs(pairs)
+                                              void saveHeaderPairs(pairs)
+                                            }}
                                           />
                                           <Button
                                             variant="outline"
@@ -684,14 +776,14 @@ export default function AiPage({ mobile = false }: { mobile?: boolean }) {
                                             onClick={() => {
                                               const pairs = headerPairs.filter((_, pairIndex) => pairIndex !== index)
                                               setHeaderPairs(pairs)
-                                              void updateAiConfig({ ...currentConfig, customHeaders: convertKeyValueToJson(pairs) })
+                                              void saveHeaderPairs(pairs)
                                             }}
                                           ><X /></Button>
                                         </Field>
                                       ))}
                                       <Button
                                         variant="outline"
-                                        onClick={() => setHeaderPairs(current => [...current, { key: '', value: '', id: v4() }])}
+                                        onClick={() => setHeaderPairs(current => [...current, { key: '', value: '', id: v4(), secret: false }])}
                                       ><Plus data-icon="inline-start" />{t('addHeader')}</Button>
                                     </FieldGroup>
                                   </CardContent>

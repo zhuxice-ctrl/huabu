@@ -1,7 +1,9 @@
+use crate::credential_store::{is_secret_header_name, resolve_credential};
 use futures_util::StreamExt;
 use reqwest::{
     header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, CONTENT_TYPE},
     multipart::{Form, Part},
+    redirect::Policy,
     Client, Method, Proxy, Url,
 };
 use serde::{Deserialize, Serialize};
@@ -50,8 +52,9 @@ impl AiRequestManager {
 #[serde(rename_all = "camelCase")]
 pub struct AiConfigPayload {
     pub base_url: String,
-    pub api_key: Option<String>,
+    pub credential_ref: Option<String>,
     pub custom_headers: Option<HashMap<String, String>>,
+    pub custom_header_refs: Option<HashMap<String, String>>,
     pub proxy: Option<AiProxyConfig>,
 }
 
@@ -112,7 +115,10 @@ fn abort_error() -> String {
 }
 
 fn build_client(config: &AiConfigPayload) -> Result<Client, String> {
-    let mut builder = Client::builder();
+    // Never forward model credentials across redirects. Providers must expose
+    // the configured native endpoint directly; callers can update baseUrl
+    // explicitly after re-authenticating if an endpoint moves.
+    let mut builder = Client::builder().redirect(Policy::none());
 
     match &config.proxy {
         Some(AiProxyConfig::Direct) => {
@@ -142,13 +148,18 @@ fn build_headers(
     include_json_content_type: bool,
 ) -> Result<HeaderMap, String> {
     let mut headers = HeaderMap::new();
-    if let Some(api_key) = &config.api_key {
-        if !api_key.is_empty() {
-            let bearer = format!("Bearer {api_key}");
-            let value = HeaderValue::from_str(&bearer)
-                .map_err(|error| format!("Invalid authorization header: {error}"))?;
-            headers.insert(AUTHORIZATION, value);
+    if let Some(credential_ref) = &config.credential_ref {
+        let api_key = resolve_credential(credential_ref, &config.base_url, None)?;
+        if api_key.trim().is_empty() {
+            return Err(format!(
+                "Credential is empty for reference={credential_ref}"
+            ));
         }
+        let bearer = format!("Bearer {api_key}");
+        let value = HeaderValue::from_str(&bearer).map_err(|error| {
+            format!("Invalid authorization header for reference={credential_ref}: {error}")
+        })?;
+        headers.insert(AUTHORIZATION, value);
     }
 
     if include_json_content_type {
@@ -157,11 +168,29 @@ fn build_headers(
 
     if let Some(custom_headers) = &config.custom_headers {
         for (key, value) in custom_headers {
+            if is_secret_header_name(key, false) {
+                return Err(format!(
+                    "Secret header `{key}` must use a credential reference."
+                ));
+            }
             let key = HeaderName::from_str(key)
                 .map_err(|error| format!("Invalid header name `{key}`: {error}"))?;
             let value = HeaderValue::from_str(value)
                 .map_err(|error| format!("Invalid header value for `{key}`: {error}"))?;
             headers.insert(key, value);
+        }
+    }
+
+    if let Some(custom_header_refs) = &config.custom_header_refs {
+        for (key, reference) in custom_header_refs {
+            let header_name = HeaderName::from_str(key).map_err(|error| {
+                format!("Invalid header name `{key}` for reference={reference}: {error}")
+            })?;
+            let value = resolve_credential(reference, &config.base_url, Some(key))?;
+            let header_value = HeaderValue::from_str(&value).map_err(|error| {
+                format!("Invalid header value for `{key}` reference={reference}: {error}")
+            })?;
+            headers.insert(header_name, header_value);
         }
     }
 
@@ -171,8 +200,7 @@ fn build_headers(
 async fn read_response_json(response: reqwest::Response) -> Result<Value, String> {
     let status = response.status();
     if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("Request failed: {status} {error_text}"));
+        return Err(format!("Request failed: {status}"));
     }
     response
         .json::<Value>()
@@ -323,11 +351,10 @@ pub async fn ai_binary_request(
 
     let status = response.status();
     if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_default();
         if let Some(request_id) = &request.request_id {
             manager.finish(request_id).await;
         }
-        return Err(format!("Request failed: {status} {error_text}"));
+        return Err(format!("Request failed: {status}"));
     }
 
     let bytes = response
@@ -419,9 +446,8 @@ pub async fn ai_chat_completion_stream(
 
     if !response.status().is_success() {
         let status = response.status();
-        let error_text = response.text().await.unwrap_or_default();
         manager.finish(&request.request_id).await;
-        return Err(format!("Request failed: {status} {error_text}"));
+        return Err(format!("Request failed: {status}"));
     }
 
     let mut decoder = SseDecoder::new();

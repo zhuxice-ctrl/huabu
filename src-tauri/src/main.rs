@@ -6,6 +6,7 @@ mod ai;
 mod android_ocr;
 mod app_setup;
 mod backup;
+mod credential_store;
 mod device;
 mod file_open;
 mod fonts;
@@ -26,6 +27,7 @@ use ai::{
     cancel_ai_request, AiRequestManager,
 };
 use backup::{export_app_data, import_app_data, import_app_data_from_file};
+use credential_store::{credential_delete, credential_get, credential_set};
 use device::get_device_id;
 use fonts::list_system_fonts;
 use fuzzy_search::{fuzzy_search, fuzzy_search_parallel};
@@ -106,6 +108,9 @@ fn main() {
             ai_multipart_request,
             ai_chat_completion_stream,
             cancel_ai_request,
+            credential_set,
+            credential_get,
+            credential_delete,
             update_tray_record_toolbar_config,
             list_ocr_providers,
             run_ocr_provider,

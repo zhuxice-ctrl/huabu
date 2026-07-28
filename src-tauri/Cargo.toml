@@ -63,6 +63,9 @@ regex = "1"
 font-kit = "0.14"
 
 [target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Security_Credentials"
+] }
 windows = { version = "0.58", features = [
   "Foundation",
   "Foundation_Collections",
