@@ -1,9 +1,9 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
+  "task_id": "zeroxb-integrated-task-18-no-user-export",
   "status": "accepted",
-  "graph_revision": "ae53efe998d5b2d81aee716f",
-  "slice_revision": "ae53efe998d5b2d81aee716f",
+  "graph_revision": "f9209ccc9bf3c1c380e4d945",
+  "slice_revision": "f9209ccc9bf3c1c380e4d945",
   "confidence": 1.0,
   "confidence_threshold": 0.8,
   "freshness": {

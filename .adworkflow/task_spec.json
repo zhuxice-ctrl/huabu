@@ -1,37 +1,32 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
+  "task_id": "zeroxb-integrated-task-18-no-user-export",
   "task_type": "code",
-  "goal": "Add exact evidence navigation, read-only linear graph projections and persisted saved filter definitions without mutating source canvas geometry or content.",
+  "goal": "Remove every Windows user-facing file, configuration, theme, local-backup and canvas export surface while preserving internal thumbnail, print and recovery primitives.",
   "non_goals": [
-    "Do not implement Task 18 export removal, Task 19 credential migration or Task 20 recovery.",
-    "Do not copy node bodies into saved views or change source node positions.",
-    "Do not make low-confidence evidence auto-navigate without candidate confirmation.",
-    "Do not merge AI-derived relations into CanvasDocument manual edges."
+    "Do not delete internal serializers or renderers still used by thumbnails, print viewers or recovery snapshots.",
+    "Do not replace export actions with download or share aliases.",
+    "Do not implement credential migration, recovery storage or release packaging from Tasks 19-21.",
+    "Do not remove remote synchronization import/download capabilities that are not local user-facing export surfaces."
   ],
   "acceptance_criteria": [
-    "Evidence navigation stores the origin viewport, focuses exact node/range anchors, supports previous/next and returns to the origin viewport.",
-    "Low-confidence results show candidates before navigation while accepted evidence collapses the answer HUD and may switch source canvas explicitly.",
-    "Linear projections traverse one/two hops across selected manual and AI relations with deterministic time/relevance/distance/manual ordering.",
-    "Saved views persist only filter/sort/relation-source definitions and recompute current references on reopen.",
-    "Navigation and linear browsing never copy node bodies, write source positions or create manual history entries.",
-    "Focused tests, Canvas regression, TypeScript, production build, independent review and exhaustive L2 impact pass."
+    "Windows-rendered menus, buttons and actions expose no Markdown, HTML, JSON, PDF, configuration, theme-code, local-backup, PNG or SVG export.",
+    "Internal thumbnail rendering, existing viewer print support and recovery snapshot writers remain available only through non-user-facing paths.",
+    "Removed surfaces leave no dead imports, handlers, state or misleading aliases.",
+    "Focused export-boundary tests, TypeScript, production build, independent review and exhaustive L2 impact pass."
   ],
   "risk_level": "high",
   "execution_mode": "worker_plus_reviewer",
   "allowed_actions": ["read", "edit", "test", "shell"],
   "required_outputs": [
-    "src/lib/canvas/evidence-navigation.ts",
-    "src/lib/canvas/linear-view.ts",
-    "src/db/canvas-views.ts",
-    "src/db/index.ts",
-    "src/app/core/main/canvas/canvas-evidence-navigator.tsx",
-    "src/app/core/main/canvas/canvas-linear-view.tsx",
-    "src/app/core/main/chat/chat-content.tsx",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "scripts/tests/canvas-evidence-navigation.test.mjs",
-    "scripts/tests/canvas-linear-view.test.mjs",
+    "scripts/tests/zeroxb-no-user-export.test.mjs",
+    "src/app/core/main/file/file-item.tsx",
+    "src/app/core/main/editor/markdown/footer-bar/export-button.tsx",
+    "src/app/core/setting/general/advanced-settings.tsx",
+    "src/app/core/setting/general/config-file-actions.tsx",
+    "src/app/core/setting/general/interface-settings/custom-theme.tsx",
+    "src/components/title-bar-toolbars/sync-toggle.tsx",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -39,38 +34,35 @@
     ".adworkflow/review_findings.json"
   ],
   "do_not_touch": [
-    "manual canvas undo history semantics",
-    "CanvasDocument source ownership",
+    "src/lib/canvas/static-export.ts",
+    "src/app/core/main/editor/markdown/markdown-export.ts",
     "main branch",
     "official upstream remote",
-    "release artifacts",
     "installed zeroxB application",
     "zeroxB user documents",
     "provider credentials",
-    "Task 18-21 product scope"
+    "Task 19-21 product scope"
   ],
   "entrypoints": [
-    "typescript:src.db.canvas-ai-overlay:getCanvasAiOverlayRecords:function",
-    "typescript:src.lib.canvas.canvas-retrieval:CanvasEvidence:interface",
-    "typescript:src.types.canvas:CanvasViewport:interface",
-    "typescript:src.types.canvas:CanvasDocument:interface"
+    "typescript:src.app.core.main.editor.markdown.markdown-export:sanitizeExportFileName:function",
+    "typescript:src.app.core.main.editor.markdown.markdown-export:getMarkdownExportBaseName:function"
   ],
   "context_sources": [
-    "docs/superpowers/plans/2026-07-25-zeroxb-integrated-canvas-experience.md",
-    "src/types/canvas.ts",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/chat/chat-content.tsx",
-    "src/lib/canvas/canvas-retrieval.ts",
-    "src/lib/canvas/knowledge-extraction.ts",
-    "src/db/canvas-ai-overlay.ts",
-    "src/stores/canvas.ts",
-    "src/stores/chat-hud.ts"
+    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-18-brief.md",
+    "src/app/core/main/file/file-item.tsx",
+    "src/app/core/main/editor/markdown/footer-bar/export-button.tsx",
+    "src/app/core/setting/general/advanced-settings.tsx",
+    "src/app/core/setting/general/config-file-actions.tsx",
+    "src/app/core/setting/general/interface-settings/custom-theme.tsx",
+    "src/components/title-bar-toolbars/sync-toggle.tsx",
+    "src/lib/canvas/static-export.ts",
+    "src/app/core/main/editor/markdown/markdown-export.ts"
   ],
   "notes": [
-    "Use test-first implementation and keep ordinary audit reporting concise.",
-    "Evidence focus uses anchor node/range references and state outside CanvasDocument.",
-    "Saved filters store definitions only; reopening recomputes against current data.",
+    "Use test-first implementation and keep routine audit reporting concise.",
+    "Use a leaf internal export data-contract slice for L2; all user-facing component context_sources remain mandatory manual context.",
+    "The contract is based on Windows UI reachability, not a repository-wide ban on the export symbol name.",
     "Use fixed UTF-8 I/O for Chinese UI copy and non-ASCII source."
   ],
-  "implementation_owner": "task17-implementer"
+  "implementation_owner": "task18-implementer"
 }

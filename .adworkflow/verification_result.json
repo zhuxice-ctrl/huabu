@@ -1,20 +1,44 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
+  "task_id": "zeroxb-integrated-task-18-no-user-export",
   "status": "passed",
-  "source_revision": "e79feffdee0a9451d53aef5b99f62ff0b11fccf8",
+  "source_revision": "08a0eb4c7761ed0d74cbfad5610fdb770af50a7d",
   "commands": [
     {
-      "command": "node --experimental-strip-types --test --test-reporter=spec scripts/tests/canvas-evidence-navigation.test.mjs scripts/tests/canvas-linear-view.test.mjs scripts/tests/canvas-retrieval.test.mjs scripts/tests/canvas-knowledge-extraction.test.mjs scripts/tests/canvas-sensitive-content.test.mjs",
+      "command": "expanded prepare_context.py --project F:/huabu-worktrees/foundation --level l2",
       "status": "passed",
-      "summary": "Focused Task 16/17 set passed 27/27.",
+      "summary": "Fresh leaf internal-export L2 preflight accepted at f9209ccc9bf3c1c380e4d945 with confidence 1.0 and zero critical unresolved edges.",
       "exit_code": 0
     },
     {
-      "command": "node --experimental-strip-types --test --test-reporter=dot scripts/tests/canvas-*.test.mjs",
+      "command": "node --test scripts/tests/zeroxb-no-user-export.test.mjs",
+      "status": "failed_expected",
+      "summary": "Pre-implementation contract failed on file-item markdown export import, proving the test detects existing user-facing export reachability.",
+      "exit_code": 1
+    },
+    {
+      "command": "node --test scripts/tests/zeroxb-no-user-export.test.mjs",
       "status": "passed",
-      "summary": "Complete Canvas regression passed 220/220.",
+      "summary": "Post-implementation focused contract passed 2/2.",
       "exit_code": 0
+    },
+    {
+      "command": "pnpm test:canvas",
+      "status": "blocked",
+      "summary": "pnpm wrapper attempted install and stopped on ERR_PNPM_IGNORED_BUILDS for approved-builds policy.",
+      "exit_code": 1
+    },
+    {
+      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
+      "status": "passed",
+      "summary": "Direct Canvas regression passed 220/220; only existing MODULE_TYPELESS_PACKAGE_JSON warnings were emitted.",
+      "exit_code": 0
+    },
+    {
+      "command": "pnpm exec tsc --noEmit",
+      "status": "blocked",
+      "summary": "pnpm wrapper attempted install and stopped on ERR_PNPM_IGNORED_BUILDS for approved-builds policy.",
+      "exit_code": 1
     },
     {
       "command": "node_modules/.bin/tsc.cmd --noEmit",
@@ -25,45 +49,57 @@
     {
       "command": "node_modules/.bin/next.cmd build --turbopack",
       "status": "passed",
-      "summary": "Production build compiled and generated 53/53 static pages and 3/3 exports.",
+      "summary": "Production build compiled, type/lint checked and generated all static pages/exports.",
       "exit_code": 0
     },
     {
-      "command": "independent scoped re-review 12618fb0..e79feffd",
+      "command": "git diff --check -- src scripts/tests",
       "status": "passed",
-      "summary": "All five structural/behavior findings addressed with no new Critical or Important breakage.",
+      "summary": "No whitespace errors; Git reported line-ending normalization warnings only.",
+      "exit_code": 0
+    },
+    {
+      "command": "independent scoped review by subagent 019fa6ff-fcb8-7ca2-b61f-8bfac001521c",
+      "status": "passed",
+      "summary": "No bugs, dead imports/state or unintended UI loss found; preservation spot checks passed.",
       "exit_code": 0
     },
     {
       "command": "expanded exhaustive L2 post-edit impact",
       "status": "passed",
-      "summary": "382 predicted, 355 observed, zero unexpected, zero production/test critical edges, complete propagation, fresh baseline comparison.",
+      "summary": "21 predicted, 20 observed, zero unexpected, zero production/test critical edges, complete propagation and fresh baseline comparison.",
+      "exit_code": 0
+    },
+    {
+      "command": "git commit -m \"refactor(product): remove user-facing export actions\"",
+      "status": "passed",
+      "summary": "Committed only the six Task 18 source/test files as 08a0eb4c7761ed0d74cbfad5610fdb770af50a7d.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Evidence navigation preserves origin viewport, gates low confidence and focuses exact ranges.",
+      "criterion": "Windows-rendered menus, buttons and actions expose no Markdown, HTML, JSON, PDF, configuration, theme-code, local-backup, PNG or SVG export.",
       "status": "passed",
-      "evidence": ["evidence-navigation.ts", "evidence-navigation-runtime.ts", "canvas-evidence-navigator.tsx", "canvas-evidence-navigation.test.mjs"]
+      "evidence": ["scripts/tests/zeroxb-no-user-export.test.mjs", "file-item.tsx", "export-button.tsx", "config-file-actions.tsx", "custom-theme.tsx", "sync-toggle.tsx"]
     },
     {
-      "criterion": "Linear projections traverse selected relations without copying bodies or mutating geometry.",
+      "criterion": "Internal thumbnail rendering, existing viewer print support and recovery snapshot writers remain available only through non-user-facing paths.",
       "status": "passed",
-      "evidence": ["linear-view.ts", "canvas-linear-view.tsx", "canvas-linear-view.test.mjs"]
+      "evidence": ["src/lib/canvas/static-export.ts", "src/lib/canvas/thumbnail.ts", "src/app/print/page.tsx", "src/lib/sync/auto-data-sync-queue.ts"]
     },
     {
-      "criterion": "Saved views store filter definitions only and recompute current references.",
+      "criterion": "Removed surfaces leave no dead imports, handlers, state or misleading aliases.",
       "status": "passed",
-      "evidence": ["canvas-views.ts", "canvas-linear-view.tsx", "canvas-linear-view.test.mjs"]
+      "evidence": ["node_modules/.bin/tsc.cmd --noEmit", "node_modules/.bin/next.cmd build --turbopack", "independent scoped review"]
     },
     {
-      "criterion": "Independent review and L2 structural gates pass.",
+      "criterion": "Focused export-boundary tests, TypeScript, production build, independent review and L2 impact pass.",
       "status": "passed",
-      "evidence": ["task-17-fix-round-2-rereview.md", ".adworkflow/impact_report.json"]
+      "evidence": ["focused contract", "Canvas 220/220", "TypeScript", "Next build", "review_findings.json", "impact_report.json"]
     }
   ],
-  "passed": ["All Task 17 acceptance criteria and mandatory gates"],
+  "passed": ["All Task 18 acceptance criteria and mandatory verification gates."],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": []

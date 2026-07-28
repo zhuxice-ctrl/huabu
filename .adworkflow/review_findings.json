@@ -1,23 +1,24 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-17-evidence-linear-views",
+  "task_id": "zeroxb-integrated-task-18-no-user-export",
   "status": "approved",
-  "reviewer": "independent scoped Codex reviewer plus L2 structural gate",
-  "source_revision": "e79feffdee0a9451d53aef5b99f62ff0b11fccf8",
+  "reviewer": "independent scoped Codex explorer 019fa6ff-fcb8-7ca2-b61f-8bfac001521c",
+  "source_revision": "08a0eb4c7761ed0d74cbfad5610fdb770af50a7d",
   "review_basis": [
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-17-independent-review.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-17-fix-round-1-rereview.md",
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-17-fix-round-2-rereview.md",
-    "Focused 27/27, Canvas 220/220, TypeScript, production build and passed exhaustive L2 impact."
+    "Working-tree diff for the six scoped Task 18 source/test files.",
+    "Focused contract: node --test scripts/tests/zeroxb-no-user-export.test.mjs.",
+    "Scoped ESLint run by reviewer.",
+    "git diff --check on scoped files.",
+    "Preservation spot checks for internal markdown print/export, canvas static export/thumbnail and recovery snapshots."
   ],
   "blocking_findings": [],
   "non_blocking_findings": [],
   "suggested_tests": [
-    "Exercise cross-canvas evidence navigation, exact text selection, origin return and saved linear views in the Task 21 Windows checklist."
+    "Exercise Windows file context menus, advanced config import, custom theme import, sync cloud upload/download and local backup import during Task 21 release verification."
   ],
   "risk_notes": [
-    "Initial review found one Critical and four Important issues; all were fixed in 12618fb0.",
-    "Initial L2 found 31 production critical dynamic-dispatch edges; all were removed in e79feffd.",
-    "Final L2 has zero unexpected impact, zero production/test critical edges, complete propagation and no reused baseline."
+    "The reviewer reported no bugs, dead imports/state or unintended UI loss.",
+    "Remote sync upload/download and local backup import remain wired.",
+    "Internal export-named implementation remains intentionally available for non-user-facing thumbnail, print and recovery paths."
   ]
 }
