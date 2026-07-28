@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:3456",
-    "beforeBuildCommand": "pnpm build",
+    "beforeBuildCommand": "node node_modules/next/dist/bin/next build --turbopack && node scripts/prune-production-source-maps.mjs",
     "frontendDist": "../out"
   },
   "app": {
