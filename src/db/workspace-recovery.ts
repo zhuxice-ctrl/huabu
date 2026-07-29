@@ -80,21 +80,20 @@ export async function initWorkspaceRecoveryDb(db: SqlExecutor): Promise<void> {
   `)
 }
 
-export async function probeWorkspaceWritable(db: SqlExecutor, now = Date.now()): Promise<void> {
-  try {
-    await db.execute('BEGIN IMMEDIATE')
-    await db.execute(
-      `insert into workspace_recovery_metadata (key, value, updatedAt)
+export async function probeWorkspaceWritable(
+  _db: SqlExecutor,
+  now = Date.now(),
+  runTransaction: typeof executeNativeSqliteTransaction = executeNativeSqliteTransaction,
+): Promise<void> {
+  await runTransaction([
+    {
+      query: `insert into workspace_recovery_metadata (key, value, updatedAt)
        values ('write-probe', $1, $1)
        on conflict(key) do update set value = excluded.value, updatedAt = excluded.updatedAt`,
-      [now],
-    )
-    await db.execute("delete from workspace_recovery_metadata where key = 'write-probe'")
-    await db.execute('COMMIT')
-  } catch (error) {
-    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
-    throw error
-  }
+      bindValues: [now],
+    },
+    { query: "delete from workspace_recovery_metadata where key = 'write-probe'" },
+  ])
 }
 
 export async function enterReadOnlyFallback(db: SqlExecutor): Promise<WorkspaceAccessMode> {

@@ -6,6 +6,7 @@ import {
   assertAttachmentWriteAllowed,
   assertReadOnlyRecoverySafe,
   enableCrashSafeSqlite,
+  probeWorkspaceWritable,
   recoverPendingCanvasAiTransactions,
   repairCanvasIndexes,
 } from '../../src/db/workspace-recovery.ts'
@@ -165,6 +166,21 @@ test('disk-full and read-only workspaces reject attachment adoption before any w
   assert.doesNotThrow(
     () => assertAttachmentWriteAllowed({ mode: 'read-write', requiredBytes: 10, availableBytes: 10 }),
   )
+})
+
+test('writable probe uses one native transaction instead of pooled BEGIN and COMMIT calls', async () => {
+  const db = fakeDb()
+  let statements = []
+  await probeWorkspaceWritable(db, 725, async (recorded) => {
+    statements = recorded
+    return []
+  })
+  assert.equal(db.calls.length, 0)
+  assert.equal(statements.length, 2)
+  assert.match(statements[0].query, /insert into workspace_recovery_metadata/i)
+  assert.deepEqual(statements[0].bindValues, [725])
+  assert.match(statements[1].query, /delete from workspace_recovery_metadata/i)
+  assert.equal(statements.some(statement => /BEGIN|COMMIT|ROLLBACK/i.test(statement.query)), false)
 })
 
 test('read-only startup fails closed while AI work is pending', async () => {

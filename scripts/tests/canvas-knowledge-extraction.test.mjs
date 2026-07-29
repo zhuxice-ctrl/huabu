@@ -64,7 +64,7 @@ test('worker retries before replacing persisted anchors when extraction is incom
     new URL('../../src/db/canvas-index.ts', import.meta.url), 'utf8',
   ))
   const failureGuard = source.indexOf('if (extraction.failures.length > 0)')
-  const transaction = source.indexOf("await db.execute('BEGIN IMMEDIATE')", failureGuard)
+  const transaction = source.indexOf('const recorder = createStatementRecorder()', failureGuard)
   const replacement = source.indexOf('await replaceCanvasKnowledgeAnchors', failureGuard)
   assert.ok(failureGuard >= 0)
   assert.ok(transaction > failureGuard)

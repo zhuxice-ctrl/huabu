@@ -1,4 +1,5 @@
 import { getDb } from './client'
+import { createStatementRecorder, executeNativeSqliteTransaction } from './native-transaction'
 import {
   canvasNodeContentRevision,
   buildLocalCanvasIndexFeatures,
@@ -201,31 +202,18 @@ export async function resetAbandonedCanvasIndexJobs() {
 
 export async function claimReadyCanvasIndexJob(now = Date.now()): Promise<CanvasIndexJob | null> {
   const db = await getDb()
-  await db.execute('BEGIN IMMEDIATE')
-  try {
-    const rows = await db.select<CanvasIndexJob[]>(
-      `select id, canvasId, nodeId, contentRevision, operation, state, attempts, nextAttemptAt
-       from canvas_index_jobs
+  const rows = await db.select<CanvasIndexJob[]>(
+    `update canvas_index_jobs
+     set state = 'running', attempts = attempts + 1, updatedAt = $1
+     where id = (
+       select id from canvas_index_jobs
        where state in ('pending', 'retry') and nextAttemptAt <= $1
-       order by createdAt, id limit 1`,
-      [now],
-    )
-    const job = rows[0]
-    if (!job) {
-      await db.execute('COMMIT')
-      return null
-    }
-    await db.execute(
-      `update canvas_index_jobs set state = 'running', attempts = attempts + 1, updatedAt = $1
-       where id = $2 and state in ('pending', 'retry')`,
-      [now, job.id],
-    )
-    await db.execute('COMMIT')
-    return { ...job, state: 'running', attempts: job.attempts + 1 }
-  } catch (error) {
-    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
-    throw error
-  }
+       order by createdAt, id limit 1
+     ) and state in ('pending', 'retry')
+     returning id, canvasId, nodeId, contentRevision, operation, state, attempts, nextAttemptAt`,
+    [now],
+  )
+  return rows[0] ?? null
 }
 
 export async function completeCanvasIndexJob(id: string, executor?: SqlExecutor) {
@@ -313,27 +301,22 @@ async function replaceCanvasKnowledgeAnchors(
 export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'complete' | 'retry'> {
   const db = await getDb()
   if (job.operation === 'delete') {
-    await db.execute('BEGIN IMMEDIATE')
-    try {
-      const rows = await db.select<Array<{ content: string }>>(
-        'select content from canvases where id = $1 and deletedAt is null limit 1',
-        [job.canvasId],
-      )
-      const document = rows[0]
-        ? normalizeCanvasDocument(JSON.parse(rows[0].content))
-        : DEFAULT_CANVAS_DOCUMENT
-      const plan = planCanvasIndexDelete(document, job.nodeId)
-      if (plan.remove) {
-        await removeCanvasIndexNode(job.canvasId, job.nodeId, db)
-      } else if (plan.ensureUpsert) {
-        await enqueueCanvasIndexJobDrafts(job.canvasId, [plan.ensureUpsert], db)
-      }
-      await completeCanvasIndexJob(job.id, db)
-      await db.execute('COMMIT')
-    } catch (error) {
-      try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
-      throw error
+    const rows = await db.select<Array<{ content: string }>>(
+      'select content from canvases where id = $1 and deletedAt is null limit 1',
+      [job.canvasId],
+    )
+    const document = rows[0]
+      ? normalizeCanvasDocument(JSON.parse(rows[0].content))
+      : DEFAULT_CANVAS_DOCUMENT
+    const plan = planCanvasIndexDelete(document, job.nodeId)
+    const recorder = createStatementRecorder()
+    if (plan.remove) {
+      await removeCanvasIndexNode(job.canvasId, job.nodeId, recorder)
+    } else if (plan.ensureUpsert) {
+      await enqueueCanvasIndexJobDrafts(job.canvasId, [plan.ensureUpsert], recorder)
     }
+    await completeCanvasIndexJob(job.id, recorder)
+    await executeNativeSqliteTransaction(recorder.statements)
     return 'complete'
   }
 
@@ -383,9 +366,8 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
     return 'retry'
   }
   const now = Date.now()
-  await db.execute('BEGIN IMMEDIATE')
-  try {
-    await db.execute(
+  const recorder = createStatementRecorder()
+  await recorder.execute(
     `insert into canvas_index_anchors (
       canvasId, nodeId, contentRevision, content, entities, timeTerms, updatedAt
     ) values ($1, $2, $3, $4, $5, $6, $7)
@@ -398,7 +380,7 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
     [job.canvasId, job.nodeId, currentRevision, content,
       JSON.stringify(features.entities), JSON.stringify(features.timeTerms), now],
     )
-    await db.execute(
+  await recorder.execute(
     `insert into canvas_index_embeddings (
       canvasId, nodeId, contentRevision, embedding, model, updatedAt
     ) values ($1, $2, $3, $4, 'local-sparse-v1', $5)
@@ -408,13 +390,15 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
       updatedAt = excluded.updatedAt`,
     [job.canvasId, job.nodeId, currentRevision, JSON.stringify(features.vector), now],
     )
-    await replaceCanvasKnowledgeAnchors(job.canvasId, job.nodeId, currentRevision, extraction.anchors, db)
-    await completeCanvasIndexJob(job.id, db)
-    await db.execute('COMMIT')
-  } catch (error) {
-    try { await db.execute('ROLLBACK') } catch { /* no active transaction */ }
-    throw error
-  }
+  await replaceCanvasKnowledgeAnchors(
+    job.canvasId,
+    job.nodeId,
+    currentRevision,
+    extraction.anchors,
+    recorder,
+  )
+  await completeCanvasIndexJob(job.id, recorder)
+  await executeNativeSqliteTransaction(recorder.statements)
   return 'complete'
 }
 

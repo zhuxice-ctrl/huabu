@@ -121,6 +121,12 @@ test('persistence and worker source preserve atomic save and resumable tombstone
   assert.match(indexDb, /unique\s*\(canvasId, nodeId, contentRevision, operation\)/)
   assert.match(indexDb, /on conflict\(canvasId, nodeId, contentRevision, operation\) do update set/)
   assert.match(indexDb, /state = 'running'[\s\S]*state = 'retry'/)
+  assert.match(indexDb, /update canvas_index_jobs[\s\S]*returning id, canvasId/)
+  assert.doesNotMatch(
+    indexDb.slice(indexDb.indexOf('export async function claimReadyCanvasIndexJob'), indexDb.indexOf('export async function completeCanvasIndexJob')),
+    /BEGIN|COMMIT|ROLLBACK/,
+  )
+  assert.match(indexDb, /createStatementRecorder\(\)[\s\S]*executeNativeSqliteTransaction/)
   assert.match(indexDb, /delete from canvas_index_anchors[\s\S]*delete from canvas_index_embeddings/)
   assert.match(indexDb, /planCanvasIndexDelete[\s\S]*enqueueCanvasIndexJobDrafts[\s\S]*completeCanvasIndexJob/)
   assert.match(indexDb, /removeAbsentCanvasIndexNodes/)
