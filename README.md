@@ -1,132 +1,98 @@
 <div align="center">
-  <h1>NoteGen</h1>
-  <p><strong>Capture first, organize later.</strong></p>
+  <h1>zeroxB</h1>
+  <p><strong>面向 Windows 的本地优先 AI 画布与笔记工作台</strong></p>
   <p>
-    <a href="https://notegen.top/en/">Documentation</a>
-    ·
-    <a href="https://notegen.top/en/download">Download</a>
-    ·
-    <a href="https://notegen.top/business">Business</a>
-    ·
-    <a href="https://notegen.top/donate">Donate</a>
-    ·
-    <a href="https://github.com/codexu/note-gen/discussions">Discussions</a>
-  </p>
-  <p>
-    <a href="https://github.com/codexu/note-gen/actions/workflows/release.yml"><img alt="Release workflow" src="https://img.shields.io/github/actions/workflow/status/codexu/note-gen/release.yml?branch=release&label=release&style=flat-square&logo=githubactions&logoColor=white"></a>
-    <a href="https://github.com/codexu/note-gen/blob/dev/LICENSE"><img alt="License" src="https://img.shields.io/github/license/codexu/note-gen?style=flat-square&color=0f766e"></a>
-    <img alt="Pricing: free" src="https://img.shields.io/badge/pricing-free-155eef?style=flat-square">
-  </p>
-  <p>
+    <img alt="Windows" src="https://img.shields.io/badge/Windows_10%2F11-x64-0078D4?style=flat-square&logo=windows&logoColor=white">
     <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-ffc131?style=flat-square&logo=tauri&logoColor=111111">
     <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white">
     <img alt="React 19" src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=111111">
-    <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?style=flat-square&logo=tailwindcss&logoColor=white">
-  </p>
-  <p>
-    <a href="https://trendshift.io/repositories/12784" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12784" alt="codexu%2Fnote-gen | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-    <a href="https://hellogithub.com/repository/0163cb946dca44cc8905dbe34c2c987b" target="_blank"><img src="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=0163cb946dca44cc8905dbe34c2c987b&claim_uid=YJ39kIMBz1TGAvc" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-    <a href="https://www.producthunt.com/products/notegen-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-notegen&#0045;2" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=956348&theme=light&t=1749194675492" alt="NoteGen - A&#0032;cross&#0045;platform&#0032;Markdown&#0032;note&#0045;taking&#0032;application | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+    <a href="LICENSE"><img alt="GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-0f766e?style=flat-square"></a>
   </p>
 </div>
 
-## Get Started
+## 项目定位
 
-> Capture first, organize later.
+zeroxB 将无限画布、Markdown 笔记、资料收集和 AI 对话整合到一个桌面工作区。内容默认保存在本机，适合把零散文本、图片、记录和引用逐步组织成可检索、可关联、可继续写作的知识结构。
 
-NoteGen is an open-source, cross-platform note app that helps you capture rough information first and turn it into structured writing later.
+> 当前产品只面向 **Windows 10/11 x64**。本仓库不维护 Android、iOS、macOS 或 Linux 安装包。
 
-It works like a capture inbox, Markdown editor, and AI assistant in one app. Save scattered thoughts, voice recordings, screenshots, images, links, files, and todos in one place. When you are ready, let AI organize those raw records into clear notes, summaries, reports, articles, or reusable knowledge.
+## 主要能力
 
-![](https://s2.loli.net/2025/12/22/jlpEP2c6ogwHhIA.png)
+- **画布优先工作区**：创建文本、图片和笔记引用节点，支持缩放、自动整理、网格吸附与线性浏览。
+- **自然的文本块尺寸**：拖动创建时沿用用户手势，文本超过初始空间后自动增长；边缘可横向或纵向调整。
+- **关系连线**：从节点锚点或节点任意位置右键拖动建立关系，拖动过程中实时显示实线曲线、端点与目标高亮。
+- **AI 对话与定位**：AI 可结合画布内容回答问题，并将结果定位回对应节点或证据位置。
+- **图片识别**：支持 Windows 本地图片识别缓存，并可通过配置的视觉模型理解图片内容。
+- **可折叠界面**：左侧资源栏和底部 AI 输入区均可折叠；偏好会持久化，AI 草稿与附件不会因折叠丢失。
+- **本地数据与恢复**：工作区数据保存在本机 SQLite 数据库，并提供备份、启动恢复和写入串行化保护。
+- **安全的 AI 凭据**：密钥通过 Windows Credential Manager 管理，应用数据仅保存不透明引用。
 
-## What Can NoteGen Do?
+## 安装
 
-NoteGen is built around a simple idea: do not force yourself to write a perfect note at the moment an idea appears.
+推荐从本仓库的 [Releases](https://github.com/zhuxice-ctrl/huabu/releases) 获取 Windows NSIS 安装包。
 
-- 🧩 Capture anything quickly: text, voice, screenshots, images, links, files, and todos.
-- 🧠 Turn messy records into organized notes: select records, choose a template, and generate structured Markdown.
-- ✍️ Keep writing after AI helps: edit the result in a Markdown editor with tables, diagrams, math, outline, search, and export tools.
-- 💬 Ask questions about your own material: chat with notes, records, and knowledge base content instead of starting from a blank prompt.
-- 🖼️ Make images useful: save screenshots and images, run OCR or AI recognition, add descriptions, and reuse them in notes.
-- 🔄 Work across devices: keep notes local as Markdown files and sync them through GitHub, Gitee, GitLab, Gitea, S3, or WebDAV.
+覆盖安装不会主动删除用户数据库。默认数据目录为：
 
-## Use NoteGen For
+```text
+%APPDATA%\com.zeroxb.desktop\
+```
 
-- Meeting notes and class notes: capture fragments during the session, then turn them into a readable summary.
-- Reading and research: collect links, screenshots, documents, and quotes, then ask AI to organize the material.
-- Weekly reports and work logs: generate reports from recent records by tag, time range, or template.
-- Personal knowledge management: keep long-term notes as Markdown files and chat with your own knowledge base.
+重要数据仍建议在升级前自行备份。自定义安装目录可以在安装器中选择。
 
-## Typical Workflow
+## 本地开发
 
-1. **Record first**: save a thought, meeting snippet, screenshot, webpage, document, or task without deciding where it belongs.
-2. **Organize later**: filter records by tag, time, or type, then ask AI to turn selected records into a note, weekly report, draft, or summary.
-3. **Write with control**: polish the generated Markdown, keep useful references and images, and export or sync when needed.
-4. **Reuse your knowledge**: search, chat, translate, rewrite, or let the Agent help continue working with your notes.
+### 环境要求
 
-## Powerful When You Need It
+- Windows 10/11 x64
+- Node.js 与 pnpm
+- Rust stable（`x86_64-pc-windows-msvc`）
+- Visual Studio 2022 Build Tools，包含 MSVC 与 Windows SDK
+- Microsoft Edge WebView2 Runtime
 
-NoteGen keeps the everyday experience focused on recording and writing, while still offering advanced tools for heavier workflows:
+### 启动开发环境
 
-- Local-first Markdown storage and workspace-based file management.
-- AI chat, inline completion, translation, rewriting, summaries, prompts, memories, and Agent mode.
-- Knowledge base search with vector indexing and hybrid retrieval.
-- Configurable AI providers and models for chat, embeddings, OCR/VLM, audio, and more.
-- MCP support for connecting external AI tools.
-- Cross-platform desktop and mobile apps built with Tauri.
+```powershell
+corepack enable
+pnpm install --frozen-lockfile
+pnpm tauri dev
+```
 
-## Download
+### 自动化验证
 
-| ![Windows](https://img.shields.io/badge/Windows-0078D4?logo=windows&logoColor=white&style=for-the-badge) | ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white&style=for-the-badge) | ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black&style=for-the-badge) | ![Android](https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white&style=for-the-badge) | ![iOS](https://img.shields.io/badge/iOS-000000?logo=apple&logoColor=white&style=for-the-badge) |
-| --- | --- | --- | --- | --- |
-| ✅ beta | ✅ beta | ✅ beta | 🛠️ alpha | 🛠️ alpha |
-| [Download](https://notegen.top/en/download) | [Download](https://notegen.top/en/download) | [Download](https://notegen.top/en/download) | [Download](https://notegen.top/en/download) | [TestFlight](https://testflight.apple.com/join/8KjFRTCq) |
+```powershell
+pnpm test:canvas
+pnpm verify:foundation
+.\node_modules\.bin\tsc.CMD --noEmit
+cargo test --manifest-path src-tauri\Cargo.toml --locked
+cargo check --manifest-path src-tauri\Cargo.toml --locked
+```
 
-Desktop and Android packages are distributed through the official download page, with GitHub Releases kept as a fallback mirror.
+Rust 命令应在 Visual Studio Developer PowerShell/Command Prompt 中执行，确保 `link.exe` 可用。
 
-## Contribute
+### 构建 Windows 安装包
 
-- [Read contribution guide](https://notegen.top/en/docs/contributing)
-- [Update plans](https://github.com/codexu/note-gen/issues/46)
-- [Submit bugs or improvement suggestions](https://github.com/codexu/note-gen/issues)
-- [Discussions](https://github.com/codexu/note-gen/discussions)
+```powershell
+.\node_modules\.bin\tauri.CMD build --bundles nsis
+```
 
-## Contributors
+默认输出目录：
 
-<a href="https://github.com/codexu/note-gen/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=codexu/note-gen" />
-</a>
+```text
+src-tauri\target\release\bundle\nsis\
+```
 
-## Thanks
+## 技术栈
 
-Special thanks to our technology partners who make NoteGen better:
+- Tauri 2 + Rust
+- Next.js 15 + React 19 + TypeScript
+- Tailwind CSS 4
+- React Flow
+- SQLite
 
-**[SiliconFlow](https://cloud.siliconflow.cn/i/O2ciJeZw)** - Providing free AI model services, powering NoteGen's intelligent features with high-quality AI capabilities.
+## 分支约定
 
-<a href="https://cloud.siliconflow.cn/i/O2ciJeZw" target="_blank">
-  <img width="240" src="https://s2.loli.net/2025/09/10/KWPOA5XhIGmYTV9.png" />
-</a>
+`main` 是当前 Windows 产品的稳定主分支。功能开发应从 `main` 创建独立分支，验证通过后再合并。
 
-We also thank other partners for their service support
+## 上游与许可
 
-<div>
-  <a href="https://www.qiniu.com/products/ai-token-api?utm_source=NoteGen" target="_blank">
-    <img src="https://s2.loli.net/2025/06/11/OKJq542lTs7U9xg.png" />
-  </a>
-  <a href="https://share.302.ai/jfFrIP" target="_blank">
-    <img src="https://s2.loli.net/2025/07/01/dPlkU1tejnDyV4S.png" />
-  </a>
-  <a href="https://www.shengsuanyun.com/?from=CH_KAFLGC9O" target="_blank">
-    <img src="https://s2.loli.net/2025/09/15/CcVRbTUBtf7ZvNl.png" />
-  </a>
-  <a href="https://ai.gitee.com/" target="_blank">
-    <img src="https://s2.loli.net/2025/09/15/wmnBWfyACMz9pVc.png" />
-  </a>
-  <a href="https://www.netlify.com" target="_blank">
-    <img src="https://s2.loli.net/2025/09/16/yJ64xIlrhdABt9o.png" />
-  </a>
-  <a href="https://skywork.ai/p/bY47ky" target="_blank">
-    <img src="https://s2.loli.net/2025/09/16/mTzMCQ8tZLfJNk5.png" />
-  </a>
-</div>
+zeroxB 基于 [NoteGen](https://github.com/codexu/note-gen) 开发，详细归属见 [NOTICE.md](NOTICE.md)。本项目及衍生发布遵循 [GNU General Public License v3.0](LICENSE)。
