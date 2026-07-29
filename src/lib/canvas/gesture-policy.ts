@@ -1,6 +1,6 @@
 export const POINTER_DRAG_THRESHOLD = 6
 export const POINTER_AXIS_THRESHOLD = 3
-export const RELATION_LONG_PRESS_MS = 320
+export const RELATION_DRAG_THRESHOLD = 4
 
 export interface CanvasRect {
   x: number
@@ -32,7 +32,7 @@ export function classifyPointerRelease(input: {
   }
 
   if (input.button === 2 && input.startedOnNode) {
-    return input.elapsedMs >= RELATION_LONG_PRESS_MS
+    return Math.hypot(input.deltaX, input.deltaY) >= RELATION_DRAG_THRESHOLD
       ? 'relation-drag'
       : 'node-context'
   }

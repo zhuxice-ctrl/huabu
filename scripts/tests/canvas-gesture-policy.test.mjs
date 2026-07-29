@@ -25,10 +25,10 @@ test('right-drag empty canvas is a marquee and right-click is context', () => {
   assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 90, deltaX: 0, deltaY: 0, startedOnNode: false }), 'pane-context')
 })
 
-test('node right-click stays context while long hold starts a relation', () => {
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 200, deltaX: 0, deltaY: 0, startedOnNode: true }), 'node-context')
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 360, deltaX: 25, deltaY: 0, startedOnNode: true }), 'relation-drag')
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 360, deltaX: 0, deltaY: 0, startedOnNode: true }), 'relation-drag')
+test('node right-click stays context while four-pixel right drag starts a relation', () => {
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 1000, deltaX: 0, deltaY: 0, startedOnNode: true }), 'node-context')
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 4, deltaY: 0, startedOnNode: true }), 'relation-drag')
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 3, deltaY: 0, startedOnNode: true }), 'node-context')
 })
 
 test('marquee includes every partially intersecting rectangle', () => {

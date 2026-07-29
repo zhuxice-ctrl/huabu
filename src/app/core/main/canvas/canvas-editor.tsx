@@ -170,7 +170,7 @@ import {
   intersectingRectIds,
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
-  RELATION_LONG_PRESS_MS,
+  RELATION_DRAG_THRESHOLD,
   type CanvasRect,
 } from '@/lib/canvas/gesture-policy'
 import { resolveTextResize } from '@/lib/canvas/text-node-sizing'
@@ -332,7 +332,6 @@ interface GeometryUiState {
 interface RelationPointerSession {
   pointerId: number
   sourceId: string
-  startedAt: number
   start: { x: number; y: number }
   current: { x: number; y: number }
   active: boolean
@@ -340,7 +339,6 @@ interface RelationPointerSession {
   sourceHandle: string
   targetHandle: string | null
   captureElement: HTMLDivElement
-  timer?: ReturnType<typeof setTimeout>
 }
 
 interface MarqueePointerSession {
@@ -1997,7 +1995,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const relation = relationSessionRef.current
     if (relation && (pointerId === undefined || relation.pointerId === pointerId)) {
       cancelledRightButtonSession = true
-      if (relation.timer) clearTimeout(relation.timer)
       relationSessionRef.current = null
       if (relation.captureElement.hasPointerCapture(relation.pointerId)) {
         relation.captureElement.releasePointerCapture(relation.pointerId)
@@ -2054,7 +2051,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         const session: RelationPointerSession = {
           pointerId: event.pointerId,
           sourceId: sourceId!,
-          startedAt: Date.now(),
           start: { x: event.clientX, y: event.clientY },
           current: { x: event.clientX, y: event.clientY },
           active: false,
@@ -2064,14 +2060,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           captureElement: element,
         }
         try { element.setPointerCapture(event.pointerId) } catch { /* window listeners still guarantee cleanup */ }
-        session.timer = setTimeout(() => {
-          const current = relationSessionRef.current
-          if (!current || current.pointerId !== event.pointerId) return
-          current.active = true
-          suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
-          updateRelationPointerGeometry(current, current.current, null)
-          setRelationPreview({ ...current })
-        }, RELATION_LONG_PRESS_MS)
         relationSessionRef.current = session
         return
       }
@@ -2129,6 +2117,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const relation = relationSessionRef.current
     if (relation?.pointerId === event.pointerId) {
       relation.current = { x: event.clientX, y: event.clientY }
+      if (!relation.active && Math.hypot(
+        relation.current.x - relation.start.x,
+        relation.current.y - relation.start.y,
+      ) >= RELATION_DRAG_THRESHOLD) {
+        relation.active = true
+        suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
+        updateRelationPointerGeometry(relation, relation.current, null)
+      }
       if (relation.active) {
         const target = globalThis.document.elementFromPoint(event.clientX, event.clientY)?.closest('.react-flow__node')?.getAttribute('data-id') || null
         updateRelationPointerGeometry(relation, relation.current, target)
@@ -2164,7 +2160,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const handleBlockDrawPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const relation = relationSessionRef.current
     if (relation?.pointerId === event.pointerId) {
-      if (relation.timer) clearTimeout(relation.timer)
       relationSessionRef.current = null
       if (!relation.active) return
       event.preventDefault()
