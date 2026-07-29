@@ -80,3 +80,17 @@ test('keeps saved widths, tab choice, collapse choices, and canvas identity inde
   assert.equal(layout.preferences.leftCollapsed, false)
   assert.equal(layout.preferences.documentPanelCollapsed, false)
 })
+
+test('canvas workspace removes Documents and exposes persistent left collapse controls', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const source = await readFile(
+    new URL('../../src/app/core/main/canvas/canvas-workspace.tsx', import.meta.url),
+    'utf8',
+  )
+  assert.doesNotMatch(source, /EditorLayout/)
+  assert.doesNotMatch(source, /Expand documents|Documents/)
+  assert.doesNotMatch(source, /startDocumentPanelResize|toggleRightSidebar/)
+  assert.match(source, /aria-label="收起资源栏"/)
+  assert.match(source, /aria-label="展开资源栏"/)
+  assert.match(source, /toggleLeftSidebar/)
+})

@@ -3664,28 +3664,30 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                   />
                 )
               })()}
-              {relationPreview?.active && (
-                <svg className="pointer-events-none absolute inset-0 size-full overflow-visible">
-                  <path
-                    d={relationPreviewPath(
-                      {
-                        x: relationPreview.start.x - (containerRef.current?.getBoundingClientRect().left || 0),
-                        y: relationPreview.start.y - (containerRef.current?.getBoundingClientRect().top || 0),
-                      },
-                      {
-                        x: relationPreview.current.x - (containerRef.current?.getBoundingClientRect().left || 0),
-                        y: relationPreview.current.y - (containerRef.current?.getBoundingClientRect().top || 0),
-                      },
-                    )}
-                    fill="none"
-                    stroke="var(--primary)"
-                    strokeWidth="2.25"
-                    strokeDasharray="7 6"
-                    strokeLinecap="round"
-                    style={{ filter: 'drop-shadow(0 0 5px hsl(var(--primary) / 0.45))' }}
-                  />
-                </svg>
-              )}
+              {relationPreview?.active && (() => {
+                const bounds = containerRef.current?.getBoundingClientRect()
+                const start = {
+                  x: relationPreview.start.x - (bounds?.left || 0),
+                  y: relationPreview.start.y - (bounds?.top || 0),
+                }
+                const end = {
+                  x: relationPreview.current.x - (bounds?.left || 0),
+                  y: relationPreview.current.y - (bounds?.top || 0),
+                }
+                return (
+                  <svg className="canvas-relation-preview pointer-events-none absolute inset-0 z-20 size-full overflow-visible">
+                    <path
+                      d={relationPreviewPath(start, end)}
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2.25"
+                      strokeLinecap="round"
+                      style={{ filter: 'drop-shadow(0 0 5px hsl(var(--primary) / 0.45))' }}
+                    />
+                    <circle cx={end.x} cy={end.y} r="4" fill="hsl(var(--primary))" />
+                  </svg>
+                )
+              })()}
               {relationEditor && (() => {
                 const edge = relationEditor.mode === 'create'
                   ? relationEditor.draft

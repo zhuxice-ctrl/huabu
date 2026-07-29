@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, type WheelEvent } from 'react'
-import { ChevronDown, ChevronUp, MessageSquareDashed, MessageSquarePlus } from 'lucide-react'
+import { ChevronDown, ChevronUp, MessageSquareDashed, MessageSquarePlus, PanelBottomClose } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import useCanvasStore from '@/stores/canvas'
 import useChatStore, {
@@ -11,6 +11,8 @@ import useChatStore, {
 import useChatHudStore, {
   createChatHudDraftKey,
   getExpandedChatHudHeight,
+  initChatHudPreferences,
+  setChatHudComposerCollapsed,
   setChatHudExpanded,
   setChatHudHistoryOpen,
   setChatHudVisibleCanvasHeight,
@@ -62,6 +64,8 @@ export function CanvasChatHud() {
   const historyOpen = useChatHudStore(state => state.historyOpen)
   const visibleCanvasHeight = useChatHudStore(state => state.visibleCanvasHeight)
   const temporarySessionId = useChatHudStore(state => state.temporarySessionId)
+  const composerCollapsed = useChatHudStore(state => state.composerCollapsed)
+  const loading = useChatStore(state => state.loading)
   const conversationKey = useMemo(() => createChatHudDraftKey(
     currentConversationId,
     temporarySessionId,
@@ -83,6 +87,10 @@ export function CanvasChatHud() {
   useEffect(() => () => stopCurrentAudio(), [])
 
   useEffect(() => {
+    initChatHudPreferences()
+  }, [])
+
+  useEffect(() => {
     const host = hostRef.current?.parentElement
     if (!host) return
     const updateHeight = () => setChatHudVisibleCanvasHeight(host.clientHeight)
@@ -97,10 +105,11 @@ export function CanvasChatHud() {
       if (event.key !== 'Escape' || event.defaultPrevented) return
       if (historyOpen) setChatHudHistoryOpen(false)
       else if (expanded) setChatHudExpanded(false)
+      else if (!composerCollapsed) setChatHudComposerCollapsed(true)
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [expanded, historyOpen])
+  }, [composerCollapsed, expanded, historyOpen])
 
   const expandedHeight = getExpandedChatHudHeight(visibleCanvasHeight)
 
@@ -115,54 +124,77 @@ export function CanvasChatHud() {
         aria-label="画布对话"
         onWheel={stopHudWheelPropagation}
       >
-        {expanded ? (
-          <div
-            className="flex min-h-0 flex-col overflow-hidden rounded-t-xl border-x border-t bg-background/95 shadow-xl backdrop-blur-xl"
-            style={{ height: expandedHeight }}
-          >
-            <div className="flex h-10 shrink-0 items-center justify-between border-b px-2">
-              <span className="px-2 text-xs font-medium">当前画布对话</span>
-              <div className="flex items-center gap-1">
-                <CanvasChatConversationActions />
-                <CanvasChatHistoryPopover />
+        {composerCollapsed ? (
+          <div aria-label="展开 AI 输入框" className="contents">
+            <CanvasChatSummary
+              variant="compact"
+              statusLabel={loading ? 'AI 正在处理' : 'AI 已就绪'}
+              onExpand={() => setChatHudComposerCollapsed(false)}
+            />
+          </div>
+        ) : (
+          <>
+            {expanded ? (
+              <div
+                className="flex min-h-0 flex-col overflow-hidden rounded-t-xl border-x border-t bg-background/95 shadow-xl backdrop-blur-xl"
+                style={{ height: expandedHeight }}
+              >
+                <div className="flex h-10 shrink-0 items-center justify-between border-b px-2">
+                  <span className="px-2 text-xs font-medium">当前画布对话</span>
+                  <div className="flex items-center gap-1">
+                    <CanvasChatConversationActions />
+                    <CanvasChatHistoryPopover />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="收起对话记录"
+                      onClick={() => setChatHudExpanded(false)}
+                    >
+                      <ChevronDown className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+                <ChatContent
+                  layoutVariant="hud"
+                  scrollerId="canvas-chat-hud-scroller"
+                  conversationKey={conversationKey}
+                />
+              </div>
+            ) : (
+              <div className="relative">
+                <CanvasChatSummary onExpand={() => setChatHudExpanded(true)} />
+                <div className="absolute right-2 top-1.5 flex items-center gap-1">
+                  <CanvasChatConversationActions />
+                  <CanvasChatHistoryPopover />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="展开对话记录"
+                    onClick={() => setChatHudExpanded(true)}
+                  >
+                    <ChevronUp className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="rounded-b-xl border bg-background/96 shadow-xl backdrop-blur-xl">
+              <div className="flex items-center justify-end gap-1 px-2 pt-1">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="收起对话记录"
-                  onClick={() => setChatHudExpanded(false)}
+                  aria-label="收起 AI 输入框"
+                  onClick={() => setChatHudComposerCollapsed(true)}
                 >
-                  <ChevronDown className="size-4" />
+                  <PanelBottomClose className="size-4" />
                 </Button>
               </div>
+              <ChatInput key={conversationKey} />
             </div>
-            <ChatContent
-              layoutVariant="hud"
-              scrollerId="canvas-chat-hud-scroller"
-              conversationKey={conversationKey}
-            />
-          </div>
-        ) : (
-          <div className="relative">
-            <CanvasChatSummary onExpand={() => setChatHudExpanded(true)} />
-            <div className="absolute right-2 top-1.5 flex items-center gap-1">
-              <CanvasChatConversationActions />
-              <CanvasChatHistoryPopover />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="展开对话记录"
-                onClick={() => setChatHudExpanded(true)}
-              >
-                <ChevronUp className="size-4" />
-              </Button>
-            </div>
-          </div>
+          </>
         )}
-        <div className="rounded-b-xl border bg-background/96 shadow-xl backdrop-blur-xl">
-          <ChatInput key={conversationKey} />
-        </div>
       </section>
     </div>
   )

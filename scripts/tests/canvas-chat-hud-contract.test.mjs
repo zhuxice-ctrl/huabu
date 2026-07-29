@@ -69,3 +69,20 @@ test('ChatInput saves and restores in-memory keyed drafts and clears only on acc
   assert.match(send, /const insertedUserChat = await insert/)
   assert.match(send, /if \(!insertedUserChat\) return/)
 })
+
+test('AI composer collapses to a persisted compact bar without clearing drafts', async () => {
+  const [hud, summary, store] = await Promise.all([
+    readFile(new URL('src/app/core/main/chat/canvas-chat-hud.tsx', root), 'utf8'),
+    readFile(new URL('src/app/core/main/chat/canvas-chat-summary.tsx', root), 'utf8'),
+    readFile(new URL('src/stores/chat-hud.ts', root), 'utf8'),
+  ])
+  assert.match(store, /composerCollapsed:\s*boolean/)
+  assert.match(store, /canvasChatHudComposerCollapsed/)
+  assert.match(store, /Store\.load\('store\.json'\)/)
+  assert.match(store, /setChatHudComposerCollapsed/)
+  assert.match(hud, /composerCollapsed/)
+  assert.match(hud, /收起 AI 输入框/)
+  assert.match(hud, /展开 AI 输入框/)
+  assert.match(summary, /variant\?: 'summary' \| 'compact'/)
+  assert.doesNotMatch(store, /setChatHudComposerCollapsed[^]*drafts:\s*\{\}/)
+})

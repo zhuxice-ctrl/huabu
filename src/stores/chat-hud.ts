@@ -1,9 +1,23 @@
 import { create } from 'zustand'
+import { Store } from '@tauri-apps/plugin-store'
 
 export const CHAT_HISTORY_WIDTH = 360
 export const CHAT_HISTORY_HEIGHT = 420
 export const CHAT_WINDOW_SEGMENT_SIZE = 40
 export const CHAT_WINDOW_MAX_SIZE = 120
+
+const CHAT_HUD_COMPOSER_COLLAPSED_KEY = 'canvasChatHudComposerCollapsed'
+
+function initialComposerCollapsed() {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(CHAT_HUD_COMPOSER_COLLAPSED_KEY) === 'true'
+}
+
+async function persistComposerCollapsed(collapsed: boolean) {
+  const store = await Store.load('store.json')
+  await store.set(CHAT_HUD_COMPOSER_COLLAPSED_KEY, collapsed)
+  await store.save()
+}
 
 export interface ChatHudDraft {
   text: string
@@ -26,6 +40,7 @@ interface ChatHudState {
   historyQuery: string
   visibleCanvasHeight: number
   temporarySessionId: string
+  composerCollapsed: boolean
   drafts: Record<string, ChatHudDraft>
   scrollPositions: Record<string, number>
   messageWindows: Record<string, MessageWindow>
@@ -143,10 +158,35 @@ const useChatHudStore = create<ChatHudState>(() => ({
   historyQuery: '',
   visibleCanvasHeight: 0,
   temporarySessionId: crypto.randomUUID(),
+  composerCollapsed: initialComposerCollapsed(),
   drafts: {},
   scrollPositions: {},
   messageWindows: {},
 }))
+
+let chatHudPreferencesInitialized = false
+
+export function initChatHudPreferences() {
+  if (chatHudPreferencesInitialized || typeof window === 'undefined') return
+  chatHudPreferencesInitialized = true
+  void Store.load('store.json').then(async store => {
+    const persisted = await store.get<boolean>(CHAT_HUD_COMPOSER_COLLAPSED_KEY)
+    if (typeof persisted !== 'boolean') return
+    localStorage.setItem(CHAT_HUD_COMPOSER_COLLAPSED_KEY, String(persisted))
+    useChatHudStore.setState({ composerCollapsed: persisted })
+  })
+}
+
+export function setChatHudComposerCollapsed(composerCollapsed: boolean) {
+  useChatHudStore.setState({
+    composerCollapsed,
+    ...(composerCollapsed ? { expanded: false, historyOpen: false } : {}),
+  })
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(CHAT_HUD_COMPOSER_COLLAPSED_KEY, String(composerCollapsed))
+    void persistComposerCollapsed(composerCollapsed)
+  }
+}
 
 export function setChatHudExpanded(expanded: boolean) {
   useChatHudStore.setState({ expanded })

@@ -22,7 +22,11 @@ test('canvas editor registers custom relation edges and right-drag marquee behav
 
 test('relationship preview and saved edges use editable curved paths', () => {
   assert.match(editorSource, /relationPreviewPath/)
-  assert.match(editorSource, /strokeDasharray="7 6"/)
+  assert.match(editorSource, /hsl\(var\(--primary\)\)/)
+  assert.match(editorSource, /canvas-relation-preview/)
+  assert.match(editorSource, /<circle/)
+  assert.match(editorSource, /z-20/)
+  assert.doesNotMatch(editorSource, /strokeDasharray="7 6"/)
   assert.match(edgeSource, /interactionWidth=\{24\}/)
   assert.match(edgeSource, /relation\.routeType === 'manual'/)
   assert.match(edgeSource, /canvas-history-checkpoint/)

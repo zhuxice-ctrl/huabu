@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, type PointerEventHandler } from 'react'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useWindowSize } from 'usehooks-ts'
-import { EditorLayout } from '../editor/editor-layout'
 import { LeftSidebar } from '../left-sidebar'
 import useCanvasStore from '@/stores/canvas'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -41,15 +41,11 @@ export function CanvasWorkspace() {
   const activeCanvasId = useCanvasStore(state => state.activeCanvasId)
   const {
     leftSidebarVisible,
-    rightSidebarVisible,
     leftSidebarTab,
     leftWidth,
-    documentPanelWidth,
     initSidebarState,
     toggleLeftSidebar,
-    toggleRightSidebar,
     startLeftResize,
-    startDocumentPanelResize,
   } = useSidebarStore()
 
   useEffect(initSidebarState, [initSidebarState])
@@ -58,9 +54,8 @@ export function CanvasWorkspace() {
     leftCollapsed: !leftSidebarVisible,
     leftWidth,
     leftTab: leftSidebarTab,
-    documentPanelCollapsed: !rightSidebarVisible,
-    documentPanelWidth,
-  }, windowWidth), [documentPanelWidth, leftSidebarTab, leftSidebarVisible, leftWidth, rightSidebarVisible, windowWidth])
+    documentPanelCollapsed: true,
+  }, windowWidth), [leftSidebarTab, leftSidebarVisible, leftWidth, windowWidth])
 
   useEffect(() => {
     // React Flow observes its container; notify it after a panel change without replacing the editor.
@@ -76,14 +71,26 @@ export function CanvasWorkspace() {
         {layout.leftCollapsed ? (
           <button
             type="button"
-            aria-label="Expand navigation"
-            className="h-full w-full text-xs text-muted-foreground hover:bg-muted"
+            aria-label="展开资源栏"
+            className="flex h-full w-full items-start justify-center pt-4 text-muted-foreground hover:bg-muted"
             disabled={layout.autoLeftCollapsed}
-            onClick={toggleLeftSidebar}
+            onClick={() => void toggleLeftSidebar()}
           >
-            ☰
+            <PanelLeftOpen className="size-4" />
           </button>
-        ) : <LeftSidebar />}
+        ) : (
+          <>
+            <LeftSidebar />
+            <button
+              type="button"
+              aria-label="收起资源栏"
+              className="absolute right-1 top-1/2 z-30 flex size-7 -translate-y-1/2 items-center justify-center rounded-md border bg-background/90 text-muted-foreground shadow-sm hover:bg-muted"
+              onClick={() => void toggleLeftSidebar()}
+            >
+              <PanelLeftClose className="size-4" />
+            </button>
+          </>
+        )}
       </aside>
       {!layout.leftCollapsed && (
         <ResizeDivider onPointerDown={startLeftResize} />
@@ -100,29 +107,8 @@ export function CanvasWorkspace() {
             Select or create a canvas to begin
           </div>
         )}
-        {layout.documentPanelCollapsed && (
-          <button
-            type="button"
-            aria-label="Expand documents"
-            className="absolute right-3 top-3 z-20 rounded border bg-background/90 px-2 py-1 text-xs text-muted-foreground shadow-sm hover:bg-muted"
-            disabled={layout.autoDocumentPanelCollapsed}
-            onClick={toggleRightSidebar}
-          >
-            Documents
-          </button>
-        )}
         <CanvasChatHud />
       </main>
-
-      {!layout.documentPanelCollapsed && (
-        <ResizeDivider onPointerDown={startDocumentPanelResize} />
-      )}
-      <aside
-        className="h-full shrink-0 overflow-hidden border-l bg-background"
-        style={{ width: layout.documentPanelWidth }}
-      >
-        {!layout.documentPanelCollapsed && <EditorLayout mode="documents-only" />}
-      </aside>
     </div>
   )
 }

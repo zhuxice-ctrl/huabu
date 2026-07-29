@@ -7,11 +7,30 @@ import { getCollapsedChatSummary } from '@/stores/chat-hud'
 
 interface CanvasChatSummaryProps {
   onExpand: () => void
+  variant?: 'summary' | 'compact'
+  statusLabel?: string
 }
 
-export const CanvasChatSummary = memo(function CanvasChatSummary({ onExpand }: CanvasChatSummaryProps) {
+export const CanvasChatSummary = memo(function CanvasChatSummary({ onExpand, variant = 'summary', statusLabel }: CanvasChatSummaryProps) {
   const chats = useChatStore(state => state.chats)
   const summary = useMemo(() => getCollapsedChatSummary(chats), [chats])
+
+  if (variant === 'compact') {
+    return (
+      <button
+        type="button"
+        onClick={onExpand}
+        className="flex h-10 w-full items-center gap-2 rounded-xl border bg-background/95 px-3 text-left shadow-xl backdrop-blur-xl hover:bg-muted/90"
+        aria-label="展开 AI 输入框"
+      >
+        <MessageCircleMore className="size-4 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+          {summary.assistant || summary.user || '在当前画布中开始提问'}
+        </span>
+        <span className="shrink-0 text-[11px] text-muted-foreground">{statusLabel || 'AI 已就绪'}</span>
+      </button>
+    )
+  }
 
   return (
     <button
