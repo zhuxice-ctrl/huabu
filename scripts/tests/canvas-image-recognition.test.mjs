@@ -54,3 +54,17 @@ test('Windows worker hashes image bytes, runs hybrid recognition, and exposes re
   assert.match(editor, /重新识别/)
   assert.match(editor, /enqueueCanvasImageRecognition/)
 })
+
+test('recognized image semantics are indexed and original images stay out of text context', async () => {
+  const [indexSource, chatSource] = await Promise.all([
+    readFile(new URL('../../src/db/canvas-index.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/chat/chat-send.tsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(indexSource, /getCanvasImageRecognition/)
+  assert.match(indexSource, /image-description/)
+  assert.match(chatSource, /collectCanvasImageInspectionCandidates/)
+  assert.match(chatSource, /canvas_inspect_sensitive_image/)
+  assert.match(chatSource, /agentHandler\.execute\(requestText, messages, combinedImageUrls\)/)
+  assert.doesNotMatch(chatSource, /additionalContext[^]*data:image/)
+  assert.match(chatSource, /canvas_image_evidence untrusted="true"/)
+})

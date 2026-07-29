@@ -188,6 +188,22 @@ test('exact range focus keeps field-local identity and fails safely for labels a
   assert.equal(isExactEvidenceTextSelection(textFocus, '  Different body  '), false)
 })
 
+test('image description evidence focuses its image node without a text range', () => {
+  const result = evidence('image-description', 0.9, {
+    nodeId: 'image-node',
+    contentType: 'image-description',
+    plainText: 'A screenshot of a canvas.',
+    startOffset: 0,
+    endOffset: 25,
+  })
+  const focus = evidenceFocusFor(
+    createEvidenceNavigationSession('canvas-a', viewport, [result]),
+    [result],
+  )
+  assert.equal(focus?.nodeId, 'image-node')
+  assert.equal(focus?.field, null)
+})
+
 test('query origin is captured before navigation and remains stable as the live viewport changes', async () => {
   const queryKey = 'chat:canvas-a:100'
   recordCanvasViewportSnapshot('canvas-a', viewport)

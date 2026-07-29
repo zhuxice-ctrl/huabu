@@ -43,12 +43,24 @@ export async function initCanvasImageRecognitionDb() {
   `)
 }
 
-export async function getCanvasImageRecognition(cacheKey: string) {
+export async function getCanvasImageRecognition(input: string | {
+  canvasId: string
+  nodeId: string
+  contentRevision: string
+}) {
   const db = await getDb()
-  const rows = await db.select<CanvasImageRecognitionRecord[]>(
-    'select * from canvas_image_recognition where cacheKey = $1 limit 1',
-    [cacheKey],
-  )
+  const rows = typeof input === 'string'
+    ? await db.select<CanvasImageRecognitionRecord[]>(
+        'select * from canvas_image_recognition where cacheKey = $1 limit 1',
+        [input],
+      )
+    : await db.select<CanvasImageRecognitionRecord[]>(
+        `select * from canvas_image_recognition
+         where canvasId = $1 and nodeId = $2 and contentRevision = $3
+           and status in ('recognized', 'ocr-only')
+         order by updatedAt desc limit 1`,
+        [input.canvasId, input.nodeId, input.contentRevision],
+      )
   return rows[0] ?? null
 }
 

@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { extractCanvasKnowledgeAnchors } from '../../src/lib/canvas/knowledge-extraction.ts'
+import {
+  collectCanvasImageInspectionCandidates,
+  extractCanvasKnowledgeAnchors,
+} from '../../src/lib/canvas/knowledge-extraction.ts'
 
 const node = (data, type = 'file') => ({
   id: 'node-1',
@@ -70,4 +73,26 @@ test('worker retries before replacing persisted anchors when extraction is incom
   assert.ok(transaction > failureGuard)
   assert.ok(replacement > failureGuard)
   assert.match(source.slice(failureGuard, transaction), /retryCanvasIndexJob[\s\S]*return 'retry'/)
+})
+
+test('image inspection candidates are unique and limited to retrieved image evidence', () => {
+  const imageNode = node({ label: 'Screenshot', imagePath: 'images/a.png', sensitive: true }, 'image')
+  const document = { nodes: [imageNode] }
+  const makeEvidence = (id, contentType) => ({
+    anchor: { id, canvasId: 'canvas-a', nodeId: imageNode.id, contentType },
+    score: 0.9,
+    matchedBy: ['keyword'],
+  })
+  assert.deepEqual(collectCanvasImageInspectionCandidates([
+    makeEvidence('ocr', 'image-ocr'),
+    makeEvidence('description', 'image-description'),
+    makeEvidence('label', 'field:label'),
+  ], document), [{
+    canvasId: 'canvas-a',
+    nodeId: 'node-1',
+    imagePath: 'images/a.png',
+    imageLabel: 'Screenshot',
+    sensitive: true,
+    evidenceIds: ['ocr', 'description'],
+  }])
 })

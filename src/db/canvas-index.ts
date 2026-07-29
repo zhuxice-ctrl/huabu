@@ -14,8 +14,12 @@ import {
 } from '@/lib/canvas/canvas-index-jobs'
 import {
   extractCanvasKnowledgeAnchors,
+  extractKnowledgeEntities,
+  extractKnowledgeTimeHints,
   type CanvasKnowledgeAnchor,
 } from '@/lib/canvas/knowledge-extraction'
+import { getCanvasImageRecognition } from './canvas-image-recognition'
+import { recognitionKnowledgeParts } from '@/lib/canvas/canvas-image-recognition'
 import { DEFAULT_CANVAS_DOCUMENT, normalizeCanvasDocument, type CanvasDocument } from '@/types/canvas'
 
 interface SqlExecutor {
@@ -365,6 +369,32 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
     await retryCanvasIndexJob(job, new Error(extraction.failures.map(failure => failure.message).join('; ')))
     return 'retry'
   }
+  const recognition = node.type === 'image'
+    ? await getCanvasImageRecognition({
+        canvasId: job.canvasId,
+        nodeId: job.nodeId,
+        contentRevision: currentRevision,
+      })
+    : null
+  const recognitionAnchors: CanvasKnowledgeAnchor[] = recognitionKnowledgeParts(
+    recognition ?? { ocrText: '', visionDescription: '' },
+  ).filter(part => part.contentType === 'image-ocr' || part.contentType === 'image-description')
+    .map((part, index) => ({
+    id: `${job.canvasId}:${job.nodeId}:${currentRevision}:image:${index}`,
+    workspaceId: 'default',
+    canvasId: job.canvasId,
+    nodeId: job.nodeId,
+    startOffset: 0,
+    endOffset: part.text.length,
+    nodePosition: { ...node.position },
+    contentRevision: currentRevision,
+    plainText: part.text,
+    entities: extractKnowledgeEntities(part.text),
+    timeHints: extractKnowledgeTimeHints(part.text),
+    contentType: part.contentType,
+    ...(node.data.sensitive === true ? { userMarkedSensitive: true } : {}),
+    }))
+  const completeAnchors = [...extraction.anchors, ...recognitionAnchors]
   const now = Date.now()
   const recorder = createStatementRecorder()
   await recorder.execute(
@@ -394,7 +424,7 @@ export async function processCanvasIndexJob(job: CanvasIndexJob): Promise<'compl
     job.canvasId,
     job.nodeId,
     currentRevision,
-    extraction.anchors,
+    completeAnchors,
     recorder,
   )
   await completeCanvasIndexJob(job.id, recorder)

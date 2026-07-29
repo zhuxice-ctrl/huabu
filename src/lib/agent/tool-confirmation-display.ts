@@ -68,6 +68,11 @@ const TOOL_CONFIRMATION_DISPLAY: Record<string, ToolConfirmationDisplayConfig> =
     summaryFields: ['transactionId', 'mode', 'impact', 'operations'],
     contentFields: ['operations'],
   },
+  canvas_inspect_sensitive_image: {
+    titleKey: 'record.chat.input.agent.confirmation.fallback.title',
+    descriptionKey: 'record.chat.input.agent.confirmation.fallback.description',
+    summaryFields: ['imageLabel', 'model'],
+  },
   note_delete_file: {
     titleKey: 'record.chat.input.agent.confirmation.tools.delete_markdown_file.title',
     descriptionKey: 'record.chat.input.agent.confirmation.tools.delete_markdown_file.description',

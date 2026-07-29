@@ -1,4 +1,46 @@
-import type { CanvasNode } from '@/types/canvas'
+import type { CanvasDocument, CanvasNode } from '@/types/canvas'
+import type { CanvasEvidence } from './canvas-retrieval'
+
+export interface CanvasImageInspectionCandidate {
+  canvasId: string
+  nodeId: string
+  imagePath: string
+  imageLabel: string
+  sensitive: boolean
+  evidenceIds: string[]
+}
+
+export function collectCanvasImageInspectionCandidates(
+  evidence: readonly CanvasEvidence[],
+  document: CanvasDocument | null | undefined,
+): CanvasImageInspectionCandidate[] {
+  if (!document) return []
+  const candidates = new Map<string, CanvasImageInspectionCandidate>()
+  for (const item of evidence) {
+    if (item.anchor.contentType !== 'image-ocr' && item.anchor.contentType !== 'image-description') continue
+    const node = document.nodes.find(candidate => (
+      candidate.id === item.anchor.nodeId && candidate.type === 'image'
+    ))
+    const imagePath = node?.data.imagePath
+    if (!node || typeof imagePath !== 'string' || !imagePath) continue
+    const current = candidates.get(node.id)
+    if (current) {
+      if (!current.evidenceIds.includes(item.anchor.id)) current.evidenceIds.push(item.anchor.id)
+      continue
+    }
+    candidates.set(node.id, {
+      canvasId: item.anchor.canvasId,
+      nodeId: node.id,
+      imagePath,
+      imageLabel: typeof node.data.label === 'string' && node.data.label.trim()
+        ? node.data.label
+        : '图片',
+      sensitive: node.data.sensitive === true,
+      evidenceIds: [item.anchor.id],
+    })
+  }
+  return [...candidates.values()]
+}
 
 export interface CanvasKnowledgeAnchor {
   id: string

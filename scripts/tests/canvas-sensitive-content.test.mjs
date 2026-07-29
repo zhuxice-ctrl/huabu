@@ -57,3 +57,14 @@ test('production chat stays fail-closed for redirects and preserves non-canvas R
   assert.match(source, /getContextForQueryInFolder[\s\S]*getContextForQuery/)
   assert.match(source, /buildSteeringContext\(text\)/)
 })
+
+test('sensitive canvas originals require a per-request confirmation display', async () => {
+  const [chatSource, displaySource] = await Promise.all([
+    readFile(new URL('../../src/app/core/main/chat/chat-send.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/lib/agent/tool-confirmation-display.ts', import.meta.url), 'utf8'),
+  ])
+  assert.match(chatSource, /requestConfirmation\('canvas_inspect_sensitive_image'/)
+  assert.match(chatSource, /decision !== 'approved'/)
+  assert.match(displaySource, /canvas_inspect_sensitive_image/)
+  assert.match(displaySource, /summaryFields:\s*\['imageLabel', 'model'\]/)
+})
