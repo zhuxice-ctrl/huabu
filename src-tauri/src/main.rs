@@ -19,6 +19,7 @@ mod printing;
 mod screenshot;
 mod skill_runtime;
 mod skills;
+mod sqlite_transaction;
 mod tray;
 mod window;
 
@@ -116,6 +117,9 @@ fn main() {
             run_ocr_provider,
             printing::print_webview,
             file_open::drain_pending_open_files,
+            sqlite_transaction::execute_sqlite_transaction,
+            sqlite_transaction::workspace_available_bytes,
+            sqlite_transaction::assert_no_reparse_points,
         ])
         // 应用设置 - 在所有插件和命令注册后
         .setup(app_setup::setup_app)

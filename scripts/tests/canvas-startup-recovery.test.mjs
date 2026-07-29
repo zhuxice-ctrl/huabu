@@ -210,10 +210,11 @@ test('settings expose recovery-only database actions and no export, share, or do
 })
 
 test('runtime recovery checks the actual attachment volume and native reparse points', async () => {
-  const [editor, recovery, native] = await Promise.all([
+  const [editor, recovery, native, desktopMain] = await Promise.all([
     readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../src/lib/recovery/startup-recovery.ts', import.meta.url), 'utf8'),
     readFile(new URL('../../src-tauri/src/sqlite_transaction.rs', import.meta.url), 'utf8'),
+    readFile(new URL('../../src-tauri/src/main.rs', import.meta.url), 'utf8'),
   ])
   assert.match(editor, /assertWorkspaceAttachmentWriteAllowed\([^,]+,\s*destinationDirectory\)/)
   const imageAdoption = editor.slice(
@@ -227,4 +228,15 @@ test('runtime recovery checks the actual attachment volume and native reparse po
   )
   assert.match(recovery, /assert_no_reparse_points/)
   assert.match(native, /FILE_ATTRIBUTE_REPARSE_POINT/)
+  for (const command of [
+    'execute_sqlite_transaction',
+    'workspace_available_bytes',
+    'assert_no_reparse_points',
+  ]) {
+    assert.match(
+      desktopMain,
+      new RegExp(`sqlite_transaction::${command}`),
+      `${command} must be registered by the desktop binary`,
+    )
+  }
 })
