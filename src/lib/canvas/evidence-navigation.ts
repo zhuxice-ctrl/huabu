@@ -162,6 +162,17 @@ function evidenceNavigationCommand(
   }
 }
 
+export function planInitialEvidenceNavigation(
+  session: EvidenceNavigationSession,
+  evidence: readonly CanvasEvidence[],
+  state: { completed: boolean; alreadyClaimed: boolean },
+): EvidenceNavigationCommand {
+  if (!state.completed || state.alreadyClaimed) {
+    return { session, showCandidates: false, focus: null }
+  }
+  return evidenceNavigationCommand(session, evidence)
+}
+
 export function planEvidenceNavigationReconciliation(
   session: EvidenceNavigationSession,
   canvasId: string,

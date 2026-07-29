@@ -13,6 +13,7 @@ import {
   isExactEvidenceTextSelection,
   planEvidenceCandidateConfirmation,
   planEvidenceFocusViewport,
+  planInitialEvidenceNavigation,
   planEvidenceMove,
   planEvidenceSelection,
   reconcileEvidenceNavigationSession,
@@ -79,6 +80,25 @@ test('pure navigation commands gate candidates and plan exact focus without inje
   assert.equal(confirmed.focus?.nodeId, 'node-candidate')
   assert.equal(moved.showCandidates, false)
   assert.equal(moved.focus?.nodeId, 'node-accepted')
+})
+
+test('completed answers auto-focus confident evidence exactly once', () => {
+  const results = [evidence('first', 0.9)]
+  const session = createEvidenceNavigationSession('canvas-a', viewport, results)
+  assert.equal(planInitialEvidenceNavigation(session, results, { completed: false, alreadyClaimed: false }).focus, null)
+  assert.equal(planInitialEvidenceNavigation(session, results, { completed: true, alreadyClaimed: false }).focus?.nodeId, 'node-first')
+  assert.equal(planInitialEvidenceNavigation(session, results, { completed: true, alreadyClaimed: true }).focus, null)
+})
+
+test('completed low-confidence answers expose candidates without moving', () => {
+  const results = [evidence('candidate', 0.4)]
+  const command = planInitialEvidenceNavigation(
+    createEvidenceNavigationSession('canvas-a', viewport, results),
+    results,
+    { completed: true, alreadyClaimed: false },
+  )
+  assert.equal(command.focus, null)
+  assert.equal(command.showCandidates, true)
 })
 
 test('focus viewport planning centers the source node without mutating its position', () => {

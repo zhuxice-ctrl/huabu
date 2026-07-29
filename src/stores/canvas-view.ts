@@ -18,6 +18,7 @@ export interface EvidenceNavigationViewState {
 interface CanvasViewState {
   viewports: Record<string, CanvasViewport>
   evidenceNavigation: Record<string, EvidenceNavigationViewState>
+  automaticEvidenceClaims: Record<string, string>
   linearControls: Record<string, LinearViewControls>
   savedViews: Record<string, SavedCanvasView[]>
 }
@@ -28,6 +29,7 @@ const viewportAnimations = new Map<string, number>()
 const useCanvasViewStore = create<CanvasViewState>(() => ({
   viewports: {},
   evidenceNavigation: {},
+  automaticEvidenceClaims: {},
   linearControls: {},
   savedViews: {},
 }))
@@ -117,6 +119,22 @@ export function releaseEvidenceNavigationState(navigationId: string) {
     delete evidenceNavigation[navigationId]
     return { evidenceNavigation }
   })
+}
+
+export function claimAutomaticEvidenceNavigation(navigationId: string, signature: string): boolean {
+  const claimed = useCanvasViewStore.getState().automaticEvidenceClaims[navigationId]
+  if (claimed === signature) return false
+  useCanvasViewStore.setState(state => ({
+    automaticEvidenceClaims: {
+      ...state.automaticEvidenceClaims,
+      [navigationId]: signature,
+    },
+  }))
+  return true
+}
+
+export function evidenceNavigationSignature(canvasId: string, anchorIds: readonly string[]) {
+  return JSON.stringify([canvasId, ...anchorIds])
 }
 
 export function useCanvasLinearViewControls(canvasId: string) {
