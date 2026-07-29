@@ -34,3 +34,23 @@ test('derived cache stores only recognition metadata and bound values', async ()
   assert.match(dbSource, /canvas_image_recognition/)
   assert.match(dbSource, /\$1/)
 })
+
+test('Windows worker hashes image bytes, runs hybrid recognition, and exposes retry state', async () => {
+  const [recognition, worker, nodes, editor] = await Promise.all([
+    readFile(new URL('../../src/lib/image-recognition.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/stores/canvas-image-recognition.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/canvas/nodes/canvas-nodes.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(recognition, /ocrText:\s*string/)
+  assert.match(recognition, /visionDescription:\s*string/)
+  assert.match(recognition, /'hybrid'\s*\|\s*'vlm'\s*\|\s*'ocr'\s*\|\s*'none'/)
+  assert.match(worker, /getFilePathOptions\(imagePath\)/)
+  assert.match(worker, /crypto\.subtle\.digest\('SHA-256'/)
+  assert.match(worker, /enableImageRecognition/)
+  assert.match(worker, /workerChain/)
+  assert.doesNotMatch(worker, /upsertCanvasImageRecognition\([^)]*(?:data:image|base64)/s)
+  assert.match(nodes, /识别中/)
+  assert.match(editor, /重新识别/)
+  assert.match(editor, /enqueueCanvasImageRecognition/)
+})

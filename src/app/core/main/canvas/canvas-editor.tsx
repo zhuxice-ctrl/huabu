@@ -214,6 +214,12 @@ import {
 } from '@/lib/canvas/collision-policy'
 import { CanvasSpatialIndex } from '@/lib/canvas/spatial-index'
 import { findNearestFreePlacement } from '@/lib/canvas/placement-policy'
+import { canvasNodeContentRevision } from '@/lib/canvas/canvas-index-jobs'
+import {
+  enqueueCanvasImageRecognition,
+  useCanvasImageRecognitionStore,
+} from '@/stores/canvas-image-recognition'
+import useSettingStore from '@/stores/setting'
 import {
   mergeNoteReferenceMarks,
   NOTE_REFERENCE_MIME,
@@ -777,6 +783,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const initialHistory = projects.find(project => project.id === canvasId)?.history
   const fileTree = useArticleStore(state => state.fileTree)
   const loadFileTree = useArticleStore(state => state.loadFileTree)
+  const enableImageRecognition = useSettingStore(state => state.enableImageRecognition)
+  const imageMethodModel = useSettingStore(state => state.imageMethodModel)
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<FlowCanvasNode>(
     ((document?.nodes || []) as FlowCanvasNode[]).map(node => (
       node.draggable === false ? { ...node, draggable: true } : node
@@ -883,6 +891,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const transientEvidenceMoveRef = useRef(false)
   const transientEvidenceMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const evidenceHighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const recognitionQueuedRevisionsRef = useRef(new Set<string>())
   const captureCurrentViewport = useCallback(() => {
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return null
@@ -966,6 +975,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const selectedFreehandIds = selectedFreehandNodes.map(node => node.id).join(':')
   const selectedOnlyFreehand = selectedNodeCount > 0 && selectedFreehandNodes.length === selectedNodeCount
   const selectedStyleNode = nodes.find(node => node.selected && node.type !== 'freehand')
+  const selectedImageRecognitionStatus = useCanvasImageRecognitionStore(state => (
+    selectedStyleNode?.type === 'image'
+      ? state.statuses[`${canvasId}:${selectedStyleNode.id}`]
+      : undefined
+  ))
   const selectedStyleNodes = nodes.filter(node => node.selected && node.type !== 'freehand')
   const selectedTextStyleNodes = selectedStyleNodes.filter(node => TEXT_CAPABLE_NODE_TYPES.has(node.type))
   const selectedFontSizes = selectedTextStyleNodes.map(node => (
@@ -1069,6 +1083,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       const visual = nodeVisualStates.get(node.id)
       return {
         ...node,
+        data: node.type === 'image' ? { ...node.data, canvasId } : node.data,
         className: cn(
           node.className,
           visual === 'invalid' && 'canvas-geometry-invalid',
@@ -1079,7 +1094,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         ),
       }
     })
-  }, [evidenceHighlightNodeId, legacyConflictIds, nodeVisualStates, nodes, placementPreview, previewSnapshot])
+  }, [canvasId, evidenceHighlightNodeId, legacyConflictIds, nodeVisualStates, nodes, placementPreview, previewSnapshot])
   const displayEdges = useMemo(() => (previewSnapshot?.edges || edges).map(edge => {
     const relation = edge.data as CanvasRelationData | undefined
     if (!relation) return edge
@@ -1347,6 +1362,22 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     if (!reactFlowReady) return
     return markCanvasEvidenceRuntimeReady(canvasId)
   }, [canvasId, reactFlowReady])
+
+  useEffect(() => {
+    if (!enableImageRecognition) return
+    for (const node of nodes) {
+      if (node.type !== 'image') continue
+      const contentRevision = canvasNodeContentRevision(node as CanvasNode)
+      const queueKey = `${canvasId}:${node.id}:${contentRevision}:${imageMethodModel || 'local-ocr'}`
+      if (recognitionQueuedRevisionsRef.current.has(queueKey)) continue
+      recognitionQueuedRevisionsRef.current.add(queueKey)
+      void enqueueCanvasImageRecognition({
+        canvasId,
+        node: node as CanvasNode,
+        contentRevision,
+      })
+    }
+  }, [canvasId, enableImageRecognition, imageMethodModel, nodes])
 
   useEffect(() => {
     setEvidenceHighlightNodeId(null)
@@ -3693,6 +3724,26 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               />
             )}
             {contextTarget === 'node' && <ContextMenuSeparator />}
+            {contextTarget === 'node' && selectedStyleNode?.type === 'image' && (
+              <>
+                <ContextMenuGroup>
+                  <ContextMenuItem
+                    disabled={selectedImageRecognitionStatus === 'running'}
+                    onSelect={() => {
+                      const contentRevision = canvasNodeContentRevision(selectedStyleNode as CanvasNode)
+                      void enqueueCanvasImageRecognition({
+                        canvasId,
+                        node: selectedStyleNode as CanvasNode,
+                        contentRevision,
+                      }, { force: true })
+                    }}
+                  >
+                    {selectedImageRecognitionStatus ? '重新识别' : '识别图片'}
+                  </ContextMenuItem>
+                </ContextMenuGroup>
+                <ContextMenuSeparator />
+              </>
+            )}
             {contextTarget === 'pane' && (
               <ContextMenuGroup>
                 <ContextMenuItem onSelect={() => setTool('select')}>选择模式</ContextMenuItem>

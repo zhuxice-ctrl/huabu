@@ -7,7 +7,9 @@ export type ImageRecognitionStage = 'vlm' | 'ocr' | 'description'
 export interface ImageRecognitionResult {
   content: string
   desc: string
-  method: 'vlm' | 'ocr' | 'none'
+  ocrText: string
+  visionDescription: string
+  method: 'hybrid' | 'vlm' | 'ocr' | 'none'
 }
 
 interface RecognizeImageOptions {
@@ -31,6 +33,8 @@ async function recognizeWithOcr(
     return {
       content: '',
       desc: '',
+      ocrText: '',
+      visionDescription: '',
       method: 'none',
     }
   }
@@ -47,6 +51,8 @@ async function recognizeWithOcr(
   return {
     content,
     desc,
+    ocrText: content,
+    visionDescription: shouldGenerateDescription && desc !== content ? desc : '',
     method: 'ocr',
   }
 }
@@ -57,23 +63,34 @@ export async function recognizeImageWithFallback({
   shouldGenerateDescription = false,
   onProgress,
 }: RecognizeImageOptions): Promise<ImageRecognitionResult> {
+  let ocrText = ''
+  let visionDescription = ''
+
+  if (imagePath) {
+    try {
+      const ocrResult = await recognizeWithOcr(imagePath, shouldGenerateDescription, onProgress)
+      ocrText = ocrResult.ocrText
+      visionDescription = ocrResult.visionDescription
+    } catch {
+      console.warn('Local OCR image recognition failed')
+    }
+  }
+
   try {
     const vlmConfig = base64 ? await getAISettings('imageMethodModel') : undefined
     if (base64 && vlmConfig?.model) {
       onProgress?.('vlm')
-      const content = await tryRecognizeWithVlm(base64)
-
-      if (content) {
-        return {
-          content,
-          desc: content,
-          method: 'vlm',
-        }
-      }
+      visionDescription = await tryRecognizeWithVlm(base64) || visionDescription
     }
-  } catch (error) {
-    console.warn('VLM image recognition failed, falling back to OCR:', error)
+  } catch {
+    console.warn('VLM image recognition failed')
   }
 
-  return recognizeWithOcr(imagePath, shouldGenerateDescription, onProgress)
+  return {
+    content: ocrText || visionDescription,
+    desc: visionDescription || ocrText,
+    ocrText,
+    visionDescription,
+    method: visionDescription && ocrText ? 'hybrid' : visionDescription ? 'vlm' : ocrText ? 'ocr' : 'none',
+  }
 }

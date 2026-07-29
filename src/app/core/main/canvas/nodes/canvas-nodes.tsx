@@ -14,6 +14,7 @@ import useMarkStore from '@/stores/mark'
 import { cn, convertImageByWorkspace } from '@/lib/utils'
 import { getFilePathOptions } from '@/lib/workspace'
 import { normalizeContentScaleForRead } from '@/lib/canvas/content-ingest'
+import { useCanvasImageRecognitionStore } from '@/stores/canvas-image-recognition'
 import {
   createNoteReferenceLinkData,
   mergeNoteReferenceMarks,
@@ -449,6 +450,7 @@ export const TodoCanvasNode = memo(function TodoCanvasNode({ id, data, selected 
 
 export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   const [imageUrl, setImageUrl] = useState('')
+  const recognitionStatus = useCanvasImageRecognitionStore(state => state.statuses[`${String(data.canvasId ?? '')}:${id}`])
 
   useEffect(() => {
     let cancelled = false
@@ -466,6 +468,19 @@ export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data, selecte
     <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-0 min-w-0 overflow-hidden shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="image" />
       <ConnectionHandles />
+      {recognitionStatus && (
+        <span className="pointer-events-none absolute right-2 top-2 z-10 rounded-full bg-background/90 px-2 py-0.5 text-[10px] text-muted-foreground shadow-sm">
+          {recognitionStatus === 'running'
+            ? '识别中…'
+            : recognitionStatus === 'recognized'
+              ? '已识别'
+              : recognitionStatus === 'ocr-only'
+                ? 'OCR 已完成'
+                : recognitionStatus === 'failed'
+                  ? '识别失败'
+                  : '等待识别'}
+        </span>
+      )}
       {imageUrl ? (
         <Image
           src={imageUrl}
