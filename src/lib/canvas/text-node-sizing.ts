@@ -16,7 +16,9 @@ export function resolveTextNodeHeight(input: {
 }): number {
   const minimum = normalizeTextManualMinHeight(input.manualMinHeight, MIN_TEXT_NODE_DIMENSION)
   if (!Number.isFinite(input.measuredContentHeight) || !Number.isFinite(input.chromeHeight)) return minimum
-  return Math.max(minimum, Math.ceil(input.measuredContentHeight + input.chromeHeight))
+  const measuredHeight = input.measuredContentHeight + input.chromeHeight
+  if (!Number.isFinite(measuredHeight)) return minimum
+  return Math.max(minimum, Math.ceil(measuredHeight))
 }
 
 export function resolveTextResize(input: {
@@ -26,11 +28,12 @@ export function resolveTextResize(input: {
   changedWidth: boolean
   changedHeight: boolean
 }) {
+  const previousMinimum = normalizeTextManualMinHeight(input.previousManualMinHeight, input.height)
   return {
-    width: Math.max(MIN_TEXT_NODE_DIMENSION, input.width),
-    manualMinHeight: input.changedHeight
-      ? Math.max(MIN_TEXT_NODE_DIMENSION, input.height)
-      : normalizeTextManualMinHeight(input.previousManualMinHeight, input.height),
+    width: finitePositive(input.width) ? input.width : MIN_TEXT_NODE_DIMENSION,
+    manualMinHeight: input.changedHeight && finitePositive(input.height)
+      ? input.height
+      : previousMinimum,
     shouldMeasure: input.changedWidth || input.changedHeight,
   }
 }
