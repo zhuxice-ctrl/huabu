@@ -80,6 +80,7 @@ test('AI composer collapses to a persisted compact bar without clearing drafts',
   assert.match(store, /canvasChatHudComposerCollapsed/)
   assert.match(store, /Store\.load\('store\.json'\)/)
   assert.match(store, /setChatHudComposerCollapsed/)
+  assert.match(store, /composerPreferenceMutation/)
   assert.match(hud, /composerCollapsed/)
   assert.match(hud, /收起 AI 输入框/)
   assert.match(hud, /展开 AI 输入框/)

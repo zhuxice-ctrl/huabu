@@ -165,19 +165,22 @@ const useChatHudStore = create<ChatHudState>(() => ({
 }))
 
 let chatHudPreferencesInitialized = false
+let composerPreferenceMutation = 0
 
 export function initChatHudPreferences() {
   if (chatHudPreferencesInitialized || typeof window === 'undefined') return
   chatHudPreferencesInitialized = true
+  const mutationAtLoad = composerPreferenceMutation
   void Store.load('store.json').then(async store => {
     const persisted = await store.get<boolean>(CHAT_HUD_COMPOSER_COLLAPSED_KEY)
-    if (typeof persisted !== 'boolean') return
+    if (typeof persisted !== 'boolean' || composerPreferenceMutation !== mutationAtLoad) return
     localStorage.setItem(CHAT_HUD_COMPOSER_COLLAPSED_KEY, String(persisted))
     useChatHudStore.setState({ composerCollapsed: persisted })
   })
 }
 
 export function setChatHudComposerCollapsed(composerCollapsed: boolean) {
+  composerPreferenceMutation += 1
   useChatHudStore.setState({
     composerCollapsed,
     ...(composerCollapsed ? { expanded: false, historyOpen: false } : {}),

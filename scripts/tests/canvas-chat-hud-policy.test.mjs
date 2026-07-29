@@ -63,10 +63,40 @@ test('10,000-message histories mount forty initially and keep a bounded window',
   )
 })
 
-test('session HUD defaults collapsed and stores drafts and scroll positions only in memory', async () => {
+test('session HUD defaults collapsed and keeps draft data on its memory-only path', async () => {
   const source = await import('node:fs/promises').then(fs => fs.readFile(moduleUrl, 'utf8'))
   assert.match(source, /expanded: false/)
   assert.match(source, /drafts: \{\}/)
   assert.match(source, /scrollPositions: \{\}/)
-  assert.doesNotMatch(source, /persist\(|localStorage|Store\.load|insertChat|upload/)
+  const memoryOnlyStart = source.indexOf('export function getChatHudDraft')
+  assert.ok(memoryOnlyStart >= 0)
+  const memoryOnlySource = source.slice(memoryOnlyStart)
+  assert.doesNotMatch(memoryOnlySource, /localStorage|Store\.load|persistComposerCollapsed|insertChat|upload/)
+})
+
+test('collapsing the composer preserves an existing draft and closes transient HUD layers', async () => {
+  const {
+    default: useChatHudStore,
+    clearChatHudDraft,
+    saveChatHudDraft,
+    setChatHudComposerCollapsed,
+  } = await import(moduleUrl.href)
+  const key = 'test-conversation:canvas-a'
+  const draft = {
+    text: '保留这份草稿',
+    attachedImages: [],
+    fileAttachments: [],
+    linkedResource: null,
+    pendingQuote: null,
+    editorSelectionQuote: null,
+  }
+  useChatHudStore.setState({ expanded: true, historyOpen: true })
+  saveChatHudDraft(key, draft)
+  setChatHudComposerCollapsed(true)
+  const state = useChatHudStore.getState()
+  assert.equal(state.composerCollapsed, true)
+  assert.equal(state.expanded, false)
+  assert.equal(state.historyOpen, false)
+  assert.deepEqual(state.drafts[key], draft)
+  clearChatHudDraft(key)
 })
