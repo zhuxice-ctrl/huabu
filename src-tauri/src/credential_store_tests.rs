@@ -112,6 +112,22 @@ fn credential_scope_rejects_mismatched_provider_and_header_references() {
     .expect_err("provider mismatch rejected")
     .contains("Credential provider mismatch"));
 
+    let provider_with_header_envelope = CredentialEnvelope {
+        version: 1,
+        provider_key: "openai".to_string(),
+        header_name: Some("Authorization".to_string()),
+        base_url: "https://api.openai.com/v1".to_string(),
+        secret: "example-secret".to_string(),
+    };
+    assert!(validate_credential_scope(
+        &parsed_provider,
+        &provider_with_header_envelope,
+        "https://api.openai.com/v1",
+        None,
+    )
+    .expect_err("provider envelope header metadata rejected")
+    .contains("unexpected header metadata"));
+
     let header_reference = custom_header_credential_ref("openai", "X-Api-Key");
     let parsed_header = parse_credential_ref(&header_reference).expect("header ref parses");
     let header_envelope = CredentialEnvelope {

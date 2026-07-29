@@ -145,7 +145,7 @@ pub fn credential_target_name(reference: &str) -> Result<String, String> {
     Ok(format!("zeroxb/model-credential/{reference}"))
 }
 
-pub fn validate_credential_scope(
+fn validate_credential_scope(
     parsed: &CredentialReference,
     envelope: &CredentialEnvelope,
     requested_base_url: &str,
@@ -164,6 +164,11 @@ pub fn validate_credential_scope(
         envelope.header_name.as_deref(),
     ) {
         (CredentialKind::ProviderApiKey, None, None) => {}
+        (CredentialKind::ProviderApiKey, None, Some(_)) => {
+            return Err(
+                "Provider credential envelope contains unexpected header metadata.".to_string(),
+            );
+        }
         (
             CredentialKind::CustomHeader { header_name },
             Some(expected_header),
