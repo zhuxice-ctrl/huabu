@@ -173,6 +173,7 @@ import {
   RELATION_LONG_PRESS_MS,
   type CanvasRect,
 } from '@/lib/canvas/gesture-policy'
+import { resolveTextResize } from '@/lib/canvas/text-node-sizing'
 import {
   armContextMenuSuppression,
   canStartRelationGesture,
@@ -819,6 +820,24 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const updateFlowNodes = useCallback((updater: Parameters<typeof setNodes>[0]) => {
     setNodes(updater)
   }, [setNodes])
+  useEffect(() => {
+    const applyMeasuredHeight = (payload: unknown) => {
+      if (!payload || typeof payload !== 'object') return
+      const { nodeId, height } = payload as { nodeId?: unknown; height?: unknown }
+      if (typeof nodeId !== 'string' || typeof height !== 'number') return
+      updateFlowNodes(current => current.map(node => (
+        node.id === nodeId
+        && node.type === 'text'
+        && !textResizeOriginRef.current.has(nodeId)
+        && Number.isFinite(height)
+        && Math.abs((node.height ?? 0) - height) >= 1
+          ? { ...node, height, style: { ...node.style, height } }
+          : node
+      )))
+    }
+    emitter.on('canvas-text-node-measure', applyMeasuredHeight)
+    return () => emitter.off('canvas-text-node-measure', applyMeasuredHeight)
+  }, [updateFlowNodes])
   const [marqueePreview, setMarqueePreview] = useState<MarqueePointerSession | null>(null)
   const [relationPreview, setRelationPreview] = useState<RelationPointerSession | null>(null)
   const [relationEditor, setRelationEditor] = useState<RelationEditorState | null>(null)
@@ -832,6 +851,11 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const pasteOffsetRef = useRef(0)
   const geometrySessionRef = useRef<GeometrySession | null>(null)
   const decorativeResizingRef = useRef(false)
+  const textResizeOriginRef = useRef(new Map<string, {
+    width: number
+    height: number
+    manualMinHeight: number
+  }>())
   const spatialIndexRef = useRef(new CanvasSpatialIndex())
   const authoritativeNodesRef = useRef(nodes)
   const latestNodesRef = useRef(nodes)
@@ -1575,6 +1599,18 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
 
   const applyGeometryNodeChanges = useCallback((changes: NodeChange<FlowCanvasNode>[]) => {
     const nodeById = new Map(nodes.map(node => [node.id, node]))
+    for (const change of changes) {
+      if (change.type !== 'dimensions' || change.resizing !== true) continue
+      const node = nodeById.get(change.id)
+      if (!node || node.type !== 'text' || textResizeOriginRef.current.has(change.id)) continue
+      textResizeOriginRef.current.set(change.id, {
+        width: node.width ?? change.dimensions?.width ?? 1,
+        height: node.height ?? change.dimensions?.height ?? 1,
+        manualMinHeight: typeof node.data.textManualMinHeight === 'number'
+          ? node.data.textManualMinHeight
+          : node.height ?? change.dimensions?.height ?? 1,
+      })
+    }
     const startsSolidResize = changes.find(change => {
       if (change.type !== 'dimensions' || change.resizing !== true) return false
       const node = nodeById.get(change.id)
@@ -1625,13 +1661,46 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     })
     onNodesChangeBase(passThroughChanges)
 
+    const completedTextResizes = changes.filter(change => (
+      change.type === 'dimensions'
+      && change.resizing === false
+      && nodeById.get(change.id)?.type === 'text'
+    ))
+    if (completedTextResizes.length > 0) {
+      updateFlowNodes(current => current.map(node => {
+        const change = completedTextResizes.find(candidate => (
+          candidate.type === 'dimensions' && candidate.id === node.id
+        ))
+        if (!change || change.type !== 'dimensions') return node
+        const origin = textResizeOriginRef.current.get(node.id)
+        const width = change.dimensions?.width ?? node.width ?? origin?.width ?? 1
+        const height = change.dimensions?.height ?? node.height ?? origin?.height ?? 1
+        const resize = resolveTextResize({
+          width,
+          height,
+          previousManualMinHeight: origin?.manualMinHeight
+            ?? (typeof node.data.textManualMinHeight === 'number' ? node.data.textManualMinHeight : height),
+          changedWidth: origin ? Math.abs(width - origin.width) >= 1 : true,
+          changedHeight: origin ? Math.abs(height - origin.height) >= 1 : true,
+        })
+        textResizeOriginRef.current.delete(node.id)
+        return {
+          ...node,
+          width: resize.width,
+          height,
+          style: { ...node.style, width: resize.width, height },
+          data: { ...node.data, textManualMinHeight: resize.manualMinHeight },
+        }
+      }))
+    }
+
     if (session?.kind === 'resize'
       && changes.some(change => change.type === 'dimensions'
         && change.id === session.nodeId && change.resizing === false)) {
       finalizeResizeGeometrySession()
     }
   }, [captureCurrentViewport, createGeometrySessionBase, evaluateResizeGeometrySession,
-    finalizeResizeGeometrySession, nodes, onNodesChangeBase, pushHistory])
+    finalizeResizeGeometrySession, nodes, onNodesChangeBase, pushHistory, updateFlowNodes])
 
   const onNodesChange = useCallback((changes: NodeChange<FlowCanvasNode>[]) => {
     applyGeometryNodeChanges(changes)
@@ -1854,6 +1923,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         selected: true,
         data: {
           label: '',
+          textManualMinHeight: rect.height,
           backgroundColor: '#F2F1ED',
           textColor: '#202321',
           borderColor: '#D8D6CF',

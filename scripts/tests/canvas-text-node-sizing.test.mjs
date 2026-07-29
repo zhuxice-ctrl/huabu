@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import {
   normalizeTextManualMinHeight,
@@ -36,4 +37,17 @@ test('invalid resize dimensions fall back safely without replacing the manual mi
   assert.deepEqual(resolveTextResize({ width: 240, height: Number.POSITIVE_INFINITY, previousManualMinHeight: 73, changedWidth: false, changedHeight: true }), {
     width: 240, manualMinHeight: 73, shouldMeasure: true,
   })
+})
+
+test('renderer measures wrapped text and editor preserves drawn and manual minimum height', async () => {
+  const [renderer, editor] = await Promise.all([
+    readFile(new URL('../../src/app/core/main/canvas/nodes/canvas-nodes.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(renderer, /ResizeObserver/)
+  assert.match(renderer, /overflowWrap:\s*'anywhere'/)
+  assert.match(renderer, /canvas-text-node-measure/)
+  assert.match(editor, /textManualMinHeight:\s*rect\.height/)
+  assert.match(editor, /resolveTextResize/)
+  assert.match(editor, /change\.resizing === false/)
 })

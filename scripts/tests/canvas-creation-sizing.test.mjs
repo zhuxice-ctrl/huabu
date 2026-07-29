@@ -148,6 +148,10 @@ test('AI operation adapter forwards one valid requested dimension without discar
 test('direct creation sessions retain one viewport while duplicate and imports retain stored geometry', () => {
   const editor = readFileSync(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8')
   const renderer = readFileSync(new URL('../../src/app/core/main/canvas/nodes/canvas-nodes.tsx', import.meta.url), 'utf8')
+  const drawCreation = editor.slice(
+    editor.indexOf('const finalizeDrawGeometrySession'),
+    editor.indexOf('const setRelationTargetHighlight'),
+  )
 
   assert.match(editor, /interface DrawDraft[\s\S]*viewport: ViewportSnapshot/)
   assert.match(editor, /materializeIngestDraft\(draft, capturedViewport\)/)
@@ -158,4 +162,8 @@ test('direct creation sessions retain one viewport while duplicate and imports r
   assert.match(renderer, /function contentScale\(data: CanvasNodeData\)/)
   assert.match(renderer, /padding: 8 \* contentScale\(data\)/)
   assert.doesNotMatch(editor, /onNodesChange[\s\S]{0,900}contentScale:/)
+  assert.match(drawCreation, /width:\s*rect\.width/)
+  assert.match(drawCreation, /height:\s*rect\.height/)
+  assert.doesNotMatch(drawCreation, /width:\s*320/)
+  assert.doesNotMatch(drawCreation, /height:\s*96/)
 })

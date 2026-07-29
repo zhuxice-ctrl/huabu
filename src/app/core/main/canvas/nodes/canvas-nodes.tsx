@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import Image from 'next/image'
 import { Handle, NodeResizer, Position, useReactFlow, type Node, type NodeProps } from '@xyflow/react'
 import { CheckSquare2, ExternalLink, FileArchive, FileText, ImageIcon, Square } from 'lucide-react'
@@ -27,6 +27,10 @@ import {
   isExactEvidenceTextSelection,
   type EvidenceFocus,
 } from '@/lib/canvas/evidence-navigation'
+import {
+  normalizeTextManualMinHeight,
+  resolveTextNodeHeight,
+} from '@/lib/canvas/text-node-sizing'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
 
@@ -184,6 +188,28 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
     return () => emitter.off('canvas-focus-node', focusNode)
   }, [id])
 
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const publish = () => {
+      const bounds = textarea.getBoundingClientRect()
+      const previousHeight = textarea.style.height
+      textarea.style.height = '0px'
+      const measuredContentHeight = textarea.scrollHeight
+      textarea.style.height = previousHeight
+      const nextHeight = resolveTextNodeHeight({
+        measuredContentHeight,
+        chromeHeight: Math.max(0, bounds.height - textarea.clientHeight) + 16 * contentScale(data),
+        manualMinHeight: normalizeTextManualMinHeight(data.textManualMinHeight, bounds.height),
+      })
+      emitter.emit('canvas-text-node-measure', { nodeId: id, height: nextHeight })
+    }
+    publish()
+    const observer = new ResizeObserver(publish)
+    observer.observe(textarea)
+    return () => observer.disconnect()
+  }, [data.contentScale, data.fontSize, data.label, data.textManualMinHeight, id])
+
   useEffect(() => {
     const focusEvidence = (focus: EvidenceFocus) => {
       if (focus.nodeId !== id) return
@@ -226,7 +252,12 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
       <textarea
         ref={textareaRef}
         className="nodrag nowheel size-full resize-none bg-transparent text-left leading-6 text-inherit outline-none placeholder:text-muted-foreground"
-        style={{ fontSize: data.fontSize }}
+        style={{
+          fontSize: data.fontSize,
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word',
+          overflow: 'hidden',
+        }}
         value={data.label || ''}
         placeholder="输入内容…"
         onFocus={() => emitter.emit('canvas-history-checkpoint')}
