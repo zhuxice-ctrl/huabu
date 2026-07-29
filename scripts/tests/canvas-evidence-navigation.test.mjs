@@ -276,3 +276,17 @@ test('evidence navigation uses pure commands and static store/runtime boundaries
   assert.match(runtimeSource, /useCanvasStore\.setState\(\{ activeCanvasId: focus\.canvasId \}\)/)
   assert.doesNotMatch(viewStoreSource, /updateDocument|updateHistory|pushHistory/)
 })
+
+test('chat completion triggers one focus only after destination canvas readiness', async () => {
+  const [navigator, chat, runtime, editor] = await Promise.all([
+    readFile(new URL('../../src/app/core/main/canvas/canvas-evidence-navigator.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/chat/chat-content.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/lib/canvas/evidence-navigation-runtime.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(chat, /completed=\{chat\.completionState === 'complete'\}/)
+  assert.match(navigator, /claimAutomaticEvidenceNavigation/)
+  assert.match(navigator, /planInitialEvidenceNavigation/)
+  assert.match(runtime, /waitForCanvasEvidenceRuntime/)
+  assert.match(editor, /markCanvasEvidenceRuntimeReady\(canvasId\)/)
+})

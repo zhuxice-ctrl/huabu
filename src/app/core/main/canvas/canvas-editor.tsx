@@ -153,6 +153,7 @@ import {
   recordCanvasViewportSnapshot,
   type EvidenceFocus,
 } from '@/lib/canvas/evidence-navigation'
+import { markCanvasEvidenceRuntimeReady } from '@/lib/canvas/evidence-navigation-runtime'
 import {
   animateCanvasViewportState,
   initializeCanvasViewportState,
@@ -804,6 +805,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [importContentOpen, setImportContentOpen] = useState(false)
   const [importContentDraft, setImportContentDraft] = useState('')
   const [contextTarget, setContextTarget] = useState<'pane' | 'node' | 'edge'>('pane')
+  const [reactFlowReady, setReactFlowReady] = useState(false)
+  const [evidenceHighlightNodeId, setEvidenceHighlightNodeId] = useState<string | null>(null)
   const [geometryUi, setDrawDraft] = useState<GeometryUiState>({
     drawDraft: null,
     snapGuides: [],
@@ -879,6 +882,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const { screenToFlowPosition, getNodesBounds, fitView } = useReactFlow()
   const transientEvidenceMoveRef = useRef(false)
   const transientEvidenceMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const evidenceHighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const captureCurrentViewport = useCallback(() => {
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return null
@@ -1070,10 +1074,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           visual === 'invalid' && 'canvas-geometry-invalid',
           visual !== 'invalid' && legacyConflictIds.has(node.id) && 'canvas-legacy-conflict',
           placementIds.has(node.id) && 'canvas-placement-preview',
+          evidenceHighlightNodeId === node.id
+            && 'canvas-evidence-highlight !ring-4 !ring-primary/60 !ring-offset-2 !ring-offset-background',
         ),
       }
     })
-  }, [legacyConflictIds, nodeVisualStates, nodes, placementPreview, previewSnapshot])
+  }, [evidenceHighlightNodeId, legacyConflictIds, nodeVisualStates, nodes, placementPreview, previewSnapshot])
   const displayEdges = useMemo(() => (previewSnapshot?.edges || edges).map(edge => {
     const relation = edge.data as CanvasRelationData | undefined
     if (!relation) return edge
@@ -1338,6 +1344,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   }, [canvasId, viewport])
 
   useEffect(() => {
+    if (!reactFlowReady) return
+    return markCanvasEvidenceRuntimeReady(canvasId)
+  }, [canvasId, reactFlowReady])
+
+  useEffect(() => {
+    setEvidenceHighlightNodeId(null)
+    return () => {
+      if (evidenceHighlightTimerRef.current) clearTimeout(evidenceHighlightTimerRef.current)
+      evidenceHighlightTimerRef.current = null
+    }
+  }, [canvasId])
+
+  useEffect(() => {
     const armTransientEvidenceMove = () => {
       transientEvidenceMoveRef.current = true
       if (transientEvidenceMoveTimerRef.current) clearTimeout(transientEvidenceMoveTimerRef.current)
@@ -1368,6 +1387,12 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const focusEvidence = (focus: EvidenceFocus) => {
       if (focus.canvasId !== canvasId) return
       if (!focusNode(focus.nodeId, true)) return
+      setEvidenceHighlightNodeId(focus.nodeId)
+      if (evidenceHighlightTimerRef.current) clearTimeout(evidenceHighlightTimerRef.current)
+      evidenceHighlightTimerRef.current = setTimeout(() => {
+        setEvidenceHighlightNodeId(current => current === focus.nodeId ? null : current)
+        evidenceHighlightTimerRef.current = null
+      }, 1_200)
       if (focus.field === 'text') emitter.emit('canvas-select-evidence-range', focus)
     }
     const returnToEvidenceOrigin = ({
@@ -3537,7 +3562,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           setEdgeEditorOpen(true)
         }}
         onPaneContextMenu={() => setContextTarget('pane')}
-        onInit={() => recordCanvasViewportSnapshot(canvasId, viewport)}
+        onInit={() => {
+          recordCanvasViewportSnapshot(canvasId, viewport)
+          setReactFlowReady(true)
+        }}
         onViewportChange={nextViewport => publishCanvasViewportState(canvasId, nextViewport)}
         onMove={(_event, viewport) => recordCanvasViewportSnapshot(canvasId, viewport)}
         onMoveEnd={(_event, viewport) => {

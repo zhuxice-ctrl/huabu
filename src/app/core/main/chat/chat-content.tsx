@@ -318,6 +318,7 @@ function CanvasEvidenceChips({ chat }: { chat: Chat }) {
       canvasId={canvasId}
       evidence={evidence}
       originViewport={originViewport}
+      completed={chat.completionState === 'complete'}
     />
   )
 }

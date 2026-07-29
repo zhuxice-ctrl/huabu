@@ -9,6 +9,7 @@ import {
   planEvidenceMove,
   planEvidenceNavigationReconciliation,
   planEvidenceSelection,
+  planInitialEvidenceNavigation,
   reconcileEvidenceNavigationSession,
   returnToEvidenceOrigin,
   type EvidenceNavigationCommand,
@@ -20,6 +21,8 @@ import {
 import type { CanvasEvidence } from '@/lib/canvas/canvas-retrieval'
 import {
   applyEvidenceNavigationCommand,
+  claimAutomaticEvidenceNavigation,
+  evidenceNavigationSignature,
   releaseEvidenceNavigationState,
   useEvidenceNavigationViewState,
 } from '@/stores/canvas-view'
@@ -30,7 +33,7 @@ function executeEvidenceNavigationCommand(
   command: EvidenceNavigationCommand,
 ) {
   applyEvidenceNavigationCommand(navigationId, command)
-  if (command.focus) executeCanvasEvidenceFocus(command.focus)
+  if (command.focus) void executeCanvasEvidenceFocus(command.focus)
 }
 
 export function CanvasEvidenceNavigator({
@@ -38,11 +41,13 @@ export function CanvasEvidenceNavigator({
   canvasId,
   evidence,
   originViewport,
+  completed,
 }: {
   navigationId: string
   canvasId: string
   evidence: readonly CanvasEvidence[]
   originViewport: CanvasViewport
+  completed: boolean
 }) {
   const initialState = useMemo(() => ({
     session: createEvidenceNavigationSession(canvasId, originViewport, evidence),
@@ -63,6 +68,18 @@ export function CanvasEvidenceNavigator({
       evidence,
     ))
   }, [canvasId, evidence, navigation.session, navigationId, originViewport])
+  useEffect(() => {
+    if (!completed) return
+    const signature = evidenceNavigationSignature(canvasId, synchronizedSession.resultAnchorIds)
+    const alreadyClaimed = !claimAutomaticEvidenceNavigation(navigationId, signature)
+    const command = planInitialEvidenceNavigation(
+      synchronizedSession,
+      evidence,
+      { completed, alreadyClaimed },
+    )
+    applyEvidenceNavigationCommand(navigationId, command)
+    if (command.focus) void executeCanvasEvidenceFocus(command.focus)
+  }, [canvasId, completed, evidence, navigationId, synchronizedSession])
   useEffect(() => () => releaseEvidenceNavigationState(navigationId), [navigationId])
   const activeEvidence = useMemo(() => {
     const anchorId = synchronizedSession.resultAnchorIds[synchronizedSession.activeIndex]
