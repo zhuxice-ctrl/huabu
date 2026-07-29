@@ -1,6 +1,7 @@
 
 import { initCanvasAiTransactionsDb } from './canvas-ai-transactions'
 import { initCanvasIndexDb } from './canvas-index'
+import { initCanvasImageRecognitionDb } from './canvas-image-recognition'
 import { initCanvasAiOverlayDb } from './canvas-ai-overlay'
 import { initCanvasViewsDb } from './canvas-views'
 import { initWorkspaceRecoveryDb } from './workspace-recovery'
@@ -56,6 +57,7 @@ async function runSchemaInitialization() {
   await initActivityDb();
   await initCanvasesDb();
   await initCanvasAiTransactionsDb();
+  await initCanvasImageRecognitionDb();
   await initCanvasIndexDb();
   await initCanvasAiOverlayDb();
   await initCanvasViewsDb();
