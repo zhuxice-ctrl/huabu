@@ -111,6 +111,8 @@ export interface CanvasNodeData extends Record<string, unknown> {
   sourceUpdatedAt?: number
   sourceStatus?: 'available' | 'missing'
   sourceSyncStatus?: 'current' | 'stale'
+  textManualMinHeight?: number
+  sensitive?: boolean
 }
 
 export interface CanvasNode {
