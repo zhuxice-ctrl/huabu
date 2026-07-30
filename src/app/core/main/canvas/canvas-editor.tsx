@@ -231,10 +231,14 @@ import {
   useCanvasImageRecognitionStore,
 } from '@/stores/canvas-image-recognition'
 import useCanvasImageTagsStore, {
+  clearCanvasImageTagFilter,
   initCanvasImageTags,
+  mergeCanvasImageTagsFromNodes,
   registerCanvasImageTags,
+  setCanvasImageTagFilter,
+  stepCanvasImageTagMatch,
 } from '@/stores/canvas-image-tags'
-import { normalizeImageTags } from '@/lib/canvas/image-tags'
+import { normalizeImageTags, orderedMatchingImageIds } from '@/lib/canvas/image-tags'
 import useSettingStore from '@/stores/setting'
 import {
   mergeNoteReferenceMarks,
@@ -247,6 +251,7 @@ import {
   updateNoteReferenceAuthority,
 } from '@/lib/canvas/note-reference'
 import { CanvasImageInfo } from './canvas-image-info'
+import { CanvasImageTagFilter } from './canvas-image-tag-filter'
 
 const elk = new ELK()
 const PLACEMENT_PREVIEW_MS = 120
@@ -276,6 +281,8 @@ const nodeTypes: NodeTypes = {
 interface CanvasEditorProps {
   canvasId: string
 }
+
+const EMPTY_IMAGE_TAGS: string[] = []
 
 interface CanvasSnapshot {
   nodes: FlowCanvasNode[]
@@ -807,6 +814,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const imageMethodModel = useSettingStore(state => state.imageMethodModel)
   const imageTagCatalog = useCanvasImageTagsStore(state => state.catalog)
   const recentImageTags = useCanvasImageTagsStore(state => state.recent)
+  const selectedImageTags = useCanvasImageTagsStore(state => state.selectedByCanvas[canvasId] || EMPTY_IMAGE_TAGS)
+  const imageTagMatchIndex = useCanvasImageTagsStore(state => state.activeIndexByCanvas[canvasId] ?? 0)
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<FlowCanvasNode>(
     ((document?.nodes || []) as FlowCanvasNode[]).map(node => (
       node.draggable === false ? { ...node, draggable: true } : node
@@ -1007,8 +1016,14 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       : undefined
   ))
   useEffect(() => {
-    initCanvasImageTags()
-  }, [])
+    let current = true
+    void initCanvasImageTags().then(() => {
+      if (current) mergeCanvasImageTagsFromNodes(nodes)
+    })
+    return () => {
+      current = false
+    }
+  }, [nodes])
   const selectedStyleNodes = nodes.filter(node => node.selected && node.type !== 'freehand')
   const selectedTextStyleNodes = selectedStyleNodes.filter(node => TEXT_CAPABLE_NODE_TYPES.has(node.type))
   const selectedFontSizes = selectedTextStyleNodes.map(node => (
@@ -1103,6 +1118,16 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     return { nodes: previewNodes, edges: previewEdges }
   }, [agentPreviewOperations, document, edges, nodes])
+  const matchingImageIds = useMemo(
+    () => orderedMatchingImageIds(nodes, selectedImageTags),
+    [nodes, selectedImageTags],
+  )
+  const matchingImageIdSet = useMemo(() => new Set(matchingImageIds), [matchingImageIds])
+  const filteringImageTags = selectedImageTags.length > 0
+  const normalizedImageTagMatchIndex = matchingImageIds.length
+    ? Math.min(imageTagMatchIndex, matchingImageIds.length - 1)
+    : 0
+
   const displayNodes = useMemo(() => {
     const base = placementPreview
       ? [...nodes.map(node => ({ ...node, selected: false })), ...placementPreview.nodes]
@@ -1110,11 +1135,24 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     const placementIds = new Set(placementPreview?.nodes.map(node => node.id) || [])
     return base.map(node => {
       const visual = nodeVisualStates.get(node.id)
+      const imageTagMatch = filteringImageTags && matchingImageIdSet.has(node.id)
+      const imageTagFilterState: 'match' | 'dim' | undefined = imageTagMatch
+        ? 'match'
+        : filteringImageTags ? 'dim' : undefined
       return {
         ...node,
-        data: node.type === 'image' ? { ...node.data, canvasId } : node.data,
+        data: {
+          ...node.data,
+          ...(node.type === 'image' ? { canvasId } : {}),
+          imageTagFilterState,
+        },
+        style: {
+          ...node.style,
+          ...(filteringImageTags && !imageTagMatch ? { opacity: 0.25 } : {}),
+        },
         className: cn(
           node.className,
+          imageTagMatch && 'canvas-image-tag-match',
           visual === 'invalid' && 'canvas-geometry-invalid',
           visual !== 'invalid' && legacyConflictIds.has(node.id) && 'canvas-legacy-conflict',
           placementIds.has(node.id) && 'canvas-placement-preview',
@@ -1123,21 +1161,29 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         ),
       }
     })
-  }, [canvasId, evidenceHighlightNodeId, legacyConflictIds, nodeVisualStates, nodes, placementPreview, previewSnapshot])
+  }, [canvasId, evidenceHighlightNodeId, filteringImageTags, legacyConflictIds, matchingImageIdSet, nodeVisualStates, nodes, placementPreview, previewSnapshot])
   const displayEdges = useMemo(() => (previewSnapshot?.edges || edges).map(edge => {
     const relation = edge.data as CanvasRelationData | undefined
-    if (!relation) return edge
+    if (!relation) return filteringImageTags
+      ? { ...edge, style: { ...(edge.style || {}), opacity: 0.25 } }
+      : edge
     const normalized = normalizeRelationData(relation)
     const visuals = relationEdgeVisuals(normalized)
     return {
       ...edge,
       type: 'relation',
       data: normalized,
-      style: { ...(edge.style || {}), stroke: visuals.stroke, strokeWidth: visuals.strokeWidth, strokeDasharray: visuals.strokeDasharray },
+      style: {
+        ...(edge.style || {}),
+        stroke: visuals.stroke,
+        strokeWidth: visuals.strokeWidth,
+        strokeDasharray: visuals.strokeDasharray,
+        ...(filteringImageTags ? { opacity: 0.25 } : {}),
+      },
       markerStart: visuals.markerStart ? { type: MarkerType.ArrowClosed, color: normalized.color } : undefined,
       markerEnd: visuals.markerEnd ? { type: MarkerType.ArrowClosed, color: normalized.color } : undefined,
     }
-  }), [edges, previewSnapshot])
+  }), [edges, filteringImageTags, previewSnapshot])
 
   useEffect(() => {
     if (!document) {
@@ -1377,6 +1423,37 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     registerCanvasImageTags(value.tags)
     setImageInfoNodeId(null)
   }, [imageInfoNodeId, pushHistory, updateFlowNodes])
+
+  const toggleImageTagFilter = useCallback((tag: string) => {
+    const key = tag.toLocaleLowerCase()
+    const selected = selectedImageTags.some(value => value.toLocaleLowerCase() === key)
+    setCanvasImageTagFilter(
+      canvasId,
+      selected
+        ? selectedImageTags.filter(value => value.toLocaleLowerCase() !== key)
+        : [...selectedImageTags, tag],
+    )
+  }, [canvasId, selectedImageTags])
+
+  const moveImageTagMatch = useCallback((delta: -1 | 1) => {
+    const matchCount = matchingImageIds.length
+    if (!matchCount) return
+    const currentIndex = ((imageTagMatchIndex % matchCount) + matchCount) % matchCount
+    const nextIndex = (currentIndex + delta + matchCount) % matchCount
+    const node = latestNodesRef.current.find(item => item.id === matchingImageIds[nextIndex])
+    const bounds = containerRef.current?.getBoundingClientRect()
+    if (!node || !bounds) return
+    stepCanvasImageTagMatch(canvasId, matchCount, delta)
+    const targetViewport = planEvidenceFocusViewport({
+      nodePosition: node.position,
+      nodeWidth: node.measured?.width ?? node.width ?? 180,
+      nodeHeight: node.measured?.height ?? node.height ?? 72,
+      viewportWidth: bounds.width,
+      viewportHeight: bounds.height,
+      currentZoom: Math.max(viewport.zoom, 0.8),
+    })
+    animateCanvasViewportState(canvasId, targetViewport, 260)
+  }, [canvasId, imageTagMatchIndex, matchingImageIds, viewport.zoom])
 
   useEffect(() => {
     const checkpoint = () => {
@@ -3658,7 +3735,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               <ReactFlow
         style={{ '--canvas-visual-scale': 1 / Math.max(0.1, viewport.zoom) } as CSSProperties}
         className={cn(
-          tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary/50 [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background [&_.react-flow__handle.relation-handle-target-active]:!size-3.5 [&_.react-flow__handle.relation-handle-target-active]:!border-2 [&_.react-flow__handle.relation-handle-target-active]:!border-background [&_.react-flow__handle.relation-handle-target-active]:!bg-primary [&_.react-flow__handle.relation-handle-target-active]:!shadow-[0_0_0_5px_hsl(var(--primary)/0.28)]',
+          tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.canvas-image-tag-match]:!ring-2 [&_.react-flow__node.canvas-image-tag-match]:!ring-primary [&_.react-flow__node.canvas-image-tag-match]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary/50 [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background [&_.react-flow__handle.relation-handle-target-active]:!size-3.5 [&_.react-flow__handle.relation-handle-target-active]:!border-2 [&_.react-flow__handle.relation-handle-target-active]:!border-background [&_.react-flow__handle.relation-handle-target-active]:!bg-primary [&_.react-flow__handle.relation-handle-target-active]:!shadow-[0_0_0_5px_hsl(var(--primary)/0.28)]',
           tool === 'hand' && '[&_.react-flow__node]:!cursor-grab [&_.react-flow__node:active]:!cursor-grabbing [&_.react-flow__pane]:!cursor-grab [&_.react-flow__pane.dragging]:!cursor-grabbing'
         )}
         nodes={displayNodes}
@@ -3999,6 +4076,16 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               <ImagePlus />
             </Button>
           </CanvasToolbarTooltip>
+          <CanvasImageTagFilter
+            catalog={imageTagCatalog}
+            selectedTags={selectedImageTags}
+            matchIndex={normalizedImageTagMatchIndex}
+            matchCount={matchingImageIds.length}
+            onToggleTag={toggleImageTagFilter}
+            onPrevious={() => moveImageTagMatch(-1)}
+            onNext={() => moveImageTagMatch(1)}
+            onClear={() => clearCanvasImageTagFilter(canvasId)}
+          />
           <Popover>
             <CanvasToolbarTooltip label={t('arrange.title')} disabled={selectedNodeCount < 2}>
               <PopoverTrigger asChild>

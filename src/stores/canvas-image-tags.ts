@@ -20,8 +20,8 @@ const useCanvasImageTagsStore = create<CanvasImageTagState>(() => ({
   activeIndexByCanvas: {},
 }))
 
-let initialized = false
 let catalogMutation = 0
+let initializationPromise: Promise<void> | null = null
 
 async function persistCatalog(catalog: string[], recent: string[]) {
   const store = await Store.load('store.json')
@@ -31,10 +31,10 @@ async function persistCatalog(catalog: string[], recent: string[]) {
 }
 
 export function initCanvasImageTags() {
-  if (initialized || typeof window === 'undefined') return
-  initialized = true
+  if (typeof window === 'undefined') return Promise.resolve()
+  if (initializationPromise) return initializationPromise
   const mutationAtLoad = catalogMutation
-  void Store.load('store.json').then(async store => {
+  initializationPromise = Store.load('store.json').then(async store => {
     const [catalog, recent] = await Promise.all([
       store.get<string[]>(CATALOG_KEY),
       store.get<string[]>(RECENT_KEY),
@@ -45,6 +45,7 @@ export function initCanvasImageTags() {
       recent: normalizeImageTags(recent).slice(0, 12),
     })
   })
+  return initializationPromise
 }
 
 export function registerCanvasImageTags(tags: string[]) {
@@ -79,7 +80,8 @@ export function setCanvasImageTagFilter(canvasId: string, tags: string[]) {
 export function stepCanvasImageTagMatch(canvasId: string, matchCount: number, delta: -1 | 1) {
   useCanvasImageTagsStore.setState(state => {
     const current = state.activeIndexByCanvas[canvasId] ?? 0
-    const next = matchCount > 0 ? (current + delta + matchCount) % matchCount : 0
+    const normalizedCurrent = matchCount > 0 ? ((current % matchCount) + matchCount) % matchCount : 0
+    const next = matchCount > 0 ? (normalizedCurrent + delta + matchCount) % matchCount : 0
     return { activeIndexByCanvas: { ...state.activeIndexByCanvas, [canvasId]: next } }
   })
 }

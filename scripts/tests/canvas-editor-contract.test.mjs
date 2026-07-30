@@ -73,3 +73,10 @@ test('runtime batch ingest materializes and stacks through its captured viewport
   assert.match(editorSource, /screenPointToCanvas\([^]*screenOrigin[^]*capturedViewport/)
   assert.doesNotMatch(editorSource, /offsetIngestDrafts/)
 })
+
+test('image tag filtering is a display projection rather than a document mutation', () => {
+  assert.match(editorSource, /const displayNodes = useMemo/)
+  assert.match(editorSource, /imageTagFilterState/)
+  assert.match(editorSource, /const displayEdges = useMemo/)
+  assert.match(editorSource, /clearCanvasImageTagFilter\(canvasId\)/)
+})
