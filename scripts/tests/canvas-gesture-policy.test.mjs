@@ -5,6 +5,7 @@ import {
   hasDrawableArea,
   intersectingRectIds,
   normalizeDrawRect,
+  relationSourceSideFromVector,
 } from '../../src/lib/canvas/gesture-policy.ts'
 
 test('clicks and single-axis drags do not draw blocks', () => {
@@ -26,10 +27,17 @@ test('empty-canvas buttons assign marquee to left and text drawing to right', ()
   assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 1, deltaY: 1, startedOnNode: false }), 'pane-click')
 })
 
-test('node right-click stays context while four-pixel right drag starts a relation', () => {
+test('node right-click stays context while six-pixel right drag starts a relation', () => {
   assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 1000, deltaX: 0, deltaY: 0, startedOnNode: true }), 'node-context')
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 4, deltaY: 0, startedOnNode: true }), 'relation-drag')
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 3, deltaY: 0, startedOnNode: true }), 'node-context')
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 6, deltaY: 0, startedOnNode: true }), 'relation-drag')
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 5, deltaY: 0, startedOnNode: true }), 'node-context')
+})
+
+test('relation source side follows the dominant initial direction', () => {
+  assert.equal(relationSourceSideFromVector({ x: 8, y: 2 }), 'right')
+  assert.equal(relationSourceSideFromVector({ x: -8, y: 2 }), 'left')
+  assert.equal(relationSourceSideFromVector({ x: 2, y: -8 }), 'top')
+  assert.equal(relationSourceSideFromVector({ x: 2, y: 8 }), 'bottom')
 })
 
 test('marquee includes every partially intersecting rectangle', () => {

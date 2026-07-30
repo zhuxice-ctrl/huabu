@@ -1,4 +1,4 @@
-import type { CanvasRect } from './gesture-policy'
+import type { CanvasRect, RelationSide } from './gesture-policy'
 import type { CanvasRelationData, CanvasRelationWaypoint } from '../../types/canvas'
 
 export interface RelationEdgeLike {
@@ -46,6 +46,38 @@ export interface ContextMenuSuppressionState {
 }
 
 const CONTEXT_MENU_SUPPRESSION_MS = 750
+const SOURCE_HANDLE_IDS = { top: 'source-top', right: 'right', bottom: 'bottom', left: 'source-left' } as const
+const TARGET_HANDLE_IDS = { top: 'top', right: 'target-right', bottom: 'target-bottom', left: 'left' } as const
+
+export function sourceHandleIdForSide(side: RelationSide) {
+  return SOURCE_HANDLE_IDS[side]
+}
+
+export function targetHandleIdForSide(side: RelationSide) {
+  return TARGET_HANDLE_IDS[side]
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value))
+}
+
+export function selectSourceRelationHandle(rect: CanvasRect, side: RelationSide): RelationHandleEndpoint {
+  if (side === 'top') return { handleId: sourceHandleIdForSide(side), point: { x: rect.x + rect.width / 2, y: rect.y } }
+  if (side === 'right') return { handleId: sourceHandleIdForSide(side), point: { x: rect.x + rect.width, y: rect.y + rect.height / 2 } }
+  if (side === 'bottom') return { handleId: sourceHandleIdForSide(side), point: { x: rect.x + rect.width / 2, y: rect.y + rect.height } }
+  return { handleId: sourceHandleIdForSide(side), point: { x: rect.x, y: rect.y + rect.height / 2 } }
+}
+
+export function selectTargetRelationHandle(rect: CanvasRect, pointer: { x: number; y: number }): RelationHandleEndpoint {
+  const candidates = [
+    { side: 'top' as const, distance: Math.abs(pointer.y - rect.y), point: { x: clamp(pointer.x, rect.x, rect.x + rect.width), y: rect.y } },
+    { side: 'right' as const, distance: Math.abs(pointer.x - (rect.x + rect.width)), point: { x: rect.x + rect.width, y: clamp(pointer.y, rect.y, rect.y + rect.height) } },
+    { side: 'bottom' as const, distance: Math.abs(pointer.y - (rect.y + rect.height)), point: { x: clamp(pointer.x, rect.x, rect.x + rect.width), y: rect.y + rect.height } },
+    { side: 'left' as const, distance: Math.abs(pointer.x - rect.x), point: { x: rect.x, y: clamp(pointer.y, rect.y, rect.y + rect.height) } },
+  ]
+  const nearest = candidates.reduce((best, candidate) => candidate.distance < best.distance ? candidate : best)
+  return { handleId: targetHandleIdForSide(nearest.side), point: nearest.point }
+}
 
 function distanceSquared(a: { x: number; y: number }, b: { x: number; y: number }) {
   return (b.x - a.x) ** 2 + (b.y - a.y) ** 2

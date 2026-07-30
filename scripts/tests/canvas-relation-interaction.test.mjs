@@ -9,7 +9,28 @@ import {
   createPendingRelationEdge,
   removeWaypointAt,
   selectRelationHandles,
+  selectSourceRelationHandle,
+  selectTargetRelationHandle,
+  sourceHandleIdForSide,
 } from '../../src/lib/canvas/relation-interaction.ts'
+
+test('four source sides preserve legacy ids and add typed complements', () => {
+  assert.equal(sourceHandleIdForSide('bottom'), 'bottom')
+  assert.equal(sourceHandleIdForSide('right'), 'right')
+  assert.equal(sourceHandleIdForSide('top'), 'source-top')
+  assert.equal(sourceHandleIdForSide('left'), 'source-left')
+  assert.deepEqual(selectSourceRelationHandle({ x: 0, y: 0, width: 100, height: 60 }, 'top'), {
+    handleId: 'source-top', point: { x: 50, y: 0 },
+  })
+})
+
+test('target side follows the pointer nearest edge', () => {
+  const rect = { x: 100, y: 100, width: 200, height: 120 }
+  assert.equal(selectTargetRelationHandle(rect, { x: 110, y: 160 }).handleId, 'left')
+  assert.equal(selectTargetRelationHandle(rect, { x: 290, y: 160 }).handleId, 'target-right')
+  assert.equal(selectTargetRelationHandle(rect, { x: 200, y: 105 }).handleId, 'top')
+  assert.equal(selectTargetRelationHandle(rect, { x: 200, y: 215 }).handleId, 'target-bottom')
+})
 
 test('new relations stay staged until one save commit', () => {
   const persistedEdges = [{ id: 'existing', source: 'a', target: 'b' }]

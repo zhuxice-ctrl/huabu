@@ -1,6 +1,13 @@
 export const POINTER_DRAG_THRESHOLD = 6
 export const POINTER_AXIS_THRESHOLD = 3
-export const RELATION_DRAG_THRESHOLD = 4
+export const RELATION_DRAG_THRESHOLD = 6
+
+export type RelationSide = 'top' | 'right' | 'bottom' | 'left'
+
+export function relationSourceSideFromVector(delta: { x: number; y: number }): RelationSide {
+  if (Math.abs(delta.x) >= Math.abs(delta.y)) return delta.x < 0 ? 'left' : 'right'
+  return delta.y < 0 ? 'top' : 'bottom'
+}
 
 export interface CanvasRect {
   x: number

@@ -43,6 +43,10 @@ const ConnectionHandles = memo(function ConnectionHandles() {
       <Handle type="source" position={Position.Bottom} id="bottom" />
       <Handle type="target" position={Position.Left} id="left" />
       <Handle type="source" position={Position.Right} id="right" />
+      <Handle type="source" position={Position.Top} id="source-top" className="canvas-handle-role-pair" />
+      <Handle type="target" position={Position.Right} id="target-right" className="canvas-handle-role-pair" />
+      <Handle type="target" position={Position.Bottom} id="target-bottom" className="canvas-handle-role-pair" />
+      <Handle type="source" position={Position.Left} id="source-left" className="canvas-handle-role-pair" />
     </>
   )
 })

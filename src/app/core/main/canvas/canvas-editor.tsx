@@ -172,7 +172,9 @@ import {
   normalizeDrawRect,
   POINTER_DRAG_THRESHOLD,
   RELATION_DRAG_THRESHOLD,
+  relationSourceSideFromVector,
   type CanvasRect,
+  type RelationSide,
 } from '@/lib/canvas/gesture-policy'
 import { resolveTextResize } from '@/lib/canvas/text-node-sizing'
 import {
@@ -181,7 +183,8 @@ import {
   commitRelationEditorTransaction,
   consumeContextMenuSuppression,
   createPendingRelationEdge,
-  selectRelationHandles,
+  selectSourceRelationHandle,
+  selectTargetRelationHandle,
   type ContextMenuSuppressionState,
 } from '@/lib/canvas/relation-interaction'
 import {
@@ -344,6 +347,7 @@ interface RelationPointerSession {
   active: boolean
   targetId: string | null
   sourceHandle: string
+  sourceSide: RelationSide | null
   targetHandle: string | null
   captureElement: HTMLDivElement
 }
@@ -2030,16 +2034,13 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       setRelationTargetHighlight(null)
       return
     }
-    const handles = selectRelationHandles({
-      sourceRect: screenRect(sourceBounds),
-      ...(targetBounds ? { targetRect: screenRect(targetBounds) } : {}),
-      pointer,
-    })
-    relation.start = handles.source.point
-    relation.sourceHandle = handles.source.handleId
-    relation.current = handles.target?.point || pointer
-    relation.targetId = handles.target ? validTargetId : null
-    relation.targetHandle = handles.target?.handleId || null
+    const source = selectSourceRelationHandle(screenRect(sourceBounds), relation.sourceSide ?? 'bottom')
+    const target = targetBounds ? selectTargetRelationHandle(screenRect(targetBounds), pointer) : null
+    relation.start = source.point
+    relation.sourceHandle = source.handleId
+    relation.current = target?.point || pointer
+    relation.targetId = target ? validTargetId : null
+    relation.targetHandle = target?.handleId || null
     setRelationTargetHighlight(relation.targetId, relation.targetHandle)
   }, [setRelationTargetHighlight])
 
@@ -2112,6 +2113,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           active: false,
           targetId: null,
           sourceHandle: 'bottom',
+          sourceSide: null,
           targetHandle: null,
           captureElement: element,
         }
@@ -2162,6 +2164,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         relation.current.y - relation.start.y,
       ) >= RELATION_DRAG_THRESHOLD) {
         relation.active = true
+        relation.sourceSide = relationSourceSideFromVector({
+          x: relation.current.x - relation.start.x,
+          y: relation.current.y - relation.start.y,
+        })
         suppressContextMenuRef.current = armContextMenuSuppression(Date.now())
         updateRelationPointerGeometry(relation, relation.current, null)
       }
