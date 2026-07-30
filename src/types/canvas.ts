@@ -99,6 +99,8 @@ export interface CanvasNodeData extends Record<string, unknown> {
   drawingTool?: 'pen' | 'highlighter'
   filePath?: string
   imagePath?: string
+  imageTags?: string[]
+  imageTagFilterState?: 'match' | 'dim'
   url?: string
   metadata?: CanvasRichMediaMetadata
   checked?: boolean
