@@ -157,12 +157,15 @@ function videoMetadata(title: string): CanvasVideoMetadata {
   return { kind: 'video', title, description: '', subtitles: [], userNotes: '' }
 }
 
-export function transferUrlChoice(input: CanvasTransferInput): {
+export function transferUrlChoice(
+  input: CanvasTransferInput,
+  htmlToText?: (html: string) => string,
+): {
   url: string
   mediaKind: 'video' | 'web-preview'
 } | null {
   if (input.files.length > 0 || input.urlChoice) return null
-  const content = chooseExternalText({ plainText: input.text, htmlText: input.html })
+  const content = chooseExternalText({ plainText: input.text, htmlText: input.html, htmlToText })
   const classified = classifyTextContent(content)
   if (classified.kind !== 'link') return null
   return {
@@ -171,7 +174,10 @@ export function transferUrlChoice(input: CanvasTransferInput): {
   }
 }
 
-export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraft[] {
+export function draftsFromTransfer(
+  input: CanvasTransferInput,
+  htmlToText?: (html: string) => string,
+): CanvasIngestDraft[] {
   if (input.files.length > 0) {
     return input.files.map(file => {
       if (file.type.startsWith('image/')) {
@@ -199,7 +205,7 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
     })
   }
 
-  const content = chooseExternalText({ plainText: input.text, htmlText: input.html })
+  const content = chooseExternalText({ plainText: input.text, htmlText: input.html, htmlToText })
   if (!content) return []
   const classified = classifyTextContent(content)
   if (classified.kind === 'link') {

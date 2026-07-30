@@ -30,7 +30,15 @@ test('files take precedence over text and retain their media kind', () => {
 })
 
 test('sanitized html falls back to text and empty input creates nothing', () => {
-  assert.equal(draftsFromTransfer({ files: [], html: '<p>旅行<br>清单</p>', text: '' })[0].kind, 'text')
+  const parsed = draftsFromTransfer(
+    { files: [], html: '<p>旅行<br>清单</p>', text: '' },
+    html => {
+      assert.equal(html, '<p>旅行<br>清单</p>')
+      return '旅行\n清单'
+    },
+  )
+  assert.equal(parsed[0].kind, 'text')
+  assert.equal(parsed[0].text, '旅行\n清单')
   assert.deepEqual(draftsFromTransfer({ files: [], html: '', text: '   ' }), [])
 })
 
