@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 test('image metadata drafts initialize only when the dialog opens', async () => {
   const source = await readFile(new URL('../../src/app/core/main/canvas/canvas-image-info.tsx', import.meta.url), 'utf8')
   assert.match(source, /const wasOpenRef = useRef\(false\)/)
-  assert.match(source, /if \(open && !wasOpenRef\.current\) \{[\s\S]*setName\(initial\.name\)[\s\S]*setComment\(initial\.comment\)[\s\S]*setTags\(normalizeImageTags\(initial\.tags\)\)/)
+  assert.match(source, /imageInfoDraftInitialization\(wasOpenRef\.current, open, initial\)/)
   assert.match(source, /wasOpenRef\.current = open/)
 })
 

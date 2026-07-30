@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { imageInfoDraftInitialization } from '@/lib/canvas/image-info-draft'
 import { normalizeImageTags } from '@/lib/canvas/image-tags'
 
 interface CanvasImageInfoProps {
@@ -38,10 +39,11 @@ export function CanvasImageInfo({
   const wasOpenRef = useRef(false)
 
   useEffect(() => {
-    if (open && !wasOpenRef.current) {
-      setName(initial.name)
-      setComment(initial.comment)
-      setTags(normalizeImageTags(initial.tags))
+    const next = imageInfoDraftInitialization(wasOpenRef.current, open, initial)
+    if (next) {
+      setName(next.name)
+      setComment(next.comment)
+      setTags(next.tags)
       setTagQuery('')
     }
     wasOpenRef.current = open
