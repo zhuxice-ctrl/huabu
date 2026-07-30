@@ -27,7 +27,7 @@ export function classifyPointerRelease(input: {
 }): PointerReleaseIntent {
   if (input.button === 0 && !input.startedOnNode) {
     return hasDrawableArea({ x: 0, y: 0 }, { x: input.deltaX, y: input.deltaY })
-      ? 'draw-block'
+      ? 'marquee-select'
       : 'pane-click'
   }
 
@@ -38,8 +38,9 @@ export function classifyPointerRelease(input: {
   }
 
   if (input.button === 2 && !input.startedOnNode) {
-    const distance = Math.hypot(input.deltaX, input.deltaY)
-    return distance >= POINTER_DRAG_THRESHOLD ? 'marquee-select' : 'pane-context'
+    return hasDrawableArea({ x: 0, y: 0 }, { x: input.deltaX, y: input.deltaY })
+      ? 'draw-block'
+      : 'pane-click'
   }
 
   return 'none'

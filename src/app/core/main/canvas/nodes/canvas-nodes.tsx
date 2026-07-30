@@ -179,12 +179,14 @@ export const TerminatorNode = memo(function TerminatorNode({ id, data, selected 
 export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   const { updateNodeData } = useReactFlow<FlowCanvasNode>()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [editing, setEditing] = useState(false)
   const savedStyle = nodeStyle(data)
 
   useEffect(() => {
     const focusNode = (nodeId: string) => {
       if (nodeId !== id) return
-      textareaRef.current?.focus()
+      setEditing(true)
+      requestAnimationFrame(() => textareaRef.current?.focus())
     }
     emitter.on('canvas-focus-node', focusNode)
     return () => emitter.off('canvas-focus-node', focusNode)
@@ -217,8 +219,11 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
       if (focus.nodeId !== id) return
       const textarea = textareaRef.current
       if (!textarea || !isExactEvidenceTextSelection(focus, textarea.value)) return
-      textarea.focus()
-      textarea.setSelectionRange(focus.startOffset, focus.endOffset)
+      setEditing(true)
+      requestAnimationFrame(() => {
+        textarea.focus()
+        textarea.setSelectionRange(focus.startOffset, focus.endOffset)
+      })
     }
     emitter.on('canvas-select-evidence-range', focusEvidence)
     return () => emitter.off('canvas-select-evidence-range', focusEvidence)
@@ -226,6 +231,11 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
 
   return (
     <div
+      onDoubleClick={event => {
+        event.stopPropagation()
+        setEditing(true)
+        requestAnimationFrame(() => textareaRef.current?.focus())
+      }}
       style={{
         ...savedStyle,
         backgroundColor: data.backgroundColor ?? data.fillColor ?? TEXT_BACKGROUND_DEFAULT,
@@ -253,7 +263,11 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
       <ConnectionHandles />
       <textarea
         ref={textareaRef}
-        className="nodrag nowheel size-full resize-none bg-transparent text-left leading-6 text-inherit outline-none placeholder:text-muted-foreground"
+        readOnly={!editing}
+        className={cn(
+          'size-full resize-none bg-transparent text-left leading-6 text-inherit outline-none placeholder:text-muted-foreground',
+          editing ? 'nodrag nowheel' : 'pointer-events-none',
+        )}
         style={{
           fontSize: data.fontSize,
           overflowWrap: 'anywhere',
@@ -263,6 +277,13 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
         value={data.label || ''}
         placeholder="输入内容…"
         onFocus={() => emitter.emit('canvas-history-checkpoint')}
+        onBlur={() => setEditing(false)}
+        onKeyDown={event => {
+          if (event.key !== 'Escape') return
+          event.preventDefault()
+          setEditing(false)
+          event.currentTarget.blur()
+        }}
         onChange={event => updateNodeData(id, { label: event.target.value })}
         onPaste={event => {
           const textarea = event.currentTarget
@@ -284,7 +305,9 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
             textarea.setSelectionRange(result.caret, result.caret)
           })
         }}
-        onPointerDown={event => event.stopPropagation()}
+        onPointerDown={event => {
+          if (editing) event.stopPropagation()
+        }}
         aria-label="文本区块"
       />
     </div>

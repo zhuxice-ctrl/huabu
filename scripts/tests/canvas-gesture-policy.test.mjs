@@ -20,9 +20,10 @@ test('draw rectangles preserve the exact two-axis drag size', () => {
   })
 })
 
-test('right-drag empty canvas is a marquee and right-click is context', () => {
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 90, deltaX: 30, deltaY: 20, startedOnNode: false }), 'marquee-select')
-  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 90, deltaX: 0, deltaY: 0, startedOnNode: false }), 'pane-context')
+test('empty-canvas buttons assign marquee to left and text drawing to right', () => {
+  assert.equal(classifyPointerRelease({ button: 0, elapsedMs: 20, deltaX: 30, deltaY: 20, startedOnNode: false }), 'marquee-select')
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 30, deltaY: 20, startedOnNode: false }), 'draw-block')
+  assert.equal(classifyPointerRelease({ button: 2, elapsedMs: 20, deltaX: 1, deltaY: 1, startedOnNode: false }), 'pane-click')
 })
 
 test('node right-click stays context while four-pixel right drag starts a relation', () => {

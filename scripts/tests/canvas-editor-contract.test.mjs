@@ -11,13 +11,21 @@ const nodesSource = read('src/app/core/main/canvas/nodes/canvas-nodes.tsx')
 const edgeSource = read('src/app/core/main/canvas/canvas-edge.tsx')
 const relationEditorSource = read('src/app/core/main/canvas/canvas-relation-editor.tsx')
 
-test('canvas editor registers custom relation edges and right-drag marquee behavior', () => {
+test('canvas editor registers custom relation edges and assigns empty-canvas drag roles', () => {
   assert.match(editorSource, /const edgeTypes: EdgeTypes = \{ relation: CanvasRelationEdge \}/)
   assert.match(editorSource, /edgeTypes=\{edgeTypes\}/)
-  assert.match(editorSource, /intersectingRectIds/)
-  assert.match(editorSource, /marqueeSessionRef/)
+  assert.match(editorSource, /event\.button === 2[\s\S]*react-flow__pane/)
+  assert.match(editorSource, /selectionOnDrag=\{true\}/)
+  assert.match(editorSource, /onPaneContextMenu=\{event => \{[\s\S]*event\.preventDefault\(\)/)
   assert.match(editorSource, /relation-target-active/)
   assert.match(editorSource, /type: 'relation'/)
+})
+
+test('text nodes use double-click edit mode and escape returns to dragging', () => {
+  assert.match(nodesSource, /onDoubleClick/)
+  assert.match(nodesSource, /readOnly=\{!editing\}/)
+  assert.match(nodesSource, /editing \? 'nodrag nowheel' : 'pointer-events-none'/)
+  assert.match(nodesSource, /event\.key !== 'Escape'/)
 })
 
 test('relationship preview and saved edges use editable curved paths', () => {

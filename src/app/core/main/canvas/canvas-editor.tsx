@@ -2125,47 +2125,31 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         && event.target.classList.contains('react-flow__pane')
       ) {
         const point = { x: event.clientX, y: event.clientY }
-        marqueeSessionRef.current = {
-          pointerId: event.pointerId,
+        const capturedViewport = captureCurrentViewport()
+        if (!capturedViewport) return
+        event.preventDefault()
+        event.stopPropagation()
+        event.currentTarget.setPointerCapture(event.pointerId)
+        event.currentTarget.dataset.canvasGeometryPointer = String(event.pointerId)
+        const session: DrawGeometrySession = {
+          ...createGeometrySessionBase({
+            pointerId: event.pointerId,
+            viewport: capturedViewport,
+            controlledNodeIds: new Set(),
+            collisionMemberIds: new Set(['__draw__']),
+            ignoreInternal: false,
+          }),
+          kind: 'draw',
           start: point,
           current: point,
-          active: false,
-          captureElement: event.currentTarget,
+          candidate: null,
+          snap: {},
         }
+        geometrySessionRef.current = session
+        updateGeometryUi({ drawDraft: session })
       }
       return
     }
-    if (
-      event.button !== 0
-      || tool !== 'select'
-      || previewSnapshot
-      || !(event.target instanceof Element)
-      || !event.target.classList.contains('react-flow__pane')
-    ) return
-
-    event.preventDefault()
-    event.stopPropagation()
-    const point = { x: event.clientX, y: event.clientY }
-    const capturedViewport = captureCurrentViewport()
-    if (!capturedViewport) return
-    event.currentTarget.setPointerCapture(event.pointerId)
-    event.currentTarget.dataset.canvasGeometryPointer = String(event.pointerId)
-    const session: DrawGeometrySession = {
-      ...createGeometrySessionBase({
-        pointerId: event.pointerId,
-        viewport: capturedViewport,
-        controlledNodeIds: new Set(),
-        collisionMemberIds: new Set(['__draw__']),
-        ignoreInternal: false,
-      }),
-      kind: 'draw',
-      start: point,
-      current: point,
-      candidate: null,
-      snap: {},
-    }
-    geometrySessionRef.current = session
-    updateGeometryUi({ drawDraft: session })
   }, [captureCurrentViewport, createGeometrySessionBase, previewSnapshot,
     tool, updateGeometryUi, updateRelationPointerGeometry])
 
@@ -3592,7 +3576,10 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           setEdgeLabelDraft(typeof targetEdge.label === 'string' ? targetEdge.label : '')
           setEdgeEditorOpen(true)
         }}
-        onPaneContextMenu={() => setContextTarget('pane')}
+        onPaneContextMenu={event => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
         onInit={() => {
           recordCanvasViewportSnapshot(canvasId, viewport)
           setReactFlowReady(true)
@@ -3616,7 +3603,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         nodesConnectable={!previewSnapshot && (tool === 'select' || tool === 'connector')}
         elementsSelectable={!previewSnapshot && tool === 'select'}
         panOnDrag={[1]}
-        selectionOnDrag={false}
+        selectionOnDrag={true}
         selectionMode={SelectionMode.Partial}
         snapToGrid={document.settings.snapToGrid}
         snapGrid={[20, 20]}
