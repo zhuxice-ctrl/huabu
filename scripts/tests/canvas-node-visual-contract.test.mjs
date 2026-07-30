@@ -62,3 +62,11 @@ test('selected text nodes yield their inline warm shadow to visual-state priorit
     /boxShadow: selected\s*\?\s*undefined\s*:\s*`\$\{savedStyle\?\.boxShadow \? `\$\{savedStyle\.boxShadow\}, ` : ''\}\$\{TEXT_SHADOW_DEFAULT\}`/,
   )
 })
+
+test('image nodes use hover-only metadata instead of a permanent label', () => {
+  const imageSection = nodesSource.slice(nodesSource.indexOf('export const ImageCanvasNode'), nodesSource.indexOf('export const GroupCanvasNode'))
+  assert.doesNotMatch(imageSection, /<BaseNodeContent/)
+  assert.match(imageSection, /group-hover:opacity-100/)
+  assert.match(imageSection, /pointer-events-none/)
+  assert.match(imageSection, /imageTags/)
+})

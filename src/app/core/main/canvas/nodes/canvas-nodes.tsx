@@ -499,6 +499,9 @@ export const TodoCanvasNode = memo(function TodoCanvasNode({ id, data, selected 
 export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data, selected }: NodeProps<FlowCanvasNode>) {
   const [imageUrl, setImageUrl] = useState('')
   const recognitionStatus = useCanvasImageRecognitionStore(state => state.statuses[`${String(data.canvasId ?? '')}:${id}`])
+  const imageTags = Array.isArray(data.imageTags) ? data.imageTags : []
+  const visibleTags = imageTags.slice(0, 4)
+  const hiddenCount = Math.max(0, imageTags.length - visibleTags.length)
 
   useEffect(() => {
     let cancelled = false
@@ -513,7 +516,7 @@ export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data, selecte
   }, [data.imagePath])
 
   return (
-    <BaseNode style={nodeStyle(data)} className={cn('size-full min-h-0 min-w-0 overflow-hidden shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
+    <BaseNode style={nodeStyle(data)} className={cn('group relative size-full overflow-hidden shadow-sm', transientNodeClassName(selected), previewClassName(data.previewState))}>
       <SolidNodeResizer selected={selected} type="image" />
       <ConnectionHandles />
       {recognitionStatus && (
@@ -536,15 +539,20 @@ export const ImageCanvasNode = memo(function ImageCanvasNode({ id, data, selecte
           width={256}
           height={144}
           unoptimized
-          className="w-full rounded-t-lg object-cover"
-          style={{ height: 144 * contentScale(data) }}
+          className="size-full object-cover"
         />
       ) : (
-        <div className="flex items-center justify-center bg-muted text-muted-foreground" style={{ height: 144 * contentScale(data) }}><ImageIcon style={scaledSquareStyle(data, 24)} /></div>
+        <div className="flex size-full items-center justify-center bg-muted text-muted-foreground"><ImageIcon style={scaledSquareStyle(data, 24)} /></div>
       )}
-      <BaseNodeContent style={scaledContentStyle(data, { padding: 8, gap: 8 })}>
-        <EditableLabel id={id} value={data.label || '图片'} style={fontStyle(data)} />
-      </BaseNodeContent>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        <div className="bg-black/65 px-2 py-1.5 text-white backdrop-blur-sm">
+          <div className="truncate text-xs font-medium">{data.label || '图片'}</div>
+          <div className="mt-1 flex max-h-10 flex-wrap gap-1 overflow-hidden">
+            {visibleTags.map(tag => <span key={tag} className="rounded-full bg-white/15 px-1.5 py-0.5 text-[10px]">{tag}</span>)}
+            {hiddenCount > 0 && <span className="text-[10px]">+{hiddenCount}</span>}
+          </div>
+        </div>
+      </div>
     </BaseNode>
   )
 })

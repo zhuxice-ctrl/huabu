@@ -230,6 +230,11 @@ import {
   enqueueCanvasImageRecognition,
   useCanvasImageRecognitionStore,
 } from '@/stores/canvas-image-recognition'
+import useCanvasImageTagsStore, {
+  initCanvasImageTags,
+  registerCanvasImageTags,
+} from '@/stores/canvas-image-tags'
+import { normalizeImageTags } from '@/lib/canvas/image-tags'
 import useSettingStore from '@/stores/setting'
 import {
   mergeNoteReferenceMarks,
@@ -241,6 +246,7 @@ import {
   type NoteReferenceAuthorityState,
   updateNoteReferenceAuthority,
 } from '@/lib/canvas/note-reference'
+import { CanvasImageInfo } from './canvas-image-info'
 
 const elk = new ELK()
 const PLACEMENT_PREVIEW_MS = 120
@@ -799,6 +805,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const loadFileTree = useArticleStore(state => state.loadFileTree)
   const enableImageRecognition = useSettingStore(state => state.enableImageRecognition)
   const imageMethodModel = useSettingStore(state => state.imageMethodModel)
+  const imageTagCatalog = useCanvasImageTagsStore(state => state.catalog)
+  const recentImageTags = useCanvasImageTagsStore(state => state.recent)
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<FlowCanvasNode>(
     ((document?.nodes || []) as FlowCanvasNode[]).map(node => (
       node.draggable === false ? { ...node, draggable: true } : node
@@ -826,6 +834,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const [edgeLabelDraft, setEdgeLabelDraft] = useState('')
   const [importContentOpen, setImportContentOpen] = useState(false)
   const [importContentDraft, setImportContentDraft] = useState('')
+  const [imageInfoNodeId, setImageInfoNodeId] = useState<string | null>(null)
   const [contextTarget, setContextTarget] = useState<'pane' | 'node' | 'edge'>('pane')
   const [reactFlowReady, setReactFlowReady] = useState(false)
   const [evidenceHighlightNodeId, setEvidenceHighlightNodeId] = useState<string | null>(null)
@@ -989,11 +998,17 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
   const selectedFreehandIds = selectedFreehandNodes.map(node => node.id).join(':')
   const selectedOnlyFreehand = selectedNodeCount > 0 && selectedFreehandNodes.length === selectedNodeCount
   const selectedStyleNode = nodes.find(node => node.selected && node.type !== 'freehand')
+  const imageInfoNode = imageInfoNodeId
+    ? nodes.find(node => node.id === imageInfoNodeId && node.type === 'image')
+    : undefined
   const selectedImageRecognitionStatus = useCanvasImageRecognitionStore(state => (
     selectedStyleNode?.type === 'image'
       ? state.statuses[`${canvasId}:${selectedStyleNode.id}`]
       : undefined
   ))
+  useEffect(() => {
+    initCanvasImageTags()
+  }, [])
   const selectedStyleNodes = nodes.filter(node => node.selected && node.type !== 'freehand')
   const selectedTextStyleNodes = selectedStyleNodes.filter(node => TEXT_CAPABLE_NODE_TYPES.has(node.type))
   const selectedFontSizes = selectedTextStyleNodes.map(node => (
@@ -1346,6 +1361,22 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     setCanUndo(true)
     setCanRedo(false)
   }, [persistHistory])
+
+  const saveImageInfo = useCallback((value: { name: string; comment: string; tags: string[] }) => {
+    if (!imageInfoNodeId) return
+    pushHistory()
+    updateFlowNodes(current => current.map(node => node.id === imageInfoNodeId ? {
+      ...node,
+      data: {
+        ...node.data,
+        label: value.name,
+        description: value.comment,
+        imageTags: normalizeImageTags(value.tags),
+      },
+    } : node))
+    registerCanvasImageTags(value.tags)
+    setImageInfoNodeId(null)
+  }, [imageInfoNodeId, pushHistory, updateFlowNodes])
 
   useEffect(() => {
     const checkpoint = () => {
@@ -3836,6 +3867,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
             {contextTarget === 'node' && selectedStyleNode?.type === 'image' && (
               <>
                 <ContextMenuGroup>
+                  <ContextMenuItem onSelect={() => setImageInfoNodeId(selectedStyleNode.id)}>
+                    图片信息
+                  </ContextMenuItem>
                   <ContextMenuItem
                     disabled={selectedImageRecognitionStatus === 'running'}
                     onSelect={() => {
@@ -4252,6 +4286,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           </Command>
         </DialogContent>
       </Dialog>
+
+      <CanvasImageInfo
+        open={Boolean(imageInfoNode)}
+        initial={{
+          name: imageInfoNode?.data.label || '',
+          comment: imageInfoNode?.data.description || '',
+          tags: imageInfoNode?.data.imageTags || [],
+        }}
+        catalog={imageTagCatalog}
+        recent={recentImageTags}
+        onOpenChange={open => { if (!open) setImageInfoNodeId(null) }}
+        onSave={saveImageInfo}
+      />
 
       <Dialog open={edgeEditorOpen} onOpenChange={setEdgeEditorOpen}>
         <DialogContent className="sm:max-w-sm">
