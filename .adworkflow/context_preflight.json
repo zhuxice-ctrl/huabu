@@ -1,41 +1,43 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-integrated-task-18-no-user-export",
+  "task_id": "zeroxb-stage-closeout-2026-07-31",
   "status": "accepted",
-  "graph_revision": "f9209ccc9bf3c1c380e4d945",
-  "slice_revision": "f9209ccc9bf3c1c380e4d945",
-  "confidence": 1.0,
+  "graph_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
+  "slice_revision": "operations-only-manual-2026-07-31",
+  "confidence": 0.96,
   "confidence_threshold": 0.8,
   "freshness": {
     "fresh": true,
-    "changed": [],
-    "missing": [],
+    "changed": [
+      ".adworkflow/task_spec.json"
+    ],
+    "missing": [
+      "prepare_context.py"
+    ],
     "added": [],
-    "config_changed": false
+    "config_changed": true
   },
-  "provider_capabilities": [
-    {
-      "capabilities": [
-        "calls",
-        "definitions",
-        "imports",
-        "references",
-        "source_ranges",
-        "unresolved_edges"
-      ],
-      "implementation_identity": "b500ea5a0f4d47f19679ab4a7d816784b6fe39ea11d0f26cb6700fa576e5e2d1",
-      "languages": [
-        "javascript",
-        "typescript"
-      ],
-      "provider": "typescript-compiler-api",
-      "version": "5.9.3"
-    }
-  ],
-  "missing_capabilities": {},
+  "provider_capabilities": [],
+  "missing_capabilities": {
+    "semantic-codegraph": "Not required for this operations/documentation-only closeout because no product source or symbol is in scope.",
+    "prepare_context.py": "Searched repository, PATH, CodexHome, agent roots and common Windows runtime locations; script unavailable."
+  },
   "invalid_reasons": [],
-  "expansion_reasons": [],
-  "required_actions": [],
+  "expansion_reasons": [
+    "Manual context fallback accepted because the task operates on Git metadata, verified database backup files, cache configuration, disposable worktrees and documentation only."
+  ],
+  "required_actions": [
+    "Re-run reachability checks immediately before every branch or worktree deletion.",
+    "Verify database backup SHA-256 before removing its C: source copy.",
+    "Do not copy the live database while zeroxB is running; use the already verified pre-change backup or stop the app first.",
+    "Generate a post-operation impact report before final verification."
+  ],
   "critical_unresolved_edges": [],
-  "expansion_history": []
+  "expansion_history": [
+    {
+      "timestamp": "2026-07-30T18:04:38.3068835Z",
+      "action": "manual_operations_context_fallback",
+      "task_spec_sha256": "6c49c02a0725670fc12ac8923e25a61e4a1e13c30b85f1f57e887a29d450b94e"
+    }
+  ]
 }

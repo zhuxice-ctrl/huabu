@@ -1,68 +1,69 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-integrated-task-18-no-user-export",
-  "task_type": "code",
-  "goal": "Remove every Windows user-facing file, configuration, theme, local-backup and canvas export surface while preserving internal thumbnail, print and recovery primitives.",
+  "task_id": "zeroxb-stage-closeout-2026-07-31",
+  "task_type": "operations_and_documentation",
+  "goal": "Complete the interrupted zeroxB stage closeout: preserve and relocate verified database backups to F:, reduce avoidable C: cache use, safely consolidate Git branches and disposable local test artifacts, and write a durable Chinese stage report.",
   "non_goals": [
-    "Do not delete internal serializers or renderers still used by thumbnails, print viewers or recovery snapshots.",
-    "Do not replace export actions with download or share aliases.",
-    "Do not implement credential migration, recovery storage or release packaging from Tasks 19-21.",
-    "Do not remove remote synchronization import/download capabilities that are not local user-facing export surfaces."
+    "Do not change product behavior or source code.",
+    "Do not delete the live note.db or any user document.",
+    "Do not delete an unmerged or unpushed commit.",
+    "Do not remove reproducible project tests tracked by Git.",
+    "Do not clear unrelated system-wide caches or credentials."
   ],
   "acceptance_criteria": [
-    "Windows-rendered menus, buttons and actions expose no Markdown, HTML, JSON, PDF, configuration, theme-code, local-backup, PNG or SVG export.",
-    "Internal thumbnail rendering, existing viewer print support and recovery snapshot writers remain available only through non-user-facing paths.",
-    "Removed surfaces leave no dead imports, handlers, state or misleading aliases.",
-    "Focused export-boundary tests, TypeScript, production build, independent review and exhaustive L2 impact pass."
+    "At least one verified note.db backup resides on F: and its SHA-256 matches the source backup or live database captured for this closeout.",
+    "Project-local build caches and package-manager cache configuration avoid C: where supported, without changing product source.",
+    "Temporary worktrees, disposable test artifacts and branches are removed only after reachability and remote-safety checks.",
+    "The canonical branch contains the completed Canvas feature history and the remote is synchronized, unless a concrete safety blocker is documented.",
+    "A Chinese stage report records commits, verification results, package and backup evidence, cleanup actions, remaining manual acceptance, and rollback locations.",
+    "L2 context preflight, post-operation impact report, independent review evidence, worker state and verification result are current and passed."
   ],
   "risk_level": "high",
-  "execution_mode": "worker_plus_reviewer",
-  "allowed_actions": ["read", "edit", "test", "shell"],
+  "execution_mode": "solo_with_independent_read_only_review",
+  "allowed_actions": [
+    "read",
+    "edit_workflow_artifacts",
+    "write_report",
+    "copy_and_verify_backup",
+    "configure_project_cache_paths",
+    "remove_verified_disposable_cache",
+    "git_merge_push_and_prune_after_reachability_checks",
+    "shell"
+  ],
   "required_outputs": [
-    "scripts/tests/zeroxb-no-user-export.test.mjs",
-    "src/app/core/main/file/file-item.tsx",
-    "src/app/core/main/editor/markdown/footer-bar/export-button.tsx",
-    "src/app/core/setting/general/advanced-settings.tsx",
-    "src/app/core/setting/general/config-file-actions.tsx",
-    "src/app/core/setting/general/interface-settings/custom-theme.tsx",
-    "src/components/title-bar-toolbars/sync-toggle.tsx",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
+    ".adworkflow/worker_state.json",
     ".adworkflow/verification_result.json",
-    ".adworkflow/review_findings.json"
+    ".adworkflow/review_findings.json",
+    "docs/reports/2026-07-31-zeroxb-stage-closeout.md",
+    "F:/zeroxB-backups/"
   ],
   "do_not_touch": [
-    "src/lib/canvas/static-export.ts",
-    "src/app/core/main/editor/markdown/markdown-export.ts",
-    "main branch",
-    "official upstream remote",
-    "installed zeroxB application",
+    "live zeroxB note.db",
     "zeroxB user documents",
     "provider credentials",
-    "Task 19-21 product scope"
+    "tracked product tests",
+    "unrelated Windows caches",
+    "unmerged or unpushed Git history"
   ],
-  "entrypoints": [
-    "typescript:src.app.core.main.editor.markdown.markdown-export:sanitizeExportFileName:function",
-    "typescript:src.app.core.main.editor.markdown.markdown-export:getMarkdownExportBaseName:function"
-  ],
+  "entrypoints": [],
   "context_sources": [
-    ".superpowers/sdd/2026-07-25-zeroxb-integrated-canvas-experience/task-18-brief.md",
-    "src/app/core/main/file/file-item.tsx",
-    "src/app/core/main/editor/markdown/footer-bar/export-button.tsx",
-    "src/app/core/setting/general/advanced-settings.tsx",
-    "src/app/core/setting/general/config-file-actions.tsx",
-    "src/app/core/setting/general/interface-settings/custom-theme.tsx",
-    "src/components/title-bar-toolbars/sync-toggle.tsx",
-    "src/lib/canvas/static-export.ts",
-    "src/app/core/main/editor/markdown/markdown-export.ts"
+    ".adworkflow/task_spec.json",
+    ".adworkflow/context_manifest.json",
+    ".adworkflow/context_preflight.json",
+    ".adworkflow/impact_report.json",
+    ".git/config",
+    ".git/worktrees",
+    "docs/superpowers/plans/2026-07-30-canvas-interaction-physics-image-tags.md",
+    ".superpowers/sdd/2026-07-30-canvas-interaction-physics-image-tags/progress.md"
   ],
   "notes": [
-    "Use test-first implementation and keep routine audit reporting concise.",
-    "Use a leaf internal export data-contract slice for L2; all user-facing component context_sources remain mandatory manual context.",
-    "The contract is based on Windows UI reachability, not a repository-wide ban on the export symbol name.",
-    "Use fixed UTF-8 I/O for Chinese UI copy and non-ASCII source."
+    "Use explicit UTF-8 for all Chinese text I/O.",
+    "Prefer reversible cleanup and preserve hash evidence before deleting or moving artifacts.",
+    "The prior thread already completed product implementation and release gates; this task validates and closes out state rather than reimplementing features."
   ],
-  "implementation_owner": "task18-implementer"
+  "implementation_owner": "root"
 }

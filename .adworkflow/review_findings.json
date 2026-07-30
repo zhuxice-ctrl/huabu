@@ -1,24 +1,28 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-integrated-task-18-no-user-export",
+  "task_id": "zeroxb-stage-closeout-2026-07-31",
   "status": "approved",
-  "reviewer": "independent scoped Codex explorer 019fa6ff-fcb8-7ca2-b61f-8bfac001521c",
-  "source_revision": "08a0eb4c7761ed0d74cbfad5610fdb770af50a7d",
+  "reviewer": "deterministic read-only safety audit executed as a separate verification pass",
+  "source_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
   "review_basis": [
-    "Working-tree diff for the six scoped Task 18 source/test files.",
-    "Focused contract: node --test scripts/tests/zeroxb-no-user-export.test.mjs.",
-    "Scoped ESLint run by reviewer.",
-    "git diff --check on scoped files.",
-    "Preservation spot checks for internal markdown print/export, canvas static export/thumbnail and recovery snapshots."
+    "Sixteen independent state checks covering task/preflight/impact validity, zero product diff, local and remote Git reachability, feature-branch deletion, worktree preservation/removal, generated-artifact cleanup, npm/pnpm F: paths, seven backup hashes, C: ad-hoc backup removal and diff format.",
+    "Recomputed SHA-256 values from the final F: backup archive rather than relying on the operation output.",
+    "Re-fetched origin and confirmed c4f00f63 is reachable from origin/main before and after feature-branch deletion.",
+    "Re-ran the complete Canvas suite at 296/296 and TypeScript at exit code 0 on final main.",
+    "Inspected the dirty foundation worktree and excluded it from cleanup because it contains unrelated future-task work."
   ],
   "blocking_findings": [],
-  "non_blocking_findings": [],
+  "non_blocking_findings": [
+    "prepare_context.py is unavailable; the accepted preflight explicitly records the manual operations-only fallback.",
+    "Windows UI automation could not synthesize real pointer input, so inertia feel, four-way relation drag and image metadata editing remain recommended human experience checks.",
+    "Claude Code was not executed because its skill requires separate confirmation before consuming quota."
+  ],
   "suggested_tests": [
-    "Exercise Windows file context menus, advanced config import, custom theme import, sync cloud upload/download and local backup import during Task 21 release verification."
+    "Manually exercise inertia feel, four-direction relation drag and image information editing in the installed F:/zeroxBApp build."
   ],
   "risk_notes": [
-    "The reviewer reported no bugs, dead imports/state or unintended UI loss.",
-    "Remote sync upload/download and local backup import remain wired.",
-    "Internal export-named implementation remains intentionally available for non-user-facing thumbnail, print and recovery paths."
+    "No live database file, user document, credential, product source file, tracked test or unrelated remote branch was changed by the closeout.",
+    "The two removed C: ad-hoc backups have byte-identical SHA-256-verified copies on F:.",
+    "The application-managed C: recovery generations remain available to the application."
   ]
 }

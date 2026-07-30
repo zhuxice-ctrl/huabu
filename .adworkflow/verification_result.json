@@ -1,106 +1,115 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-integrated-task-18-no-user-export",
+  "task_id": "zeroxb-stage-closeout-2026-07-31",
   "status": "passed",
-  "source_revision": "08a0eb4c7761ed0d74cbfad5610fdb770af50a7d",
+  "source_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
   "commands": [
     {
-      "command": "expanded prepare_context.py --project F:/huabu-worktrees/foundation --level l2",
+      "command": "codex_app read_thread pagination for 019fa2e9-49ed-7583-aeec-db9a606288af",
       "status": "passed",
-      "summary": "Fresh leaf internal-export L2 preflight accepted at f9209ccc9bf3c1c380e4d945 with confidence 1.0 and zero critical unresolved edges.",
+      "summary": "Read all eight pages and recovered the interrupted closeout requirements plus prior implementation and release evidence.",
       "exit_code": 0
     },
     {
-      "command": "node --test scripts/tests/zeroxb-no-user-export.test.mjs",
-      "status": "failed_expected",
-      "summary": "Pre-implementation contract failed on file-item markdown export import, proving the test detects existing user-facing export reachability.",
-      "exit_code": 1
+      "command": "prepare_context.py discovery",
+      "status": "unavailable_with_accepted_fallback",
+      "summary": "Not present in repository, PATH, CodexHome, agent roots or searched Windows runtime locations; manual operations-only L2 preflight accepted at confidence 0.96.",
+      "exit_code": 127
     },
     {
-      "command": "node --test scripts/tests/zeroxb-no-user-export.test.mjs",
+      "command": "SQLite online backup plus SHA-256 archive audit",
       "status": "passed",
-      "summary": "Post-implementation focused contract passed 2/2.",
+      "summary": "Seven archive files verified; current consistent snapshot is 528384 bytes with SHA-256 4499F0A321B27B322FB4D8C605736E6357488E60EA4216825A71FE9E7E618603.",
       "exit_code": 0
     },
     {
-      "command": "pnpm test:canvas",
-      "status": "blocked",
-      "summary": "pnpm wrapper attempted install and stopped on ERR_PNPM_IGNORED_BUILDS for approved-builds policy.",
-      "exit_code": 1
+      "command": "npm config get cache; pnpm store path; cache size audit",
+      "status": "passed",
+      "summary": "npm uses F:/.npm-cache with 2718890048 bytes migrated; pnpm uses F:/.pnpm-store/v11; legacy C: npm cache contains 32479 bytes of logs.",
+      "exit_code": 0
+    },
+    {
+      "command": "git clean -fdX -- .next out tsconfig.tsbuildinfo",
+      "status": "passed",
+      "summary": "Removed only ignored reproducible build artifacts after a dry run listed exactly those three paths.",
+      "exit_code": 0
+    },
+    {
+      "command": "git worktree remove --force F:/Temp/zeroxb-task9-baseline",
+      "status": "passed",
+      "summary": "Removed the disposable baseline only after path, ancestor and changed-file checks; preserved F:/huabu-worktrees/foundation.",
+      "exit_code": 0
+    },
+    {
+      "command": "git merge --ff-only feature; git push origin main; delete merged local and remote feature branch",
+      "status": "passed",
+      "summary": "main and origin/main contain c4f00f63; the merged feature branch is absent locally and remotely.",
+      "exit_code": 0
+    },
+    {
+      "command": "post-operation impact report",
+      "status": "passed",
+      "summary": "No product source or symbol impact, no unexpected files, and all operations remained inside declared paths.",
+      "exit_code": 0
+    },
+    {
+      "command": "deterministic separate read-only safety audit",
+      "status": "passed",
+      "summary": "Sixteen of sixteen state, hash, Git, cache, worktree and diff checks passed.",
+      "exit_code": 0
     },
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Direct Canvas regression passed 220/220; only existing MODULE_TYPELESS_PACKAGE_JSON warnings were emitted.",
+      "summary": "Final main Canvas regression passed 296/296 with zero failures.",
       "exit_code": 0
-    },
-    {
-      "command": "pnpm exec tsc --noEmit",
-      "status": "blocked",
-      "summary": "pnpm wrapper attempted install and stopped on ERR_PNPM_IGNORED_BUILDS for approved-builds policy.",
-      "exit_code": 1
     },
     {
       "command": "node_modules/.bin/tsc.cmd --noEmit",
       "status": "passed",
-      "summary": "TypeScript completed without diagnostics.",
+      "summary": "Final main TypeScript check completed without diagnostics.",
       "exit_code": 0
     },
     {
-      "command": "node_modules/.bin/next.cmd build --turbopack",
+      "command": "git diff --check",
       "status": "passed",
-      "summary": "Production build compiled, type/lint checked and generated all static pages/exports.",
-      "exit_code": 0
-    },
-    {
-      "command": "git diff --check -- src scripts/tests",
-      "status": "passed",
-      "summary": "No whitespace errors; Git reported line-ending normalization warnings only.",
-      "exit_code": 0
-    },
-    {
-      "command": "independent scoped review by subagent 019fa6ff-fcb8-7ca2-b61f-8bfac001521c",
-      "status": "passed",
-      "summary": "No bugs, dead imports/state or unintended UI loss found; preservation spot checks passed.",
-      "exit_code": 0
-    },
-    {
-      "command": "expanded exhaustive L2 post-edit impact",
-      "status": "passed",
-      "summary": "21 predicted, 20 observed, zero unexpected, zero production/test critical edges, complete propagation and fresh baseline comparison.",
-      "exit_code": 0
-    },
-    {
-      "command": "git commit -m \"refactor(product): remove user-facing export actions\"",
-      "status": "passed",
-      "summary": "Committed only the six Task 18 source/test files as 08a0eb4c7761ed0d74cbfad5610fdb770af50a7d.",
+      "summary": "No whitespace errors; only repository line-ending conversion warnings were emitted.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "Windows-rendered menus, buttons and actions expose no Markdown, HTML, JSON, PDF, configuration, theme-code, local-backup, PNG or SVG export.",
+      "criterion": "At least one verified note.db backup resides on F:.",
       "status": "passed",
-      "evidence": ["scripts/tests/zeroxb-no-user-export.test.mjs", "file-item.tsx", "export-button.tsx", "config-file-actions.tsx", "custom-theme.tsx", "sync-toggle.tsx"]
+      "evidence": ["seven SHA-256-verified files under F:/zeroxB-backups/2026-07-31-stage-closeout"]
     },
     {
-      "criterion": "Internal thumbnail rendering, existing viewer print support and recovery snapshot writers remain available only through non-user-facing paths.",
+      "criterion": "Project cache policy minimizes future C: use.",
       "status": "passed",
-      "evidence": ["src/lib/canvas/static-export.ts", "src/lib/canvas/thumbnail.ts", "src/app/print/page.tsx", "src/lib/sync/auto-data-sync-queue.ts"]
+      "evidence": ["npm F:/.npm-cache", "pnpm F:/.pnpm-store/v11", "32 KiB legacy C: logs"]
     },
     {
-      "criterion": "Removed surfaces leave no dead imports, handlers, state or misleading aliases.",
+      "criterion": "Cleanup removes only verified disposable state.",
       "status": "passed",
-      "evidence": ["node_modules/.bin/tsc.cmd --noEmit", "node_modules/.bin/next.cmd build --turbopack", "independent scoped review"]
+      "evidence": ["ignored build artifact dry run", "baseline ancestor/path/change audit", "foundation worktree preserved"]
     },
     {
-      "criterion": "Focused export-boundary tests, TypeScript, production build, independent review and L2 impact pass.",
+      "criterion": "Canonical branch contains the Canvas feature and remote is synchronized.",
       "status": "passed",
-      "evidence": ["focused contract", "Canvas 220/220", "TypeScript", "Next build", "review_findings.json", "impact_report.json"]
+      "evidence": ["main and origin/main contain c4f00f63", "merged feature branch deleted locally and remotely"]
+    },
+    {
+      "criterion": "A durable Chinese stage report and current workflow evidence exist.",
+      "status": "passed",
+      "evidence": ["docs/reports/2026-07-31-zeroxb-stage-closeout.md", "impact_report.json", "review_findings.json"]
     }
   ],
-  "passed": ["All Task 18 acceptance criteria and mandatory verification gates."],
+  "passed": [
+    "All closeout acceptance criteria and mandatory verification gates."
+  ],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": []
+  "residual_risk": [
+    "Three subjective pointer-driven interactions remain recommended for manual human experience testing because the Windows UI automation runtime was unavailable."
+  ]
 }
