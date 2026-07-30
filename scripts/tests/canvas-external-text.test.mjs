@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import {
   chooseExternalText,
   insertExternalText,
@@ -32,4 +33,11 @@ test('selection insertion replaces exactly one range and returns the caret', () 
     value: 'a甲\n乙d',
     caret: 4,
   })
+})
+
+test('text node leaves an empty clipboard paste to the native no-op path', async () => {
+  const renderer = await readFile(new URL('../../src/app/core/main/canvas/nodes/canvas-nodes.tsx', import.meta.url), 'utf8')
+  const pasteHandler = renderer.slice(renderer.indexOf('onPaste={event => {'), renderer.indexOf('onPointerDown=', renderer.indexOf('onPaste={event => {')))
+  assert.match(pasteHandler, /const inserted = chooseExternalText/)
+  assert.match(pasteHandler, /if \(!inserted\) return[\s\S]*event\.preventDefault\(\)/)
 })
