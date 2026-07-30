@@ -7,6 +7,7 @@ export const MAX_CANVAS_ZOOM = 6
 const MIN_CONTENT_SCALE = 0.1667
 const MAX_CONTENT_SCALE = 10
 const DEFAULT_CANVAS_FONT_SIZE = 15
+const TEXT_DRAW_BASE_MINIMUM = { width: 160, height: 88 }
 
 export interface ViewportSnapshot {
   x: number
@@ -113,6 +114,30 @@ export function canvasSizeToScreen(size: CanvasSize, snapshot: ViewportSnapshot)
 
 export function contentScaleForZoom(zoom: number): number {
   return clamp(round4(1 / normalizeZoom(zoom)), MIN_CONTENT_SCALE, MAX_CONTENT_SCALE)
+}
+
+export function resolveZoomAwareTextDrawSize(size: CanvasSize, zoom: number): CanvasSize {
+  const effectiveZoom = Math.sqrt(Math.max(1, normalizeZoom(zoom)))
+  return {
+    width: round2(Math.max(size.width, TEXT_DRAW_BASE_MINIMUM.width / effectiveZoom)),
+    height: round2(Math.max(size.height, TEXT_DRAW_BASE_MINIMUM.height / effectiveZoom)),
+  }
+}
+
+export function resolveZoomAwareTextDrawRect(
+  start: { x: number; y: number },
+  current: { x: number; y: number },
+  zoom: number,
+) {
+  const size = resolveZoomAwareTextDrawSize({
+    width: Math.abs(current.x - start.x),
+    height: Math.abs(current.y - start.y),
+  }, zoom)
+  return {
+    x: round2(current.x >= start.x ? start.x : start.x - size.width),
+    y: round2(current.y >= start.y ? start.y : start.y - size.height),
+    ...size,
+  }
 }
 
 export function normalizeCanvasFontSize(value: unknown, fallback = DEFAULT_CANVAS_FONT_SIZE): number {

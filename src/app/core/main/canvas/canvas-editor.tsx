@@ -202,6 +202,7 @@ import {
   screenDistanceToCanvas,
   screenPointToCanvas,
   screenSizeToCanvas,
+  resolveZoomAwareTextDrawRect,
   type ViewportSnapshot,
 } from '@/lib/canvas/viewport-sizing'
 import {
@@ -1913,10 +1914,9 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       updateGeometryUi({ snapGuides: [], drawDraft: { ...draft } })
       return
     }
-    const rawScreenRect = normalizeDrawRect(draft.start, current)
-    const position = screenPointToCanvas({ clientX: rawScreenRect.x, clientY: rawScreenRect.y }, draft.viewport)
-    const size = screenSizeToCanvas({ width: rawScreenRect.width, height: rawScreenRect.height }, draft.viewport)
-    const rawCandidate = { ...position, ...size }
+    const startCanvas = screenPointToCanvas({ clientX: draft.start.x, clientY: draft.start.y }, draft.viewport)
+    const currentCanvas = screenPointToCanvas({ clientX: current.x, clientY: current.y }, draft.viewport)
+    const rawCandidate = resolveZoomAwareTextDrawRect(startCanvas, currentCanvas, draft.viewport.zoom)
     const thresholds = thresholdsForSnapshot(draft.viewport)
     const obstacles = spatialIndexRef.current
       .query(expandRect(rawCandidate, thresholds.snapBreak + thresholds.safetyGap))

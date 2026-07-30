@@ -9,10 +9,25 @@ import {
   captureViewportSnapshot,
   contentScaleForZoom,
   normalizeCanvasFontSize,
+  resolveZoomAwareTextDrawRect,
+  resolveZoomAwareTextDrawSize,
   screenDistanceToCanvas,
   screenPointToCanvas,
   screenSizeToCanvas,
 } from '../../src/lib/canvas/viewport-sizing.ts'
+
+test('drawn text soft minimum grows sublinearly above 100 percent', () => {
+  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 1), { width: 160, height: 88 })
+  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 2), { width: 113.14, height: 62.23 })
+  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 6), { width: 65.32, height: 35.93 })
+  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 300, height: 120 }, 6), { width: 300, height: 120 })
+})
+
+test('reverse drag expands the soft minimum toward the pointer direction', () => {
+  assert.deepEqual(resolveZoomAwareTextDrawRect({ x: 200, y: 160 }, { x: 190, y: 150 }, 2), {
+    x: 86.86, y: 97.77, width: 113.14, height: 62.23,
+  })
+})
 import { DEFAULT_CANVAS_DOCUMENT, normalizeCanvasDocument } from '../../src/types/canvas.ts'
 
 test('screen dimensions round-trip through one captured 65% snapshot', () => {
