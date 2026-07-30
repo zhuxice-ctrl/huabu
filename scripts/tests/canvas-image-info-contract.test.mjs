@@ -2,18 +2,26 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
-test('image node hides the permanent label and exposes hover metadata', async () => {
-  const source = await readFile(new URL('../../src/app/core/main/canvas/nodes/canvas-nodes.tsx', import.meta.url), 'utf8')
-  const imageSection = source.slice(source.indexOf('export const ImageCanvasNode'), source.indexOf('export const GroupCanvasNode'))
-  assert.doesNotMatch(imageSection, /<BaseNodeContent/)
-  assert.match(imageSection, /group-hover:opacity-100/)
-  assert.match(imageSection, /pointer-events-none/)
-  assert.match(imageSection, /imageTags/)
+test('image metadata drafts initialize only when the dialog opens', async () => {
+  const source = await readFile(new URL('../../src/app/core/main/canvas/canvas-image-info.tsx', import.meta.url), 'utf8')
+  assert.match(source, /const wasOpenRef = useRef\(false\)/)
+  assert.match(source, /if \(open && !wasOpenRef\.current\) \{[\s\S]*setName\(initial\.name\)[\s\S]*setComment\(initial\.comment\)[\s\S]*setTags\(normalizeImageTags\(initial\.tags\)\)/)
+  assert.match(source, /wasOpenRef\.current = open/)
 })
 
 test('image context menu opens one metadata editor and saves through one checkpoint', async () => {
   const editor = await readFile(new URL('../../src/app/core/main/canvas/canvas-editor.tsx', import.meta.url), 'utf8')
+  const saveHandler = editor.match(/const saveImageInfo = useCallback\([\s\S]*?\r?\n  \}, \[imageInfoNodeId, pushHistory, updateFlowNodes\]\)/)?.[0] || ''
   assert.match(editor, /图片信息/)
   assert.match(editor, /setImageInfoNodeId/)
-  assert.match(editor, /pushHistory\(\)[\s\S]*imageTags/)
+  assert.equal(saveHandler.match(/pushHistory\(\)/g)?.length, 1)
+  assert.match(saveHandler, /pushHistory\(\)[\s\S]*imageTags:[\s\S]*registerCanvasImageTags\(value\.tags\)[\s\S]*setImageInfoNodeId\(null\)/)
+})
+
+test('cancel closes image metadata without invoking the save callback', async () => {
+  const source = await readFile(new URL('../../src/app/core/main/canvas/canvas-image-info.tsx', import.meta.url), 'utf8')
+  const cancelButton = source.match(/<Button[^>]*onClick=\{\(\) => onOpenChange\(false\)\}>取消<\/Button>/)?.[0] || ''
+  assert.match(cancelButton, /onOpenChange\(false\)/)
+  assert.doesNotMatch(cancelButton, /onSave/)
+  assert.match(source, /onClick=\{\(\) => onSave\(/)
 })

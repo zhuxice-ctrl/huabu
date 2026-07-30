@@ -63,10 +63,8 @@ test('selected text nodes yield their inline warm shadow to visual-state priorit
   )
 })
 
-test('image nodes use hover-only metadata instead of a permanent label', () => {
+test('image nodes keep recognition feedback while filling the node with media', () => {
   const imageSection = nodesSource.slice(nodesSource.indexOf('export const ImageCanvasNode'), nodesSource.indexOf('export const GroupCanvasNode'))
-  assert.doesNotMatch(imageSection, /<BaseNodeContent/)
-  assert.match(imageSection, /group-hover:opacity-100/)
-  assert.match(imageSection, /pointer-events-none/)
-  assert.match(imageSection, /imageTags/)
+  assert.match(imageSection, /recognitionStatus/)
+  assert.match(imageSection, /className="size-full object-cover"/)
 })

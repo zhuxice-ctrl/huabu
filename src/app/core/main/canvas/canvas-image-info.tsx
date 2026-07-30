@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,14 +35,17 @@ export function CanvasImageInfo({
   const [comment, setComment] = useState(initial.comment)
   const [tags, setTags] = useState(() => normalizeImageTags(initial.tags))
   const [tagQuery, setTagQuery] = useState('')
+  const wasOpenRef = useRef(false)
 
   useEffect(() => {
-    if (!open) return
-    setName(initial.name)
-    setComment(initial.comment)
-    setTags(normalizeImageTags(initial.tags))
-    setTagQuery('')
-  }, [initial, open])
+    if (open && !wasOpenRef.current) {
+      setName(initial.name)
+      setComment(initial.comment)
+      setTags(normalizeImageTags(initial.tags))
+      setTagQuery('')
+    }
+    wasOpenRef.current = open
+  }, [initial.comment, initial.name, initial.tags, open])
 
   const matchingTags = useMemo(() => {
     const query = tagQuery.trim().toLocaleLowerCase()
