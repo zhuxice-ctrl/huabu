@@ -32,6 +32,7 @@ import {
   normalizeTextManualMinHeight,
   resolveTextNodeHeight,
 } from '@/lib/canvas/text-node-sizing'
+import { chooseExternalText, insertExternalText } from '@/lib/canvas/external-text'
 
 export type FlowCanvasNode = Node<CanvasNodeData, CanvasNodeType>
 
@@ -263,6 +264,25 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
         placeholder="输入内容…"
         onFocus={() => emitter.emit('canvas-history-checkpoint')}
         onChange={event => updateNodeData(id, { label: event.target.value })}
+        onPaste={event => {
+          event.preventDefault()
+          const textarea = event.currentTarget
+          const inserted = chooseExternalText({
+            plainText: event.clipboardData.getData('text/plain'),
+            htmlText: event.clipboardData.getData('text/html'),
+          })
+          const result = insertExternalText(
+            textarea.value,
+            textarea.selectionStart,
+            textarea.selectionEnd,
+            inserted,
+          )
+          updateNodeData(id, { label: result.value })
+          requestAnimationFrame(() => {
+            textarea.focus()
+            textarea.setSelectionRange(result.caret, result.caret)
+          })
+        }}
         onPointerDown={event => event.stopPropagation()}
         aria-label="文本区块"
       />

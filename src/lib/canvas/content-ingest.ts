@@ -15,6 +15,7 @@ import {
   type ViewportSnapshot,
 } from './viewport-sizing.ts'
 import { stackIngestDrafts, type PositionedCanvasDraft } from './placement-policy.ts'
+import { chooseExternalText } from './external-text.ts'
 
 const DEFAULT_SCREEN_FONT_SIZE = 15
 const MIN_CONTENT_SCALE = 0.1667
@@ -161,25 +162,13 @@ export function transferUrlChoice(input: CanvasTransferInput): {
   mediaKind: 'video' | 'web-preview'
 } | null {
   if (input.files.length > 0 || input.urlChoice) return null
-  const content = input.html ? htmlToPlainText(input.html) : input.text.trim()
+  const content = chooseExternalText({ plainText: input.text, htmlText: input.html })
   const classified = classifyTextContent(content)
   if (classified.kind !== 'link') return null
   return {
     url: classified.value,
     mediaKind: isVideoUrl(classified.value) ? 'video' : 'web-preview',
   }
-}
-
-function htmlToPlainText(html: string) {
-  return html
-    .replace(/<br\s*\/?\s*>/gi, '\n')
-    .replace(/<\/p\s*>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .trim()
 }
 
 export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraft[] {
@@ -210,7 +199,7 @@ export function draftsFromTransfer(input: CanvasTransferInput): CanvasIngestDraf
     })
   }
 
-  const content = input.html ? htmlToPlainText(input.html) : input.text.trim()
+  const content = chooseExternalText({ plainText: input.text, htmlText: input.html })
   if (!content) return []
   const classified = classifyTextContent(content)
   if (classified.kind === 'link') {
