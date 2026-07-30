@@ -178,6 +178,13 @@ import {
 } from '@/lib/canvas/gesture-policy'
 import { resolveTextResize } from '@/lib/canvas/text-node-sizing'
 import {
+  appendPointerSample,
+  inertiaProgress,
+  planNodeInertia,
+  releaseVelocity,
+  type PointerSample,
+} from '@/lib/canvas/node-inertia'
+import {
   armContextMenuSuppression,
   canStartRelationGesture,
   commitRelationEditorTransaction,
@@ -319,6 +326,8 @@ interface ResizeGeometrySession extends GeometrySessionBase {
 interface MoveGeometrySession extends GeometrySessionBase {
   kind: 'move'
   activeNodeId: string
+  samples: PointerSample[]
+  inertiaFrame: number | null
 }
 
 type GeometrySession =
@@ -1792,13 +1801,25 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       }),
       kind: 'move',
       activeNodeId: activeNode.id,
+      samples: appendPointerSample([], {
+        x: Number((event as { clientX?: number }).clientX ?? 0),
+        y: Number((event as { clientY?: number }).clientY ?? 0),
+        time: Number((event as { timeStamp?: number }).timeStamp ?? performance.now()),
+      }),
+      inertiaFrame: null,
     }
     geometrySessionRef.current = session
   }, [captureCurrentViewport, createGeometrySessionBase, nodes])
 
-  const evaluateMoveGeometrySession = useCallback((activeNode: FlowCanvasNode) => {
+  const evaluateMoveGeometrySession = useCallback((event: unknown, activeNode: FlowCanvasNode) => {
     const session = geometrySessionRef.current
     if (!session || session.kind !== 'move' || session.activeNodeId !== activeNode.id) return
+    const pointer = event as { clientX?: number; clientY?: number; timeStamp?: number }
+    session.samples = appendPointerSample(session.samples, {
+      x: Number(pointer.clientX ?? 0),
+      y: Number(pointer.clientY ?? 0),
+      time: Number(pointer.timeStamp ?? performance.now()),
+    })
     const originalActive = session.originalGeometry.get(activeNode.id)
     const acceptedActive = session.lastAcceptedGeometry.get(activeNode.id)
     if (!originalActive || !acceptedActive) return
@@ -1857,9 +1878,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     updateFlowNodes(current => applyGeometry(current, candidate))
   }, [updateFlowNodes])
 
-  const finalizeMoveGeometrySession = useCallback(() => {
-    const session = geometrySessionRef.current
-    if (!session || session.kind !== 'move') return
+  const commitMoveGeometrySession = useCallback((session: MoveGeometrySession) => {
+    if (session.inertiaFrame !== null) cancelAnimationFrame(session.inertiaFrame)
     const changed = [...session.lastAcceptedGeometry].some(([id, rect]) => (
       !geometryEqual(rect, session.originalGeometry.get(id))
     ))
@@ -1887,6 +1907,93 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     releaseGeometryPointerCapture(outcome.pointerId)
   }, [cancelGeometrySession, commitGeometrySessionCheckpoint,
     releaseGeometryPointerCapture, updateFlowNodes, updateGeometryUi])
+
+  const finalizeMoveGeometrySession = useCallback((event?: unknown) => {
+    const session = geometrySessionRef.current
+    if (!session || session.kind !== 'move') return
+    const pointer = event as { clientX?: number; clientY?: number; timeStamp?: number } | undefined
+    if (pointer) {
+      session.samples = appendPointerSample(session.samples, {
+        x: Number(pointer.clientX ?? 0),
+        y: Number(pointer.clientY ?? 0),
+        time: Number(pointer.timeStamp ?? performance.now()),
+      })
+    }
+    const plan = planNodeInertia(releaseVelocity(session.samples))
+    if (!plan) {
+      commitMoveGeometrySession(session)
+      return
+    }
+    const desiredDelta = {
+      x: screenDistanceToCanvas(plan.delta.x, session.viewport),
+      y: screenDistanceToCanvas(plan.delta.y, session.viewport),
+    }
+    const members = [...session.collisionMemberIds].flatMap(id => {
+      const rect = session.lastAcceptedGeometry.get(id)
+      return rect ? [{ id, rect }] : []
+    })
+    let acceptedDelta = desiredDelta
+    if (members.length > 0) {
+      const targetRects = members.map(member => ({
+        ...member.rect,
+        x: member.rect.x + desiredDelta.x,
+        y: member.rect.y + desiredDelta.y,
+      }))
+      const broadPhase = unionRect([...members.map(member => member.rect), ...targetRects])
+      if (!broadPhase) {
+        commitMoveGeometrySession(session)
+        return
+      }
+      const thresholds = thresholdsForSnapshot(session.viewport)
+      const obstacles = spatialIndexRef.current.query(expandRect(broadPhase, thresholds.safetyGap))
+        .filter(record => !session.controlledNodeIds.has(record.id))
+        .map(record => ({ id: record.id, rect: record.rect }))
+      const swept = sweepRigidSet({ members, obstacles, delta: desiredDelta, thresholds, maxPasses: 4 })
+      if (!swept.valid) {
+        commitMoveGeometrySession(session)
+        return
+      }
+      acceptedDelta = swept.delta
+    }
+    const startGeometry = new Map(session.lastAcceptedGeometry)
+    const targetGeometry = new Map(startGeometry)
+    for (const id of session.controlledNodeIds) {
+      const rect = startGeometry.get(id)
+      if (rect) targetGeometry.set(id, { ...rect, x: rect.x + acceptedDelta.x, y: rect.y + acceptedDelta.y })
+    }
+    const startedAt = performance.now()
+    const animate = (now: number) => {
+      if (geometrySessionRef.current !== session) return
+      const progress = inertiaProgress(now - startedAt, plan.durationMs)
+      const geometry = new Map(startGeometry)
+      for (const [id, target] of targetGeometry) {
+        const start = startGeometry.get(id)
+        if (!start) continue
+        geometry.set(id, {
+          ...target,
+          x: start.x + (target.x - start.x) * progress,
+          y: start.y + (target.y - start.y) * progress,
+        })
+      }
+      session.lastAcceptedGeometry = geometry
+      updateFlowNodes(current => applyGeometry(current, geometry))
+      if (progress >= 1) {
+        session.inertiaFrame = null
+        commitMoveGeometrySession(session)
+        return
+      }
+      session.inertiaFrame = requestAnimationFrame(animate)
+    }
+    session.inertiaFrame = requestAnimationFrame(animate)
+  }, [commitMoveGeometrySession, updateFlowNodes])
+
+  const finishActiveMoveInertia = useCallback(() => {
+    const session = geometrySessionRef.current
+    if (!session || session.kind !== 'move' || session.inertiaFrame === null) return
+    cancelAnimationFrame(session.inertiaFrame)
+    session.inertiaFrame = null
+    commitMoveGeometrySession(session)
+  }, [commitMoveGeometrySession])
 
   const onEdgesChangeTracked = useCallback((changes: EdgeChange<Edge>[]) => {
     if (changes.some(change => change.type === 'remove')) pushHistory()
@@ -2070,10 +2177,16 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     }
     const geometry = geometrySessionRef.current
     if (geometry && (pointerId === undefined || geometry.pointerId === pointerId || geometry.pointerId < 0)) {
-      cancelGeometrySession(geometryReason)
+      if (geometry.kind === 'move' && geometry.inertiaFrame !== null) {
+        cancelAnimationFrame(geometry.inertiaFrame)
+        geometry.inertiaFrame = null
+        commitMoveGeometrySession(geometry)
+      } else {
+        cancelGeometrySession(geometryReason)
+      }
     }
     if (cancelledRightButtonSession) suppressContextMenuRef.current = null
-  }, [cancelGeometrySession, setRelationTargetHighlight])
+  }, [cancelGeometrySession, commitMoveGeometrySession, setRelationTargetHighlight])
 
   useEffect(() => {
     const cancelAll = () => cancelPointerSessions(undefined, 'window-blur')
@@ -3476,6 +3589,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
       <div
         className="relative min-h-0 flex-1 overflow-hidden"
         onPointerDownCapture={event => {
+          finishActiveMoveInertia()
           lastPointerIdRef.current = event.pointerId
           event.currentTarget.dataset.canvasGeometryPointer = String(event.pointerId)
           if (event.target instanceof HTMLElement) {
@@ -3602,7 +3716,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
           persistViewport(viewport)
         }}
         onNodeDragStart={(event, node) => startMoveGeometrySession(event, node)}
-        onNodeDrag={(_event, node) => evaluateMoveGeometrySession(node)}
+        onNodeDrag={(event, node) => evaluateMoveGeometrySession(event, node)}
         onNodeDragStop={finalizeMoveGeometrySession}
         deleteKeyCode={null}
         nodesDraggable={!previewSnapshot && tool === 'select'}

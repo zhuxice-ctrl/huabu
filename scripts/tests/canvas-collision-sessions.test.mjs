@@ -185,7 +185,7 @@ test('move sessions sweep rigid members, preserve group children and checkpoint 
   assert.match(editorSource, /onNodeDragStop=.*finalizeMoveGeometrySession/s)
 
   const resizeFinalization = section('const finalizeResizeGeometrySession', 'const evaluateResizeGeometrySession')
-  const moveFinalization = section('const finalizeMoveGeometrySession', 'const onEdgesChangeTracked')
+  const moveFinalization = section('const commitMoveGeometrySession', 'const onEdgesChangeTracked')
   const drawFinalization = section('const finalizeDrawGeometrySession', 'const setRelationTargetHighlight')
   assert.equal((resizeFinalization.match(/commitGeometrySessionCheckpoint\(/g) || []).length, 1)
   assert.equal((moveFinalization.match(/commitGeometrySessionCheckpoint\(/g) || []).length, 1)
