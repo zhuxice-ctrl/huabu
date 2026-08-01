@@ -1,30 +1,28 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
-  "task_type": "code",
-  "goal": "Fix canvas text auto-growth boundaries, make zoom range predictable, add center reset and colored tag markers to the minimap, and remove user-facing layer-order actions.",
+  "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
+  "task_type": "release",
+  "goal": "Consolidate every current project branch into main with the locally verified Canvas state as the code authority, publish version 0.32.2, build and locally install the Windows NSIS package, then synchronize main to origin.",
   "non_goals": [
-    "Do not rewrite the React Flow canvas architecture.",
-    "Do not remove internal geometry, z-index or persistence fields unless they are unreachable after removing the menu actions.",
-    "Do not change database schema or user documents.",
-    "Do not add a second independent tag catalog; reuse the existing canvas image tag model where possible.",
-    "Do not change unrelated chat, recovery, provider or release behavior."
+    "Do not overwrite a remote branch with force push.",
+    "Do not change live user data, credentials, application recovery files or the unrelated foundation worktree.",
+    "Do not import stale remote branch code over the newer local mainline; divergent history is retained with explicit ours-strategy merge commits.",
+    "Do not alter dependency build-approval policy."
   ],
   "acceptance_criteria": [
-    "Text nodes retain their drawn/manual height while content fits; automatic vertical growth starts only after measured content exceeds the current node height.",
-    "Growth is monotonic, bounded and guarded against non-finite or pathological measurements; repeated input cannot grow forever without additional overflow.",
-    "Canvas zoom clamps to a maximum of 100% and a minimum of 0.1%, with wheel/pinch and programmatic viewport updates using the same bounds.",
-    "The minimap exposes a clear center/reset action that animates the viewport to the current canvas content center without changing document data.",
-    "Tag categories/colors are projected onto minimap node markers at their actual canvas positions, with deterministic fallback for untagged nodes.",
-    "User-facing layer-order menu items and handlers are removed; ordinary node selection, deletion and context actions remain available.",
-    "Focused tests, full Canvas tests, TypeScript, production build and an independent read-only review pass."
+    "main contains the latest locally verified Canvas branch and has recorded every non-ancestor local/origin branch history.",
+    "The source tree and the separate foundation worktree are clean or deliberately preserved without accidental changes.",
+    "Tauri configuration version is 0.32.2 and both NSIS installer creation and checksum verification pass.",
+    "The NSIS installer is run locally in silent update mode without deleting application data.",
+    "origin/main is fast-forwarded to the verified local main; no force push is used.",
+    "Final Canvas tests, TypeScript, production frontend build, Rust checks and release audit pass."
   ],
   "risk_level": "high",
-  "execution_mode": "solo_with_independent_read_only_review",
-  "allowed_actions": ["read", "edit", "test", "shell", "write_workflow_artifacts"],
+  "execution_mode": "solo_release_with_read_only_audit",
+  "allowed_actions": ["read", "edit", "test", "build", "git_merge", "git_push", "install", "write_workflow_artifacts"],
   "required_outputs": [
-    "docs/superpowers/plans/2026-08-02-canvas-growth-zoom-minimap-tags.md",
+    "docs/superpowers/plans/2026-08-02-release-main-consolidation-0.32.2.md",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
@@ -33,38 +31,31 @@
     ".adworkflow/review_findings.json"
   ],
   "do_not_touch": [
-    "main branch history before this task",
     "live zeroxB note.db",
-    "zeroxB user documents",
+    "user documents and attachments",
     "provider credentials",
-    "src-tauri/src/printing.rs",
-    "unrelated remote branches",
-    "tracked tests outside the focused Canvas scope"
+    "F:/huabu-worktrees/foundation working tree contents",
+    "remote branch history via force push"
   ],
   "entrypoints": [
-    "typescript:src.lib.canvas.text-node-sizing",
-    "typescript:src.lib.canvas.viewport-sizing",
-    "typescript:src.app.core.main.canvas.canvas-editor",
-    "typescript:src.app.core.main.canvas.canvas-workspace",
-    "typescript:src.app.core.main.canvas.nodes.canvas-nodes"
+    "src-tauri/tauri.conf.json",
+    "package.json",
+    "src-tauri/Cargo.toml",
+    "README.md",
+    "git refs main, origin/* and upstream/dev"
   ],
   "context_sources": [
-    "src/lib/canvas/text-node-sizing.ts",
-    "src/lib/canvas/viewport-sizing.ts",
-    "src/app/core/main/canvas/canvas-editor.tsx",
-    "src/app/core/main/canvas/canvas-workspace.tsx",
-    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
-    "src/lib/canvas/image-tags.ts",
-    "scripts/tests/canvas-text-node-sizing.test.mjs",
-    "scripts/tests/canvas-viewport-sizing.test.mjs",
-    "scripts/tests/canvas-node-visual-contract.test.mjs",
-    "scripts/tests/canvas-editor-contract.test.mjs"
+    "README.md release instructions",
+    "src-tauri/tauri.conf.json",
+    "git branch -vv",
+    "git worktree list --porcelain",
+    "git log main..origin/*"
   ],
   "notes": [
-    "Use explicit UTF-8 for all Chinese source and report I/O.",
-    "Prefer pure policies and focused contract tests before touching the large React components.",
-    "The supplied recording shows a 600% start state, a narrow node becoming vertically unbounded, and a visible layer-order menu; treat those as reproduction evidence, not as exact implementation constraints.",
-    "The TV analysis produced no speech segments; visual evidence is stored outside the repository under F:/TV/notes."
+    "Version 0.32.2 is a patch release selected from current Tauri version 0.32.1.",
+    "origin/dev, origin/feat/agent-permission-policy and origin/feat/canvas-workspace are substantially behind main yet have unique commits. They will be merged with the ours strategy so all histories remain reachable while the locally verified mainline remains authoritative.",
+    "origin/release and origin/foundation/notegen-636d4f8 are already ancestors and require no merge commit.",
+    "Use explicit UTF-8 for all Chinese reports and shell I/O."
   ],
   "implementation_owner": "root"
 }

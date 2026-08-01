@@ -1,10 +1,10 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
+  "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
   "status": "accepted",
-  "graph_revision": "e7a2dcf72a206f9fdf41289cacb7e4ab19e4c101",
-  "slice_revision": "manual-l2-canvas-growth-zoom-minimap-tags-2026-08-02",
-  "confidence": 0.93,
+  "graph_revision": "ec72557b503240796a859d23b172d87cdab20aee",
+  "slice_revision": "manual-l2-release-main-consolidation-2026-08-02",
+  "confidence": 0.96,
   "confidence_threshold": 0.8,
   "freshness": {
     "fresh": true,
@@ -15,23 +15,18 @@
   },
   "provider_capabilities": [],
   "missing_capabilities": {
-    "semantic-codegraph": "Not available for the manual fallback; focused source and contract context is read directly.",
-    "prepare_context.py": "Command attempted; executable not installed or discoverable."
+    "semantic-codegraph": "Not available for the manual fallback; branch graph, release configuration and focused contracts were read directly.",
+    "prepare_context.py": "Executable is not installed or discoverable."
   },
   "invalid_reasons": [],
-  "expansion_reasons": [
-    "Task is isolated to Canvas sizing, zoom, minimap, tags and visible layer menu contracts; no database or provider paths are in scope."
-  ],
+  "expansion_reasons": ["Release spans Git ancestry, Windows packaging and local installer behavior; all are explicitly included in the read-first context."],
   "required_actions": [
-    "Add failing focused contracts before implementation.",
-    "Run post-edit impact analysis before final verification.",
-    "Run independent read-only review of the final diff and verify no unrelated files changed."
+    "Record every divergent branch and the strategy used to preserve it.",
+    "Run post-merge impact analysis before packaging.",
+    "Verify installer file hash and local install exit code before pushing main."
   ],
   "critical_unresolved_edges": [],
   "expansion_history": [
-    {
-      "timestamp": "2026-08-02T00:00:00Z",
-      "action": "manual_operations_fallback_after_prepare_context_unavailable"
-    }
+    {"timestamp": "2026-08-02T00:00:00Z", "action": "manual_release_preflight_after_prepare_context_unavailable"}
   ]
 }
