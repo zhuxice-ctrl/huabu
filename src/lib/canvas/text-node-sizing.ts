@@ -1,4 +1,5 @@
 const MIN_TEXT_NODE_DIMENSION = 1
+export const MAX_AUTO_TEXT_NODE_HEIGHT = 20_000
 
 function finitePositive(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= MIN_TEXT_NODE_DIMENSION
@@ -12,13 +13,15 @@ export function normalizeTextManualMinHeight(value: unknown, persistedHeight: nu
 export function resolveTextNodeHeight(input: {
   measuredContentHeight: number
   chromeHeight: number
+  currentHeight?: number
   manualMinHeight: number
 }): number {
   const minimum = normalizeTextManualMinHeight(input.manualMinHeight, MIN_TEXT_NODE_DIMENSION)
-  if (!Number.isFinite(input.measuredContentHeight) || !Number.isFinite(input.chromeHeight)) return minimum
+  const current = finitePositive(input.currentHeight) ? input.currentHeight : minimum
+  if (!Number.isFinite(input.measuredContentHeight) || !Number.isFinite(input.chromeHeight)) return Math.max(minimum, current)
   const measuredHeight = input.measuredContentHeight + input.chromeHeight
-  if (!Number.isFinite(measuredHeight)) return minimum
-  return Math.max(minimum, Math.ceil(measuredHeight))
+  if (!Number.isFinite(measuredHeight) || measuredHeight <= current) return Math.max(minimum, current)
+  return Math.max(current, minimum, Math.min(MAX_AUTO_TEXT_NODE_HEIGHT, Math.ceil(measuredHeight)))
 }
 
 export function resolveTextResize(input: {

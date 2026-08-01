@@ -9,8 +9,13 @@ import {
 
 test('drawn height becomes the minimum and wrapped content grows only vertically', () => {
   assert.equal(normalizeTextManualMinHeight(undefined, 73), 73)
-  assert.equal(resolveTextNodeHeight({ measuredContentHeight: 110, chromeHeight: 16, manualMinHeight: 73 }), 126)
-  assert.equal(resolveTextNodeHeight({ measuredContentHeight: 20, chromeHeight: 16, manualMinHeight: 73 }), 73)
+  assert.equal(resolveTextNodeHeight({ measuredContentHeight: 110, chromeHeight: 16, currentHeight: 73, manualMinHeight: 73 }), 126)
+  assert.equal(resolveTextNodeHeight({ measuredContentHeight: 20, chromeHeight: 16, currentHeight: 120, manualMinHeight: 73 }), 120)
+})
+
+test('automatic growth is capped and never compounds the current height', () => {
+  assert.equal(resolveTextNodeHeight({ measuredContentHeight: 110, chromeHeight: 16, currentHeight: 126, manualMinHeight: 73 }), 126)
+  assert.equal(resolveTextNodeHeight({ measuredContentHeight: 100000000, chromeHeight: 16, currentHeight: 126, manualMinHeight: 73 }), 20000)
 })
 
 test('horizontal resize preserves width and recomputes height while vertical resize replaces the minimum', () => {

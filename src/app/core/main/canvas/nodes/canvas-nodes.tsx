@@ -201,13 +201,11 @@ export const TextCanvasNode = memo(function TextCanvasNode({ id, data, selected 
     if (!textarea) return
     const publish = () => {
       const bounds = textarea.getBoundingClientRect()
-      const previousHeight = textarea.style.height
-      textarea.style.height = '0px'
       const measuredContentHeight = textarea.scrollHeight
-      textarea.style.height = previousHeight
       const nextHeight = resolveTextNodeHeight({
         measuredContentHeight,
-        chromeHeight: Math.max(0, bounds.height - textarea.clientHeight) + 16 * contentScale(data),
+        chromeHeight: 16 * contentScale(data) + 2,
+        currentHeight: bounds.height,
         manualMinHeight: normalizeTextManualMinHeight(data.textManualMinHeight, bounds.height),
       })
       emitter.emit('canvas-text-node-measure', { nodeId: id, height: nextHeight })
