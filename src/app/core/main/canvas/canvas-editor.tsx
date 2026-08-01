@@ -3288,42 +3288,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
     )))
   }, [pushHistory, selectedFreehandNodes.length, setNodes])
 
-  const updateSelectedNodeLayer = useCallback((action: 'front' | 'forward' | 'backward' | 'back') => {
-    if (selectedNodeCount === 0) return
-    pushHistory()
-    setNodes(current => {
-      const originalIndex = new Map(current.map((node, index) => [node.id, index]))
-      const ordered = [...current].sort((left, right) => {
-        const layerDifference = (left.zIndex ?? 0) - (right.zIndex ?? 0)
-        return layerDifference || (originalIndex.get(left.id) ?? 0) - (originalIndex.get(right.id) ?? 0)
-      })
-      const selectedIds = new Set(ordered.filter(node => node.selected).map(node => node.id))
-
-      if (action === 'front' || action === 'back') {
-        const selected = ordered.filter(node => selectedIds.has(node.id))
-        const unselected = ordered.filter(node => !selectedIds.has(node.id))
-        ordered.splice(0, ordered.length, ...(action === 'front'
-          ? [...unselected, ...selected]
-          : [...selected, ...unselected]))
-      } else if (action === 'forward') {
-        for (let index = ordered.length - 2; index >= 0; index -= 1) {
-          if (selectedIds.has(ordered[index].id) && !selectedIds.has(ordered[index + 1].id)) {
-            ;[ordered[index], ordered[index + 1]] = [ordered[index + 1], ordered[index]]
-          }
-        }
-      } else {
-        for (let index = 1; index < ordered.length; index += 1) {
-          if (selectedIds.has(ordered[index].id) && !selectedIds.has(ordered[index - 1].id)) {
-            ;[ordered[index], ordered[index - 1]] = [ordered[index - 1], ordered[index]]
-          }
-        }
-      }
-
-      const layerById = new Map(ordered.map((node, index) => [node.id, index]))
-      return current.map(node => ({ ...node, zIndex: layerById.get(node.id) ?? 0 }))
-    })
-  }, [pushHistory, selectedNodeCount, setNodes])
-
   const updateSelectedFreehandWidth = useCallback((size: number, recordHistory = true) => {
     if (selectedFreehandNodes.length === 0) return
     if (recordHistory) pushHistory()
@@ -4026,21 +3990,6 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                 <CopyPlus />
                 {t('contextMenu.duplicate')}
                 <ContextMenuShortcut>{shortcutModifier}D</ContextMenuShortcut>
-              </ContextMenuItem>
-            </ContextMenuGroup>}
-            {contextTarget !== 'pane' && <ContextMenuSeparator />}
-            {contextTarget !== 'pane' && <ContextMenuGroup>
-              <ContextMenuItem disabled={selectedNodeCount === 0} onSelect={() => updateSelectedNodeLayer('front')}>
-                {t('layer.front')}
-              </ContextMenuItem>
-              <ContextMenuItem disabled={selectedNodeCount === 0} onSelect={() => updateSelectedNodeLayer('forward')}>
-                {t('layer.forward')}
-              </ContextMenuItem>
-              <ContextMenuItem disabled={selectedNodeCount === 0} onSelect={() => updateSelectedNodeLayer('backward')}>
-                {t('layer.backward')}
-              </ContextMenuItem>
-              <ContextMenuItem disabled={selectedNodeCount === 0} onSelect={() => updateSelectedNodeLayer('back')}>
-                {t('layer.back')}
               </ContextMenuItem>
             </ContextMenuGroup>}
             {contextTarget !== 'pane' && <ContextMenuSeparator />}

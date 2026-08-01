@@ -80,3 +80,10 @@ test('image tag filtering is a display projection rather than a document mutatio
   assert.match(editorSource, /const displayEdges = useMemo/)
   assert.match(editorSource, /clearCanvasImageTagFilter\(canvasId\)/)
 })
+
+test('visible layer ordering actions are removed while core context actions remain', () => {
+  assert.doesNotMatch(editorSource, /t\('layer\.(front|forward|backward|back)'\)/)
+  assert.doesNotMatch(editorSource, /updateSelectedNodeLayer\(/)
+  assert.match(editorSource, /onSelect=\{deleteSelection\}/)
+  assert.match(editorSource, /onSelect=\{duplicateSelection\}/)
+})
