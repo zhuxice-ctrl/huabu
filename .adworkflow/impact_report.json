@@ -1,65 +1,85 @@
 {
   "schema": "ADworkflo.impact_report.v1",
-  "task_id": "zeroxb-stage-closeout-2026-07-31",
+  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
   "status": "passed",
-  "baseline_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
-  "current_revision": "working-tree:zeroxb-stage-closeout-2026-07-31",
+  "baseline_revision": "e7a2dcf72a206f9fdf41289cacb7e4ab19e4c101",
+  "current_revision": "working-tree:codex/canvas-growth-zoom-minimap-tags",
   "declared_files": [
-    ".adworkflow/task_spec.json",
-    ".adworkflow/context_manifest.json",
-    ".adworkflow/context_preflight.json",
-    ".adworkflow/impact_report.json",
-    ".adworkflow/worker_state.json",
-    ".adworkflow/verification_result.json",
-    ".adworkflow/review_findings.json",
-    "docs/reports/2026-07-31-zeroxb-stage-closeout.md"
-  ],
-  "predicted_files": [
-    ".adworkflow/task_spec.json",
-    ".adworkflow/context_manifest.json",
-    ".adworkflow/context_preflight.json",
-    ".adworkflow/impact_report.json",
-    ".adworkflow/worker_state.json",
-    ".adworkflow/verification_result.json",
-    ".adworkflow/review_findings.json",
-    "docs/reports/2026-07-31-zeroxb-stage-closeout.md"
+    "src/lib/canvas/text-node-sizing.ts",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/types/canvas.ts",
+    "src/stores/canvas-view.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-footer.tsx",
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/lib/canvas/minimap.ts",
+    "scripts/tests/canvas-text-node-sizing.test.mjs",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    "scripts/tests/canvas-minimap-contract.test.mjs",
+    "scripts/tests/canvas-node-visual-contract.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs",
+    "scripts/tests/canvas-collision-policy.test.mjs",
+    "scripts/tests/canvas-content-ingest.test.mjs",
+    "scripts/tests/canvas-placement-policy.test.mjs"
   ],
   "changed_files": [
-    ".adworkflow/task_spec.json",
-    ".adworkflow/context_manifest.json",
-    ".adworkflow/context_preflight.json",
-    ".adworkflow/impact_report.json",
-    ".adworkflow/worker_state.json",
-    ".adworkflow/verification_result.json",
-    ".adworkflow/review_findings.json",
-    "docs/reports/2026-07-31-zeroxb-stage-closeout.md"
+    "src/lib/canvas/text-node-sizing.ts",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/types/canvas.ts",
+    "src/stores/canvas-view.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-footer.tsx",
+    "src/app/core/main/canvas/canvas-node-style-menu.tsx",
+    "src/lib/canvas/minimap.ts",
+    "scripts/tests/canvas-text-node-sizing.test.mjs",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    "scripts/tests/canvas-minimap-contract.test.mjs",
+    "scripts/tests/canvas-node-visual-contract.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs",
+    "scripts/tests/canvas-collision-policy.test.mjs",
+    "scripts/tests/canvas-content-ingest.test.mjs",
+    "scripts/tests/canvas-placement-policy.test.mjs"
   ],
-  "observed_impact_files": [],
   "unexpected_impact": [],
   "symbol_delta": {
-    "added": [],
-    "removed": []
+    "added": [
+      "MAX_AUTO_TEXT_NODE_HEIGHT",
+      "normalizeCanvasZoom",
+      "normalizeCanvasTags",
+      "canvasTagColor",
+      "minimapNodeColor",
+      "CanvasNodeData.tags"
+    ],
+    "removed": ["updateSelectedNodeLayer"]
   },
   "edge_delta": {
-    "calls": { "added": [], "removed": [] },
-    "imports": { "added": [], "removed": [] }
+    "calls": {
+      "added": ["CanvasEditor -> fitView", "MiniMap -> minimapNodeColor", "CanvasNodeStyleMenu -> normalizeCanvasTags"],
+      "removed": ["ContextMenu -> updateSelectedNodeLayer"]
+    },
+    "imports": {
+      "added": ["canvas-editor -> canvas/minimap", "canvas-footer -> viewport-sizing", "canvas-view -> viewport-sizing"],
+      "removed": []
+    }
   },
-  "operational_impact": {
-    "product_source_changed": false,
-    "database_live_file_changed_by_closeout": false,
-    "external_backup_root": "F:/zeroxB-backups/2026-07-31-stage-closeout",
-    "npm_cache_from": "C:/Users/Lenovo/AppData/Local/npm-cache",
-    "npm_cache_to": "F:/.npm-cache",
-    "git_main_fast_forward": "0a4be0e06e6a947059cdaaa84bbf13e5ca47fb65..c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
-    "deleted_worktree": "F:/Temp/zeroxb-task9-baseline",
-    "preserved_dirty_worktree": "F:/huabu-worktrees/foundation"
-  },
-  "production_critical_edges": [],
-  "test_critical_edges": [],
+  "production_critical_edges": [
+    "TextCanvasNode measurement -> resolveTextNodeHeight -> canvas-text-node-measure",
+    "ReactFlow viewport -> shared 0.001..1 zoom normalization",
+    "CanvasNodeData tags/imageTags -> MiniMap marker color"
+  ],
+  "test_critical_edges": [
+    "text overflow and 20000px cap",
+    "zoom normalization at 0.001 and 1",
+    "minimap center/tag contracts",
+    "visible layer actions absent"
+  ],
   "propagation_truncated": false,
   "notes": [
-    "No product source was edited during the closeout; semantic symbol impact is empty.",
-    "All destructive operations were preceded by explicit path, hash or Git reachability checks.",
-    "The unrelated dirty foundation worktree and all unrelated remote branches were preserved."
+    "Post-edit allowlist audit found zero unexpected files.",
+    "No database schema, live note.db, user documents, credentials, Rust source or unrelated branches were changed.",
+    "The three adjusted pre-existing Canvas tests now express the new 100% zoom cap rather than an obsolete 200% snapshot assumption.",
+    "prepare_context.py was unavailable; the accepted manual L2 preflight is recorded in context_preflight.json."
   ]
 }

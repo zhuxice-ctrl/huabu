@@ -36,11 +36,11 @@ test('screen collision constants use one viewport conversion boundary', () => {
     snapBreak: 21.5385,
     epsilon: 0.3846,
   })
-  assert.deepEqual(thresholdsForSnapshot(snapshot(2)), {
-    safetyGap: 3,
-    snapEntry: 4,
-    snapBreak: 7,
-    epsilon: 0.125,
+  assert.deepEqual(thresholdsForSnapshot(snapshot(1)), {
+    safetyGap: 6,
+    snapEntry: 8,
+    snapBreak: 14,
+    epsilon: 0.25,
   })
 })
 

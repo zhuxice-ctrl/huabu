@@ -42,7 +42,7 @@ test('sanitized html falls back to text and empty input creates nothing', () => 
   assert.deepEqual(draftsFromTransfer({ files: [], html: '', text: '   ' }), [])
 })
 
-test('multiple drafts stack vertically with a six-screen-pixel gap at non-unit zoom', () => {
+test('multiple drafts stack vertically after zoom is clamped at the 100 percent cap', () => {
   const snapshot = captureViewportSnapshot({
     viewport: { x: 0, y: 0, zoom: 2 },
     containerRect: { left: 0, top: 0 },
@@ -53,7 +53,7 @@ test('multiple drafts stack vertically with a six-screen-pixel gap at non-unit z
   ]
   assert.deepEqual(stackIngestDrafts(drafts, snapshot).map(item => item.position), [
     { x: 0, y: 0 },
-    { x: 0, y: 23 },
+    { x: 0, y: 46 },
   ])
 })
 

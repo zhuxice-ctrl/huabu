@@ -1,115 +1,89 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-stage-closeout-2026-07-31",
+  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
   "status": "passed",
-  "source_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
+  "source_revision": "codex/canvas-growth-zoom-minimap-tags",
   "commands": [
     {
       "command": "codex_app read_thread pagination for 019fa2e9-49ed-7583-aeec-db9a606288af",
       "status": "passed",
-      "summary": "Read all eight pages and recovered the interrupted closeout requirements plus prior implementation and release evidence.",
+      "summary": "Recovered the source task context and reconciled it with the durable local branch state.",
       "exit_code": 0
     },
     {
       "command": "prepare_context.py discovery",
       "status": "unavailable_with_accepted_fallback",
-      "summary": "Not present in repository, PATH, CodexHome, agent roots or searched Windows runtime locations; manual operations-only L2 preflight accepted at confidence 0.96.",
+      "summary": "Executable was not installed or discoverable; manual L2 context manifest and accepted preflight recorded the fallback.",
       "exit_code": 127
-    },
-    {
-      "command": "SQLite online backup plus SHA-256 archive audit",
-      "status": "passed",
-      "summary": "Seven archive files verified; current consistent snapshot is 528384 bytes with SHA-256 4499F0A321B27B322FB4D8C605736E6357488E60EA4216825A71FE9E7E618603.",
-      "exit_code": 0
-    },
-    {
-      "command": "npm config get cache; pnpm store path; cache size audit",
-      "status": "passed",
-      "summary": "npm uses F:/.npm-cache with 2718890048 bytes migrated; pnpm uses F:/.pnpm-store/v11; legacy C: npm cache contains 32479 bytes of logs.",
-      "exit_code": 0
-    },
-    {
-      "command": "git clean -fdX -- .next out tsconfig.tsbuildinfo",
-      "status": "passed",
-      "summary": "Removed only ignored reproducible build artifacts after a dry run listed exactly those three paths.",
-      "exit_code": 0
-    },
-    {
-      "command": "git worktree remove --force F:/Temp/zeroxb-task9-baseline",
-      "status": "passed",
-      "summary": "Removed the disposable baseline only after path, ancestor and changed-file checks; preserved F:/huabu-worktrees/foundation.",
-      "exit_code": 0
-    },
-    {
-      "command": "git merge --ff-only feature; git push origin main; delete merged local and remote feature branch",
-      "status": "passed",
-      "summary": "main and origin/main contain c4f00f63; the merged feature branch is absent locally and remotely.",
-      "exit_code": 0
-    },
-    {
-      "command": "post-operation impact report",
-      "status": "passed",
-      "summary": "No product source or symbol impact, no unexpected files, and all operations remained inside declared paths.",
-      "exit_code": 0
-    },
-    {
-      "command": "deterministic separate read-only safety audit",
-      "status": "passed",
-      "summary": "Sixteen of sixteen state, hash, Git, cache, worktree and diff checks passed.",
-      "exit_code": 0
     },
     {
       "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
       "status": "passed",
-      "summary": "Final main Canvas regression passed 296/296 with zero failures.",
+      "summary": "301 tests passed, 0 failed, 0 skipped.",
       "exit_code": 0
     },
     {
-      "command": "node_modules/.bin/tsc.cmd --noEmit",
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
       "status": "passed",
-      "summary": "Final main TypeScript check completed without diagnostics.",
+      "summary": "TypeScript completed without diagnostics.",
       "exit_code": 0
+    },
+    {
+      "command": "node node_modules/next/dist/bin/next build --turbopack && node scripts/prune-production-source-maps.mjs",
+      "status": "passed",
+      "summary": "Next.js production build compiled, type checked, generated 53 static pages and pruned production source maps.",
+      "exit_code": 0
+    },
+    {
+      "command": "pnpm build",
+      "status": "blocked_by_dependency_policy_with_equivalent_direct_gate_passed",
+      "summary": "The pnpm wrapper ran dependency status/install and stopped on ERR_PNPM_IGNORED_BUILDS before invoking the build script; no dependency approval policy was changed. Equivalent locked local binaries passed.",
+      "exit_code": 1
     },
     {
       "command": "git diff --check",
       "status": "passed",
-      "summary": "No whitespace errors; only repository line-ending conversion warnings were emitted.",
+      "summary": "No whitespace errors; only existing Windows line-ending conversion warnings were emitted.",
+      "exit_code": 0
+    },
+    {
+      "command": "declared-file allowlist and obsolete-layer symbol audit",
+      "status": "passed",
+      "summary": "Zero unexpected files; no layer.front/forward/backward/back calls or updateSelectedNodeLayer symbol remain in the editor.",
       "exit_code": 0
     }
   ],
   "acceptance_criteria_coverage": [
     {
-      "criterion": "At least one verified note.db backup resides on F:.",
+      "criterion": "Text grows only after content overflows the current node.",
       "status": "passed",
-      "evidence": ["seven SHA-256-verified files under F:/zeroxB-backups/2026-07-31-stage-closeout"]
+      "evidence": ["canvas-text-node-sizing tests", "renderer contract", "textarea no longer forced to 0px"]
     },
     {
-      "criterion": "Project cache policy minimizes future C: use.",
+      "criterion": "Automatic growth is bounded and non-compounding.",
       "status": "passed",
-      "evidence": ["npm F:/.npm-cache", "pnpm F:/.pnpm-store/v11", "32 KiB legacy C: logs"]
+      "evidence": ["MAX_AUTO_TEXT_NODE_HEIGHT=20000", "repeat measurement returns current height"]
     },
     {
-      "criterion": "Cleanup removes only verified disposable state.",
+      "criterion": "Zoom range is 0.1% to 100% everywhere.",
       "status": "passed",
-      "evidence": ["ignored build artifact dry run", "baseline ancestor/path/change audit", "foundation worktree preserved"]
+      "evidence": ["viewport policy", "document normalization", "React Flow min/max", "footer slider", "viewport store"]
     },
     {
-      "criterion": "Canonical branch contains the Canvas feature and remote is synchronized.",
+      "criterion": "Minimap has center reset and colored tag-position markers.",
       "status": "passed",
-      "evidence": ["main and origin/main contain c4f00f63", "merged feature branch deleted locally and remotely"]
+      "evidence": ["fitView center button", "nodeColor projection", "generic and legacy tag tests"]
     },
     {
-      "criterion": "A durable Chinese stage report and current workflow evidence exist.",
+      "criterion": "Visible layer-order actions are removed.",
       "status": "passed",
-      "evidence": ["docs/reports/2026-07-31-zeroxb-stage-closeout.md", "impact_report.json", "review_findings.json"]
+      "evidence": ["editor contract absence assertions", "read-only source scan"]
     }
   ],
-  "passed": [
-    "All closeout acceptance criteria and mandatory verification gates."
-  ],
+  "passed": ["All automated acceptance criteria and mandatory product gates."],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": [
-    "Three subjective pointer-driven interactions remain recommended for manual human experience testing because the Windows UI automation runtime was unavailable."
+    "Manual real-pointer confirmation remains recommended for the exact feel of very low zoom, fitView centering and textarea reflow."
   ]
 }

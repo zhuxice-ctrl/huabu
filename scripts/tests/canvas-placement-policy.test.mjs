@@ -69,14 +69,14 @@ test('geometrically tied placement nodes are ordered deterministically by node I
   assert.deepEqual(tiedNodes.map(node => node.id), ['z-node', 'a-node'])
 })
 
-test('repeat lattice stays 32 screen pixels at non-unit zoom', () => {
+test('repeat lattice uses the 32 screen-pixel gap at the 100 percent zoom cap', () => {
   const result = findNearestFreePlacement({
     members: [{ id: 'source', rect: rect(0, 0) }],
     obstacles: [{ id: 'block', rect: rect(0, 0) }],
     targetTranslation: { x: 0, y: 0 },
     snapshot: snapshot(2),
   })
-  assert.deepEqual(result.translation, { x: 0, y: -16 })
+  assert.deepEqual(result.translation, { x: 0, y: -32 })
 })
 
 test('rigid copy preserves relative member geometry', () => {

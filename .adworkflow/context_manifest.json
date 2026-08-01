@@ -1,57 +1,71 @@
 {
   "schema": "ADworkflo.context_manifest.v1",
-  "task_id": "zeroxb-stage-closeout-2026-07-31",
+  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
   "context_level": "L2-semantic-codegraph",
   "read_first": [
     ".adworkflow/task_spec.json",
-    ".superpowers/sdd/2026-07-30-canvas-interaction-physics-image-tags/progress.md",
-    "docs/superpowers/plans/2026-07-30-canvas-interaction-physics-image-tags.md",
-    ".git/config"
+    "src/lib/canvas/text-node-sizing.ts",
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/image-tags.ts",
+    "scripts/tests/canvas-text-node-sizing.test.mjs",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    "scripts/tests/canvas-node-visual-contract.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs"
   ],
-  "relevant_symbols": [],
-  "entrypoints": [],
+  "relevant_symbols": [
+    "resolveTextNodeHeight",
+    "resolveZoomAwareTextDrawSize",
+    "normalizeViewportZoom",
+    "CanvasEditor",
+    "CanvasWorkspace",
+    "TextCanvasNode",
+    "orderedMatchingImageIds"
+  ],
+  "entrypoints": [
+    "typescript:src.lib.canvas.text-node-sizing",
+    "typescript:src.lib.canvas.viewport-sizing",
+    "typescript:src.app.core.main.canvas.canvas-editor",
+    "typescript:src.app.core.main.canvas.canvas-workspace",
+    "typescript:src.app.core.main.canvas.nodes.canvas-nodes"
+  ],
   "likely_tests": [
-    "git reachability and remote synchronization checks",
-    "SHA-256 comparison for database backups",
-    "cache path verification",
-    "JSON parse checks for ADworkflo evidence",
-    "git diff --check"
+    "scripts/tests/canvas-text-node-sizing.test.mjs",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs",
+    "scripts/tests/canvas-node-visual-contract.test.mjs",
+    "new minimap center/tag contract test"
   ],
   "do_not_touch": [
     "live zeroxB note.db",
     "zeroxB user documents",
     "provider credentials",
-    "tracked product tests",
-    "unrelated Windows caches",
-    "unmerged or unpushed Git history"
+    "src-tauri/src/printing.rs",
+    "unrelated remote branches"
   ],
   "open_questions": [
-    "prepare_context.py is not present in the repository, PATH, CodexHome, agent skill roots, or the searched common Windows runtime locations; this manifest is a manual operations-only fallback."
+    "prepare_context.py is unavailable; manual L2 fallback is used and must be disclosed in verification evidence.",
+    "Whether tags should apply to all node types or only image nodes must be resolved from current minimap/node data contracts before implementation."
   ],
-  "graph_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
-  "context_confidence": 0.96,
+  "graph_revision": "e7a2dcf72a206f9fdf41289cacb7e4ab19e4c101",
+  "context_confidence": 0.93,
   "preflight_status": "accepted",
   "semantic_slice": ".adworkflow/semantic_slice.json",
   "context_preflight": ".adworkflow/context_preflight.json",
   "predicted_impact_files": [
-    ".adworkflow/task_spec.json",
-    ".adworkflow/context_manifest.json",
-    ".adworkflow/context_preflight.json",
-    ".adworkflow/impact_report.json",
-    ".adworkflow/worker_state.json",
-    ".adworkflow/verification_result.json",
-    ".adworkflow/review_findings.json",
-    "docs/reports/2026-07-31-zeroxb-stage-closeout.md"
+    "src/lib/canvas/text-node-sizing.ts",
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/image-tags.ts",
+    "scripts/tests/canvas-text-node-sizing.test.mjs",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs",
+    "scripts/tests/canvas-node-visual-contract.test.mjs",
+    "scripts/tests/canvas-minimap-contract.test.mjs"
   ],
-  "operational_context": {
-    "canonical_branch": "main",
-    "feature_branch": "deleted after fast-forward into main",
-    "feature_head": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
-    "live_database": "C:/Users/Lenovo/AppData/Roaming/com.zeroxb.desktop/note.db",
-    "verified_source_backup": "C:/Users/Lenovo/AppData/Roaming/com.zeroxb.desktop/note.db.pre-canvas-interaction-20260731-002004.bak",
-    "target_backup_root": "F:/zeroxB-backups",
-    "current_pnpm_store": "F:/.pnpm-store/v11",
-    "current_npm_cache": "C:/Users/Lenovo/AppData/Local/npm-cache",
-    "temporary_worktree": "deleted after reachability and diff-scope verification"
-  }
+  "fallback_reason": "prepare_context.py command was attempted and is not installed or discoverable in PATH."
 }

@@ -1,43 +1,37 @@
 {
   "schema": "ADworkflo.context_preflight.v1",
-  "task_id": "zeroxb-stage-closeout-2026-07-31",
+  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
   "status": "accepted",
-  "graph_revision": "c4f00f6362d67f41dce055d8aa7d1b2b7218adbe",
-  "slice_revision": "operations-only-manual-2026-07-31",
-  "confidence": 0.96,
+  "graph_revision": "e7a2dcf72a206f9fdf41289cacb7e4ab19e4c101",
+  "slice_revision": "manual-l2-canvas-growth-zoom-minimap-tags-2026-08-02",
+  "confidence": 0.93,
   "confidence_threshold": 0.8,
   "freshness": {
     "fresh": true,
-    "changed": [
-      ".adworkflow/task_spec.json"
-    ],
-    "missing": [
-      "prepare_context.py"
-    ],
+    "changed": [".adworkflow/task_spec.json"],
+    "missing": ["prepare_context.py"],
     "added": [],
     "config_changed": true
   },
   "provider_capabilities": [],
   "missing_capabilities": {
-    "semantic-codegraph": "Not required for this operations/documentation-only closeout because no product source or symbol is in scope.",
-    "prepare_context.py": "Searched repository, PATH, CodexHome, agent roots and common Windows runtime locations; script unavailable."
+    "semantic-codegraph": "Not available for the manual fallback; focused source and contract context is read directly.",
+    "prepare_context.py": "Command attempted; executable not installed or discoverable."
   },
   "invalid_reasons": [],
   "expansion_reasons": [
-    "Manual context fallback accepted because the task operates on Git metadata, verified database backup files, cache configuration, disposable worktrees and documentation only."
+    "Task is isolated to Canvas sizing, zoom, minimap, tags and visible layer menu contracts; no database or provider paths are in scope."
   ],
   "required_actions": [
-    "Re-run reachability checks immediately before every branch or worktree deletion.",
-    "Verify database backup SHA-256 before removing its C: source copy.",
-    "Do not copy the live database while zeroxB is running; use the already verified pre-change backup or stop the app first.",
-    "Generate a post-operation impact report before final verification."
+    "Add failing focused contracts before implementation.",
+    "Run post-edit impact analysis before final verification.",
+    "Run independent read-only review of the final diff and verify no unrelated files changed."
   ],
   "critical_unresolved_edges": [],
   "expansion_history": [
     {
-      "timestamp": "2026-07-30T18:04:38.3068835Z",
-      "action": "manual_operations_context_fallback",
-      "task_spec_sha256": "6c49c02a0725670fc12ac8923e25a61e4a1e13c30b85f1f57e887a29d450b94e"
+      "timestamp": "2026-08-02T00:00:00Z",
+      "action": "manual_operations_fallback_after_prepare_context_unavailable"
     }
   ]
 }

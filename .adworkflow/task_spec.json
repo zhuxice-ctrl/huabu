@@ -1,69 +1,70 @@
 {
   "schema": "ADworkflo.task_spec.v2",
   "configured": true,
-  "task_id": "zeroxb-stage-closeout-2026-07-31",
-  "task_type": "operations_and_documentation",
-  "goal": "Complete the interrupted zeroxB stage closeout: preserve and relocate verified database backups to F:, reduce avoidable C: cache use, safely consolidate Git branches and disposable local test artifacts, and write a durable Chinese stage report.",
+  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
+  "task_type": "code",
+  "goal": "Fix canvas text auto-growth boundaries, make zoom range predictable, add center reset and colored tag markers to the minimap, and remove user-facing layer-order actions.",
   "non_goals": [
-    "Do not change product behavior or source code.",
-    "Do not delete the live note.db or any user document.",
-    "Do not delete an unmerged or unpushed commit.",
-    "Do not remove reproducible project tests tracked by Git.",
-    "Do not clear unrelated system-wide caches or credentials."
+    "Do not rewrite the React Flow canvas architecture.",
+    "Do not remove internal geometry, z-index or persistence fields unless they are unreachable after removing the menu actions.",
+    "Do not change database schema or user documents.",
+    "Do not add a second independent tag catalog; reuse the existing canvas image tag model where possible.",
+    "Do not change unrelated chat, recovery, provider or release behavior."
   ],
   "acceptance_criteria": [
-    "At least one verified note.db backup resides on F: and its SHA-256 matches the source backup or live database captured for this closeout.",
-    "Project-local build caches and package-manager cache configuration avoid C: where supported, without changing product source.",
-    "Temporary worktrees, disposable test artifacts and branches are removed only after reachability and remote-safety checks.",
-    "The canonical branch contains the completed Canvas feature history and the remote is synchronized, unless a concrete safety blocker is documented.",
-    "A Chinese stage report records commits, verification results, package and backup evidence, cleanup actions, remaining manual acceptance, and rollback locations.",
-    "L2 context preflight, post-operation impact report, independent review evidence, worker state and verification result are current and passed."
+    "Text nodes retain their drawn/manual height while content fits; automatic vertical growth starts only after measured content exceeds the current node height.",
+    "Growth is monotonic, bounded and guarded against non-finite or pathological measurements; repeated input cannot grow forever without additional overflow.",
+    "Canvas zoom clamps to a maximum of 100% and a minimum of 0.1%, with wheel/pinch and programmatic viewport updates using the same bounds.",
+    "The minimap exposes a clear center/reset action that animates the viewport to the current canvas content center without changing document data.",
+    "Tag categories/colors are projected onto minimap node markers at their actual canvas positions, with deterministic fallback for untagged nodes.",
+    "User-facing layer-order menu items and handlers are removed; ordinary node selection, deletion and context actions remain available.",
+    "Focused tests, full Canvas tests, TypeScript, production build and an independent read-only review pass."
   ],
   "risk_level": "high",
   "execution_mode": "solo_with_independent_read_only_review",
-  "allowed_actions": [
-    "read",
-    "edit_workflow_artifacts",
-    "write_report",
-    "copy_and_verify_backup",
-    "configure_project_cache_paths",
-    "remove_verified_disposable_cache",
-    "git_merge_push_and_prune_after_reachability_checks",
-    "shell"
-  ],
+  "allowed_actions": ["read", "edit", "test", "shell", "write_workflow_artifacts"],
   "required_outputs": [
+    "docs/superpowers/plans/2026-08-02-canvas-growth-zoom-minimap-tags.md",
     ".adworkflow/context_manifest.json",
     ".adworkflow/context_preflight.json",
     ".adworkflow/impact_report.json",
     ".adworkflow/worker_state.json",
     ".adworkflow/verification_result.json",
-    ".adworkflow/review_findings.json",
-    "docs/reports/2026-07-31-zeroxb-stage-closeout.md",
-    "F:/zeroxB-backups/"
+    ".adworkflow/review_findings.json"
   ],
   "do_not_touch": [
+    "main branch history before this task",
     "live zeroxB note.db",
     "zeroxB user documents",
     "provider credentials",
-    "tracked product tests",
-    "unrelated Windows caches",
-    "unmerged or unpushed Git history"
+    "src-tauri/src/printing.rs",
+    "unrelated remote branches",
+    "tracked tests outside the focused Canvas scope"
   ],
-  "entrypoints": [],
+  "entrypoints": [
+    "typescript:src.lib.canvas.text-node-sizing",
+    "typescript:src.lib.canvas.viewport-sizing",
+    "typescript:src.app.core.main.canvas.canvas-editor",
+    "typescript:src.app.core.main.canvas.canvas-workspace",
+    "typescript:src.app.core.main.canvas.nodes.canvas-nodes"
+  ],
   "context_sources": [
-    ".adworkflow/task_spec.json",
-    ".adworkflow/context_manifest.json",
-    ".adworkflow/context_preflight.json",
-    ".adworkflow/impact_report.json",
-    ".git/config",
-    ".git/worktrees",
-    "docs/superpowers/plans/2026-07-30-canvas-interaction-physics-image-tags.md",
-    ".superpowers/sdd/2026-07-30-canvas-interaction-physics-image-tags/progress.md"
+    "src/lib/canvas/text-node-sizing.ts",
+    "src/lib/canvas/viewport-sizing.ts",
+    "src/app/core/main/canvas/canvas-editor.tsx",
+    "src/app/core/main/canvas/canvas-workspace.tsx",
+    "src/app/core/main/canvas/nodes/canvas-nodes.tsx",
+    "src/lib/canvas/image-tags.ts",
+    "scripts/tests/canvas-text-node-sizing.test.mjs",
+    "scripts/tests/canvas-viewport-sizing.test.mjs",
+    "scripts/tests/canvas-node-visual-contract.test.mjs",
+    "scripts/tests/canvas-editor-contract.test.mjs"
   ],
   "notes": [
-    "Use explicit UTF-8 for all Chinese text I/O.",
-    "Prefer reversible cleanup and preserve hash evidence before deleting or moving artifacts.",
-    "The prior thread already completed product implementation and release gates; this task validates and closes out state rather than reimplementing features."
+    "Use explicit UTF-8 for all Chinese source and report I/O.",
+    "Prefer pure policies and focused contract tests before touching the large React components.",
+    "The supplied recording shows a 600% start state, a narrow node becoming vertically unbounded, and a visible layer-order menu; treat those as reproduction evidence, not as exact implementation constraints.",
+    "The TV analysis produced no speech segments; visual evidence is stored outside the repository under F:/TV/notes."
   ],
   "implementation_owner": "root"
 }
