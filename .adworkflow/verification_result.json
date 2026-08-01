@@ -1,89 +1,25 @@
 {
   "schema": "ADworkflo.verification_result.v1",
-  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
+  "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
   "status": "passed",
-  "source_revision": "codex/canvas-growth-zoom-minimap-tags",
+  "source_revision": "main:6951ffe7 before release-evidence commit",
   "commands": [
-    {
-      "command": "codex_app read_thread pagination for 019fa2e9-49ed-7583-aeec-db9a606288af",
-      "status": "passed",
-      "summary": "Recovered the source task context and reconciled it with the durable local branch state.",
-      "exit_code": 0
-    },
-    {
-      "command": "prepare_context.py discovery",
-      "status": "unavailable_with_accepted_fallback",
-      "summary": "Executable was not installed or discoverable; manual L2 context manifest and accepted preflight recorded the fallback.",
-      "exit_code": 127
-    },
-    {
-      "command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs",
-      "status": "passed",
-      "summary": "301 tests passed, 0 failed, 0 skipped.",
-      "exit_code": 0
-    },
-    {
-      "command": "node node_modules/typescript/bin/tsc --noEmit",
-      "status": "passed",
-      "summary": "TypeScript completed without diagnostics.",
-      "exit_code": 0
-    },
-    {
-      "command": "node node_modules/next/dist/bin/next build --turbopack && node scripts/prune-production-source-maps.mjs",
-      "status": "passed",
-      "summary": "Next.js production build compiled, type checked, generated 53 static pages and pruned production source maps.",
-      "exit_code": 0
-    },
-    {
-      "command": "pnpm build",
-      "status": "blocked_by_dependency_policy_with_equivalent_direct_gate_passed",
-      "summary": "The pnpm wrapper ran dependency status/install and stopped on ERR_PNPM_IGNORED_BUILDS before invoking the build script; no dependency approval policy was changed. Equivalent locked local binaries passed.",
-      "exit_code": 1
-    },
-    {
-      "command": "git diff --check",
-      "status": "passed",
-      "summary": "No whitespace errors; only existing Windows line-ending conversion warnings were emitted.",
-      "exit_code": 0
-    },
-    {
-      "command": "declared-file allowlist and obsolete-layer symbol audit",
-      "status": "passed",
-      "summary": "Zero unexpected files; no layer.front/forward/backward/back calls or updateSelectedNodeLayer symbol remain in the editor.",
-      "exit_code": 0
-    }
+    {"command": "git fetch --prune; branch/worktree/divergence audit", "status": "passed", "summary": "All named local, origin and upstream branch histories are reachable from main; foundation worktree was preserved.", "exit_code": 0},
+    {"command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "301 passed, 0 failed.", "exit_code": 0},
+    {"command": "node node_modules/typescript/bin/tsc --noEmit", "status": "passed", "summary": "No diagnostics.", "exit_code": 0},
+    {"command": "cargo check --manifest-path src-tauri/Cargo.toml --locked", "status": "passed", "summary": "Release dependencies and Rust source checked successfully.", "exit_code": 0},
+    {"command": "node_modules/.bin/tauri.CMD build --bundles nsis", "status": "passed", "summary": "Next production build and optimized Tauri release build completed; NSIS artifact created.", "exit_code": 0},
+    {"command": "Get-FileHash installer and installed binary", "status": "passed", "summary": "Installer SHA-256 0AA6019F93965B8D510F171478DA0E72C143EAB6133715745515265806481AA0; installed binary exactly matches release binary SHA-256 660C51FE4E4EE67E1FB41BD15DE4C8EDA69ED70FC7BD26344E801C7A6D1D0820.", "exit_code": 0},
+    {"command": "Start-Process installer /S -Wait", "status": "passed", "summary": "Silent local update exited 0 and F:/zeroxBApp/zeroxb.exe exists.", "exit_code": 0},
+    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors.", "exit_code": 0}
   ],
   "acceptance_criteria_coverage": [
-    {
-      "criterion": "Text grows only after content overflows the current node.",
-      "status": "passed",
-      "evidence": ["canvas-text-node-sizing tests", "renderer contract", "textarea no longer forced to 0px"]
-    },
-    {
-      "criterion": "Automatic growth is bounded and non-compounding.",
-      "status": "passed",
-      "evidence": ["MAX_AUTO_TEXT_NODE_HEIGHT=20000", "repeat measurement returns current height"]
-    },
-    {
-      "criterion": "Zoom range is 0.1% to 100% everywhere.",
-      "status": "passed",
-      "evidence": ["viewport policy", "document normalization", "React Flow min/max", "footer slider", "viewport store"]
-    },
-    {
-      "criterion": "Minimap has center reset and colored tag-position markers.",
-      "status": "passed",
-      "evidence": ["fitView center button", "nodeColor projection", "generic and legacy tag tests"]
-    },
-    {
-      "criterion": "Visible layer-order actions are removed.",
-      "status": "passed",
-      "evidence": ["editor contract absence assertions", "read-only source scan"]
-    }
+    {"criterion": "All branch histories are consolidated into main with local latest code authoritative.", "status": "passed", "evidence": ["three ours merge commits", "every named branch has 0 commits in main..branch"]},
+    {"criterion": "Version 0.32.2 NSIS installer is built and locally installed.", "status": "passed", "evidence": ["zeroxB_0.32.2_x64-setup.exe", "installer exit 0", "release/install binary hash match"]},
+    {"criterion": "Release gates pass before publication.", "status": "passed", "evidence": ["Canvas 301/301", "TypeScript", "Next", "cargo check"]}
   ],
-  "passed": ["All automated acceptance criteria and mandatory product gates."],
+  "passed": ["All local release gates."],
   "failed": [],
   "not_run_reason": null,
-  "residual_risk": [
-    "Manual real-pointer confirmation remains recommended for the exact feel of very low zoom, fitView centering and textarea reflow."
-  ]
+  "residual_risk": ["The installed app was not auto-launched after silent installation; the binary hash and installer exit code verify the local update, while first interactive use remains a normal user acceptance step."]
 }

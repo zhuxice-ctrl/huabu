@@ -1,30 +1,17 @@
 {
   "schema": "ADworkflo.review_findings.v1",
-  "task_id": "zeroxb-canvas-growth-zoom-minimap-tags-2026-08-02",
+  "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
   "status": "approved",
-  "reviewer": "separate deterministic read-only final-diff audit",
-  "source_revision": "6e357b7aa79e31938aab182a896d51a449fd403a plus declared working-tree tests/workflow evidence",
+  "reviewer": "deterministic read-only release audit",
+  "source_revision": "main:6951ffe7 before release-evidence commit",
   "review_basis": [
-    "Enumerated committed and working-tree changes against main and compared them with the task allowlist; zero unexpected files were present.",
-    "Inspected the complete product diff for overflow measurement, viewport bounds, minimap projection, tag editing and context-menu removal.",
-    "Confirmed the text renderer no longer collapses the textarea to 0px and the sizing policy returns the current height when content fits.",
-    "Confirmed React Flow, footer input, viewport state publication/animation and document normalization all enforce the 0.1% to 100% range.",
-    "Confirmed visible layer-order labels and updateSelectedNodeLayer are absent while duplicate and delete actions remain.",
-    "Re-ran all 301 Canvas tests, TypeScript and production build after the audit."
+    "Verified the exact mainline code remained unchanged by each ours-strategy merge while the remote parent histories became reachable.",
+    "Verified zero remaining unique commits for origin/dev, origin/feat/agent-permission-policy, origin/feat/canvas-workspace, origin/foundation/notegen-636d4f8, origin/release, upstream/dev, foundation/notegen-636d4f8 and codex/canvas-growth-zoom-minimap-tags.",
+    "Verified version 0.32.2 in Tauri config, NSIS artifact hash, silent installation exit code and installed/release binary hash identity.",
+    "Verified Canvas 301/301, TypeScript, Rust check, Tauri build and whitespace audit."
   ],
   "blocking_findings": [],
-  "non_blocking_findings": [
-    "At 0.1% zoom, extremely large canvas extents remain possible by design; visual-scale compensation is capped at 10 to avoid oversized borders and handles.",
-    "The production build succeeded using the locked local Next.js and TypeScript binaries because the pnpm wrapper stopped at its dependency build-approval policy before starting the requested scripts.",
-    "Manual pointer/UI acceptance is still recommended for wheel zoom, long wrapped text, minimap centering and tag-marker readability."
-  ],
-  "suggested_tests": [
-    "Create a large text node, type content that fits, then cross the lower boundary and confirm a single monotonic vertical growth step.",
-    "Zoom from 100% down to 0.1% with the wheel and footer slider, then use 回到中心.",
-    "Assign several tags to nodes and confirm minimap colors appear at matching spatial positions."
-  ],
-  "risk_notes": [
-    "Internal zIndex persistence and export compatibility remain intact; only user-facing reorder actions were removed.",
-    "Legacy imageTags remain readable by the minimap color projection."
-  ]
+  "non_blocking_findings": ["The foundation worktree is intentionally dirty and was not modified.", "Tauri emits existing Turbopack deprecation/production-source-map warnings; they did not affect build success."],
+  "suggested_tests": ["Open the installed 0.32.2 app and perform one normal workspace startup smoke check."],
+  "risk_notes": ["No force push, live database, credentials, user documents or foundation worktree content was touched."]
 }
