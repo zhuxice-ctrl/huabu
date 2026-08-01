@@ -9,6 +9,7 @@ import {
   type LinearViewControls,
 } from '@/lib/canvas/linear-view'
 import type { CanvasViewport } from '@/types/canvas'
+import { normalizeCanvasZoom } from '@/lib/canvas/viewport-sizing'
 
 export interface EvidenceNavigationViewState {
   session: EvidenceNavigationSession
@@ -38,6 +39,10 @@ function sameViewport(left: CanvasViewport | undefined, right: CanvasViewport) {
   return left?.x === right.x && left.y === right.y && left.zoom === right.zoom
 }
 
+function normalizeViewport(viewport: CanvasViewport): CanvasViewport {
+  return { ...viewport, zoom: normalizeCanvasZoom(viewport.zoom) }
+}
+
 function cancelCanvasViewportAnimation(canvasId: string) {
   const animation = viewportAnimations.get(canvasId)
   if (animation !== undefined) cancelAnimationFrame(animation)
@@ -49,15 +54,17 @@ export function useCanvasViewportState(canvasId: string, initialViewport: Canvas
 }
 
 export function initializeCanvasViewportState(canvasId: string, viewport: CanvasViewport) {
+  const normalized = normalizeViewport(viewport)
   useCanvasViewStore.setState(state => state.viewports[canvasId]
     ? state
-    : { viewports: { ...state.viewports, [canvasId]: { ...viewport } } })
+    : { viewports: { ...state.viewports, [canvasId]: normalized } })
 }
 
 export function publishCanvasViewportState(canvasId: string, viewport: CanvasViewport) {
-  useCanvasViewStore.setState(state => sameViewport(state.viewports[canvasId], viewport)
+  const normalized = normalizeViewport(viewport)
+  useCanvasViewStore.setState(state => sameViewport(state.viewports[canvasId], normalized)
     ? state
-    : { viewports: { ...state.viewports, [canvasId]: { ...viewport } } })
+    : { viewports: { ...state.viewports, [canvasId]: normalized } })
 }
 
 export function animateCanvasViewportState(
@@ -66,9 +73,10 @@ export function animateCanvasViewportState(
   duration: number,
 ) {
   cancelCanvasViewportAnimation(canvasId)
-  const initial = useCanvasViewStore.getState().viewports[canvasId] ?? target
-  if (duration <= 0 || sameViewport(initial, target)) {
-    publishCanvasViewportState(canvasId, target)
+  const normalizedTarget = normalizeViewport(target)
+  const initial = useCanvasViewStore.getState().viewports[canvasId] ?? normalizedTarget
+  if (duration <= 0 || sameViewport(initial, normalizedTarget)) {
+    publishCanvasViewportState(canvasId, normalizedTarget)
     return
   }
 
@@ -77,9 +85,9 @@ export function animateCanvasViewportState(
     const progress = Math.min(1, Math.max(0, (timestamp - startedAt) / duration))
     const eased = 1 - (1 - progress) ** 3
     publishCanvasViewportState(canvasId, {
-      x: initial.x + (target.x - initial.x) * eased,
-      y: initial.y + (target.y - initial.y) * eased,
-      zoom: initial.zoom + (target.zoom - initial.zoom) * eased,
+      x: initial.x + (normalizedTarget.x - initial.x) * eased,
+      y: initial.y + (normalizedTarget.y - initial.y) * eased,
+      zoom: initial.zoom + (normalizedTarget.zoom - initial.zoom) * eased,
     })
     if (progress >= 1) {
       viewportAnimations.delete(canvasId)

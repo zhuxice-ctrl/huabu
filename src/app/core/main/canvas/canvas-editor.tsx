@@ -206,6 +206,8 @@ import {
 import {
   captureViewportSnapshot,
   contentScaleForZoom,
+  MAX_CANVAS_ZOOM,
+  MIN_CANVAS_ZOOM,
   screenDistanceToCanvas,
   screenPointToCanvas,
   screenSizeToCanvas,
@@ -3733,7 +3735,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               onLostPointerCapture={event => cancelPointerSessions(event.pointerId)}
             >
               <ReactFlow
-        style={{ '--canvas-visual-scale': 1 / Math.max(0.1, viewport.zoom) } as CSSProperties}
+        style={{ '--canvas-visual-scale': Math.min(10, 1 / Math.max(MIN_CANVAS_ZOOM, viewport.zoom)) } as CSSProperties}
         className={cn(
           tool === 'select' && '[&_.react-flow__pane]:!cursor-default [&_.react-flow__node.canvas-image-tag-match]:!ring-2 [&_.react-flow__node.canvas-image-tag-match]:!ring-primary [&_.react-flow__node.canvas-image-tag-match]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-2 [&_.react-flow__node.relation-target-active]:!ring-primary/50 [&_.react-flow__node.relation-target-active]:!ring-offset-2 [&_.react-flow__node.relation-target-active]:!ring-offset-background [&_.react-flow__handle.relation-handle-target-active]:!size-3.5 [&_.react-flow__handle.relation-handle-target-active]:!border-2 [&_.react-flow__handle.relation-handle-target-active]:!border-background [&_.react-flow__handle.relation-handle-target-active]:!bg-primary [&_.react-flow__handle.relation-handle-target-active]:!shadow-[0_0_0_5px_hsl(var(--primary)/0.28)]',
           tool === 'hand' && '[&_.react-flow__node]:!cursor-grab [&_.react-flow__node:active]:!cursor-grabbing [&_.react-flow__pane]:!cursor-grab [&_.react-flow__pane.dragging]:!cursor-grabbing'
@@ -3836,6 +3838,8 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
         snapToGrid={document.settings.snapToGrid}
         snapGrid={[20, 20]}
         viewport={viewport}
+        minZoom={MIN_CANVAS_ZOOM}
+        maxZoom={MAX_CANVAS_ZOOM}
         onlyRenderVisibleElements={nodes.length >= 150}
         colorMode="system"
         >

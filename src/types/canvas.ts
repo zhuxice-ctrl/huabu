@@ -165,6 +165,9 @@ export interface CanvasViewport {
   zoom: number
 }
 
+export const CANVAS_MIN_ZOOM = 0.001
+export const CANVAS_MAX_ZOOM = 1
+
 export interface CanvasSize {
   width: number
   height: number
@@ -250,7 +253,7 @@ export function normalizeCanvasDocument(value: unknown): CanvasDocument {
       x: typeof viewport?.x === 'number' && Number.isFinite(viewport.x) ? viewport.x : 0,
       y: typeof viewport?.y === 'number' && Number.isFinite(viewport.y) ? viewport.y : 0,
       zoom: typeof viewport?.zoom === 'number' && Number.isFinite(viewport.zoom)
-        ? Math.min(6, Math.max(0.1, viewport.zoom))
+        ? Math.min(CANVAS_MAX_ZOOM, Math.max(CANVAS_MIN_ZOOM, viewport.zoom))
         : 0.65,
     },
     settings: {

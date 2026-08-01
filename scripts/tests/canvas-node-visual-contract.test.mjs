@@ -20,10 +20,12 @@ test('selection treatment uses exact screen-compensated approved colors', () => 
   assert.match(nodesSource, /0_0_calc\(12px\*var\(--canvas-visual-scale,1\)\)_rgba\(102,217,255,0\.32\)/)
   assert.match(nodesSource, /canvas-geometry-invalid[^]*!shadow-\[0_0_calc\(12px\*var\(--canvas-visual-scale,1\)\)_rgba\(255,93,93,0\.32\)\]/)
   assert.match(nodesSource, /canvas-legacy-conflict[^]*!border-dashed[^]*#F2B84B/)
-  for (const zoom of [0.1, 0.65, 1, 6]) {
-    assert.equal(1 / Math.max(0.1, zoom) * zoom, 1)
+  for (const zoom of [0.001, 0.65, 1]) {
+    assert.equal(1 / Math.max(0.001, zoom) * zoom, 1)
   }
-  assert.match(editorSource, /'--canvas-visual-scale': 1 \/ Math\.max\(0\.1, viewport\.zoom\)/)
+  assert.match(editorSource, /minZoom=\{MIN_CANVAS_ZOOM\}/)
+  assert.match(editorSource, /maxZoom=\{MAX_CANVAS_ZOOM\}/)
+  assert.match(editorSource, /'--canvas-visual-scale': Math\.min\(10, 1 \/ Math\.max\(MIN_CANVAS_ZOOM, viewport\.zoom\)\)/)
 })
 
 test('snap guides are viewport-portal-only transient overlays', () => {

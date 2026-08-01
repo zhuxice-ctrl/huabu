@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { MAX_CANVAS_ZOOM, MIN_CANVAS_ZOOM } from '@/lib/canvas/viewport-sizing'
 
 interface CanvasFooterProps {
   showGrid: boolean
@@ -117,9 +118,9 @@ export function CanvasFooter({
         <div className="flex items-center gap-1.5 px-1">
           <ZoomOut className="size-3" aria-hidden="true" />
           <Slider
-            min={0.1}
-            max={6}
-            step={0.05}
+            min={MIN_CANVAS_ZOOM}
+            max={MAX_CANVAS_ZOOM}
+            step={0.001}
             value={[zoom]}
             onValueChange={value => onZoomChange(value[0] ?? zoom)}
             aria-label={`${t('zoomOut')} / ${t('zoomIn')}`}

@@ -18,14 +18,14 @@ import {
 
 test('drawn text soft minimum grows sublinearly above 100 percent', () => {
   assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 1), { width: 160, height: 88 })
-  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 2), { width: 113.14, height: 62.23 })
-  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 6), { width: 65.32, height: 35.93 })
+  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 2), { width: 160, height: 88 })
+  assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 40, height: 20 }, 6), { width: 160, height: 88 })
   assert.deepEqual(resolveZoomAwareTextDrawSize({ width: 300, height: 120 }, 6), { width: 300, height: 120 })
 })
 
 test('reverse drag expands the soft minimum toward the pointer direction', () => {
   assert.deepEqual(resolveZoomAwareTextDrawRect({ x: 200, y: 160 }, { x: 190, y: 150 }, 2), {
-    x: 86.86, y: 97.77, width: 113.14, height: 62.23,
+    x: 40, y: 72, width: 160, height: 88,
   })
 })
 import { DEFAULT_CANVAS_DOCUMENT, normalizeCanvasDocument } from '../../src/types/canvas.ts'
@@ -70,16 +70,16 @@ test('conversion clamps every finite captured zoom and uses persistent/display p
     containerRect: { left: 0, top: 0 },
   })
 
-  assert.equal(MIN_CANVAS_ZOOM, 0.1)
-  assert.equal(MAX_CANVAS_ZOOM, 6)
+  assert.equal(MIN_CANVAS_ZOOM, 0.001)
+  assert.equal(MAX_CANVAS_ZOOM, 1)
   assert.equal(zero?.zoom, MIN_CANVAS_ZOOM)
   assert.equal(negative?.zoom, MIN_CANVAS_ZOOM)
-  assert.equal(nonFinite?.zoom, 2)
+  assert.equal(nonFinite?.zoom, 1)
   assert.equal(maximum?.zoom, MAX_CANVAS_ZOOM)
-  assert.equal(screenDistanceToCanvas(8.02, maximum), 1.3367)
+  assert.equal(screenDistanceToCanvas(8.02, maximum), 8.02)
   assert.deepEqual(canvasSizeToScreen({ width: 1.3367, height: -0.001 }, maximum), {
-    width: 8.02,
-    height: -0.01,
+    width: 1.34,
+    height: 0,
   })
 })
 
@@ -137,7 +137,7 @@ test('font and content scaling retain valid values and safely fall back', () => 
   assert.equal(normalizeCanvasFontSize(0, 18), 18)
   assert.equal(normalizeCanvasFontSize('15', 18), 18)
   assert.equal(contentScaleForZoom(MIN_CANVAS_ZOOM), 10)
-  assert.equal(contentScaleForZoom(MAX_CANVAS_ZOOM), 0.1667)
+  assert.equal(contentScaleForZoom(MAX_CANVAS_ZOOM), 1)
   assert.equal(contentScaleForZoom(Number.NaN), 1.5385)
   const negativeZero = screenDistanceToCanvas(-0, {
     x: 0,
@@ -183,7 +183,7 @@ test('invalid container coordinates cancel capture and viewport fields fall back
   assert.deepEqual(snapshot, {
     x: 12,
     y: -8,
-    zoom: 2,
+    zoom: 1,
     containerLeft: 20,
     containerTop: 30,
     capturedAt: snapshot?.capturedAt,
