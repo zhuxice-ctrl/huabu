@@ -26,6 +26,8 @@ test('selection treatment uses exact screen-compensated approved colors', () => 
   assert.match(editorSource, /minZoom=\{MIN_CANVAS_ZOOM\}/)
   assert.match(editorSource, /maxZoom=\{MAX_CANVAS_ZOOM\}/)
   assert.match(editorSource, /'--canvas-visual-scale': Math\.min\(10, 1 \/ Math\.max\(MIN_CANVAS_ZOOM, viewport\.zoom\)\)/)
+  assert.match(editorSource, /<MiniMap[^>]*nodeColor=\{minimapNodeColor\}/)
+  assert.match(editorSource, /aria-label="回到中心"/)
 })
 
 test('snap guides are viewport-portal-only transient overlays', () => {

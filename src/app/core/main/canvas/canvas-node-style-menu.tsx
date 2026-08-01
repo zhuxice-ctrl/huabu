@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { canvasTagColor, normalizeCanvasTags } from '@/lib/canvas/minimap'
 
 export interface CanvasNodeStyleValue {
   backgroundColor?: string
@@ -9,6 +10,7 @@ export interface CanvasNodeStyleValue {
   fontSize?: number
   borderColor?: string
   borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted'
+  tags?: string[]
 }
 
 export interface CanvasNodeStyleMenuProps {
@@ -124,6 +126,31 @@ export function CanvasNodeStyleMenu({ value, fontSizeMixed = false, onSessionSta
           </select>
         </label>
       </div>
+      <label className="block space-y-1 text-[11px] text-muted-foreground">
+        节点标签
+        <input
+          key={(value.tags || []).join('\u0000')}
+          type="text"
+          aria-label="节点标签"
+          defaultValue={(value.tags || []).join(', ')}
+          placeholder="资料, 待办, 灵感"
+          className="h-8 w-full rounded-md border bg-background px-2 text-xs text-foreground"
+          onBlur={event => onChange({ tags: normalizeCanvasTags(event.currentTarget.value.split(/[,，]/)) })}
+          onKeyDown={event => {
+            if (event.key === 'Enter') event.currentTarget.blur()
+          }}
+        />
+        {(value.tags || []).length > 0 && (
+          <span className="flex flex-wrap gap-1 pt-1">
+            {normalizeCanvasTags(value.tags).map(tag => (
+              <span key={tag} className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] text-foreground">
+                <span className="size-2 rounded-full" style={{ backgroundColor: canvasTagColor(tag) }} />
+                {tag}
+              </span>
+            ))}
+          </span>
+        )}
+      </label>
     </div>
   )
 }

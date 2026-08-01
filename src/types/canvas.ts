@@ -100,6 +100,7 @@ export interface CanvasNodeData extends Record<string, unknown> {
   filePath?: string
   imagePath?: string
   imageTags?: string[]
+  tags?: string[]
   imageTagFilterState?: 'match' | 'dim'
   url?: string
   metadata?: CanvasRichMediaMetadata

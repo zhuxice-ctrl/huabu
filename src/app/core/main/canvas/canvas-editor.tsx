@@ -42,6 +42,7 @@ import {
   Hand,
   Highlighter,
   ImagePlus,
+  LocateFixed,
   MousePointer2,
   Palette,
   Pencil,
@@ -241,6 +242,7 @@ import useCanvasImageTagsStore, {
   stepCanvasImageTagMatch,
 } from '@/stores/canvas-image-tags'
 import { normalizeImageTags, orderedMatchingImageIds } from '@/lib/canvas/image-tags'
+import { minimapNodeColor } from '@/lib/canvas/minimap'
 import useSettingStore from '@/stores/setting'
 import {
   mergeNoteReferenceMarks,
@@ -3860,7 +3862,19 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
               manualRelations={edges as CanvasEdge[]}
             />
           </Panel>
-          <MiniMap pannable zoomable />
+          <Panel position="bottom-right" className="!bottom-28 !m-3">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon-sm"
+              aria-label="回到中心"
+              title="回到中心"
+              onClick={() => void fitView({ padding: 0.2, duration: 300 })}
+            >
+              <LocateFixed />
+            </Button>
+          </Panel>
+          <MiniMap pannable zoomable nodeColor={minimapNodeColor} />
               </ReactFlow>
               {drawDraft && (
                 <DrawGeometryPreview
@@ -3938,6 +3952,7 @@ function CanvasEditorInner({ canvasId }: CanvasEditorProps) {
                   fontSize: selectedScreenFontSize,
                   borderColor: selectedStyleNode.data.borderColor as string | undefined ?? selectedStyleNode.data.color as string | undefined,
                   borderStyle: selectedStyleNode.data.borderStyle as 'none' | 'solid' | 'dashed' | 'dotted' | undefined,
+                  tags: Array.isArray(selectedStyleNode.data.tags) ? selectedStyleNode.data.tags as string[] : [],
                 }}
                 fontSizeMixed={selectedFontSizeMixed}
                 onSessionStart={() => {}}
