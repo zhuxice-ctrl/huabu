@@ -3,12 +3,13 @@
   "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
   "status": "approved",
   "reviewer": "deterministic read-only release audit",
-  "source_revision": "main:6951ffe7 before release-evidence commit",
+  "source_revision": "main:94a7182a9d1d59de2d16b73192c57ec8c16ea2de",
   "review_basis": [
     "Verified the exact mainline code remained unchanged by each ours-strategy merge while the remote parent histories became reachable.",
     "Verified zero remaining unique commits for origin/dev, origin/feat/agent-permission-policy, origin/feat/canvas-workspace, origin/foundation/notegen-636d4f8, origin/release, upstream/dev, foundation/notegen-636d4f8 and codex/canvas-growth-zoom-minimap-tags.",
     "Verified version 0.32.2 in Tauri config, NSIS artifact hash, silent installation exit code and installed/release binary hash identity.",
-    "Verified Canvas 301/301, TypeScript, Rust check, Tauri build and whitespace audit."
+    "Verified Canvas 301/301, TypeScript, Rust check, Tauri build and whitespace audit.",
+    "Verified origin/main at 94a7182a, annotated v0.32.2 tag, and GitHub Release asset digest sha256:0aa6019f93965b8d510f171478da0e72c143eab6133715745515265806481aa0."
   ],
   "blocking_findings": [],
   "non_blocking_findings": ["The foundation worktree is intentionally dirty and was not modified.", "Tauri emits existing Turbopack deprecation/production-source-map warnings; they did not affect build success."],

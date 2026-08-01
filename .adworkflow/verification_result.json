@@ -2,7 +2,7 @@
   "schema": "ADworkflo.verification_result.v1",
   "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
   "status": "passed",
-  "source_revision": "main:6951ffe7 before release-evidence commit",
+  "source_revision": "main:94a7182a9d1d59de2d16b73192c57ec8c16ea2de",
   "commands": [
     {"command": "git fetch --prune; branch/worktree/divergence audit", "status": "passed", "summary": "All named local, origin and upstream branch histories are reachable from main; foundation worktree was preserved.", "exit_code": 0},
     {"command": "node --experimental-strip-types --test scripts/tests/canvas-*.test.mjs", "status": "passed", "summary": "301 passed, 0 failed.", "exit_code": 0},
@@ -11,14 +11,16 @@
     {"command": "node_modules/.bin/tauri.CMD build --bundles nsis", "status": "passed", "summary": "Next production build and optimized Tauri release build completed; NSIS artifact created.", "exit_code": 0},
     {"command": "Get-FileHash installer and installed binary", "status": "passed", "summary": "Installer SHA-256 0AA6019F93965B8D510F171478DA0E72C143EAB6133715745515265806481AA0; installed binary exactly matches release binary SHA-256 660C51FE4E4EE67E1FB41BD15DE4C8EDA69ED70FC7BD26344E801C7A6D1D0820.", "exit_code": 0},
     {"command": "Start-Process installer /S -Wait", "status": "passed", "summary": "Silent local update exited 0 and F:/zeroxBApp/zeroxb.exe exists.", "exit_code": 0},
-    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors.", "exit_code": 0}
+    {"command": "git diff --check", "status": "passed", "summary": "No whitespace errors.", "exit_code": 0},
+    {"command": "git push origin main; git push origin v0.32.2", "status": "passed", "summary": "origin/main confirmed at 94a7182a and annotated tag v0.32.2 was published without force push.", "exit_code": 0},
+    {"command": "gh release create v0.32.2 <installer>", "status": "passed", "summary": "Published https://github.com/zhuxice-ctrl/huabu/releases/tag/v0.32.2 with the 15,319,687-byte NSIS asset whose GitHub sha256 digest matches local verification.", "exit_code": 0}
   ],
   "acceptance_criteria_coverage": [
     {"criterion": "All branch histories are consolidated into main with local latest code authoritative.", "status": "passed", "evidence": ["three ours merge commits", "every named branch has 0 commits in main..branch"]},
     {"criterion": "Version 0.32.2 NSIS installer is built and locally installed.", "status": "passed", "evidence": ["zeroxB_0.32.2_x64-setup.exe", "installer exit 0", "release/install binary hash match"]},
     {"criterion": "Release gates pass before publication.", "status": "passed", "evidence": ["Canvas 301/301", "TypeScript", "Next", "cargo check"]}
   ],
-  "passed": ["All local release gates."],
+  "passed": ["All local release gates and remote publication checks."],
   "failed": [],
   "not_run_reason": null,
   "residual_risk": ["The installed app was not auto-launched after silent installation; the binary hash and installer exit code verify the local update, while first interactive use remains a normal user acceptance step."]

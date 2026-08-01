@@ -48,6 +48,6 @@
 - Modify: `.adworkflow/impact_report.json`, `.adworkflow/worker_state.json`, `.adworkflow/verification_result.json`, `.adworkflow/review_findings.json`
 
 - [x] Perform a final read-only audit of branch reachability, version, installer hash, install exit status and unexpected file list.
-- [ ] Commit task evidence and merge metadata on `main`.
-- [ ] Push `main` with a standard fast-forward `git push origin main`; do not force-push.
-- [ ] Push the 0.32.2 tag only after `main` is confirmed at the release commit.
+- [x] Commit task evidence and merge metadata on `main`.
+- [x] Push `main` with a standard fast-forward `git push origin main`; do not force-push.
+- [x] Push the 0.32.2 tag only after `main` is confirmed at the release commit.

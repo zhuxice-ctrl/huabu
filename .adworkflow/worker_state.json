@@ -1,7 +1,7 @@
 {
   "schema": "ADworkflo.worker_state.v1",
   "task_id": "zeroxb-release-main-consolidation-0.32.2-2026-08-02",
-  "status": "in_progress",
+  "status": "complete",
   "revision": 1,
   "done": [
     "Prepared and committed 0.32.2 release metadata.",
@@ -10,18 +10,19 @@
     "Preserved the unrelated dirty foundation worktree.",
     "Passed Canvas 301/301, TypeScript, Rust check, Tauri/NSIS build and final audit.",
     "Built zeroxB_0.32.2_x64-setup.exe, checked its SHA-256 and silently installed it locally with exit 0.",
-    "Verified installed zeroxb.exe matches the release binary byte-for-byte."
+    "Verified installed zeroxb.exe matches the release binary byte-for-byte.",
+    "Pushed main at 94a7182a without force, pushed v0.32.2, and published the GitHub Release with the verified NSIS asset."
   ],
   "changed_files": ["src-tauri/tauri.conf.json", "release workflow artifacts", "release plan", "main merge commits"],
   "current_problem": null,
-  "next_action": "commit release evidence, create and push v0.32.2 tag, push main and publish GitHub Release asset",
+  "next_action": null,
   "must_keep_context": ["F:/huabu-worktrees/foundation remains intentionally dirty and must not be cleaned.", "Installer path is F:/huabu/src-tauri/target/release/bundle/nsis/zeroxB_0.32.2_x64-setup.exe.", "Installer SHA-256 is 0AA6019F93965B8D510F171478DA0E72C143EAB6133715745515265806481AA0."],
   "discarded_context": [],
   "remaining_risks": ["Interactive first launch is still a recommended normal smoke check."],
   "clarification_events": ["User closed zeroxB before installation to avoid losing unsaved work."],
   "timeout_fallbacks": ["prepare_context.py unavailable -> accepted manual L2 release preflight"],
   "context_expansion_history": [],
-  "source_revision": "6951ffe7",
+  "source_revision": "94a7182a9d1d59de2d16b73192c57ec8c16ea2de",
   "context_preflight": {"status": "accepted", "graph_revision": "ec72557b503240796a859d23b172d87cdab20aee", "confidence": 0.96},
   "post_edit_impact": {"status": "passed", "unexpected_files": 0, "production_critical_edges": 3, "test_critical_edges": 5, "propagation_truncated": false}
 }
